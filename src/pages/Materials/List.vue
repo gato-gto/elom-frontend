@@ -71,13 +71,22 @@
     </div>
 
     <div class="join mt-2 self-end">
-      <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(1)">«</button>
-      <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(page-1)">Назад</button>
-      <button class="btn btn-sm join-item btn-ghost no-animation">Стр. {{ page }}</button>
-      <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
+
     </div>
 
-    <MaterialForm v-if="canEdit" :open="modalOpen" :initial="current" @close="modalOpen=false" @saved="onSaved"/>
+    <div class="flex items-center justify-between">
+      <div class="text-sm opacity-70">Всего: {{ count }}</div>
+      <div class="flex items-center gap-2">
+        <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(1)">«</button>
+        <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(page-1)">Назад</button>
+        <span class="text-sm">Стр. {{ page }}</span>
+        <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
+      </div>
+    </div>
+
+    <Modal v-model="modalOpen" :title="current ? 'Редактировать материал' : 'Новый материал'">
+      <MaterialForm :initial="current" @saved="onSaved" @cancel="modalOpen=false"/>
+    </Modal>
   </div>
 </template>
 
@@ -88,6 +97,7 @@ import endpoints, {buildQuery} from '@/api/endpoints'
 import type {PageResponse, Material, Me} from '@/api/types'
 import MaterialForm from './MaterialForm.vue'
 import {useAuthStore} from '@/stores/auth'
+import Modal from "@/components/Modal.vue";
 
 const auth = useAuthStore()
 const canEdit = computed(() => {

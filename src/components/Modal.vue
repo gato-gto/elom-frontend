@@ -10,11 +10,6 @@
         <div class="space-y-2">
           <slot/>
         </div>
-        <div class="modal-action">
-          <slot name="actions">
-            <button class="btn btn-ghost" @click="close">Закрыть</button>
-          </slot>
-        </div>
       </div>
       <div class="modal-backdrop" @click="close"></div>
     </div>

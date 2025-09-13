@@ -38,10 +38,7 @@
       <span class="text-sm">Фото (обложка)</span>
       <FileInput v-model="photoFile" accept="image/*" :maxSizeMb="8" :existingUrl="currentPhotoUrl"/>
       <div class="flex gap-2">
-        <button v-if="currentPhotoUrl" type="button" class="btn btn-ghost btn-sm" :disabled="deletingPhoto"
-                @click="onDeletePhoto">
-          {{ deletingPhoto ? 'Удаление…' : 'Удалить фото' }}
-        </button>
+        <button v-if="currentPhotoUrl" type="button" class="btn btn-ghost btn-sm" :disabled="deletingPhoto" @click="onDeletePhoto">{{ deletingPhoto ? 'Удаление…' : 'Удалить фото' }}</button>
         <span v-if="errors.photo" class="text-xs text-error">{{ errors.photo }}</span>
       </div>
       <p class="text-xs text-base-content/60">
@@ -62,11 +59,9 @@
 import {onMounted, reactive, ref, watchEffect} from 'vue'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
-import type {Material, PageResponse, Unit} from '@/api/types'
+import type {Material, PageResponse, Category, Unit} from '@/api/types'
 import FileInput from '@/components/FileInput.vue'
 import {useUiStore} from '@/stores/ui'
-
-type Category = { id: number; name: string }
 
 const props = defineProps<{ initial: Material | null }>()
 const emit = defineEmits<{ (e: 'saved'): void; (e: 'cancel'): void }>()

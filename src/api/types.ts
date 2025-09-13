@@ -28,6 +28,10 @@ export type Unit = {
     code: string;
     name: string;
 };
+export type Category = {
+    id: number;
+    name: string
+}
 
 export type Material = {
     id: number;
