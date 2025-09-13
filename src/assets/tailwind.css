@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@plugin "daisyui";
+
+/* База */
+:root {
+    color-scheme: light;
+}
+
+html, body, #app {
+    height: 100%;
+}
+
+/* При желании: здесь же можно настраивать тему через @theme, но пока оставим по умолчанию */
