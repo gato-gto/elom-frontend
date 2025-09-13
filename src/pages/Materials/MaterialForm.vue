@@ -214,10 +214,10 @@ async function submit() {
 
     let materialId: number
     if (props.initial?.id) {
-      await api.patch(`${endpoints.materials}${props.initial.id}/`, fd)
+      await api.patch(endpoints.materials.one(props.initial.id), fd)
       materialId = props.initial.id
     } else {
-      const { data } = await api.post<Material>(endpoints.materials.list, fd)
+      const {data} = await api.post<Material>(endpoints.materials.list, fd)
       materialId = Number((data as any)?.id)
     }
 

@@ -146,7 +146,7 @@ async function remove(p: Purchase) {
   if (!confirm(`Удалить закупку #${p.id}?`)) return
   try {
     deletingId.value = p.id
-    await api.delete(`${endpoints.purchases}${p.id}/`)
+    await api.delete(endpoints.purchases.one(p.id))
     await reload(page.value)
   } finally {
     deletingId.value = null
@@ -154,7 +154,7 @@ async function remove(p: Purchase) {
 }
 
 const exportUrl = computed(() => {
-  const base = (endpoints as any).purchases || '/api/v1/purchases/'
+  const base = endpoints.purchases.list
   const params = new URLSearchParams()
   if (search.value) params.set('search', search.value)
   if (ordering.value) params.set('ordering', ordering.value)

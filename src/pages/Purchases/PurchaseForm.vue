@@ -4,7 +4,7 @@
     <div class="grid md:grid-cols-2 gap-4">
       <label class="form-control">
         <span class="label-text text-sm">Дата</span>
-        <input v-model="form.date" type="date" class="input input-bordered" required />
+        <input v-model="form.date" type="date" class="input input-bordered" required/>
         <span v-if="errors.date" class="text-xs text-error mt-1">{{ errors.date }}</span>
       </label>
 
@@ -19,7 +19,7 @@
 
       <label class="form-control">
         <span class="label-text text-sm">Поставщик</span>
-        <input v-model.trim="form.supplier" class="input input-bordered" placeholder="ООО Ромашка" />
+        <input v-model.trim="form.supplier" class="input input-bordered" placeholder="ООО Ромашка"/>
         <span v-if="errors.supplier" class="text-xs text-error mt-1">{{ errors.supplier }}</span>
       </label>
 
@@ -41,10 +41,10 @@
 
     <div class="grid gap-2">
       <span class="text-sm">Фото чеков/документов</span>
-      <input ref="photosEl" type="file" class="file-input file-input-bordered file-input-sm w-full max-w-md" accept="image/*" multiple @change="onPhotosChange" />
+      <input ref="photosEl" type="file" class="file-input file-input-bordered file-input-sm w-full max-w-md" accept="image/*" multiple @change="onPhotosChange"/>
       <div class="flex flex-wrap gap-2">
         <div v-for="(url, idx) in previewPhotos" :key="idx" class="w-28 h-28 bg-base-200 rounded-lg overflow-hidden">
-          <img :src="url" class="w-full h-full object-cover" alt="photo" />
+          <img :src="url" class="w-full h-full object-cover" alt="photo"/>
         </div>
       </div>
       <p class="text-xs opacity-60">Поддерживаются изображения, лимит по размеру — {{ maxPhotoMb }} МБ на файл.</p>
@@ -61,15 +61,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watchEffect } from 'vue'
+import {ref, reactive, onMounted, watchEffect} from 'vue'
 import api from '@/api/client'
-import { endpoints } from '@/api/endpoints'
-import type { PageResponse, ObjectLite, Employee, Purchase } from '@/api/types'
-
+import {endpoints} from '@/api/endpoints'
+import type {PageResponse, ObjectLite, Employee, Purchase} from '@/api/types'
 
 
 const props = defineProps<{ initial: any | null }>()
-const emit = defineEmits<{ (e:'saved'): void; (e:'cancel'): void }>()
+const emit = defineEmits<{ (e: 'saved'): void; (e: 'cancel'): void }>()
 
 const objects = ref<ObjectLite[]>([])
 const employees = ref<Employee[]>([])
@@ -89,34 +88,41 @@ const maxPhotoMb = 8
 
 onMounted(async () => {
   await Promise.all([loadObjects(), loadEmployees()])
-  if (!form.date) form.date = new Date().toISOString().slice(0,10)
+  if (!form.date) form.date = new Date().toISOString().slice(0, 10)
 })
 
 watchEffect(() => {
   if (props.initial) {
-    form.date = props.initial.date || new Date().toISOString().slice(0,10)
+    form.date = props.initial.date || new Date().toISOString().slice(0, 10)
     form.object = props.initial.object ? String(props.initial.object) : (props.initial.object_id ? String(props.initial.object_id) : '')
     form.supplier = props.initial.supplier || ''
     form.responsible = props.initial.responsible ? String(props.initial.responsible) : (props.initial.responsible_id ? String(props.initial.responsible_id) : '')
     form.comment = props.initial.comment || ''
   } else {
-    form.date = new Date().toISOString().slice(0,10)
-    form.object = ''; form.supplier = ''; form.responsible = ''; form.comment = ''
+    form.date = new Date().toISOString().slice(0, 10)
+    form.object = '';
+    form.supplier = '';
+    form.responsible = '';
+    form.comment = ''
   }
-  photoFiles.value = []; previewPhotos.value = []
+  photoFiles.value = [];
+  previewPhotos.value = []
   if (photosEl.value) photosEl.value = null
   for (const k of Object.keys(errors)) (errors as any)[k] = null
 })
 
 async function loadObjects() {
-  const { data } = await api.get<PageResponse<ObjectLite>>(endpoints.objects.list)
+  const {data} = await api.get<PageResponse<ObjectLite>>(endpoints.objects.list)
   objects.value = data.results
 }
+
 async function loadEmployees() {
   try {
-    const { data } = await api.get<any>('/api/v1/employees/')
-    employees.value = Array.isArray(data.results) ? data.results : data
-  } catch { employees.value = [] }
+    const {data} = await api.get<PageResponse<Employee>>(endpoints.employees.list)
+    employees.value = data.results
+  } catch {
+    employees.value = []
+  }
 }
 
 function onPhotosChange(e: Event) {
@@ -124,8 +130,14 @@ function onPhotosChange(e: Event) {
   const files = Array.from(input.files || [])
   const max = maxPhotoMb * 1024 * 1024
   for (const f of files) {
-    if (f.size > max) { errors.photos = `Файл ${f.name} превышает ${maxPhotoMb} МБ`; return }
-    if (!f.type.startsWith('image/')) { errors.photos = `Недопустимый тип файла: ${f.name}`; return }
+    if (f.size > max) {
+      errors.photos = `Файл ${f.name} превышает ${maxPhotoMb} МБ`;
+      return
+    }
+    if (!f.type.startsWith('image/')) {
+      errors.photos = `Недопустимый тип файла: ${f.name}`;
+      return
+    }
   }
   errors.photos = null
   photoFiles.value = files
@@ -146,8 +158,14 @@ function clientValidate(): boolean {
   let ok = true
   errors.date = null
   errors.object = null
-  if (!form.date) { errors.date = 'Укажите дату'; ok = false }
-  if (!form.object) { errors.object = 'Выберите объект'; ok = false }
+  if (!form.date) {
+    errors.date = 'Укажите дату';
+    ok = false
+  }
+  if (!form.object) {
+    errors.object = 'Выберите объект';
+    ok = false
+  }
   return ok
 }
 
@@ -166,17 +184,17 @@ async function submit() {
 
     let id: number
     if (props.initial?.id) {
-      await api.patch(`${endpoints.purchases}${props.initial.id}/`, fd)
+      await api.patch(endpoints.purchases.one(props.initial.id), fd)
       id = props.initial.id
     } else {
-      const { data } = await api.post<Purchase>(endpoints.purchases.list, fd)
+      const {data} = await api.post<Purchase>(endpoints.purchases.list, fd)
       id = data.id
     }
 
     if (id && photoFiles.value.length) {
       const photosFd = new FormData()
       for (const f of photoFiles.value) photosFd.append('photos', f)
-      await api.post(endpoints.purchasePhotos(id), photosFd)
+      await api.post(endpoints.purchases.uploadPhoto(id), photosFd)
     }
 
     emit('saved')
