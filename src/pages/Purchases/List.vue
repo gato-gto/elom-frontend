@@ -108,18 +108,7 @@
 import {ref, onMounted, watch, computed} from 'vue'
 import api from '@/api/client'
 import {endpoints, buildQuery} from '@/api/endpoints'
-import type {PageResponse} from '@/api/types'
-
-type Purchase = {
-  id: number
-  date: string
-  object?: number | string
-  object_name?: string
-  supplier?: string
-  responsible?: number | string
-  responsible_name?: string
-  total_amount?: number
-}
+import type {PageResponse, Purchase} from '@/api/types'
 
 const rows = ref<Purchase[]>([])
 const total = ref(0)

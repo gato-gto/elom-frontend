@@ -1,4 +1,3 @@
-<!-- src/components/TopbarProgress.vue -->
 <template>
   <div v-show="busy" class="fixed left-0 top-0 right-0 z-50 h-0.5 overflow-hidden">
     <div class="h-full bg-primary animate-topbar"></div>
@@ -17,6 +16,12 @@ const busy = computed(() => ui.busy)
 @keyframes topbar {
   0% {
     transform: translateX(-100%);
+  }
+  20% {
+    transform: translateX(-70%);
+  }
+  40% {
+    transform: translateX(-35%);
   }
   60% {
     transform: translateX(-15%);

@@ -14,6 +14,15 @@ export type Me = {
     role: 'admin' | 'buyer' | 'site_manager' | 'director' | 'coordinator';
 };
 
+export type Employee = {
+    id: number;
+    username: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    role: Me['role'];
+};
+
 export type Unit = {
     id: number;
     code: string;

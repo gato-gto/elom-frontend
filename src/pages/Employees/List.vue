@@ -31,24 +31,18 @@
             <th class="px-3 py-2 text-left">Логин</th>
             <th class="px-3 py-2 text-left">Email</th>
             <th class="px-3 py-2 text-left">Роль</th>
-            <th class="px-3 py-2 text-left">Статус</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-if="rows.length === 0">
+          <tr v-if="employers.length === 0">
             <td colspan="6" class="px-3 py-6 text-center text-base-content/60">Нет данных</td>
           </tr>
-          <tr v-for="e in rows" :key="e.id" class="border-t border-base-200">
+          <tr v-for="e in employers" :key="e.id" class="border-t border-base-200">
             <td class="px-3 py-2">{{ e.id }}</td>
-            <td class="px-3 py-2">{{ e.full_name }}</td>
+            <td class="px-3 py-2">{{ e.first_name }} {{ e.last_name }}</td>
             <td class="px-3 py-2">{{ e.username }}</td>
             <td class="px-3 py-2">{{ e.email }}</td>
             <td class="px-3 py-2">{{ e.role }}</td>
-            <td class="px-3 py-2">
-              <span :class="e.is_active ? 'text-green-700' : 'text-base-content/60'">
-                {{ e.is_active ? 'Активен' : 'Отключён' }}
-              </span>
-            </td>
           </tr>
           </tbody>
         </table>
@@ -70,14 +64,12 @@ import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
 import {onMounted, ref} from 'vue'
 import FormField from '@/components/FormField.vue'
+import {Employee} from "@/api/types";
 
-type Row = {
-  id: number; full_name: string; username: string; email: string; role: string; is_active: boolean
-}
 
 const search = ref('')
 const role = ref('')
-const rows = ref<Row[]>([])
+const employers = ref<Employee[]>([])
 const count = ref<number | null>(null)
 const next = ref<string | null>(null)
 const previous = ref<string | null>(null)
@@ -89,7 +81,7 @@ async function fetchList(url?: string) {
   const u = url ?? `${endpoints.common.employees}?${query.toString()}`
 
   const res = await api.get(u)
-  rows.value = res.data.results ?? []
+  employers.value = res.data.results ?? []
   count.value = res.data.count ?? null
   next.value = res.data.next
   previous.value = res.data.previous

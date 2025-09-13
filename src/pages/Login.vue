@@ -1,4 +1,3 @@
-<!-- src/pages/Login.vue -->
 <template>
   <div class="min-h-screen grid place-items-center p-4">
     <div class="w-full max-w-md card bg-base-100 border shadow-sm">
@@ -14,39 +13,38 @@
           <span>{{ auth.error }}</span>
         </div>
 
-        <form @submit.prevent="onSubmit" class="grid gap-3">
-          <label class="grid gap-1">
-            <span class="text-sm">Логин</span>
-            <input v-model.trim="username" type="text" autocomplete="username" class="input input-bordered" required/>
+        <form @submit.prevent="submit" class="grid gap-3">
+          <label class="form-control">
+            <span class="label-text mb-1">Логин</span>
+            <input v-model.trim="username" class="input input-bordered" required/>
           </label>
-
-          <label class="grid gap-1">
-            <span class="text-sm">Пароль</span>
-            <input v-model="password" type="password" autocomplete="current-password" class="input input-bordered" required/>
+          <label class="form-control">
+            <span class="label-text mb-1">Пароль</span>
+            <input v-model="password" type="password" class="input input-bordered" required/>
           </label>
-
-          <button type="submit" class="btn btn-primary mt-2" :disabled="auth.loading">
-            <span v-if="auth.loading">Вход…</span><span v-else>Войти</span>
-          </button>
+          <button :disabled="auth.loading" class="btn btn-primary">Войти</button>
         </form>
-
-        <p class="mt-4 text-xs text-base-content/60">Версия UI: Frontend Auth Sprint 0</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import {computed, onMounted, ref} from 'vue'
 import {useAuthStore} from '@/stores/auth'
 import {useRoute, useRouter} from 'vue-router'
-import {ref, computed, onMounted} from 'vue'
+import {useUiStore} from '@/stores/ui'
 
 const auth = useAuthStore()
+const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
-const username = ref('');
+
+const username = ref('')
 const password = ref('')
+
 const sessionExpired = computed(() => route.query.session === 'expired')
+
 onMounted(() => {
   if (auth.isAuthenticated) {
     const redirect = (route.query.redirect as string) || '/'
@@ -54,14 +52,16 @@ onMounted(() => {
   }
 })
 
-async function onSubmit() {
-  const ok = await auth.login(username.value, password.value)
-  if (!ok) return
-  const redirect = (route.query.redirect as string) || '/'
-  await router.replace(redirect)
+async function submit() {
+  try {
+    if (auth.isAuthenticated) {
+      const redirect = (route.query.redirect as string) || '/'
+      await router.replace(redirect)
+    }
+    await auth.login(username.value, password.value)
+    ui.toast({type: 'success', text: 'Добро пожаловать!'})
+  } catch (e: any) {
+    ui.toast({type: 'error', text: e?.response?.data?.detail ?? 'Ошибка входа'})
+  }
 }
 </script>
-
-<style scoped>
-/* no @apply */
-</style>

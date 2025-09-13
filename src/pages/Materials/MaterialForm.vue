@@ -62,7 +62,7 @@
 import {onMounted, reactive, ref, watchEffect} from 'vue'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
-import type {Material, Unit} from '@/api/types'
+import type {Material, PageResponse, Unit} from '@/api/types'
 import FileInput from '@/components/FileInput.vue'
 import {useUiStore} from '@/stores/ui'
 
@@ -104,8 +104,6 @@ watchEffect(() => {
   if (props.initial) {
     form.name = props.initial.name || ''
     form.sku = props.initial.sku || ''
-    // сервер может отдавать id числом — приводим к строке
-    // @ts-expect-error: category может отсутствовать в DTO
     form.category = props.initial.category ? String(props.initial.category) : ''
     form.default_unit = props.initial.default_unit ? String(props.initial.default_unit) : ''
     currentPhotoUrl.value = (props.initial as any).photo_url || null
@@ -121,8 +119,8 @@ watchEffect(() => {
 })
 
 async function loadUnits() {
-  const {data} = await api.get<any>(endpoints.units)
-  units.value = Array.isArray(data.results) ? data.results : data
+  const {data} = await api.get<PageResponse<Unit>>(endpoints.units.list);
+  units.value = data.results;
 }
 
 async function loadCategories() {
@@ -140,7 +138,6 @@ function buildFormData(): FormData {
 }
 
 function pickError(payload: any, key: string): string | null {
-  // поддержка как плоских, так и вложенных структур { errors: { key: [...] } }
   const v = payload?.[key]
   if (Array.isArray(v) && v.length) return String(v[0])
   if (typeof v === 'string') return v
@@ -220,7 +217,7 @@ async function submit() {
       await api.patch(`${endpoints.materials}${props.initial.id}/`, fd)
       materialId = props.initial.id
     } else {
-      const {data} = await api.post<Material>(endpoints.materials, fd)
+      const { data } = await api.post<Material>(endpoints.materials.list, fd)
       materialId = Number((data as any)?.id)
     }
 

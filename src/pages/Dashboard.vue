@@ -1,4 +1,3 @@
-<!-- src/pages/Dashboard.vue -->
 <template>
   <div class="grid md:grid-cols-2 gap-6">
     <div class="card bg-base-100 border">
@@ -21,21 +20,25 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue'
 import api from '@/api/client'
-import {endpoints} from '@/api/endpoints'
+import endpoints from '@/api/endpoints'
 
 const health = ref<any>(null)
 const me = ref<any>(null)
 
 async function load() {
-  const h = await api.get(endpoints.health);
-  health.value = h.data
-  const u = await api.get(endpoints.auth.me);
-  me.value = u.data
+  try {
+    const h = await api.get(endpoints.health)
+    health.value = h.data
+  } catch {
+    health.value = {ok: false}
+  }
+  try {
+    const u = await api.get(endpoints.auth.me)
+    me.value = u.data
+  } catch {
+    me.value = null
+  }
 }
 
 onMounted(load)
 </script>
-
-<style scoped>
-/* no @apply */
-</style>

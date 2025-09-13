@@ -1,4 +1,3 @@
-
 <!--
   - Path: C:/Users/HVC/WebstormProjects/elom-frontend/src/pages/Items/Edit.vue
   - File: Edit.vue
@@ -42,6 +41,7 @@
   </div>
 </template>
 <script setup lang="ts">
+const URL = window.URL;
 import {ref, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import api from '@/api/client'
@@ -73,7 +73,7 @@ async function save() {
     fd.append('unit', item.value.unit || 'шт')
     if (newPhoto.value) fd.append('photo', newPhoto.value)
     await api.patch(`/items/${id}/`, fd, {headers: {'Content-Type': 'multipart/form-data'}})
-    router.push({name: 'items'})
+    await router.push({name: 'items'})
   } catch (e: any) {
     error.value = e?.response?.data?.detail || 'Ошибка сохранения'
   } finally {

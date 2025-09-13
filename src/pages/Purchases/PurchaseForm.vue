@@ -27,7 +27,7 @@
         <span class="label-text text-sm">Ответственный</span>
         <select v-model="form.responsible" class="select select-bordered">
           <option value="">— не выбран —</option>
-          <option v-for="e in employees" :key="e.id" :value="String(e.id)">{{ e.name }}</option>
+          <option v-for="e in employees" :key="e.id" :value="String(e.id)">{{ e.first_name }} {{ e.last_name }}</option>
         </select>
         <span v-if="errors.responsible" class="text-xs text-error mt-1">{{ errors.responsible }}</span>
       </label>
@@ -41,8 +41,7 @@
 
     <div class="grid gap-2">
       <span class="text-sm">Фото чеков/документов</span>
-      <input ref="photosEl" type="file" class="file-input file-input-bordered file-input-sm w-full max-w-md"
-             accept="image/*" multiple @change="onPhotosChange" />
+      <input ref="photosEl" type="file" class="file-input file-input-bordered file-input-sm w-full max-w-md" accept="image/*" multiple @change="onPhotosChange" />
       <div class="flex flex-wrap gap-2">
         <div v-for="(url, idx) in previewPhotos" :key="idx" class="w-28 h-28 bg-base-200 rounded-lg overflow-hidden">
           <img :src="url" class="w-full h-full object-cover" alt="photo" />
@@ -65,15 +64,15 @@
 import { ref, reactive, onMounted, watchEffect } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
+import type { PageResponse, ObjectLite, Employee, Purchase } from '@/api/types'
 
-type Obj = { id: number; name: string }
-type Emp = { id: number; name: string }
+
 
 const props = defineProps<{ initial: any | null }>()
 const emit = defineEmits<{ (e:'saved'): void; (e:'cancel'): void }>()
 
-const objects = ref<Obj[]>([])
-const employees = ref<Emp[]>([])
+const objects = ref<ObjectLite[]>([])
+const employees = ref<Employee[]>([])
 
 const form = reactive<{ date: string; object: string; supplier?: string; responsible: string; comment?: string }>({
   date: '', object: '', supplier: '', responsible: '', comment: '',
@@ -110,8 +109,8 @@ watchEffect(() => {
 })
 
 async function loadObjects() {
-  const { data } = await api.get<any>(endpoints.objects)
-  objects.value = Array.isArray(data.results) ? data.results : data
+  const { data } = await api.get<PageResponse<ObjectLite>>(endpoints.objects.list)
+  objects.value = data.results
 }
 async function loadEmployees() {
   try {
@@ -170,8 +169,8 @@ async function submit() {
       await api.patch(`${endpoints.purchases}${props.initial.id}/`, fd)
       id = props.initial.id
     } else {
-      const { data } = await api.post<any>(endpoints.purchases, fd)
-      id = data?.id
+      const { data } = await api.post<Purchase>(endpoints.purchases.list, fd)
+      id = data.id
     }
 
     if (id && photoFiles.value.length) {
