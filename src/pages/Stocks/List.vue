@@ -1,8 +1,7 @@
 <template>
   <div class="grid gap-4">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Закупки</h1>
-      <RouterLink class="btn btn-primary" to="/purchases/new">Новая закупка</RouterLink>
+      <h1 class="text-lg font-semibold">Остатки</h1>
     </div>
 
     <div class="card bg-base-100 border">
@@ -23,6 +22,13 @@
           </select>
         </fieldset>
         <fieldset class="fieldset">
+          <label class="label"><span class="label-text">Материал</span></label>
+          <select v-model.number="filters.material" class="select select-bordered select-sm">
+            <option :value="undefined">Все</option>
+            <option v-for="m in materials" :key="m.id" :value="m.id">{{ m.name }}</option>
+          </select>
+        </fieldset>
+        <fieldset class="fieldset">
           <label class="label"><span class="label-text">Ответственный</span></label>
           <select v-model.number="filters.responsible" class="select select-bordered select-sm">
             <option :value="undefined">Все</option>
@@ -31,14 +37,9 @@
             </option>
           </select>
         </fieldset>
-        <fieldset class="fieldset md:col-span-2">
-          <label class="label"><span class="label-text">Поиск</span></label>
-          <input v-model.trim="filters.search" class="input input-bordered input-sm" placeholder="поставщик/комментарий" @keyup.enter="reload(1)"/>
-        </fieldset>
 
-        <div class="md:col-span-6 flex justify-end gap-2">
+        <div class="md:col-span-6 flex justify-end">
           <button class="btn btn-sm btn-outline" @click="reload(1)">Применить</button>
-          <a class="btn btn-sm" :href="exportUrl" target="_blank" rel="noreferrer">Экспорт .xlsx</a>
         </div>
       </div>
     </div>
@@ -49,22 +50,20 @@
         <tr>
           <th>Дата</th>
           <th>Объект</th>
-          <th>Поставщик</th>
+          <th>Материал</th>
+          <th>Ед.</th>
+          <th class="text-right">Факт. остаток</th>
           <th>Ответственный</th>
-          <th class="text-right">Позиций</th>
-          <th class="text-right">Действия</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="p in rows" :key="p.id">
-          <td>{{ p.date }}</td>
-          <td>{{ (p as any).object_name ?? p.object }}</td>
-          <td>{{ p.supplier ?? '—' }}</td>
-          <td>{{ (p as any).responsible_name ?? p.responsible ?? '—' }}</td>
-          <td class="text-right">{{ p.items?.length ?? 0 }}</td>
-          <td class="text-right">
-            <RouterLink class="btn btn-xs btn-ghost" :to="`/purchases/${p.id}`">Открыть</RouterLink>
-          </td>
+        <tr v-for="s in rows" :key="s.id">
+          <td>{{ s.date }}</td>
+          <td>{{ objectName(s.object) ?? s.object }}</td>
+          <td>{{ materialName(s.material) ?? s.material }}</td>
+          <td>{{ s.unit_name ?? '—' }}</td>
+          <td class="text-right">{{ s.quantity_actual }}</td>
+          <td>{{ responsibleName(s.responsible) ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
           <td colspan="6" class="text-center text-base-content/60">Нет данных</td>
@@ -86,37 +85,56 @@
 import {computed, onMounted, ref} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, EmployeeListItem} from '@/api/types'
+import type {PageResponse, StockSnapshot, StockListFilters, SiteObject, Material, EmployeeListItem} from '@/api/types'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
-const rows = ref<Purchase[]>([])
+const rows = ref<StockSnapshot[]>([])
 const count = ref(0)
 const page = ref(1)
 const pageSize = 20
 const loading = ref(false)
 
-const filters = ref<PurchaseListFilters>({
-  date_after: undefined, date_before: undefined, object: undefined, responsible: undefined, search: '', ordering: '-date',
+const filters = ref<StockListFilters>({
+  date_after: undefined, date_before: undefined, object: undefined, material: undefined, responsible: undefined,
 })
 
 const objects = ref<SiteObject[]>([])
+const materials = ref<Material[]>([])
 const employees = ref<EmployeeListItem[]>([])
 
+const oMap = computed(() => new Map(objects.value.map(o => [o.id, o.name])))
+const mMap = computed(() => new Map(materials.value.map(m => [m.id, m.name])))
+const eMap = computed(() => new Map(employees.value.map(e => [e.id, `${e.first_name || e.username}${e.last_name ? ' ' + e.last_name : ''}`])))
+
+function objectName(id?: number) {
+  return id ? oMap.value.get(id) : undefined
+}
+
+function materialName(id?: number) {
+  return id ? mMap.value.get(id) : undefined
+}
+
+function responsibleName(id: number | null | undefined) {
+  return id ? eMap.value.get(id) : undefined
+}
+
 async function loadRefs() {
-  const [{data: od}, {data: ed}] = await Promise.all([
+  const [od, md, ed] = await Promise.all([
     api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
+    api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
     api.get<PageResponse<EmployeeListItem>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
   ])
-  objects.value = od.results
-  employees.value = ed.results
+  objects.value = od.data.results
+  materials.value = md.data.results
+  employees.value = ed.data.results
 }
 
 async function fetchList() {
   loading.value = true
   try {
-    const q: PurchaseListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize}
-    const {data} = await api.get<PageResponse<Purchase>>(endpoints.purchases.list + buildQuery(q as Query))
+    const q: StockListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize}
+    const {data} = await api.get<PageResponse<StockSnapshot>>(endpoints.stock.snapshots + buildQuery(q as Query))
     rows.value = data.results
     count.value = data.count
   } finally {
@@ -128,11 +146,6 @@ function reload(p = page.value) {
   page.value = p;
   fetchList()
 }
-
-const exportUrl = computed(() => {
-  const q: PurchaseExportQuery = {...filters.value, export: 'xlsx'} as PurchaseExportQuery
-  return endpoints.purchases.list + buildQuery(q as unknown as Query)
-})
 
 onMounted(async () => {
   await loadRefs();

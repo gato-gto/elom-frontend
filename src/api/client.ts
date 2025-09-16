@@ -1,158 +1,175 @@
 // src/api/client.ts
-import axios, {AxiosError, InternalAxiosRequestConfig} from 'axios'
+import axios, {AxiosError, InternalAxiosRequestConfig, AxiosInstance} from 'axios'
 import {endpoints, API_PREFIX} from './endpoints'
 
-/**
- * Единый axios-клиент с очередью refresh и защитой от "петли" 401.
- * Без импортов router во избежание цикличности — редирект из authStore.
- */
-const api = axios.create({
+// Глобальные ключи (совпадают со стором)
+const ACCESS_KEY = 'elom_access'
+const REFRESH_KEY = 'elom_refresh'
+
+// Доступ к сторам без циклических импортов
+declare global {
+    interface Window {
+        __piniaStores?: {
+            auth?: { useAuthStore?: () => any }
+            ui?: { useUiStore?: () => any }
+        }
+    }
+}
+
+function authStoreSafe() {
+    try {
+        return window.__piniaStores?.auth?.useAuthStore?.()
+    } catch {
+        return null
+    }
+}
+
+function uiStoreSafe() {
+    try {
+        return window.__piniaStores?.ui?.useUiStore?.()
+    } catch {
+        return null
+    }
+}
+
+// Работа с токенами через localStorage (и стор, если есть)
+function getAccessToken(): string | null {
+    const s = authStoreSafe()
+    if (s?.accessToken) return s.accessToken as string
+    return localStorage.getItem(ACCESS_KEY)
+}
+
+function getRefreshToken(): string | null {
+    const s = authStoreSafe()
+    if (s?.refreshToken) return s.refreshToken as string
+    return localStorage.getItem(REFRESH_KEY)
+}
+
+function setTokens(access?: string | null, refresh?: string | null) {
+    const s = authStoreSafe()
+    if (s?.saveTokens && access && refresh) {
+        s.saveTokens({access, refresh})
+        return
+    }
+    if (access) localStorage.setItem(ACCESS_KEY, access)
+    if (refresh) localStorage.setItem(REFRESH_KEY, refresh)
+}
+
+function clearTokensAndLogout() {
+    const s = authStoreSafe()
+    if (s?.logout) {
+        // важно: без аргументов (исправление ошибки TS2554)
+        s.logout()
+    } else {
+        localStorage.removeItem(ACCESS_KEY)
+        localStorage.removeItem(REFRESH_KEY)
+    }
+}
+
+// Единый axios-клиент
+const api: AxiosInstance = axios.create({
     baseURL: API_PREFIX,
     withCredentials: false,
     headers: {'X-Requested-With': 'XMLHttpRequest'},
 })
 
-// токен в рантайме — из authStore
-function getAccessToken(): string | null {
-    try {
-        // динамический импорт, чтобы избежать циклов
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const {useAuthStore} = window.__piniaStores?.auth || {}
-        if (!useAuthStore) return null
-        const store = useAuthStore()
-        return store.accessToken
-    } catch {
-        return null
-    }
-}
-
+// ---- Refresh очередь --------------------------------------------------------
 let isRefreshing = false
+let refreshPromise: Promise<string | null> | null = null
 let subscribers: Array<(token: string | null) => void> = []
 
-function subscribe(cb: (token: string | null) => void) {
+function subscribeTokenRefresh(cb: (t: string | null) => void) {
     subscribers.push(cb)
 }
 
-function notifyAll(token: string | null) {
+function onRefreshed(token: string | null) {
     subscribers.forEach((cb) => cb(token))
     subscribers = []
 }
 
+/**
+ * Обновление access-токена.
+ * ВАЖНО: возвращает строго string | null (исправление TS2322).
+ */
+async function refreshAccessToken(): Promise<string | null> {
+    const refresh = getRefreshToken()
+    if (!refresh) return null
+
+    if (!isRefreshing) {
+        isRefreshing = true
+        refreshPromise = (async () => {
+            try {
+                const {data} = await axios.post<{ access: string; refresh?: string }>(
+                    endpoints.auth.refresh,
+                    {refresh}
+                )
+                const nextAccess = data.access
+                const nextRefresh = data.refresh ?? refresh
+                setTokens(nextAccess, nextRefresh)
+                return nextAccess
+            } catch {
+                clearTokensAndLogout()
+                return null
+            } finally {
+                isRefreshing = false
+            }
+        })()
+    }
+
+    const newAccess = await refreshPromise!
+    // важно: вернуть значение, а не "void"
+    return newAccess
+}
+
+// ---- Interceptors -----------------------------------------------------------
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    const token = getAccessToken()
-    if (token) {
-        config.headers = config.headers || {}
-        config.headers.Authorization = `Bearer ${token}`
+    try {
+        uiStoreSafe()?.start?.()
+    } catch {
+    }
+    const access = getAccessToken()
+    if (access) {
+        config.headers = config.headers ?? {}
+        ;(config.headers as any).Authorization = `Bearer ${access}`
     }
     return config
 })
 
 api.interceptors.response.use(
-    (res) => res,
-    async (error: AxiosError) => {
-        const {response, config} = error
-        const original = config as any
-        const status = response?.status
-
-        // если не 401 — просто наверх
-        if (status !== 401) {
-            return Promise.reject(error)
-        }
-
-        // не пытаемся рефрешить для самих auth эндпоинтов
-        const url = (config?.url || '').toString()
-        const isAuthUrl =
-            url.includes('/auth/token/') ||
-            url.includes('/auth/token/refresh/') ||
-            url.includes('/auth/token/verify/')
-
-        if (isAuthUrl) {
-            return Promise.reject(error)
-        }
-
-        if (original._retry) {
-            // уже пытались — выходим
-            return Promise.reject(error)
-        }
-        original._retry = true
-
-        // запуск единого refresh
-        if (!isRefreshing) {
-            isRefreshing = true
-            try {
-                const token = await doRefresh()
-                isRefreshing = false
-                notifyAll(token)
-                if (!token) throw new Error('refresh_failed')
-            } catch {
-                isRefreshing = false
-                notifyAll(null)
-            }
-        }
-
-        // ждём результата refresh и ретраим
-        return new Promise((resolve, reject) => {
-            subscribe((newToken) => {
-                if (!newToken) {
-                    // разлогиниваем с редиректом
-                    safeLogoutWithRedirect()
-                    reject(error)
-                    return
-                }
-                original.headers = original.headers || {}
-                original.headers.Authorization = `Bearer ${newToken}`
-                resolve(api(original))
-            })
-        })
-    }
-)
-
-// ——— helpers ———
-
-async function doRefresh(): Promise<string | null> {
-    try {
-        const {useAuthStore} = await import('@/stores/auth')
-        const store = useAuthStore()
-        const newAccess = await store.refreshTokens()
-        return newAccess
-    } catch {
-        return null
-    }
-}
-
-function safeLogoutWithRedirect() {
-    import('@/stores/auth').then(({useAuthStore}) => {
-        const s = useAuthStore()
-        s.logout(true)
-    })
-}
-
-// "хук" для ui.start/done — опционально: используйте перехватчики ниже
-// Если нужны визуальные индикаторы запроса — активируем:
-import {useUiStore} from '@/stores/ui'
-
-api.interceptors.request.use((cfg) => {
-    try {
-        useUiStore().start()
-    } catch {
-    }
-    return cfg
-})
-api.interceptors.response.use(
     (r) => {
         try {
-            useUiStore().done()
+            uiStoreSafe()?.done?.()
         } catch {
         }
         return r
     },
-    (e) => {
+    async (error: AxiosError) => {
+        const {response, config} = error
         try {
-            useUiStore().done()
+            // завершить прогресс и при ошибке
+            uiStoreSafe()?.done?.()
         } catch {
         }
-        return Promise.reject(e)
+
+        // Попытка рефреша при 401
+        if (response?.status === 401 && config && !(config as any)._retry) {
+            ;(config as any)._retry = true
+            const newToken = await refreshAccessToken()
+            if (!newToken) {
+                return Promise.reject(error)
+            }
+            return new Promise((resolve, reject) => {
+                subscribeTokenRefresh((token) => {
+                    if (!token) return reject(error)
+                    config.headers = config.headers ?? {}
+                    ;(config.headers as any).Authorization = `Bearer ${token}`
+                    resolve(api(config))
+                })
+                onRefreshed(newToken)
+            })
+        }
+
+        return Promise.reject(error)
     }
 )
 

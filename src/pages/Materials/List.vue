@@ -1,3 +1,4 @@
+<!-- src/pages/Materials/List.vue -->
 <template>
   <div class="grid gap-4">
     <div class="flex items-center justify-between">
@@ -5,6 +6,7 @@
       <button class="btn btn-primary" @click="openCreate" v-if="canEdit">Добавить материал</button>
     </div>
 
+    <!-- Фильтры -->
     <div class="flex gap-2 items-end">
       <label class="grid">
         <span class="text-xs text-base-content/70">Поиск</span>
@@ -21,69 +23,70 @@
           <option value="-id">id ↓</option>
         </select>
       </label>
-      <button class="btn btn-outline btn-sm" @click="reload(1)">Применить</button>
+      <button class="btn btn-sm" @click="reload(1)">Применить</button>
     </div>
 
-    <div class="overflow-auto border border-base-300 rounded-xl">
-      <table class="table table-zebra w-full">
-        <thead>
-        <tr>
-          <th class="text-left">ID</th>
-          <th class="text-left">Фото</th>
-          <th class="text-left">Название</th>
-          <th class="text-left">SKU</th>
-          <th class="text-left">Категория</th>
-          <th class="text-left">Ед.</th>
-          <th class="text-left">Статус</th>
-          <th v-if="canEdit" class="text-right">Действия</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="m in rows" :key="m.id">
-          <td>{{ m.id }}</td>
-          <td>
-            <img v-if="m.photo_url" :src="m.photo_url" alt="" class="h-10 w-10 object-cover rounded"/>
-            <span v-else class="opacity-60">нет</span>
-          </td>
-          <td>{{ m.name }}</td>
-          <td>{{ m.sku || '—' }}</td>
-          <td>{{ m.category_name || '—' }}</td>
-          <td>{{ m.default_unit_code || m.default_unit }}</td>
-          <td>
-              <span class="badge" :class="(m.is_active ?? true) ? 'badge-success' : 'badge-ghost'">
-                {{ (m.is_active ?? true) ? 'Активен' : 'Выключен' }}
-              </span>
-          </td>
-          <td v-if="canEdit" class="text-right">
-            <div class="inline-flex gap-2">
-              <button class="btn btn-xs" @click="openEdit(m)">Изм.</button>
-              <button class="btn btn-xs btn-error" @click="remove(m)" :disabled="deletingId===m.id">
-                {{ deletingId === m.id ? '...' : 'Удал.' }}
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!loading && rows.length===0">
-          <td :colspan="canEdit ? 8 : 7" class="text-center text-base-content/60">Нет данных</td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- Таблица -->
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <div class="overflow-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Фото</th>
+              <th class="text-left">Название</th>
+              <th class="text-left">SKU</th>
+              <th class="text-left">Категория</th>
+              <th class="text-left">Ед.</th>
+              <th class="text-left">Статус</th>
+              <th v-if="canEdit" class="text-right">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="m in rows" :key="m.id">
+              <td>{{ m.id }}</td>
+              <td>
+                <img v-if="m.photo_url" :src="m.photo_url" alt="" class="h-10 w-10 object-cover rounded"/>
+                <span v-else class="opacity-60">нет</span>
+              </td>
+              <td>{{ m.name }}</td>
+              <td>{{ m.sku || '—' }}</td>
+              <td>{{ m.category_name || '—' }}</td>
+              <td>{{ m.default_unit_code || m.default_unit }}</td>
+              <td>
+                <span class="badge" :class="(m.is_active ?? true) ? 'badge-success' : 'badge-ghost'">
+                  {{ (m.is_active ?? true) ? 'Активен' : 'Выключен' }}
+                </span>
+              </td>
+              <td v-if="canEdit" class="text-right">
+                <div class="inline-flex gap-2">
+                  <button class="btn btn-xs" @click="openEdit(m)">Изм.</button>
+                  <button class="btn btn-xs btn-error" @click="remove(m)" :disabled="deletingId===m.id">
+                    {{ deletingId === m.id ? '...' : 'Удал.' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!loading && rows.length===0">
+              <td colspan="8" class="text-center opacity-70 py-8">Нет данных</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
 
-    <div class="join mt-2 self-end">
-
-    </div>
-
-    <div class="flex items-center justify-between">
-      <div class="text-sm opacity-70">Всего: {{ count }}</div>
-      <div class="flex items-center gap-2">
-        <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(1)">«</button>
-        <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(page-1)">Назад</button>
-        <span class="text-sm">Стр. {{ page }}</span>
-        <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
+        <!-- Пагинация -->
+        <Pagination
+            v-if="count>pageSize"
+            :page="page"
+            :pageSize="pageSize"
+            :total="count"
+            @change="reload"
+        />
       </div>
     </div>
 
+    <!-- Модалка -->
     <Modal v-model="modalOpen" :title="current ? 'Редактировать материал' : 'Новый материал'">
       <MaterialForm :initial="current" @saved="onSaved" @cancel="modalOpen=false"/>
     </Modal>
@@ -91,15 +94,20 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, watch} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {PageResponse, Material, Me} from '@/api/types'
 import MaterialForm from './MaterialForm.vue'
+import Modal from '@/components/Modal.vue'
+import Pagination from '@/components/Pagination.vue'
 import {useAuthStore} from '@/stores/auth'
-import Modal from "@/components/Modal.vue";
+import {useRoute, useRouter} from 'vue-router'
 
 const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
   return role === 'admin' || role === 'director'
@@ -107,27 +115,19 @@ const canEdit = computed(() => {
 
 const rows = ref<Material[]>([])
 const count = ref(0)
-const page = ref(1)
+const page = ref<number>(Number(route.query.page || 1) || 1)
 const pageSize = 20
-const search = ref('')
-const ordering = ref<'name' | '-name' | 'sku' | '-sku' | 'id' | '-id'>('name')
-const loading = ref(false)
+const search = ref<string>((route.query.search as string) || '')
+const ordering = ref<'name' | '-name' | 'sku' | '-sku' | 'id' | '-id'>(
+    ((route.query.ordering as any) || 'name') as any
+)
 
+const loading = ref(false)
+const deletingId = ref<number | null>(null)
 const modalOpen = ref(false)
 const current = ref<Material | null>(null)
-const deletingId = ref<number | null>(null)
 
-function openCreate() {
-  current.value = null;
-  modalOpen.value = true
-}
-
-function openEdit(m: Material) {
-  current.value = m;
-  modalOpen.value = true
-}
-
-async function fetchList(url?: string) {
+async function fetchList() {
   loading.value = true
   try {
     const q = buildQuery({
@@ -136,7 +136,7 @@ async function fetchList(url?: string) {
       search: search.value || undefined,
       ordering: ordering.value,
     })
-    const {data} = await api.get<PageResponse<Material>>(url ?? (endpoints.materials.list + q))
+    const {data} = await api.get<PageResponse<Material>>(endpoints.materials.list + q)
     rows.value = data.results
     count.value = data.count
   } finally {
@@ -144,13 +144,34 @@ async function fetchList(url?: string) {
   }
 }
 
-async function reload(p = page.value) {
+function syncQueryToUrl() {
+  router.replace({
+    query: {
+      page: String(page.value),
+      ordering: ordering.value,
+      ...(search.value ? {search: search.value} : {}),
+    },
+  })
+}
+
+function reload(p = page.value) {
   page.value = p
-  await fetchList()
+  syncQueryToUrl()
+  fetchList()
+}
+
+function openCreate() {
+  current.value = null
+  modalOpen.value = true
+}
+
+function openEdit(m: Material) {
+  current.value = m
+  modalOpen.value = true
 }
 
 async function remove(m: Material) {
-  if (!confirm(`Удалить материал "${m.name}"?`)) return
+  if (!confirm(`Удалить материал «${m.name}»?`)) return
   deletingId.value = m.id
   try {
     await api.delete(endpoints.materials.one(m.id))
@@ -165,5 +186,13 @@ async function onSaved() {
   await fetchList()
 }
 
-onMounted(() => reload(1))
+// init
+onMounted(() => reload(page.value))
+
+// react on back/forward
+watch(() => route.query, () => {
+  page.value = Number(route.query.page || 1) || 1
+  search.value = (route.query.search as string) || ''
+  ordering.value = ((route.query.ordering as any) || 'name') as any
+})
 </script>

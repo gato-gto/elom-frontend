@@ -2,7 +2,7 @@
 import {defineStore} from 'pinia'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
-import type {Me} from '@/api/types'
+import type {MeResponse} from '@/api/types'
 
 type Tokens = { access: string; refresh: string }
 
@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', {
     state: () => ({
         accessToken: localStorage.getItem(ACCESS_KEY),
         refreshToken: localStorage.getItem(REFRESH_KEY),
-        me: null as Me | null,
+        me: null as MeResponse | null,
         loading: false,
         error: '' as string | null,
     }),

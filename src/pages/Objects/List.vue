@@ -62,11 +62,11 @@
 import {ref, onMounted} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, ObjectLite} from '@/api/types'
+import type {PageResponse, SiteObject} from '@/api/types'
 import FormField from '@/components/FormField.vue'
 import ObjectForm from './ObjectForm.vue'
 
-const rows = ref<ObjectLite[]>([])
+const rows = ref<SiteObject[]>([])
 const count = ref(0)
 const page = ref(1)
 const pageSize = 20
@@ -74,7 +74,7 @@ const search = ref('')
 const loading = ref(false)
 
 const modalOpen = ref(false)
-const current = ref<ObjectLite | null>(null)
+const current = ref<SiteObject | null>(null)
 const deletingId = ref<number | null>(null)
 
 function openCreate() {
@@ -82,7 +82,7 @@ function openCreate() {
   modalOpen.value = true
 }
 
-function openEdit(o: ObjectLite) {
+function openEdit(o: SiteObject) {
   current.value = o;
   modalOpen.value = true
 }
@@ -91,7 +91,7 @@ async function fetchList(url?: string) {
   loading.value = true
   try {
     const q = buildQuery({page: page.value, page_size: pageSize, search: search.value || undefined})
-    const {data} = await api.get<PageResponse<ObjectLite>>(url ?? (endpoints.objects.list + q))
+    const {data} = await api.get<PageResponse<SiteObject>>(url ?? (endpoints.objects.list + q))
     rows.value = data.results
     count.value = data.count
   } finally {
@@ -104,7 +104,7 @@ async function reload(p = page.value) {
   await fetchList()
 }
 
-async function remove(o: ObjectLite) {
+async function remove(o: SiteObject) {
   if (!confirm(`Удалить объект "${o.name}"?`)) return
   deletingId.value = o.id
   try {

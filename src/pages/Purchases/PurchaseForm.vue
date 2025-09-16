@@ -10,65 +10,56 @@
       </div>
     </div>
 
-    <!-- Ошибки -->
-    <div v-if="formError" class="alert alert-error">
-      <span>{{ formError }}</span>
-    </div>
+    <div v-if="formError" class="alert alert-error"><span>{{ formError }}</span></div>
 
     <!-- Шапка -->
     <div class="card bg-base-100 border">
       <div class="card-body grid md:grid-cols-4 gap-4">
         <fieldset class="fieldset">
-          <legend class="fieldset-legend sr-only">Основные поля</legend>
-          <label class="label" for="p-date"><span class="label-text">Дата*</span></label>
-          <input id="p-date" v-model="model.date" type="date" class="input input-bordered input-sm" required />
+          <span class="label-text">Дата*</span>
+          <input v-model="model.date" type="date" class="input input-bordered" required/>
         </fieldset>
-
         <fieldset class="fieldset">
-          <label class="label" for="p-object"><span class="label-text">Объект*</span></label>
-          <select id="p-object" v-model.number="model.object" class="select select-bordered select-sm" required>
+          <span class="label-text">Объект*</span>
+          <select v-model.number="model.object" class="select select-bordered" required>
             <option :value="undefined" disabled>Выберите объект</option>
             <option v-for="o in objects" :key="o.id" :value="o.id">{{ o.name }}</option>
           </select>
         </fieldset>
-
         <fieldset class="fieldset">
-          <label class="label" for="p-resp"><span class="label-text">Ответственный*</span></label>
-          <select id="p-resp" v-model.number="model.responsible" class="select select-bordered select-sm" required>
-            <option :value="undefined" disabled>Выберите сотрудника</option>
+          <span class="label-text">Ответственный</span>
+          <select v-model.number="model.responsible" class="select select-bordered">
+            <option :value="undefined">Не указан</option>
             <option v-for="e in employees" :key="e.id" :value="e.id">
               {{ e.first_name || e.username }} {{ e.last_name || '' }}
             </option>
           </select>
         </fieldset>
-
         <fieldset class="fieldset">
-          <label class="label" for="p-supplier"><span class="label-text">Поставщик</span></label>
-          <input id="p-supplier" v-model.trim="model.supplier" class="input input-bordered input-sm" placeholder="ИП Иванов" />
+          <span class="label-text">Поставщик</span>
+          <input v-model.trim="model.supplier" class="input input-bordered" placeholder="ИП Иванов"/>
         </fieldset>
 
         <fieldset class="fieldset">
-          <label class="label" for="p-invoice"><span class="label-text">№ накладной/чека</span></label>
-          <input id="p-invoice" v-model.trim="model.invoice_number" class="input input-bordered input-sm" placeholder="A-12345" />
+          <span class="label-text">№ накладной/чека</span>
+          <input v-model.trim="model.invoice_number" class="input input-bordered" placeholder="A-12345"/>
         </fieldset>
 
         <fieldset class="fieldset">
-          <label class="label" for="p-vat"><span class="label-text">НДС включён?</span></label>
-          <select id="p-vat" v-model="model.vat_included" class="select select-bordered select-sm">
+          <span class="label-text">НДС включён?</span>
+          <select v-model="model.vat_included" class="select select-bordered">
             <option :value="undefined">Не указано</option>
             <option :value="true">Да</option>
             <option :value="false">Нет</option>
           </select>
         </fieldset>
 
-        <fieldset class="fieldset md:col-span-4">
-          <label class="label" for="p-comment"><span class="label-text">Комментарий</span></label>
-          <textarea id="p-comment" v-model.trim="model.comment" class="textarea textarea-bordered textarea-sm w-full" rows="2" />
-<!--          <label class="label"><span class="label-text-alt text-base-content/60">Необязательно</span></label>-->
+        <fieldset class="fieldset w-100 md:col-span-2">
+          <label class="label"><span class="label-text">Комментарий</span></label>
+          <textarea v-model.trim="model.comment" class="textarea input" rows="1"/>
         </fieldset>
       </div>
     </div>
-
 
     <!-- Позиции -->
     <div class="card bg-base-100 border">
@@ -100,9 +91,8 @@
               </td>
               <td>
                 <select v-model.number="it.unit" class="select select-bordered select-sm w-full">
-                  <option v-for="u in units" :key="u.id" :value="u.id">
-                    {{ u.code }} — {{ u.name }}
-                  </option>
+                  <option :value="undefined">—</option>
+                  <option v-for="u in units" :key="u.id" :value="u.id">{{ u.code ?? u.id }} — {{ u.name }}</option>
                 </select>
               </td>
               <td>
@@ -156,7 +146,9 @@ import {onMounted, reactive, ref, computed} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {Employee, Material, ObjectLite, PageResponse, Purchase, Unit} from '@/api/types'
+import type {
+  EmployeeListItem, Material, SiteObject, PageResponse, Purchase, PurchaseCreate, PurchaseUpdate, PurchaseItemIn, Unit
+} from '@/api/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -168,12 +160,12 @@ const formError = ref<string | null>(null)
 
 const model = reactive<Partial<Purchase>>({
   date: new Date().toISOString().slice(0, 10),
-  object: undefined,
+  object: undefined as any,
   supplier: '',
   invoice_number: '',
   vat_included: undefined,
   comment: '',
-  responsible: undefined,
+  responsible: undefined as any,
 })
 
 type ItemForm = {
@@ -181,13 +173,13 @@ type ItemForm = {
   material?: number
   unit?: number
   quantity: string // decimal-as-string
-  price: string    // decimal-as-string
+  price: string    // decimal-as-string | empty
   amount: string   // decimal-as-string
 }
 const items = ref<ItemForm[]>([])
 
-const objects = ref<ObjectLite[]>([])
-const employees = ref<Employee[]>([])
+const objects = ref<SiteObject[]>([])
+const employees = ref<EmployeeListItem[]>([])
 const materials = ref<Material[]>([])
 const units = ref<Unit[]>([])
 
@@ -212,9 +204,9 @@ function recalc(it: ItemForm) {
 }
 
 function onMaterialChange(it: ItemForm) {
-  // при выборе материала подставляем дефолтную единицу, если пусто
+  // дефолтная единица = unit материала (если есть и если в позиции пусто)
   const m = materials.value.find(x => x.id === it.material)
-  if (m && !it.unit) it.unit = m.default_unit
+  if (m && !it.unit) it.unit = (m.unit ?? undefined) as number | undefined
 }
 
 function toObjectUrl(f: File) {
@@ -235,14 +227,13 @@ const totalAmount = computed(() => {
 
 async function loadRefs() {
   const [od, ed, md, ud] = await Promise.all([
-    api.get<PageResponse<ObjectLite>>(endpoints.objects.list + buildQuery({page_size: 1000})),
-    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000})),
+    api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
+    api.get<PageResponse<EmployeeListItem>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
     api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
     api.get<PageResponse<Unit>>(endpoints.units.list + buildQuery({page_size: 1000, ordering: 'code'})),
   ])
   objects.value = od.data.results
   employees.value = ed.data.results
-
   materials.value = md.data.results
   units.value = ud.data.results
 }
@@ -250,29 +241,30 @@ async function loadRefs() {
 async function loadIfEdit() {
   if (!isEdit) return
   const {data} = await api.get<Purchase>(endpoints.purchases.one(idParam!))
-  // заполняем шапку
+  // шапка
   model.date = data.date
   model.object = data.object
-  model.supplier = data.supplier
-  model.invoice_number = data.invoice_number
+  model.supplier = data.supplier ?? ''
+  model.invoice_number = data.invoice_number ?? ''
   model.vat_included = data.vat_included
-  model.comment = data.comment
-  model.responsible = data.responsible
-  // заполняем позиции
-  items.value = data.items.map((x) => ({
+  model.comment = data.comment ?? ''
+  model.responsible = data.responsible ?? undefined
+
+  // позиции → строки
+  items.value = (data.items ?? []).map((x) => ({
     _k: Date.now() + Math.random(),
     material: x.material,
     unit: x.unit,
-    quantity: x.quantity,
-    price: x.price,
-    amount: x.amount,
+    quantity: String(x.quantity ?? 0),
+    price: String(x.price ?? 0),
+    amount: String(x.amount ?? ((x.quantity ?? 0) * (x.price ?? 0))),
   }))
 }
 
 async function onSubmit() {
   formError.value = null
-  if (!model.date || !model.object || !model.responsible) {
-    formError.value = 'Заполните дату, объект и ответственного'
+  if (!model.date || !model.object) {
+    formError.value = 'Заполните дату и объект'
     return
   }
   if (items.value.length === 0) {
@@ -282,32 +274,44 @@ async function onSubmit() {
 
   saving.value = true
   try {
-    const payload = {
-      date: model.date,
-      object: model.object,
-      supplier: model.supplier || undefined,
-      invoice_number: model.invoice_number || undefined,
-      vat_included: model.vat_included,
-      comment: model.comment || undefined,
-      responsible: model.responsible,
-      items: items.value.map(it => ({
-        material: it.material!,
-        unit: it.unit!,
-        quantity: it.quantity,
-        price: it.price,
-      })),
-    }
+    // Готовим DTO для серверной модели
+    const payloadItems: PurchaseItemIn[] = items.value.map(it => ({
+      material: it.material!,
+      unit: it.unit,
+      quantity: Number(it.quantity || 0),
+      price: it.price !== '' ? Number(it.price) : null,
+    }))
 
     let id = idParam
     if (isEdit) {
+      const payload: PurchaseUpdate = {
+        date: model.date!,
+        object: model.object!,
+        supplier: model.supplier || null,
+        invoice_number: model.invoice_number || null,
+        vat_included: model.vat_included,
+        comment: model.comment || null,
+        responsible: model.responsible ?? null,
+        items: payloadItems,
+      }
       const {data} = await api.patch<Purchase>(endpoints.purchases.one(idParam!), payload)
       id = data.id
     } else {
+      const payload: PurchaseCreate = {
+        date: model.date!,
+        object: model.object!,
+        supplier: model.supplier || null,
+        invoice_number: model.invoice_number || null,
+        vat_included: model.vat_included,
+        comment: model.comment || null,
+        responsible: model.responsible ?? null,
+        items: payloadItems,
+      }
       const {data} = await api.post<Purchase>(endpoints.purchases.list, payload)
       id = data.id
     }
 
-    // Фото
+    // Фото после сохранения
     if (newPhotos.value.length && id) {
       const fd = new FormData()
       newPhotos.value.forEach(f => fd.append('photos[]', f))

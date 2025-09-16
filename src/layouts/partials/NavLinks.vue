@@ -15,6 +15,9 @@
     <RouterLink class="btn btn-ghost justify-start" active-class="btn-active" to="/purchases" @click="emit('navigate')">
       Закупки
     </RouterLink>
+    <RouterLink class="btn btn-ghost justify-start" active-class="btn-active" to="/stock" @click="emit('navigate')">Остатки</RouterLink>
+    <RouterLink class="btn btn-ghost justify-start" active-class="btn-active" to="/archive" @click="emit('navigate')">Архив</RouterLink>
+    <RouterLink class="btn btn-ghost justify-start" active-class="btn-active" to="/reports" @click="emit('navigate')">Отчёты</RouterLink>
   </nav>
 </template>
 

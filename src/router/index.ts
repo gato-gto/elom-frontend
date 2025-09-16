@@ -22,13 +22,22 @@ const routes: RouteRecordRaw[] = [
             {path: 'purchases', name: 'purchases', component: () => import('@/pages/Purchases/List.vue'), meta: {title: 'Закупки'}},
             {path: 'purchases/new', name: 'purchases.new', component: () => import('@/pages/Purchases/PurchaseForm.vue'), meta: {title: 'Новая закупка'}},
             {path: 'purchases/:id', name: 'purchases.edit', component: () => import('@/pages/Purchases/PurchaseForm.vue'), meta: {title: 'Редактировать закупку'}},
-            // зарезервировано (не точно!):
-            // { path: 'import', name: 'import', component: () => import('@/pages/Import/ImportPurchases.vue'), meta: { title: 'Импорт' } },
-            // { path: 'stocks', name: 'stocks', component: () => import('@/pages/Stocks/List.vue'), meta: { title: 'Остатки' } },
-            // { path: 'archive', name: 'archive', component: () => import('@/pages/Archive/List.vue'), meta: { title: 'Архив' } },
-            // { path: 'reports', name: 'reports', component: () => import('@/pages/Reports/Index.vue'), meta: { title: 'Отчёты' } },
+            {path: 'employees', name: 'employees', component: () => import('@/pages/Employees/List.vue'), meta: {title: 'Сотрудники'}},
+            {path: 'stock', name: 'stock', component: () => import('@/pages/Stocks/List.vue'), meta: {title: 'Остатки'}},
+            {path: 'archive', name: 'archive', component: () => import('@/pages/Archive/List.vue'), meta: {title: 'Архив периодов'}},
 
-
+            {
+                path: 'reports',
+                component: () => import('@/pages/Reports/Index.vue'),
+                meta: {title: 'Отчёты'},
+                children: [
+                    {path: '', redirect: {name: 'reports.period'}},
+                    {path: 'period', name: 'reports.period', component: () => import('@/pages/Reports/ByPeriod.vue'), meta: {title: 'Отчёты — По периодам'}},
+                    {path: 'object', name: 'reports.object', component: () => import('@/pages/Reports/ByObject.vue'), meta: {title: 'Отчёты — По объектам'}},
+                    {path: 'responsible', name: 'reports.responsible', component: () => import('@/pages/Reports/ByResponsible.vue'), meta: {title: 'Отчёты — По ответственным'}},
+                    {path: 'material', name: 'reports.material', component: () => import('@/pages/Reports/ByMaterial.vue'), meta: {title: 'Отчёты — По материалам'}},
+                ],
+            },
         ],
     },
     {path: '/:pathMatch(.*)*', redirect: '/dashboard'},
@@ -47,14 +56,9 @@ router.beforeEach(async (to) => {
 
     const auth = useAuthStore()
     const isAuthed = auth.isAuthenticated
-
-    if (to.meta.requiresAuth && !isAuthed) {
-        return {name: 'login', query: {redirect: to.fullPath}}
-    }
-    if (to.meta.guestOnly && isAuthed) {
-        return {path: '/dashboard'}
-    }
+    if (to.meta.requiresAuth && !isAuthed) return {name: 'login', query: {redirect: to.fullPath}}
+    if (to.meta.guestOnly && isAuthed) return {path: '/dashboard'}
 })
-router.afterEach(() => useUiStore().done())
 
+router.afterEach(() => useUiStore().done())
 export default router

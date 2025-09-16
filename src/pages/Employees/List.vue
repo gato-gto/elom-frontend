@@ -1,58 +1,51 @@
-<!-- src/pages/Employees/List.vue -->
 <template>
   <div class="grid gap-4">
-    <div class="flex flex-wrap items-end gap-2">
-      <div class="grow max-w-sm">
-        <FormField label="Поиск">
-          <input v-model.trim="search" class="input input-bordered" placeholder="ФИО/логин/email" @keyup.enter="reload()"/>
-        </FormField>
-      </div>
-      <div>
-        <FormField label="Роль">
-          <select v-model="role" class="input input-bordered">
-            <option value="">Все</option>
-            <option value="admin">Администратор</option>
-            <option value="buyer">Закупщик</option>
-            <option value="site_manager">Ответственный</option>
-            <option value="director">Руководитель</option>
-          </select>
-        </FormField>
-      </div>
-      <button class="btn" @click="reload">Найти</button>
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Сотрудники</h1>
     </div>
 
-    <div class="card p-4">
-      <div class="w-full overflow-auto rounded-lg border border-base-300">
-        <table class="w-full text-sm">
-          <thead class="bg-base-100">
-          <tr>
-            <th class="px-3 py-2 text-left">ID</th>
-            <th class="px-3 py-2 text-left">ФИО</th>
-            <th class="px-3 py-2 text-left">Логин</th>
-            <th class="px-3 py-2 text-left">Email</th>
-            <th class="px-3 py-2 text-left">Роль</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-if="employers.length === 0">
-            <td colspan="6" class="px-3 py-6 text-center text-base-content/60">Нет данных</td>
-          </tr>
-          <tr v-for="e in employers" :key="e.id" class="border-t border-base-200">
-            <td class="px-3 py-2">{{ e.id }}</td>
-            <td class="px-3 py-2">{{ e.first_name }} {{ e.last_name }}</td>
-            <td class="px-3 py-2">{{ e.username }}</td>
-            <td class="px-3 py-2">{{ e.email }}</td>
-            <td class="px-3 py-2">{{ e.role }}</td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <div class="overflow-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Логин</th>
+              <th>Имя</th>
+              <th>Фамилия</th>
+              <th>E-mail</th>
+              <th>Роль</th>
+              <th>Активен</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="e in rows" :key="e.id">
+              <td>{{ e.id }}</td>
+              <td>{{ e.username }}</td>
+              <td>{{ e.first_name || '—' }}</td>
+              <td>{{ e.last_name || '—' }}</td>
+              <td>{{ e.email || '—' }}</td>
+              <td>{{ e.role || '—' }}</td>
+              <td>
+                  <span class="badge" :class="e.is_active ? 'badge-success' : 'badge-ghost'">
+                    {{ e.is_active ? 'Да' : 'Нет' }}
+                  </span>
+              </td>
+            </tr>
+            <tr v-if="!loading && rows.length===0">
+              <td colspan="7" class="text-center text-base-content/60">Нет данных</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
 
-      <div class="flex items-center justify-between gap-2 py-3">
-        <div class="text-xs text-base-content/60"><span v-if="count !== null">Всего: {{ count }}</span></div>
-        <div class="inline-flex items-center gap-2">
-          <button class="btn btn-sm" :disabled="!previous" @click="go(previous)">Назад</button>
-          <button class="btn btn-sm" :disabled="!next" @click="go(next)">Вперёд</button>
+        <!-- Пагинация (простая) -->
+        <div class="mt-4 join self-end">
+          <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(1)">«</button>
+          <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(page-1)">Назад</button>
+          <button class="btn btn-sm join-item btn-ghost no-animation">Стр. {{ page }}</button>
+          <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
         </div>
       </div>
     </div>
@@ -60,34 +53,34 @@
 </template>
 
 <script setup lang="ts">
-import api from '@/api/client'
-import {endpoints} from '@/api/endpoints'
 import {onMounted, ref} from 'vue'
-import FormField from '@/components/FormField.vue'
-import {Employee} from "@/api/types";
+import api from '@/api/client'
+import endpoints, {buildQuery} from '@/api/endpoints'
+import type {PageResponse, EmployeeListItem} from '@/api/types'
 
+const rows = ref<EmployeeListItem[]>([])
+const count = ref(0)
+const page = ref(1)
+const pageSize = 20
+const loading = ref(false)
 
-const search = ref('')
-const role = ref('')
-const employers = ref<Employee[]>([])
-const count = ref<number | null>(null)
-const next = ref<string | null>(null)
-const previous = ref<string | null>(null)
-
-async function fetchList(url?: string) {
-  const query = new URLSearchParams()
-  if (search.value) query.set('search', search.value)
-  if (role.value) query.set('role', role.value)
-  const u = url ?? `${endpoints.common.employees}?${query.toString()}`
-
-  const res = await api.get(u)
-  employers.value = res.data.results ?? []
-  count.value = res.data.count ?? null
-  next.value = res.data.next
-  previous.value = res.data.previous
+async function fetchList() {
+  loading.value = true
+  try {
+    const {data} = await api.get<PageResponse<EmployeeListItem>>(
+        endpoints.employees.list + buildQuery({page: page.value, page_size: pageSize, ordering: 'username'})
+    )
+    rows.value = data.results
+    count.value = data.count
+  } finally {
+    loading.value = false
+  }
 }
 
-function reload() { fetchList() }
-function go(url: string | null) { if (url) fetchList(url) }
-onMounted(() => fetchList())
+function reload(p = page.value) {
+  page.value = p;
+  fetchList()
+}
+
+onMounted(fetchList)
 </script>
