@@ -1,6 +1,6 @@
 <template>
   <div v-if="modelValue" class="modal modal-open">
-    <div class="modal-box" :class="sizeClass">
+    <div class="modal-box w-full max-w-none mx-4 my-4" :class="sizeClass">
       <div v-if="title || $slots.header" class="flex items-center justify-between mb-4">
         <h3 v-if="title" class="font-bold text-lg">{{ title }}</h3>
         <slot name="header" />
@@ -53,16 +53,16 @@ const emit = defineEmits<Emits>()
 
 const sizeClass = computed(() => {
   const sizeMap = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
-    '3xl': 'max-w-3xl',
-    '4xl': 'max-w-4xl',
-    '5xl': 'max-w-5xl',
-    '6xl': 'max-w-6xl',
-    '7xl': 'max-w-7xl'
+    sm: 'sm:max-w-sm',
+    md: 'sm:max-w-md',
+    lg: 'sm:max-w-lg',
+    xl: 'sm:max-w-xl',
+    '2xl': 'sm:max-w-2xl',
+    '3xl': 'sm:max-w-3xl',
+    '4xl': 'sm:max-w-4xl',
+    '5xl': 'sm:max-w-5xl',
+    '6xl': 'sm:max-w-6xl',
+    '7xl': 'sm:max-w-7xl'
   }
   return sizeMap[props.size]
 })

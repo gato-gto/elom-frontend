@@ -145,6 +145,7 @@ export interface MaterialRequest {
     sku?: string;
     category?: ID;
     default_unit: ID;
+    created_date?: string;
 }
 
 export interface PatchedMaterialRequest {
@@ -152,6 +153,7 @@ export interface PatchedMaterialRequest {
     sku?: string;
     category?: ID;
     default_unit?: ID;
+    created_date?: string;
 }
 
 export interface MaterialPhotoUploadRequest {

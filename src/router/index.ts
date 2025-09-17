@@ -42,17 +42,17 @@ const ReportByResponsible = () => import('@/pages/Reports/ByResponsible.vue')
 const ImportPurchases = () => import('@/pages/Import/ImportPurchases.vue')
 
 const routes = [
-  {
-    path: '/login',
+    {
+        path: '/login',
     name: 'Login',
     component: Login,
     meta: { 
       public: true,
       title: 'Вход в систему'
     }
-  },
-  {
-    path: '/',
+    },
+    {
+        path: '/',
     name: 'Dashboard',
     component: Dashboard,
     meta: { 
@@ -105,6 +105,15 @@ const routes = [
   {
     path: '/purchases/create',
     name: 'PurchaseCreate',
+    component: PurchaseForm,
+    meta: { 
+      title: 'Новая закупка',
+      breadcrumb: 'Закупки / Новая'
+    }
+  },
+  {
+    path: '/purchases/new',
+    name: 'PurchaseNew',
     component: PurchaseForm,
     meta: { 
       title: 'Новая закупка',
@@ -304,8 +313,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
+    history: createWebHistory(),
+    routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -317,8 +326,8 @@ const router = createRouter({
 
 // Auth guard
 router.beforeEach(async (to, from, next) => {
-  const auth = useAuthStore()
-  
+    const auth = useAuthStore()
+    
   // Public routes (no auth required)
   if (to.meta.public) {
     // If already authenticated, redirect to dashboard
@@ -333,8 +342,8 @@ router.beforeEach(async (to, from, next) => {
   // Protected routes
   if (!auth.isAuthenticated) {
     // Try to hydrate from localStorage
-    try {
-      await auth.tryHydrate()
+        try {
+            await auth.tryHydrate()
     } catch (error) {
       console.warn('Auth hydration failed:', error)
     }
@@ -348,7 +357,7 @@ router.beforeEach(async (to, from, next) => {
   }
   
   // Check role-based access if needed
-  if (to.meta.requiresRole && !hasRequiredRole(auth.role, to.meta.requiresRole)) {
+  if (to.meta.requiresRole && typeof to.meta.requiresRole === 'string' && !hasRequiredRole(auth.role, to.meta.requiresRole)) {
     next('/')
     return
   }
@@ -357,8 +366,8 @@ router.beforeEach(async (to, from, next) => {
 })
 
 // Helper function for role-based access
-function hasRequiredRole(userRole: string | null, requiredRole: string | string[]): boolean {
-  if (!userRole) return false
+function hasRequiredRole(userRole: string | null, requiredRole: string | string[] | undefined): boolean {
+  if (!userRole || !requiredRole) return false
   
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
   return roles.includes(userRole)

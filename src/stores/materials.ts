@@ -24,8 +24,10 @@ export const useMaterialsStore = defineStore('materials', {
     },
     filters: {
       search: '',
-      category: null as number | null,
-      default_unit: null as number | null,
+      name: '',
+      sku: '',
+      category: '' as string,
+      default_unit: '' as string,
       ordering: 'name' as string
     }
   }),
@@ -60,8 +62,10 @@ export const useMaterialsStore = defineStore('materials', {
     async fetchList(params?: {
       page?: number
       search?: string
-      category?: number
-      default_unit?: number
+      name?: string
+      sku?: string
+      category?: string
+      default_unit?: string
       ordering?: string
     }) {
       this.loading = true
@@ -72,6 +76,8 @@ export const useMaterialsStore = defineStore('materials', {
           page: params?.page || this.pagination.page,
           page_size: this.pagination.pageSize,
           search: params?.search ?? this.filters.search ?? undefined,
+          name: params?.name ?? this.filters.name ?? undefined,
+          sku: params?.sku ?? this.filters.sku ?? undefined,
           category: params?.category ?? this.filters.category ?? undefined,
           default_unit: params?.default_unit ?? this.filters.default_unit ?? undefined,
           ordering: params?.ordering ?? this.filters.ordering
@@ -133,7 +139,15 @@ export const useMaterialsStore = defineStore('materials', {
       this.error = null
 
       try {
-        const { data: newMaterial } = await api.post<Material>(endpoints.materials.list, data)
+        // Create FormData for multipart/form-data
+        const formData = new FormData()
+        formData.append('name', data.name)
+        if (data.sku) formData.append('sku', data.sku)
+        if (data.category) formData.append('category', data.category.toString())
+        formData.append('default_unit', data.default_unit.toString())
+        if (data.created_date) formData.append('created_date', data.created_date)
+
+        const { data: newMaterial } = await api.post<Material>(endpoints.materials.list, formData)
         
         // Add to list
         this.items.unshift(newMaterial)
@@ -154,7 +168,15 @@ export const useMaterialsStore = defineStore('materials', {
       this.error = null
 
       try {
-        const { data: updatedMaterial } = await api.patch<Material>(endpoints.materials.one(id), data)
+        // Create FormData for multipart/form-data
+        const formData = new FormData()
+        if (data.name) formData.append('name', data.name)
+        if (data.sku !== undefined) formData.append('sku', data.sku)
+        if (data.category !== undefined) formData.append('category', data.category?.toString() || '')
+        if (data.default_unit) formData.append('default_unit', data.default_unit.toString())
+        if (data.created_date) formData.append('created_date', data.created_date)
+
+        const { data: updatedMaterial } = await api.post<Material>(endpoints.materials.one(id), formData)
         
         // Update in list
         const index = this.items.findIndex(item => item.id === id)
@@ -202,32 +224,6 @@ export const useMaterialsStore = defineStore('materials', {
       }
     },
 
-    // Upload photo
-    async uploadPhoto(id: number, file: File) {
-      this.loading = true
-      this.error = null
-
-      try {
-        const formData = new FormData()
-        formData.append('photo', file)
-
-        await api.post(endpoints.materials.uploadPhoto(id), formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-
-        // Refresh the material to get updated photo_url
-        await this.fetchOne(id)
-
-        return true
-      } catch (error: any) {
-        this.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
 
     // Set filters
     setFilters(filters: Partial<typeof this.filters>) {
@@ -238,9 +234,73 @@ export const useMaterialsStore = defineStore('materials', {
     resetFilters() {
       this.filters = {
         search: '',
-        category: null,
-        default_unit: null,
+        name: '',
+        sku: '',
+        category: '',
+        default_unit: '',
         ordering: 'name'
+      }
+    },
+
+    // Upload photo for material
+    async uploadPhoto(id: number, photo: File) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const formData = new FormData()
+        formData.append('photo', photo)
+
+        const { data } = await api.post<{ photo_url: string }>(
+          endpoints.materials.uploadPhoto(id), 
+          formData
+        )
+
+        // Update material in list with new photo_url
+        const index = this.items.findIndex(item => item.id === id)
+        if (index !== -1) {
+          this.items[index].photo_url = data.photo_url
+        }
+
+        // Update current if it's the same
+        if (this.current?.id === id) {
+          this.current.photo_url = data.photo_url
+        }
+
+        return data.photo_url
+      } catch (error: any) {
+        this.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Delete photo for material
+    async deletePhoto(id: number) {
+      this.loading = true
+      this.error = null
+
+      try {
+        await api.delete(endpoints.materials.uploadPhoto(id))
+
+        // Update material in list to remove photo_url
+        const index = this.items.findIndex(item => item.id === id)
+        if (index !== -1) {
+          this.items[index].photo_url = undefined
+        }
+
+        // Update current if it's the same
+        if (this.current?.id === id) {
+          this.current.photo_url = undefined
+        }
+
+        return true
+      } catch (error: any) {
+        this.error = error?.response?.data?.detail || 'Ошибка удаления фото'
+        throw error
+      } finally {
+        this.loading = false
       }
     },
 

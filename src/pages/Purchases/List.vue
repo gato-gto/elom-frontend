@@ -2,7 +2,7 @@
   <div class="grid gap-4">
     <div class="flex items-center justify-between">
       <h1 class="text-lg font-semibold">Закупки</h1>
-      <RouterLink class="btn btn-primary" to="/purchases/new">Новая закупка</RouterLink>
+      <button class="btn btn-primary" @click="openCreateModal">Новая закупка</button>
     </div>
 
     <div class="card bg-white border">
@@ -63,7 +63,7 @@
           <td>{{ (p as any).responsible_name ?? p.responsible ?? '—' }}</td>
           <td class="text-right">{{ p.items?.length ?? 0 }}</td>
           <td class="text-right">
-            <RouterLink class="btn btn-xs btn-ghost" :to="`/purchases/${p.id}`">Открыть</RouterLink>
+            <RouterLink class="btn btn-xs btn-outline" :to="`/purchases/${p.id}`">Открыть</RouterLink>
           </td>
         </tr>
         <tr v-if="!loading && rows.length===0">
@@ -79,6 +79,11 @@
       <button class="btn btn-sm join-item btn-ghost no-animation">Стр. {{ page }}</button>
       <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
     </div>
+
+    <!-- Modal for creating new purchase -->
+    <Modal v-model="modalOpen" :title="'Новая закупка'" size="6xl" :closable="true">
+      <PurchaseForm @saved="onPurchaseSaved" @cancel="modalOpen = false" />
+    </Modal>
   </div>
 </template>
 
@@ -87,6 +92,8 @@ import {computed, onMounted, ref} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, Employee} from '@/api/types'
+import Modal from '@/components/Modal.vue'
+import PurchaseForm from './PurchaseForm.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
@@ -95,6 +102,7 @@ const count = ref(0)
 const page = ref(1)
 const pageSize = 20
 const loading = ref(false)
+const modalOpen = ref(false)
 
 const filters = ref<PurchaseListFilters>({
   date_after: undefined, date_before: undefined, object: undefined, responsible: undefined, search: '', ordering: '-date',
@@ -126,6 +134,16 @@ async function fetchList() {
 
 function reload(p = page.value) {
   page.value = p;
+  fetchList()
+}
+
+function openCreateModal() {
+  modalOpen.value = true
+}
+
+function onPurchaseSaved() {
+  modalOpen.value = false
+  // Reload the list to show the new purchase
   fetchList()
 }
 

@@ -1,311 +1,270 @@
 <!-- src/pages/Materials/MaterialForm.vue -->
 <template>
   <form class="grid gap-4" @submit.prevent="submit">
-    <!-- Название -->
-    <FormField
-      v-model="form.name"
-      type="input"
-      label="Название материала"
-      placeholder="Введите название материала"
-      required
-      :error-message="errors.name"
-      :has-error="!!errors.name"
-    />
+    <!-- Основная информация -->
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Основная информация</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Название -->
+          <FormField
+            v-model="form.name"
+            label="Название материала"
+            type="input"
+            placeholder="Введите название материала"
+            :error="errors.name"
+            required
+          />
 
-    <!-- SKU -->
-    <FormField
-      v-model="form.sku"
-      type="input"
-      label="SKU"
-      placeholder="Артикул/код"
-      help-text="Необязательно"
-      :error-message="errors.sku"
-      :has-error="!!errors.sku"
-    />
+          <!-- SKU -->
+          <FormField
+            v-model="form.sku"
+            label="SKU (Артикул)"
+            type="input"
+            placeholder="Введите артикул или код материала"
+            :error="errors.sku"
+          />
 
-    <!-- Категория -->
-    <FormField
-      v-model="form.category"
-      type="select"
-      label="Категория"
-      placeholder="— без категории —"
-      :options="categoryOptions"
-      :error-message="errors.category"
-      :has-error="!!errors.category"
-    />
+          <!-- Категория -->
+          <FormField
+            v-model="form.category"
+            label="Категория"
+            type="select"
+            :error="errors.category"
+            placeholder="— выберите категорию —"
+            :options="categoryOptions"
+          />
 
-    <!-- Единица измерения -->
-    <FormField
-      v-model="form.default_unit"
-      type="select"
-      label="Единица по умолчанию"
-      placeholder="— выберите единицу —"
-      :options="unitOptions"
-      required
-      :error-message="errors.default_unit"
-      :has-error="!!errors.default_unit"
-    />
+          <!-- Единица измерения -->
+          <FormField
+            v-model="form.default_unit"
+            label="Единица измерения"
+            type="select"
+            :error="errors.default_unit"
+            placeholder="— выберите единицу —"
+            :options="unitOptions"
+            required
+          />
 
-    <!-- Фото -->
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text">Фото (обложка)</span>
-      </label>
-      <FileInput 
-        v-model="photoFile" 
-        accept="image/*" 
-        :maxSizeMb="8" 
-        :existingUrl="currentPhotoUrl"
-      />
-      <div class="flex gap-2 mt-2">
-        <button 
-          v-if="currentPhotoUrl" 
-          type="button" 
-          class="btn btn-ghost btn-sm" 
-          :disabled="deletingPhoto" 
-          @click="onDeletePhoto"
-        >
-          {{ deletingPhoto ? 'Удаление…' : 'Удалить фото' }}
-        </button>
-        <span v-if="errors.photo" class="text-xs text-error">{{ errors.photo }}</span>
+          <!-- Дата создания -->
+          <FormField
+            v-model="form.created_date"
+            label="Дата создания"
+            type="date"
+            :error="errors.created_date"
+            required
+          />
+        </div>
       </div>
-      <label class="label">
-        <span class="label-text-alt">
-          Загрузка/замена фото происходит после сохранения карточки. Допустимы изображения, лимит 8 МБ.
-        </span>
-      </label>
     </div>
 
+    <!-- Фото и документы -->
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Фото и документы</h2>
+        
+        <!-- Current photo preview -->
+        <div v-if="currentPhotoUrl" class="mb-4">
+          <div class="relative inline-block">
+            <img 
+              :src="currentPhotoUrl" 
+              alt="Текущее фото" 
+              class="h-24 w-24 object-cover rounded-lg border"
+            />
+            <button 
+              type="button" 
+              class="absolute -top-2 -right-2 btn btn-error btn-xs btn-circle"
+              :disabled="deletingPhoto" 
+              @click="onDeletePhoto"
+              title="Удалить фото"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-base-content-60 mt-1">Текущее фото</p>
+        </div>
+        
+        <!-- File input -->
+        <FileInput 
+          v-model="photoFile" 
+          accept="image/*" 
+          :maxSizeMb="8" 
+          :preview="true"
+          :disabled="deletingPhoto"
+        />
+      </div>
+    </div>
+
+
     <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2 mt-6">
+    <div class="flex justify-end gap-2">
       <button 
         type="button" 
-        class="btn btn-ghost" 
+        class="btn btn-outline" 
         @click="$emit('cancel')"
-        :disabled="submitting"
+        :disabled="loading || deletingPhoto"
       >
         Отмена
       </button>
       <button 
         type="submit" 
         class="btn btn-primary" 
-        :disabled="submitting"
+        :disabled="loading || deletingPhoto"
       >
-        {{ submitting ? 'Сохранение…' : 'Сохранить' }}
+        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
       </button>
     </div>
   </form>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watchEffect, computed } from 'vue'
-import type { Material, MaterialCategoryLite, Unit } from '@/api/types'
-import FileInput from '@/components/FileInput.vue'
-import FormField from '@/components/FormField.vue'
-import { useUiStore } from '@/stores/ui'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
+import { useMaterialCategoriesStore } from '@/stores/materialCategories'
+import { useUiStore } from '@/stores/ui'
+import type { Material, MaterialRequest } from '@/api/types'
+import FormField from '@/components/FormField.vue'
+import FileInput from '@/components/FileInput.vue'
 
-const props = defineProps<{ initial: Material | null }>()
-const emit = defineEmits<{ (e: 'saved'): void; (e: 'cancel'): void }>()
+const props = defineProps<{
+  initial?: Material | null
+}>()
 
-const ui = useUiStore()
+const emit = defineEmits<{
+  saved: []
+  cancel: []
+}>()
+
 const materialsStore = useMaterialsStore()
 const unitsStore = useUnitsStore()
+const materialCategoriesStore = useMaterialCategoriesStore()
+const ui = useUiStore()
 
-// Form data
-const form = reactive<{
-  name: string
-  sku: string
-  category: string
-  default_unit: string
-}>({
+const loading = ref(false)
+const deletingPhoto = ref(false)
+const errors = reactive<Record<string, string>>({})
+
+const form = reactive<MaterialRequest>({
   name: '',
   sku: '',
-  category: '',
-  default_unit: '',
+  category: undefined,
+  default_unit: 1, // Default to first unit
+  created_date: new Date().toISOString().split('T')[0]
 })
 
-const errors = reactive<Record<string, string | null>>({
-  name: null, 
-  sku: null, 
-  category: null, 
-  default_unit: null, 
-  photo: null,
-})
-
-const submitting = ref(false)
 const photoFile = ref<File | null>(null)
 const currentPhotoUrl = ref<string | null>(null)
-const deletingPhoto = ref(false)
 
-// Computed options for selects
+const categoryOptions = computed(() => materialCategoriesStore.selectOptions)
+
 const unitOptions = computed(() => {
   return unitsStore.selectOptions
 })
 
-const categoryOptions = computed(() => {
-  // TODO: Implement material categories store
-  return [
-    { value: '', label: '— без категории —' }
-  ]
-})
-
-// Load data on mount
-onMounted(async () => {
-  try {
-    await unitsStore.fetchList()
-    // TODO: Load categories when store is implemented
-  } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка загрузки справочников' })
-  }
-})
-
-// Watch for initial data changes
-watchEffect(() => {
-  if (props.initial) {
-    form.name = props.initial.name || ''
-    form.sku = props.initial.sku || ''
-    form.category = props.initial.category ? String(props.initial.category) : ''
-    form.default_unit = props.initial.default_unit ? String(props.initial.default_unit) : ''
-    currentPhotoUrl.value = props.initial.photo_url || null
-  } else {
-    form.name = ''
-    form.sku = ''
-    form.category = ''
-    form.default_unit = ''
-    currentPhotoUrl.value = null
-  }
+function resetForm() {
+  form.name = ''
+  form.sku = ''
+  form.category = undefined
+  form.default_unit = 1
+  form.created_date = new Date().toISOString().split('T')[0]
   photoFile.value = null
-  // Clear errors
-  for (const k of Object.keys(errors)) (errors as any)[k] = null
-})
-
-// Helper function to extract errors from API response
-function pickError(payload: any, key: string): string | null {
-  const v = payload?.[key]
-  if (Array.isArray(v) && v.length) return String(v[0])
-  if (typeof v === 'string') return v
-
-  const nested = payload?.errors?.[key]
-  if (Array.isArray(nested) && nested.length) return String(nested[0])
-  if (typeof nested === 'string') return nested
-
-  return null
+  currentPhotoUrl.value = null
+  Object.keys(errors).forEach(key => delete errors[key])
 }
 
-// Upload photo using store
-async function uploadPhoto(materialId: number) {
-  if (!photoFile.value) return
-  
-  try {
-    await materialsStore.uploadPhoto(materialId, photoFile.value)
-    currentPhotoUrl.value = materialsStore.current?.photo_url || null
-    photoFile.value = null
-    ui.toast({ type: 'success', text: 'Фото загружено' })
-  } catch (e: any) {
-    const d = e?.response?.data || {}
-    errors.photo = pickError(d, 'photo') || d?.detail || 'Ошибка загрузки фото'
-    throw e
+function loadInitial() {
+  if (props.initial) {
+    form.name = props.initial.name
+    form.sku = props.initial.sku || ''
+    form.category = props.initial.category
+    form.default_unit = props.initial.default_unit
+    form.created_date = new Date().toISOString().split('T')[0] // Default to today for existing materials
+    
+    if (props.initial.photo_url) {
+      currentPhotoUrl.value = props.initial.photo_url
+    }
+  } else {
+    resetForm()
   }
 }
 
-// Delete photo
 async function onDeletePhoto() {
-  if (!props.initial?.id && !currentPhotoUrl.value) return
-  if (!confirm('Удалить фото материала?')) return
+  if (!props.initial?.id) return
   
   deletingPhoto.value = true
   try {
-    const id = props.initial?.id
-    if (!id) {
-      photoFile.value = null
-      currentPhotoUrl.value = null
-      return
-    }
-    
-    // TODO: Implement delete photo in materials store
-    // await materialsStore.deletePhoto(id)
+    await materialsStore.deletePhoto(props.initial.id)
     currentPhotoUrl.value = null
     ui.toast({ type: 'success', text: 'Фото удалено' })
-  } catch (e: any) {
-    const d = e?.response?.data || {}
-    errors.photo = d?.detail || 'Не удалось удалить фото'
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка удаления фото' })
+    console.error('Error deleting photo:', error)
   } finally {
     deletingPhoto.value = false
   }
 }
 
-// Client-side validation
-function clientValidate(): boolean {
-  let ok = true
-  errors.name = null
-  errors.default_unit = null
-
-  if (!form.name.trim()) {
-    errors.name = 'Заполните название'
-    ok = false
-  }
-  if (!form.default_unit) {
-    errors.default_unit = 'Выберите единицу'
-    ok = false
-  }
-  return ok
-}
-
-// Submit form
 async function submit() {
-  // Clear previous errors
-  for (const k of Object.keys(errors)) (errors as any)[k] = null
+  loading.value = true
+  Object.keys(errors).forEach(key => delete errors[key])
   
-  // Client validation
-  if (!clientValidate()) return
-
-  submitting.value = true
   try {
-    const formData = {
-      name: form.name,
-      sku: form.sku || undefined,
-      category: form.category ? Number(form.category) : undefined,
-      default_unit: Number(form.default_unit)
-    }
-
     let materialId: number
-    if (props.initial?.id) {
-      // Update existing material
-      await materialsStore.update(props.initial.id, formData)
+    
+    // First, save the material data (without photo)
+    if (props.initial) {
+      await materialsStore.update(props.initial.id, form)
       materialId = props.initial.id
     } else {
-      // Create new material
-      const newMaterial = await materialsStore.create(formData)
+      const newMaterial = await materialsStore.create(form)
       materialId = newMaterial.id
     }
-
-    // Upload photo if selected
+    
+    // Then, upload photo if exists
     if (photoFile.value) {
-      await uploadPhoto(materialId)
+      await materialsStore.uploadPhoto(materialId, photoFile.value)
     }
-
+    
     emit('saved')
-  } catch (e: any) {
-    const d = e?.response?.data || {}
-    // Extract field errors
-    errors.name = pickError(d, 'name')
-    errors.sku = pickError(d, 'sku')
-    errors.category = pickError(d, 'category')
-    errors.default_unit = pickError(d, 'default_unit')
-
-    // If no specific field errors, show general error
-    if (!errors.name && !errors.default_unit && d?.detail && typeof d.detail === 'string') {
-      errors.name = d.detail
+  } catch (error: any) {
+    if (error.response?.status === 400 && error.response?.data) {
+      const data = error.response.data
+      if (typeof data === 'object') {
+        Object.keys(data).forEach(key => {
+          if (Array.isArray(data[key]) && data[key].length > 0) {
+            errors[key] = data[key][0]
+          }
+        })
+      }
+    } else {
+      ui.toast({ type: 'error', text: 'Ошибка сохранения материала' })
     }
   } finally {
-    submitting.value = false
+    loading.value = false
   }
 }
+
+// Load data on mount
+onMounted(async () => {
+  loadInitial()
+  
+  // Load units and categories if not already loaded
+  const promises = []
+  if (unitsStore.items.length === 0) {
+    promises.push(unitsStore.fetchList())
+  }
+  if (materialCategoriesStore.items.length === 0) {
+    promises.push(materialCategoriesStore.fetchList())
+  }
+  
+  if (promises.length > 0) {
+    await Promise.all(promises)
+  }
+})
 </script>
-
-<style scoped>
-/* no @apply */
-</style>
-

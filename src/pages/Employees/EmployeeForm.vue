@@ -1,6 +1,6 @@
 <!-- src/pages/Employees/EmployeeForm.vue -->
 <template>
-  <div class="card bg-white shadow-xl">
+  <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title text-2xl mb-6">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,111 +11,75 @@
       
       <form class="space-y-6" @submit.prevent="submit">
         <!-- Имя -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">
-            Имя
-            <span class="text-error">*</span>
-          </span>
-          <input 
-            v-model.trim="form.first_name" 
-            type="text" 
-            class="input input-bordered" 
-            :class="{ 'input-error': errors.first_name }"
-            placeholder="Введите имя"
-            required
-          />
-          <span v-if="errors.first_name" class="text-xs text-error">{{ errors.first_name }}</span>
-        </label>
+        <FormField
+          v-model="form.first_name"
+          label="Имя"
+          type="text"
+          placeholder="Введите имя"
+          :error="errors.first_name"
+          required
+        />
 
         <!-- Фамилия -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">
-            Фамилия
-            <span class="text-error">*</span>
-          </span>
-          <input 
-            v-model.trim="form.last_name" 
-            type="text" 
-            class="input input-bordered" 
-            :class="{ 'input-error': errors.last_name }"
-            placeholder="Введите фамилию"
-            required
-          />
-          <span v-if="errors.last_name" class="text-xs text-error">{{ errors.last_name }}</span>
-        </label>
+        <FormField
+          v-model="form.last_name"
+          label="Фамилия"
+          type="text"
+          placeholder="Введите фамилию"
+          :error="errors.last_name"
+          required
+        />
 
         <!-- Email -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">
-            Email
-            <span class="text-error">*</span>
-          </span>
-          <input 
-            v-model.trim="form.email" 
-            type="email" 
-            class="input input-bordered" 
-            :class="{ 'input-error': errors.email }"
-            placeholder="Введите email"
-            required
-          />
-          <span v-if="errors.email" class="text-xs text-error">{{ errors.email }}</span>
-        </label>
+        <FormField
+          v-model="form.email"
+          label="Email"
+          type="email"
+          placeholder="Введите email"
+          :error="errors.email"
+          required
+        />
+
+        <!-- Username -->
+        <FormField
+          v-model="form.username"
+          label="Имя пользователя"
+          type="text"
+          placeholder="Введите имя пользователя"
+          :error="errors.username"
+          required
+        />
 
         <!-- Роль -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">
-            Роль
-            <span class="text-error">*</span>
-          </span>
-          <select 
-            v-model="form.role" 
-            class="select select-bordered" 
-            :class="{ 'select-error': errors.role }"
-            required
-          >
-            <option value="" disabled>— выберите роль —</option>
-            <option value="admin">Администратор</option>
-            <option value="director">Директор</option>
-            <option value="manager">Менеджер</option>
-            <option value="employee">Сотрудник</option>
-          </select>
-          <span v-if="errors.role" class="text-xs text-error">{{ errors.role }}</span>
-        </label>
-
-        <!-- Пароль (только для новых сотрудников) -->
-        <label v-if="!props.initial" class="grid gap-1">
-          <span class="text-sm font-semibold">
-            Пароль
-            <span class="text-error">*</span>
-          </span>
-          <input 
-            v-model.trim="form.password" 
-            type="password" 
-            class="input input-bordered" 
-            :class="{ 'input-error': errors.password }"
-            placeholder="Введите пароль"
-            :required="!props.initial"
-          />
-          <span v-if="errors.password" class="text-xs text-error">{{ errors.password }}</span>
-          <span class="text-xs text-gray-700-60">Минимум 8 символов</span>
-        </label>
+        <FormField
+          v-model="form.role"
+          label="Роль"
+          type="select"
+          :error="errors.role"
+          placeholder="Выберите роль"
+          :options="roleOptions"
+          required
+        />
 
         <!-- Кнопки действий -->
         <div class="flex justify-end gap-2 mt-6">
           <button 
             type="button" 
-            class="btn btn-ghost" 
+            class="btn btn-outline" 
             @click="$emit('cancel')"
-            :disabled="submitting"
+            :disabled="loading"
           >
             Отмена
           </button>
           <button 
             type="submit" 
             class="btn btn-primary" 
-            :disabled="submitting || !isFormValid"
+            :disabled="loading"
           >
-            {{ submitting ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
+            <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
           </button>
         </div>
       </form>
@@ -124,135 +88,94 @@
 </template>
 
 <script setup lang="ts">
-import {reactive, ref, watchEffect, computed} from 'vue'
-import api from '@/api/client'
-import {endpoints} from '@/api/endpoints'
-import type {Employee, EmployeeRequest, PatchedEmployeeRequest} from '@/api/types'
-import {useUiStore} from '@/stores/ui'
+import { ref, reactive, onMounted } from 'vue'
+import { useEmployeesStore } from '@/stores/employees'
+import { useUiStore } from '@/stores/ui'
+import type { Employee, EmployeeRequest } from '@/api/types'
+import FormField from '@/components/FormField.vue'
 
-const props = defineProps<{ initial: Employee | null }>()
-const emit = defineEmits<{ (e: 'saved'): void; (e: 'cancel'): void }>()
+const props = defineProps<{
+  initial?: Employee | null
+}>()
 
+const emit = defineEmits<{
+  saved: []
+  cancel: []
+}>()
+
+const employeesStore = useEmployeesStore()
 const ui = useUiStore()
 
-const form = reactive<{ 
-  first_name: string; 
-  last_name: string; 
-  email: string; 
-  role: string;
-  password: string;
-}>({
-  first_name: '', 
-  last_name: '', 
-  email: '', 
-  role: '',
-  password: ''
+const loading = ref(false)
+const errors = reactive<Record<string, string>>({})
+
+const form = reactive<EmployeeRequest>({
+  first_name: '',
+  last_name: '',
+  email: '',
+  username: '',
+  role: 'buyer'
 })
 
-const errors = reactive<{ 
-  first_name: string | null; 
-  last_name: string | null; 
-  email: string | null; 
-  role: string | null;
-  password: string | null;
-}>({
-  first_name: null, 
-  last_name: null, 
-  email: null, 
-  role: null,
-  password: null
-})
+const roleOptions = [
+  { value: 'admin', label: 'Администратор' },
+  { value: 'director', label: 'Директор' },
+  { value: 'coordinator', label: 'Координатор' },
+  { value: 'site_manager', label: 'Бригадир' },
+  { value: 'buyer', label: 'Закупщик' }
+]
 
-const submitting = ref(false)
+function resetForm() {
+  form.first_name = ''
+  form.last_name = ''
+  form.email = ''
+  form.username = ''
+  form.role = 'buyer'
+  Object.keys(errors).forEach(key => delete errors[key])
+}
 
-const isFormValid = computed(() => {
-  const baseValid = form.first_name.trim() && form.last_name.trim() && form.email.trim() && form.role
-  if (props.initial) {
-    return baseValid
-  } else {
-    return baseValid && form.password.trim()
-  }
-})
-
-watchEffect(() => {
+function loadInitial() {
   if (props.initial) {
     form.first_name = props.initial.first_name
     form.last_name = props.initial.last_name
     form.email = props.initial.email
+    form.username = props.initial.username
     form.role = props.initial.role
-    form.password = ''
   } else {
-    form.first_name = ''
-    form.last_name = ''
-    form.email = ''
-    form.role = ''
-    form.password = ''
+    resetForm()
   }
-  // Очищаем ошибки
-  Object.keys(errors).forEach(key => (errors as any)[key] = null)
-})
-
-function pickError(payload: any, key: string): string | null {
-  const v = payload?.[key]
-  if (Array.isArray(v) && v.length) return String(v[0])
-  if (typeof v === 'string') return v
-
-  const nested = payload?.errors?.[key]
-  if (Array.isArray(nested) && nested.length) return String(nested[0])
-  if (typeof nested === 'string') return nested
-
-  return null
 }
 
 async function submit() {
-  submitting.value = true
-  
-  // Очищаем ошибки
-  Object.keys(errors).forEach(key => (errors as any)[key] = null)
+  loading.value = true
+  Object.keys(errors).forEach(key => delete errors[key])
   
   try {
     if (props.initial) {
-      const payload: PatchedEmployeeRequest = {
-        first_name: form.first_name,
-        last_name: form.last_name,
-        email: form.email,
-        role: form.role as any
-      }
-      await api.patch(endpoints.employees.one(props.initial.id), payload)
-      ui.toast({type: 'success', text: 'Сотрудник обновлен'})
+      await employeesStore.update(props.initial.id, form)
     } else {
-      const payload: EmployeeRequest = {
-        first_name: form.first_name,
-        last_name: form.last_name,
-        email: form.email,
-        role: form.role as any,
-        password: form.password
-      }
-      await api.post(endpoints.employees.list, payload)
-      ui.toast({type: 'success', text: 'Сотрудник создан'})
+      await employeesStore.create(form)
     }
     emit('saved')
-  } catch (e: any) {
-    const data = e?.response?.data || {}
-    errors.first_name = pickError(data, 'first_name')
-    errors.last_name = pickError(data, 'last_name')
-    errors.email = pickError(data, 'email')
-    errors.role = pickError(data, 'role')
-    errors.password = pickError(data, 'password')
-    
-    // Если нет конкретных ошибок полей, показываем общую ошибку
-    const hasFieldErrors = Object.values(errors).some(error => error !== null)
-    if (!hasFieldErrors && data?.detail && typeof data.detail === 'string') {
-      errors.email = data.detail
-    }
-    
-    if (!hasFieldErrors) {
-      ui.toast({type: 'error', text: 'Ошибка сохранения сотрудника'})
+  } catch (error: any) {
+    if (error.response?.status === 400 && error.response?.data) {
+      const data = error.response.data
+      if (typeof data === 'object') {
+        Object.keys(data).forEach(key => {
+          if (Array.isArray(data[key]) && data[key].length > 0) {
+            errors[key] = data[key][0]
+          }
+        })
+      }
+    } else {
+      ui.toast({ type: 'error', text: 'Ошибка сохранения сотрудника' })
     }
   } finally {
-    submitting.value = false
+    loading.value = false
   }
 }
+
+onMounted(() => {
+  loadInitial()
+})
 </script>
-
-

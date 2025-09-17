@@ -1,6 +1,6 @@
 <!-- src/pages/Objects/ObjectForm.vue -->
 <template>
-  <div class="card bg-white shadow-xl">
+  <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title text-2xl mb-6">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,68 +11,56 @@
       
       <form class="space-y-6" @submit.prevent="submit">
         <!-- Название -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">
-            Название объекта
-            <span class="text-error">*</span>
-          </span>
-          <input 
-            v-model.trim="form.name" 
-            type="text" 
-            class="input input-bordered" 
-            :class="{ 'input-error': errors.name }"
-            placeholder="Введите название объекта"
-            required
-          />
-          <span v-if="errors.name" class="text-xs text-error">{{ errors.name }}</span>
-        </label>
+        <FormField
+          v-model="form.name"
+          label="Название объекта"
+          type="text"
+          placeholder="Введите название объекта"
+          :error="errors.name"
+          required
+        />
 
         <!-- Адрес -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">Адрес</span>
-          <textarea 
-            v-model.trim="form.address" 
-            class="textarea textarea-bordered resize-none" 
-            placeholder="Введите адрес объекта"
-            rows="3"
-          ></textarea>
-          <span class="text-xs text-gray-700-60">Необязательно</span>
-        </label>
+        <FormField
+          v-model="form.address"
+          label="Адрес"
+          type="textarea"
+          placeholder="Введите адрес объекта"
+          :help="'Необязательно'"
+          rows="3"
+        />
 
         <!-- Статус активности -->
-        <label class="grid gap-1">
-          <span class="text-sm font-semibold">Статус</span>
-          <div class="flex items-center gap-3">
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">Активный объект</span>
             <input 
               type="checkbox" 
               v-model="form.is_active" 
               class="checkbox checkbox-primary" 
             />
-            <div>
-              <span class="font-medium">Объект активен</span>
-              <div class="text-xs text-gray-700-60">
-                Активные объекты доступны для выбора в закупках и отчетах
-              </div>
-            </div>
-          </div>
-        </label>
+          </label>
+        </div>
 
         <!-- Кнопки действий -->
         <div class="flex justify-end gap-2 mt-6">
           <button 
             type="button" 
-            class="btn btn-ghost" 
+            class="btn btn-outline" 
             @click="$emit('cancel')"
-            :disabled="submitting"
+            :disabled="loading"
           >
             Отмена
           </button>
           <button 
             type="submit" 
             class="btn btn-primary" 
-            :disabled="submitting || !form.name.trim()"
+            :disabled="loading"
           >
-            {{ submitting ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
+            <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
           </button>
         </div>
       </form>
@@ -81,83 +69,80 @@
 </template>
 
 <script setup lang="ts">
-import {reactive, ref, watchEffect} from 'vue'
-import api from '@/api/client'
-import {endpoints} from '@/api/endpoints'
-import type {SiteObject, ObjectRequest, PatchedObjectRequest} from '@/api/types'
-import {useUiStore} from '@/stores/ui'
+import { ref, reactive, onMounted } from 'vue'
+import { useObjectsStore } from '@/stores/objects'
+import { useUiStore } from '@/stores/ui'
+import type { Object, ObjectRequest } from '@/api/types'
+import FormField from '@/components/FormField.vue'
 
-const props = defineProps<{ initial: SiteObject | null }>()
-const emit = defineEmits<{ (e: 'saved'): void; (e: 'cancel'): void }>()
+const props = defineProps<{
+  initial?: Object | null
+}>()
 
+const emit = defineEmits<{
+  saved: []
+  cancel: []
+}>()
+
+const objectsStore = useObjectsStore()
 const ui = useUiStore()
 
-const form = reactive<{ name: string; address: string; is_active: boolean }>({name: '', address: '', is_active: true})
-const errors = reactive<{ name: string | null }>({name: null})
-const submitting = ref(false)
+const loading = ref(false)
+const errors = reactive<Record<string, string>>({})
 
-watchEffect(() => {
-  if (props.initial) {
-    form.name = props.initial.name
-    form.address = props.initial.address ?? ''
-    form.is_active = !!props.initial.is_active
-  } else {
-    form.name = ''
-    form.address = ''
-    form.is_active = true
-  }
-  errors.name = null
+const form = reactive<ObjectRequest>({
+  name: '',
+  address: '',
+  is_active: true
 })
 
-function pickError(payload: any, key: string): string | null {
-  const v = payload?.[key]
-  if (Array.isArray(v) && v.length) return String(v[0])
-  if (typeof v === 'string') return v
+function resetForm() {
+  form.name = ''
+  form.address = ''
+  form.is_active = true
+  Object.keys(errors).forEach(key => delete errors[key])
+}
 
-  const nested = payload?.errors?.[key]
-  if (Array.isArray(nested) && nested.length) return String(nested[0])
-  if (typeof nested === 'string') return nested
-
-  return null
+function loadInitial() {
+  if (props.initial) {
+    form.name = props.initial.name
+    form.address = props.initial.address || ''
+    form.is_active = props.initial.is_active
+  } else {
+    resetForm()
+  }
 }
 
 async function submit() {
-  submitting.value = true
-  errors.name = null
+  loading.value = true
+  Object.keys(errors).forEach(key => delete errors[key])
   
   try {
     if (props.initial) {
-      const payload: PatchedObjectRequest = {
-        name: form.name,
-        address: form.address || undefined,
-        is_active: form.is_active
-      }
-      await api.patch(endpoints.objects.one(props.initial.id), payload)
-      ui.toast({type: 'success', text: 'Объект обновлен'})
+      await objectsStore.update(props.initial.id, form)
     } else {
-      const payload: ObjectRequest = {
-        name: form.name,
-        address: form.address || undefined,
-        is_active: form.is_active
-      }
-      await api.post(endpoints.objects.list, payload)
-      ui.toast({type: 'success', text: 'Объект создан'})
+      await objectsStore.create(form)
     }
     emit('saved')
-  } catch (e: any) {
-    const data = e?.response?.data || {}
-    errors.name = pickError(data, 'name')
-    
-    if (!errors.name && data?.detail && typeof data.detail === 'string') {
-      errors.name = data.detail
-    }
-    
-    if (!errors.name) {
-      ui.toast({type: 'error', text: 'Ошибка сохранения объекта'})
+  } catch (error: any) {
+    if (error.response?.status === 400 && error.response?.data) {
+      const data = error.response.data
+      if (typeof data === 'object') {
+        Object.keys(data).forEach(key => {
+          if (Array.isArray(data[key]) && data[key].length > 0) {
+            errors[key] = data[key][0]
+          }
+        })
+      }
+    } else {
+      ui.toast({ type: 'error', text: 'Ошибка сохранения объекта' })
     }
   } finally {
-    submitting.value = false
+    loading.value = false
   }
 }
-</script>
 
+onMounted(() => {
+  loadInitial()
+})
+</script>

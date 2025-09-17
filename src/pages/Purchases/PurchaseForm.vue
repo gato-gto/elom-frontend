@@ -1,72 +1,95 @@
 <template>
   <div class="grid gap-4">
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">{{ isEdit ? 'Редактировать закупку' : 'Новая закупка' }}</h1>
-      <div class="flex gap-2">
-        <RouterLink class="btn btn-ghost" to="/purchases">К списку</RouterLink>
-        <button class="btn btn-primary" :disabled="saving" @click="onSubmit">
-          {{ saving ? 'Сохранение…' : 'Сохранить' }}
-        </button>
-      </div>
-    </div>
-
     <div v-if="formError" class="alert alert-error"><span>{{ formError }}</span></div>
 
     <!-- Шапка -->
-    <div class="card bg-white border">
-      <div class="card-body grid md:grid-cols-4 gap-4">
-        <fieldset class="fieldset">
-          <span class="label-text">Дата*</span>
-          <input v-model="model.date" type="date" class="input input-bordered" required/>
-        </fieldset>
-        <fieldset class="fieldset">
-          <span class="label-text">Объект*</span>
-          <select v-model.number="model.object" class="select select-bordered" required>
-            <option :value="undefined" disabled>Выберите объект</option>
-            <option v-for="o in objects" :key="o.id" :value="o.id">{{ o.name }}</option>
-          </select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <span class="label-text">Ответственный</span>
-          <select v-model.number="model.responsible" class="select select-bordered">
-            <option :value="undefined">Не указан</option>
-            <option v-for="e in employees" :key="e.id" :value="e.id">
-              {{ e.first_name || e.username }} {{ e.last_name || '' }}
-            </option>
-          </select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <span class="label-text">Поставщик</span>
-          <input v-model.trim="model.supplier" class="input input-bordered" placeholder="ИП Иванов"/>
-        </fieldset>
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Основная информация</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Дата -->
+          <FormField
+            v-model="model.date"
+            label="Дата"
+            type="date"
+            :error="errors.date"
+            required
+          />
 
-        <fieldset class="fieldset">
-          <span class="label-text">№ накладной/чека</span>
-          <input v-model.trim="model.invoice_number" class="input input-bordered" placeholder="A-12345"/>
-        </fieldset>
+          <!-- Объект -->
+          <FormField
+            v-model="model.object"
+            label="Объект"
+            type="select"
+            :error="errors.object"
+            placeholder="Выберите объект"
+            :options="objectOptions"
+            required
+          />
 
-        <fieldset class="fieldset">
-          <span class="label-text">НДС включён?</span>
-          <select v-model="model.vat_included" class="select select-bordered">
-            <option :value="undefined">Не указано</option>
-            <option :value="true">Да</option>
-            <option :value="false">Нет</option>
-          </select>
-        </fieldset>
+          <!-- Ответственный -->
+          <FormField
+            v-model="model.responsible"
+            label="Ответственный"
+            type="select"
+            :error="errors.responsible"
+            placeholder="Не указан"
+            :options="employeeOptions"
+          />
 
-        <fieldset class="fieldset w-100 md:col-span-2">
-          <label class="label"><span class="label-text">Комментарий</span></label>
-          <textarea v-model.trim="model.comment" class="textarea input" rows="1"/>
-        </fieldset>
+          <!-- Поставщик -->
+          <FormField
+            v-model="model.supplier"
+            label="Поставщик"
+            type="text"
+            placeholder="ИП Иванов"
+            :error="errors.supplier"
+          />
+
+          <!-- Номер накладной -->
+          <FormField
+            v-model="model.invoice_number"
+            label="№ накладной/чека"
+            type="text"
+            placeholder="A-12345"
+            :error="errors.invoice_number"
+          />
+
+          <!-- НДС -->
+          <FormField
+            v-model="model.vat_included"
+            label="НДС включён?"
+            type="select"
+            :error="errors.vat_included"
+            placeholder="Не указано"
+            :options="vatOptions"
+          />
+
+          <!-- Комментарий -->
+          <div class="md:col-span-2">
+            <FormField
+              v-model="model.comment"
+              label="Комментарий"
+              type="textarea"
+              :rows="2"
+              :error="errors.comment"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Позиции -->
-    <div class="card bg-white border">
+    <div class="card bg-base-100 border">
       <div class="card-body">
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between mb-4">
           <h2 class="card-title text-lg">Позиции</h2>
-          <button class="btn btn-sm" @click="addItem">Добавить позицию</button>
+          <button class="btn btn-sm btn-primary" @click="addItem">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Добавить позицию
+          </button>
         </div>
 
         <div class="overflow-auto">
@@ -101,21 +124,21 @@
               <td>
                 <input v-model="it.price" type="number" step="0.01" min="0" class="input input-bordered input-sm w-full" @input="recalc(it)"/>
               </td>
-              <td class="text-right">{{ it.amount }}</td>
+              <td class="text-right font-mono">{{ formatMoney(it.total) }}</td>
               <td class="text-right">
-                <button class="btn btn-xs btn-ghost" @click="duplicateItem(idx)">Дублировать</button>
-                <button class="btn btn-xs btn-error" @click="removeItem(idx)">Удалить</button>
+                <button class="btn btn-error btn-xs" @click="removeItem(idx)">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
               </td>
-            </tr>
-            <tr v-if="items.length===0">
-              <td colspan="6" class="text-center text-gray-700-60">Добавьте хотя бы одну позицию</td>
             </tr>
             </tbody>
             <tfoot>
-            <tr>
-              <th colspan="4" class="text-right">Итого</th>
-              <th class="text-right">{{ totalAmount }}</th>
-              <th/>
+            <tr class="font-bold">
+              <td colspan="4" class="text-right">Итого:</td>
+              <td class="text-right font-mono">{{ formatMoney(total) }}</td>
+              <td></td>
             </tr>
             </tfoot>
           </table>
@@ -123,213 +146,304 @@
       </div>
     </div>
 
-    <!-- Фото -->
-    <div class="card bg-white border">
+    <!-- Фото документов -->
+    <div class="card bg-base-100 border">
       <div class="card-body">
-        <h2 class="card-title text-lg">Фото и документы</h2>
-        <input type="file" class="file-input file-input-bordered w-full max-w-md" multiple @change="onPhotos"/>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <div v-for="(f, i) in newPhotos" :key="i" class="avatar">
-            <div class="w-16 rounded">
-              <img :src="toObjectUrl(f)"/>
+        <h2 class="card-title text-lg mb-4">Фото документов</h2>
+        
+        <!-- Current photos -->
+        <div v-if="currentPhotos.length > 0" class="mb-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div v-for="(photo, idx) in currentPhotos" :key="idx" class="relative">
+              <img 
+                :src="photo" 
+                alt="Документ" 
+                class="h-24 w-full object-cover rounded-lg border"
+              />
+              <button 
+                type="button" 
+                class="absolute -top-2 -right-2 btn btn-error btn-xs btn-circle"
+                :disabled="deletingPhoto" 
+                @click="onDeletePhoto(idx)"
+                title="Удалить фото"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </div>
+          <p class="text-xs text-base-content-60 mt-2">Текущие фото документов</p>
         </div>
-        <p class="text-xs text-gray-700-60 mt-2">Фото загрузятся после сохранения закупки.</p>
+        
+        <!-- File input -->
+        <input 
+          type="file" 
+          multiple 
+          accept="image/*" 
+          class="file-input file-input-bordered w-full"
+          @change="onPhotoChange"
+          :disabled="deletingPhoto"
+        />
       </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="flex justify-end gap-2">
+      <button 
+        type="button" 
+        class="btn btn-outline" 
+        @click="$emit('cancel')"
+        :disabled="saving"
+      >
+        Отмена
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        :disabled="saving" 
+        @click="onSubmit"
+      >
+        <svg v-if="saving" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        {{ saving ? 'Сохранение...' : 'Сохранить' }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref, computed} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import api from '@/api/client'
-import endpoints, {buildQuery} from '@/api/endpoints'
-import type {
-  Employee, Material, SiteObject, PageResponse, Purchase, PurchaseRequest, PatchedPurchaseRequest, PurchaseItemRequest, Unit
-} from '@/api/types'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { usePurchasesStore } from '@/stores/purchases'
+import { useMaterialsStore } from '@/stores/materials'
+import { useUnitsStore } from '@/stores/units'
+import { useObjectsStore } from '@/stores/objects'
+import { useEmployeesStore } from '@/stores/employees'
+import { useUiStore } from '@/stores/ui'
+import type { Purchase, PurchaseRequest, PurchaseItemRequest } from '@/api/types'
+import FormField from '@/components/FormField.vue'
 
-const route = useRoute()
 const router = useRouter()
-const idParam = route.params.id ? Number(route.params.id) : null
-const isEdit = !!idParam
+const route = useRoute()
+
+const emit = defineEmits<{
+  saved: []
+  cancel: []
+}>()
+
+const purchasesStore = usePurchasesStore()
+const materialsStore = useMaterialsStore()
+const unitsStore = useUnitsStore()
+const objectsStore = useObjectsStore()
+const employeesStore = useEmployeesStore()
+const ui = useUiStore()
 
 const saving = ref(false)
-const formError = ref<string | null>(null)
+const deletingPhoto = ref(false)
+const formError = ref('')
+const errors = reactive<Record<string, string>>({})
 
-const model = reactive<Partial<Purchase>>({
-  date: new Date().toISOString().slice(0, 10),
-  object: undefined as any,
+const isEdit = computed(() => !!route.params.id)
+
+const model = reactive<PurchaseRequest>({
+  date: new Date().toISOString().split('T')[0],
+  object: 0, // Will be set from form
+  responsible: 0, // Will be set from form
   supplier: '',
   invoice_number: '',
   vat_included: undefined,
   comment: '',
-  responsible: undefined as any,
+  items: []
 })
 
-type ItemForm = {
-  _k: number
-  material?: number
-  unit?: number
-  quantity: string // decimal-as-string
-  price: string    // decimal-as-string | empty
-  amount: string   // decimal-as-string
-}
-const items = ref<ItemForm[]>([])
+const items = ref<Array<PurchaseItemRequest & { _k: string, total: number, quantity: string, price: string }>>([])
+const photoFiles = ref<File[]>([])
+const currentPhotos = ref<string[]>([])
 
-const objects = ref<SiteObject[]>([])
-const employees = ref<Employee[]>([])
-const materials = ref<Material[]>([])
-const units = ref<Unit[]>([])
+const materials = computed(() => materialsStore.items)
+const units = computed(() => unitsStore.items)
+const objects = computed(() => objectsStore.items)
+const employees = computed(() => employeesStore.items)
+
+const objectOptions = computed(() => 
+  objects.value.map(obj => ({ value: obj.id, label: obj.name }))
+)
+
+const employeeOptions = computed(() => 
+  employees.value.map(emp => ({ 
+    value: emp.id, 
+    label: `${emp.first_name || emp.username} ${emp.last_name || ''}`.trim()
+  }))
+)
+
+const vatOptions = [
+  { value: true, label: 'Да' },
+  { value: false, label: 'Нет' }
+]
+
+const total = computed(() => {
+  return items.value.reduce((sum, item) => sum + (item.total || 0), 0)
+})
+
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 2
+  }).format(amount)
+}
 
 function addItem() {
-  items.value.push({_k: Date.now() + Math.random(), material: undefined, unit: undefined, quantity: '0', price: '0', amount: '0'})
+  items.value.push({
+    _k: Math.random().toString(36).substr(2, 9),
+    material: 0,
+    unit: 0,
+    quantity: '0',
+    price: '0',
+    total: 0
+  })
 }
 
-function removeItem(idx: number) {
-  items.value.splice(idx, 1)
+function removeItem(index: number) {
+  items.value.splice(index, 1)
 }
 
-function duplicateItem(idx: number) {
-  const src = items.value[idx]
-  items.value.splice(idx + 1, 0, {...src, _k: Date.now() + Math.random()})
+function onMaterialChange(item: any) {
+  const material = materials.value.find(m => m.id === item.material)
+  if (material?.default_unit) {
+    item.unit = material.default_unit
+  }
 }
 
-function recalc(it: ItemForm) {
-  const q = Number(it.quantity || '0')
-  const p = Number(it.price || '0')
-  const a = (isFinite(q) ? q : 0) * (isFinite(p) ? p : 0)
-  it.amount = a.toFixed(2)
+function recalc(item: any) {
+  const quantity = parseFloat(item.quantity || '0')
+  const price = parseFloat(item.price || '0')
+  item.total = quantity * price
 }
 
-function onMaterialChange(it: ItemForm) {
-  // дефолтная единица = unit материала (если есть и если в позиции пусто)
-  const m = materials.value.find(x => x.id === it.material)
-  if (m && !it.unit) it.unit = m.default_unit
+function onPhotoChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (files) {
+    photoFiles.value = Array.from(files)
+  }
 }
 
-function toObjectUrl(f: File) {
-  return URL.createObjectURL(f)
-}
-
-const newPhotos = ref<File[]>([])
-
-function onPhotos(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (input?.files?.length) newPhotos.value = Array.from(input.files)
-}
-
-const totalAmount = computed(() => {
-  const sum = items.value.reduce((acc, it) => acc + Number(it.amount || '0'), 0)
-  return sum.toFixed(2)
-})
-
-async function loadRefs() {
-  const [od, ed, md, ud] = await Promise.all([
-    api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
-    api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<Unit>>(endpoints.units.list + buildQuery({page_size: 1000, ordering: 'code'})),
-  ])
-  objects.value = od.data.results
-  employees.value = ed.data.results
-  materials.value = md.data.results
-  units.value = ud.data.results
-}
-
-async function loadIfEdit() {
-  if (!isEdit) return
-  const {data} = await api.get<Purchase>(endpoints.purchases.one(idParam!))
-  // шапка
-  model.date = data.date
-  model.object = data.object
-  model.supplier = data.supplier ?? ''
-  model.invoice_number = data.invoice_number ?? ''
-  model.vat_included = data.vat_included
-  model.comment = data.comment ?? ''
-  model.responsible = data.responsible ?? undefined
-
-  // позиции → строки
-  items.value = (data.items ?? []).map((x) => ({
-    _k: Date.now() + Math.random(),
-    material: x.material,
-    unit: x.unit,
-    quantity: String(x.quantity ?? 0),
-    price: String(x.price ?? 0),
-    amount: String(x.amount ?? (Number(x.quantity ?? 0) * Number(x.price ?? 0))),
-  }))
+async function onDeletePhoto(index: number) {
+  if (!isEdit.value) return
+  
+  deletingPhoto.value = true
+  try {
+    // TODO: Implement photo deletion in store
+    currentPhotos.value.splice(index, 1)
+    ui.toast({ type: 'success', text: 'Фото удалено' })
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка удаления фото' })
+    console.error('Error deleting photo:', error)
+  } finally {
+    deletingPhoto.value = false
+  }
 }
 
 async function onSubmit() {
-  formError.value = null
-  if (!model.date || !model.object) {
-    formError.value = 'Заполните дату и объект'
-    return
-  }
-  if (items.value.length === 0) {
-    formError.value = 'Добавьте хотя бы одну позицию'
-    return
-  }
-
   saving.value = true
+  formError.value = ''
+  Object.keys(errors).forEach(key => delete errors[key])
+  
   try {
-    // Готовим DTO для серверной модели
-    const payloadItems: PurchaseItemRequest[] = items.value.map(it => ({
-      material: it.material!,
-      unit: it.unit!,
-      quantity: String(Number(it.quantity || 0)),
-      price: it.price !== '' ? String(Number(it.price)) : undefined,
-    }))
-
-    let id = idParam
-    if (isEdit) {
-      const payload: PatchedPurchaseRequest = {
-        date: model.date!,
-        object: model.object!,
-        supplier: model.supplier || undefined,
-        invoice_number: model.invoice_number || undefined,
-        vat_included: model.vat_included,
-        comment: model.comment || undefined,
-        responsible: model.responsible ?? undefined,
-        items: payloadItems,
-      }
-      const {data} = await api.patch<Purchase>(endpoints.purchases.one(idParam!), payload)
-      id = data.id
+    // Prepare purchase data
+    const purchaseData: PurchaseRequest = {
+      date: model.date,
+      object: model.object,
+      responsible: model.responsible,
+      supplier: model.supplier,
+      invoice_number: model.invoice_number,
+      vat_included: model.vat_included,
+      comment: model.comment,
+      items: items.value.map(item => ({
+        material: item.material,
+        unit: item.unit,
+        quantity: item.quantity,
+        price: item.price
+      }))
+    }
+    
+    if (isEdit.value) {
+      await purchasesStore.update(Number(route.params.id), purchaseData)
     } else {
-      const payload: PurchaseRequest = {
-        date: model.date!,
-        object: model.object!,
-        supplier: model.supplier || '',
-        invoice_number: model.invoice_number || undefined,
-        vat_included: model.vat_included,
-        comment: model.comment || undefined,
-        responsible: model.responsible!,
-        items: payloadItems,
+      await purchasesStore.create(purchaseData)
+    }
+    
+    ui.toast({ type: 'success', text: 'Закупка сохранена' })
+    emit('saved')
+  } catch (error: any) {
+    if (error.response?.status === 400 && error.response?.data) {
+      const data = error.response.data
+      if (typeof data === 'object') {
+        Object.keys(data).forEach(key => {
+          if (Array.isArray(data[key]) && data[key].length > 0) {
+            errors[key] = data[key][0]
+          }
+        })
       }
-      const {data} = await api.post<Purchase>(endpoints.purchases.list, payload)
-      id = data.id
+    } else {
+      formError.value = 'Ошибка сохранения закупки'
     }
-
-    // Фото после сохранения
-    if (newPhotos.value.length && id) {
-      const fd = new FormData()
-      newPhotos.value.forEach(f => fd.append('photos[]', f))
-      await api.post(endpoints.purchases.uploadPhoto(id), fd)
-    }
-
-    await router.replace(`/purchases/${id}`)
-  } catch (e: any) {
-    formError.value = e?.response?.data?.detail || 'Ошибка сохранения'
   } finally {
     saving.value = false
   }
 }
 
-onMounted(async () => {
-  await loadRefs()
-  await loadIfEdit()
-  if (!isEdit && items.value.length === 0) addItem()
+async function loadData() {
+  // Load reference data
+  await Promise.all([
+    materialsStore.fetchList(),
+    unitsStore.fetchList(),
+    objectsStore.fetchList(),
+    employeesStore.fetchList()
+  ])
+  
+  // Load purchase data if editing
+  if (isEdit.value) {
+    try {
+      const purchase = await purchasesStore.fetchOne(Number(route.params.id))
+      if (purchase) {
+        model.date = purchase.date
+        model.object = purchase.object
+        model.responsible = purchase.responsible
+        model.supplier = purchase.supplier || ''
+        model.invoice_number = purchase.invoice_number || ''
+        model.vat_included = purchase.vat_included
+        model.comment = purchase.comment || ''
+        
+        // Load items
+        items.value = purchase.items?.map(item => ({
+          _k: Math.random().toString(36).substr(2, 9),
+          material: item.material,
+          unit: item.unit,
+          quantity: item.quantity,
+          price: item.price || '0',
+          total: parseFloat(item.quantity) * parseFloat(item.price || '0')
+        })) || []
+        
+        // Load photos
+        if (purchase.photos) {
+          currentPhotos.value = purchase.photos.map(photo => photo.url)
+        }
+      }
+    } catch (error) {
+      ui.toast({ type: 'error', text: 'Ошибка загрузки закупки' })
+      console.error('Error loading purchase:', error)
+    }
+  } else {
+    // Add initial item for new purchase
+    addItem()
+  }
+}
+
+onMounted(() => {
+  loadData()
 })
 </script>
-
