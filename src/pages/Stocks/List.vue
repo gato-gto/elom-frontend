@@ -4,7 +4,7 @@
       <h1 class="text-lg font-semibold">Остатки</h1>
     </div>
 
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body grid md:grid-cols-6 gap-4">
         <fieldset class="fieldset">
           <label class="label"><span class="label-text">Дата с</span></label>
@@ -44,7 +44,7 @@
       </div>
     </div>
 
-    <div class="overflow-auto border border-base-300 rounded-xl">
+    <div class="overflow-auto border border-gray-200 rounded-xl">
       <table class="table table-zebra w-full">
         <thead>
         <tr>
@@ -61,12 +61,12 @@
           <td>{{ s.date }}</td>
           <td>{{ objectName(s.object) ?? s.object }}</td>
           <td>{{ materialName(s.material) ?? s.material }}</td>
-          <td>{{ s.unit_name ?? '—' }}</td>
-          <td class="text-right">{{ s.quantity_actual }}</td>
+          <td>{{ s.unit_code ?? '—' }}</td>
+          <td class="text-right">{{ s.quantity }}</td>
           <td>{{ responsibleName(s.responsible) ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
-          <td colspan="6" class="text-center text-base-content/60">Нет данных</td>
+          <td colspan="6" class="text-center text-gray-700-60">Нет данных</td>
         </tr>
         </tbody>
       </table>
@@ -85,7 +85,7 @@
 import {computed, onMounted, ref} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, StockSnapshot, StockListFilters, SiteObject, Material, EmployeeListItem} from '@/api/types'
+import type {PageResponse, StockSnapshot, StockListFilters, SiteObject, Material, Employee} from '@/api/types'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
@@ -101,7 +101,7 @@ const filters = ref<StockListFilters>({
 
 const objects = ref<SiteObject[]>([])
 const materials = ref<Material[]>([])
-const employees = ref<EmployeeListItem[]>([])
+const employees = ref<Employee[]>([])
 
 const oMap = computed(() => new Map(objects.value.map(o => [o.id, o.name])))
 const mMap = computed(() => new Map(materials.value.map(m => [m.id, m.name])))
@@ -123,7 +123,7 @@ async function loadRefs() {
   const [od, md, ed] = await Promise.all([
     api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
     api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<EmployeeListItem>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
+    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
   ])
   objects.value = od.data.results
   materials.value = md.data.results
@@ -134,7 +134,7 @@ async function fetchList() {
   loading.value = true
   try {
     const q: StockListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize}
-    const {data} = await api.get<PageResponse<StockSnapshot>>(endpoints.stock.snapshots + buildQuery(q as Query))
+    const {data} = await api.get<PageResponse<StockSnapshot>>(endpoints.stockSnapshots.list + buildQuery(q as unknown as Query))
     rows.value = data.results
     count.value = data.count
   } finally {
@@ -152,3 +152,4 @@ onMounted(async () => {
   await fetchList()
 })
 </script>
+

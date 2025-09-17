@@ -1,17 +1,17 @@
 <template>
   <div class="grid md:grid-cols-2 gap-6">
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body">
         <h2 class="card-title text-lg">Состояние API</h2>
-        <pre class="bg-base-200 rounded-xl p-3 text-sm overflow-auto">{{ health }}</pre>
+        <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ health }}</pre>
         <button class="btn btn-outline mt-3" @click="load">Обновить</button>
       </div>
     </div>
 
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body">
         <h2 class="card-title text-lg">Текущий пользователь</h2>
-        <pre class="bg-base-200 rounded-xl p-3 text-sm overflow-auto">{{ me }}</pre>
+        <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ me }}</pre>
       </div>
     </div>
   </div>
@@ -33,7 +33,7 @@ async function load() {
     health.value = {ok: false}
   }
   try {
-    const u = await api.get(endpoints.auth.me)
+    const u = await api.get(endpoints.users.me)
     me.value = u.data
   } catch {
     me.value = null
@@ -42,3 +42,4 @@ async function load() {
 
 onMounted(load)
 </script>
+

@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-screen grid place-items-center p-4">
-    <div class="w-full max-w-md card bg-base-100 border shadow-sm">
+    <div class="w-full max-w-md card bg-white border shadow-sm">
       <div class="card-body">
         <h1 class="text-xl font-semibold mb-1">Вход</h1>
-        <p class="text-base-content/70 text-sm mb-4">Введите логин и пароль, чтобы продолжить.</p>
+        <p class="text-gray-600 text-sm mb-4">Введите логин и пароль, чтобы продолжить.</p>
 
         <div v-if="sessionExpired" class="alert alert-warning py-2 mb-3">
           <span>Сессия истекла. Пожалуйста, войдите снова.</span>
@@ -57,11 +57,21 @@ async function submit() {
     if (auth.isAuthenticated) {
       const redirect = (route.query.redirect as string) || '/'
       await router.replace(redirect)
+      return
     }
-    await auth.login(username.value, password.value)
-    ui.toast({type: 'success', text: 'Добро пожаловать!'})
+    
+    const success = await auth.login(username.value, password.value)
+    if (success) {
+      ui.toast({type: 'success', text: 'Добро пожаловать!'})
+      const redirect = (route.query.redirect as string) || '/'
+      await router.replace(redirect)
+    } else {
+      // Ошибка уже установлена в auth.error
+      ui.toast({type: 'error', text: auth.error || 'Ошибка входа'})
+    }
   } catch (e: any) {
     ui.toast({type: 'error', text: e?.response?.data?.detail ?? 'Ошибка входа'})
   }
 }
 </script>
+

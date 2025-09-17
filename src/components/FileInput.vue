@@ -9,8 +9,8 @@
         @change="onChange"
     />
 
-    <div v-if="previewUrl" class="rounded-xl border bg-base-100 p-2 w-full max-w-xs">
-      <img :src="previewUrl" alt="preview" class="w-full h-40 object-contain bg-base-200 rounded-lg"/>
+    <div v-if="previewUrl" class="rounded-xl border bg-white p-2 w-full max-w-xs">
+      <img :src="previewUrl" alt="preview" class="w-full h-40 object-contain bg-gray-50 rounded-lg"/>
     </div>
 
     <div class="flex items-center gap-2">
@@ -76,3 +76,4 @@ function clear() {
   if (fileEl.value) fileEl.value.value = ''
 }
 </script>
+

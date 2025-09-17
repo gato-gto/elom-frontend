@@ -4,40 +4,54 @@ const join = (path: string) =>
     path.startsWith('/') ? `${API_PREFIX}${path}` : `${API_PREFIX}/${path}`;
 
 export const endpoints = {
-    health: join('/healthz'),
+    // Health check (если есть)
+    health: join('/health'),
 
+    // Auth endpoints
     auth: {
         token: join('/auth/token/'),
         refresh: join('/auth/token/refresh/'),
         verify: join('/auth/token/verify/'),
+    },
+
+    // User endpoints
+    users: {
         me: join('/users/me'),
     },
 
+    // Employee endpoints
+    employees: {
+        list: join('/employees/'),
+        one: (id: number) => join(`/employees/${id}/`),
+        setPassword: (id: number) => join(`/employees/${id}/set_password/`),
+    },
+
+    // Units endpoints
     units: {
         list: join('/units/'),
         one: (id: number) => join(`/units/${id}/`),
     },
 
+    // Material Categories endpoints
+    materialCategories: {
+        list: join('/material-categories/'),
+        one: (id: number) => join(`/material-categories/${id}/`),
+    },
+
+    // Materials endpoints
     materials: {
         list: join('/materials/'),
         one: (id: number) => join(`/materials/${id}/`),
         uploadPhoto: (id: number) => join(`/materials/${id}/photo/`),
     },
 
-    // Допущение: список категорий материалов доступен по этому пути.
-    // Если у бэкенда другой маршрут — заменим здесь в одном месте.
-    materialCategories: join('/material-categories/'),
-
+    // Objects endpoints
     objects: {
         list: join('/objects/'),
         one: (id: number) => join(`/objects/${id}/`),
     },
 
-    employees: {
-        list: join('/employees/'),
-        one: (id: number) => join(`/employees/${id}/`),
-    },
-
+    // Purchases endpoints
     purchases: {
         list: join('/purchases/'),
         one: (id: number) => join(`/purchases/${id}/`),
@@ -49,18 +63,27 @@ export const endpoints = {
         },
     },
 
-    stock: {
-        snapshots: join('/stock/snapshots/'),
+    // Stock Snapshots endpoints
+    stockSnapshots: {
+        list: join('/stock/snapshots/'),
         one: (id: number) => join(`/stock/snapshots/${id}/`),
     },
 
+    // Archive endpoints
     archive: {
         list: join('/archive/'),
+        one: (id: number) => join(`/archive/${id}/`),
         close: join('/archive/close/'),
         reopen: join('/archive/reopen/'),
-        periods: join('/archive/periods/'),
+        periods: {
+            list: join('/archive/periods/'),
+            one: (id: number) => join(`/archive/periods/${id}/`),
+            close: join('/archive/periods/close/'),
+            reopen: join('/archive/periods/reopen/'),
+        },
     },
 
+    // Reports endpoints
     reports: {
         byPeriod: join('/reports/purchases/by-period'),
         byObject: join('/reports/purchases/by-object'),

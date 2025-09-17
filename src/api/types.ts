@@ -1,5 +1,5 @@
 // src/api/types.ts
-// Строгие DTO для фронта. Соответствуют YAML/MD спецификации проекта.
+// Строгие DTO для фронта. Соответствуют OpenAPI схеме ELOM API v1.0.0
 
 export type ID = number;
 
@@ -15,14 +15,19 @@ export interface PageResponse<T> extends PageMeta {
 }
 
 // -------------------- Auth --------------------
-export interface TokenPair {
+export interface TokenObtainPair {
     access: string;
     refresh: string;
 }
 
-export interface LoginRequest {
+export interface TokenObtainPairRequest {
     username: string;
     password: string;
+}
+
+export interface TokenRefresh {
+    access: string;
+    refresh: string;
 }
 
 export interface TokenRefreshRequest {
@@ -33,54 +38,49 @@ export interface TokenVerifyRequest {
     token: string;
 }
 
-export interface MeResponse {
+export interface Me {
     id: ID;
     username: string;
-    email?: string | null;
-    role?: UserRole | null;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    role: UserRole;
 }
 
 // -------------------- Employees/Users --------------------
-export type UserRole =
-    | "admin"
-    | "buyer"
-    | "site_manager"
-    | "director"
-    | "coordinator";
+export type UserRole = "admin" | "buyer" | "site_manager" | "director" | "coordinator";
 
-export interface EmployeeListItem {
+export interface Employee {
     id: ID;
     username: string;
     first_name?: string;
     last_name?: string;
     email?: string;
-    role?: UserRole;
     is_active: boolean;
+    role: UserRole;
+    assigned_object_ids: number[];
 }
 
-export interface EmployeeDetail extends EmployeeListItem {
-    is_staff: boolean;
-    is_superuser: boolean;
-    date_joined?: string; // ISO
-    last_login?: string | null; // ISO
-}
-
-export interface EmployeeCreate {
+export interface EmployeeRequest {
     username: string;
-    email?: string;
     first_name?: string;
     last_name?: string;
-    role?: UserRole;
+    email?: string;
     is_active?: boolean;
-    password?: string; // может быть задан при создании
+    role: UserRole;
+    assigned_object_ids?: number[];
+    password?: string;
 }
 
-export interface EmployeeUpdate {
-    email?: string;
+export interface PatchedEmployeeRequest {
+    username?: string;
     first_name?: string;
     last_name?: string;
-    role?: UserRole;
+    email?: string;
     is_active?: boolean;
+    role?: UserRole;
+    assigned_object_ids?: number[];
+    password?: string;
 }
 
 export interface SetPasswordRequest {
@@ -90,112 +90,187 @@ export interface SetPasswordRequest {
 // -------------------- Units --------------------
 export interface Unit {
     id: ID;
+    code: string;
     name: string;
-    code?: string | null;
-    is_active: boolean;
 }
 
-export interface UnitCreate {
+export interface UnitRequest {
+    code: string;
     name: string;
-    code?: string | null;
-    is_active?: boolean;
 }
 
-export interface UnitUpdate extends UnitCreate {
+export interface PatchedUnitRequest {
+    code?: string;
+    name?: string;
 }
 
 // -------------------- Objects --------------------
-export interface SiteObject {
+export interface Object {
     id: ID;
     name: string;
-    address?: string | null;
-    lat?: number | null;
-    lon?: number | null;
-    responsible_name?: string | null;
-    responsible_phone?: string | null;
-    start_date?: string | null; // ISO
-    end_date?: string | null;   // ISO
-    notes?: string | null;
+    address?: string;
     is_active: boolean;
 }
 
-export interface ObjectCreate extends Partial<SiteObject> {
+export interface ObjectRequest {
     name: string;
+    address?: string;
+    is_active?: boolean;
 }
 
-export interface ObjectUpdate extends Partial<ObjectCreate> {
+export interface PatchedObjectRequest {
+    name?: string;
+    address?: string;
+    is_active?: boolean;
 }
+
+// Type alias for compatibility with existing code
+export type SiteObject = Object;
 
 // -------------------- Materials --------------------
 export interface Material {
     id: ID;
     name: string;
-    unit: ID;              // ссылка на Unit
-    unit_name?: string;    // опционально возвращается беком
-    code?: string | null;
-    is_active: boolean;
-    photo_url?: string | null;
-}
-
-export interface MaterialCreate {
-    name: string;
-    unit: ID;
-    code?: string | null;
+    sku?: string;
+    category?: ID;
+    category_name?: string;
+    default_unit: ID;
+    default_unit_code?: string;
+    photo_url?: string;
     is_active?: boolean;
-    // photo: multipart на уровне запроса (FormData)
 }
 
-export interface MaterialUpdate extends Partial<MaterialCreate> {
+export interface MaterialRequest {
+    name: string;
+    sku?: string;
+    category?: ID;
+    default_unit: ID;
+}
+
+export interface PatchedMaterialRequest {
+    name?: string;
+    sku?: string;
+    category?: ID;
+    default_unit?: ID;
+}
+
+export interface MaterialPhotoUploadRequest {
+    photo: File;
+}
+
+// -------------------- Material Categories --------------------
+export interface MaterialCategoryLite {
+    id: ID;
+    name: string;
+    parent?: ID;
+}
+
+export interface MaterialCategoryLiteRequest {
+    name: string;
+    parent?: ID;
+}
+
+export interface PatchedMaterialCategoryLiteRequest {
+    name?: string;
+    parent?: ID;
 }
 
 // -------------------- Purchases --------------------
-export interface PurchaseItemIn {
+export interface PurchaseItem {
+    id: ID;
     material: ID;
-    quantity: number;    // в базовой еденице unit материала
-    unit?: ID;           // если бек поддерживает явный unit у позиции
-    price?: number | null; // опционально
+    material_name: string;
+    unit: ID;
+    unit_code: string;
+    quantity: string;
+    price?: string;
+    amount: string;
+    created_at: string;
+    updated_at: string;
 }
 
-export interface PurchaseItem extends PurchaseItemIn {
-    id: ID;
-    material_name?: string;
-    unit_name?: string;
-    amount?: number | null; // сумма = quantity * price (если сервер считает)
+export interface PurchaseItemRequest {
+    material: ID;
+    unit: ID;
+    quantity: string;
+    price?: string;
+    amount?: string;
 }
+
+// Type alias for compatibility with existing code
+export type PurchaseItemIn = PurchaseItemRequest;
 
 export interface PurchasePhoto {
     id: ID;
     url: string;
-    description?: string | null;
+    is_cover: boolean;
+    mime?: string;
+    size_bytes?: number;
+    created_at: string;
 }
 
-export interface PurchaseBase {
-    date: string;           // ISO (YYYY-MM-DD)
-    object: ID;             // объект
-    supplier?: string | null;
-    invoice_number?: string | null;
-    currency?: "UZS";       // MVP
-    vat_included?: boolean; // флаг НДС
-    comment?: string | null;
-    responsible?: ID | null; // бригадир/ответственный
+export interface PurchasePhotoRequest {
+    is_cover?: boolean;
+    mime?: string;
+    size_bytes?: number;
 }
 
-export interface PurchaseCreate extends PurchaseBase {
-    items: PurchaseItemIn[];     // позиции
-    // photo_main?: multipart в форме (FormData)
-    // photos_extra[]?: multipart массив
+export interface PurchasePhotoUploadRequest {
+    photo: File;
+    is_cover?: boolean;
 }
 
-export interface Purchase extends PurchaseBase {
+export interface Purchase {
     id: ID;
+    date: string;
+    object: ID;
+    object_name: string;
+    supplier: string;
+    invoice_number?: string;
+    vat_included: boolean;
+    currency: string;
+    comment?: string;
+    responsible: ID;
+    responsible_name: string;
+    total_amount: string;
+    is_archived: boolean;
+    cover_photo_url?: string;
     items: PurchaseItem[];
-    photo_main_url?: string | null;
-    photos?: PurchasePhoto[];
-    created_at?: string; // ISO
-    updated_at?: string; // ISO
+    photos: PurchasePhoto[];
+    created_at: string;
+    updated_at: string;
 }
 
-export interface PurchaseUpdate extends Partial<PurchaseCreate> {
+export interface PurchaseRequest {
+    date: string;
+    object: ID;
+    supplier: string;
+    invoice_number?: string;
+    vat_included?: boolean;
+    currency?: string;
+    comment?: string;
+    responsible: ID;
+    total_amount?: string;
+    is_archived?: boolean;
+    items: PurchaseItemRequest[];
+}
+
+// Type aliases for compatibility with existing code
+export type PurchaseCreate = PurchaseRequest;
+export type PurchaseUpdate = PatchedPurchaseRequest;
+
+export interface PatchedPurchaseRequest {
+    date?: string;
+    object?: ID;
+    supplier?: string;
+    invoice_number?: string;
+    vat_included?: boolean;
+    currency?: string;
+    comment?: string;
+    responsible?: ID;
+    total_amount?: string;
+    is_archived?: boolean;
+    items?: PurchaseItemRequest[];
 }
 
 export interface PurchaseListFilters {
@@ -270,21 +345,51 @@ export interface ImportCommitResponse {
     hash: ImportHash;
 }
 
-// -------------------- Stocks (snapshots) --------------------
-export interface StockSnapshotCreate {
-    date: string;      // YYYY-MM-DD
+// -------------------- Stock Snapshots --------------------
+export type StageEnum = "after_rough" | "after_handover";
+
+export interface StockSnapshot {
+    id: ID;
+    date: string;
     object: ID;
+    object_name: string;
     material: ID;
-    quantity_actual: number;
-    responsible?: ID | null;
+    material_name: string;
+    unit: ID;
+    unit_code: string;
+    quantity: string;
+    stage: StageEnum;
+    responsible: ID;
+    comment?: string;
+    is_archived: boolean;
+    purchased_qty: string;
+    write_off_qty: string;
+    created_at: string;
+    updated_at: string;
 }
 
-export interface StockSnapshot extends StockSnapshotCreate {
-    id: ID;
+export interface StockSnapshotRequest {
+    date: string;
+    object: ID;
+    material: ID;
+    unit: ID;
+    quantity: string;
+    stage: StageEnum;
+    responsible: ID;
+    comment?: string;
+    is_archived?: boolean;
+}
+
+export interface PatchedStockSnapshotRequest {
+    date?: string;
+    object?: ID;
+    material?: ID;
     unit?: ID;
-    unit_name?: string;
-    created_at?: string;
-    updated_at?: string;
+    quantity?: string;
+    stage?: StageEnum;
+    responsible?: ID;
+    comment?: string;
+    is_archived?: boolean;
 }
 
 export interface StockListFilters {
@@ -316,20 +421,18 @@ export interface StockSummaryItem {
 // -------------------- Archive --------------------
 export interface ArchivePeriod {
     id: ID;
-    month: string;   // YYYY-MM
+    month: string;
     object: ID;
-    object_name?: string;
-    is_closed: boolean;
-    closed_at?: string | null;
-    reopened_at?: string | null;
+    object_name: string;
+    closed_at: string;
+    closed_by: ID;
+    closed_by_name?: string;
+    is_closed?: boolean;
 }
 
-export interface ArchiveCloseRequest {
-    month: string; // YYYY-MM
+export interface ArchivePeriodRequest {
+    month: string;
     object: ID;
-}
-
-export interface ArchiveReopenRequest extends ArchiveCloseRequest {
 }
 
 export interface ArchiveListQuery {
@@ -341,31 +444,54 @@ export interface ArchiveListQuery {
 }
 
 // -------------------- Reports --------------------
-export interface ReportCommonQuery {
-    month?: string;    // YYYY-MM
-    from?: string;     // YYYY-MM-DD
-    to?: string;       // YYYY-MM-DD
-    object?: ID;
-    responsible?: ID;
+export interface ReportByMaterialQuery {
+    date_from?: string;
+    date_to?: string;
+    export?: "pdf" | "xlsx";
+    is_archived?: boolean;
     material?: ID;
-    export?: "xlsx";
-    page?: number;
-    page_size?: number;
+    object?: ID[];
+    responsible?: ID;
 }
 
-export interface ReportRow {
-    // универсальная строка отчёта (поле-супермножество)
-    date?: string;           // YYYY-MM-DD
-    object?: string;
-    object_id?: ID;
-    responsible?: string;
-    responsible_id?: ID;
-    material?: string;
-    material_id?: ID;
-    unit_name?: string;
-    quantity?: number;
-    amount?: number | null;  // при наличии цены
+export interface ReportByObjectQuery {
+    date_from?: string;
+    date_to?: string;
+    export?: "pdf" | "xlsx";
+    is_archived?: boolean;
+    object?: ID[];
+    responsible?: ID;
 }
 
-// Для страниц: отчёты могут возвращать массив строк или пагинацию.
-export type ReportResponse = PageResponse<ReportRow> | ReportRow[];
+export interface ReportByPeriodQuery {
+    date_from?: string;
+    date_to?: string;
+    export?: "pdf" | "xlsx";
+    is_archived?: boolean;
+    object?: ID[];
+    period?: "day" | "month";
+    responsible?: ID;
+}
+
+export interface ReportByResponsibleQuery {
+    date_from?: string;
+    date_to?: string;
+    export?: "pdf" | "xlsx";
+    is_archived?: boolean;
+    object?: ID[];
+    responsible?: ID;
+}
+
+export interface ReportResponse {
+    rows: (string | number | null)[][];
+}
+
+// -------------------- Paginated Lists --------------------
+export interface PaginatedUnitList extends PageResponse<Unit> {}
+export interface PaginatedObjectList extends PageResponse<Object> {}
+export interface PaginatedMaterialList extends PageResponse<Material> {}
+export interface PaginatedMaterialCategoryLiteList extends PageResponse<MaterialCategoryLite> {}
+export interface PaginatedEmployeeList extends PageResponse<Employee> {}
+export interface PaginatedPurchaseList extends PageResponse<Purchase> {}
+export interface PaginatedStockSnapshotList extends PageResponse<StockSnapshot> {}
+export interface PaginatedArchivePeriodList extends PageResponse<ArchivePeriod> {}

@@ -2,24 +2,19 @@
 import {defineStore} from 'pinia'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
-import type {MeResponse} from '@/api/types'
+import type {Me } from '@/api/types'
 
 type Tokens = { access: string; refresh: string }
 
 const ACCESS_KEY = 'elom_access'
 const REFRESH_KEY = 'elom_refresh'
 
-declare global {
-    interface Window {
-        __piniaStores?: any
-    }
-}
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         accessToken: localStorage.getItem(ACCESS_KEY),
         refreshToken: localStorage.getItem(REFRESH_KEY),
-        me: null as MeResponse | null,
+        me: null as Me | null,
         loading: false,
         error: '' as string | null,
     }),
@@ -33,7 +28,19 @@ export const useAuthStore = defineStore('auth', {
             if (!this.isAuthenticated) return
             try {
                 await this.fetchMe()
-            } catch {
+            } catch (e: any) {
+                // Если токен истек, пытаемся обновить
+                if (e?.response?.status === 401) {
+                    const newToken = await this.refreshTokens()
+                    if (newToken) {
+                        try {
+                            await this.fetchMe()
+                            return
+                        } catch {
+                            // Если и после обновления не удалось получить данные пользователя
+                        }
+                    }
+                }
                 this.logout()
             }
         },
@@ -56,7 +63,7 @@ export const useAuthStore = defineStore('auth', {
         },
 
         async fetchMe() {
-            const {data} = await api.get<Me>(endpoints.auth.me)
+            const {data} = await api.get<Me>(endpoints.users.me)
             this.me = data
         },
 
@@ -71,8 +78,11 @@ export const useAuthStore = defineStore('auth', {
                     this.setTokens({access: data.access, refresh: this.refreshToken})
                 }
                 return this.accessToken
-            } catch {
-                this.clearTokens()
+            } catch (e: any) {
+                // Если refresh token истек, очищаем все токены
+                if (e?.response?.status === 401) {
+                    this.clearTokens()
+                }
                 return null
             }
         },
@@ -91,6 +101,10 @@ export const useAuthStore = defineStore('auth', {
             this.refreshToken = t.refresh
             localStorage.setItem(ACCESS_KEY, t.access)
             localStorage.setItem(REFRESH_KEY, t.refresh)
+        },
+
+        saveTokens(t: { access: string; refresh: string }) {
+            this.setTokens(t)
         },
 
         clearTokens() {

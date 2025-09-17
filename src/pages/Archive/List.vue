@@ -6,7 +6,7 @@
     </div>
 
     <!-- Фильтры -->
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body grid md:grid-cols-3 gap-4">
         <fieldset class="fieldset">
           <label class="label" for="ar-month"><span class="label-text">Месяц</span></label>
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Таблица -->
-    <div class="overflow-auto border border-base-300 rounded-xl">
+    <div class="overflow-auto border border-gray-200 rounded-xl">
       <table class="table table-zebra w-full">
         <thead>
         <tr>
@@ -59,7 +59,7 @@
           </td>
         </tr>
         <tr v-if="!loading && rows.length===0">
-          <td colspan="5" class="text-center text-base-content/60">Нет данных</td>
+          <td colspan="5" class="text-center text-gray-700-60">Нет данных</td>
         </tr>
         </tbody>
       </table>
@@ -111,10 +111,12 @@ import endpoints, {buildQuery} from '@/api/endpoints'
 import type {
   PageResponse,
   ArchivePeriod,
-  ArchiveCloseRequest,
+  ArchivePeriodRequest,
   ArchiveListQuery,
   SiteObject,
 } from '@/api/types'
+
+type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
 const rows = ref<ArchivePeriod[]>([])
 const count = ref(0)
@@ -141,7 +143,7 @@ async function fetchList() {
       month: month.value,
       object: objectId.value,
     }
-    const {data} = await api.get<PageResponse<ArchivePeriod>>(endpoints.archive.periods + buildQuery(q))
+    const {data} = await api.get<PageResponse<ArchivePeriod>>(endpoints.archive.periods.list + buildQuery(q as unknown as Query))
     rows.value = data.results
     count.value = data.count
   } finally {
@@ -175,7 +177,7 @@ async function closePeriod() {
   if (!canClose.value) return
   closing.value = true
   try {
-    const payload: ArchiveCloseRequest = {month: closeMonth.value!, object: closeObjectId.value!}
+    const payload: ArchivePeriodRequest = {month: closeMonth.value!, object: closeObjectId.value!}
     await api.post(endpoints.archive.close, payload)
     closeDialog()
     await fetchList()
@@ -202,3 +204,4 @@ onMounted(async () => {
   await fetchList()
 })
 </script>
+

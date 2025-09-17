@@ -13,7 +13,7 @@
     <div v-if="formError" class="alert alert-error"><span>{{ formError }}</span></div>
 
     <!-- Шапка -->
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body grid md:grid-cols-4 gap-4">
         <fieldset class="fieldset">
           <span class="label-text">Дата*</span>
@@ -62,7 +62,7 @@
     </div>
 
     <!-- Позиции -->
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body">
         <div class="flex items-center justify-between mb-2">
           <h2 class="card-title text-lg">Позиции</h2>
@@ -108,7 +108,7 @@
               </td>
             </tr>
             <tr v-if="items.length===0">
-              <td colspan="6" class="text-center text-base-content/60">Добавьте хотя бы одну позицию</td>
+              <td colspan="6" class="text-center text-gray-700-60">Добавьте хотя бы одну позицию</td>
             </tr>
             </tbody>
             <tfoot>
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Фото -->
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body">
         <h2 class="card-title text-lg">Фото и документы</h2>
         <input type="file" class="file-input file-input-bordered w-full max-w-md" multiple @change="onPhotos"/>
@@ -135,7 +135,7 @@
             </div>
           </div>
         </div>
-        <p class="text-xs text-base-content/60 mt-2">Фото загрузятся после сохранения закупки.</p>
+        <p class="text-xs text-gray-700-60 mt-2">Фото загрузятся после сохранения закупки.</p>
       </div>
     </div>
   </div>
@@ -147,7 +147,7 @@ import {useRoute, useRouter} from 'vue-router'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {
-  EmployeeListItem, Material, SiteObject, PageResponse, Purchase, PurchaseCreate, PurchaseUpdate, PurchaseItemIn, Unit
+  Employee, Material, SiteObject, PageResponse, Purchase, PurchaseRequest, PatchedPurchaseRequest, PurchaseItemRequest, Unit
 } from '@/api/types'
 
 const route = useRoute()
@@ -179,7 +179,7 @@ type ItemForm = {
 const items = ref<ItemForm[]>([])
 
 const objects = ref<SiteObject[]>([])
-const employees = ref<EmployeeListItem[]>([])
+const employees = ref<Employee[]>([])
 const materials = ref<Material[]>([])
 const units = ref<Unit[]>([])
 
@@ -206,7 +206,7 @@ function recalc(it: ItemForm) {
 function onMaterialChange(it: ItemForm) {
   // дефолтная единица = unit материала (если есть и если в позиции пусто)
   const m = materials.value.find(x => x.id === it.material)
-  if (m && !it.unit) it.unit = (m.unit ?? undefined) as number | undefined
+  if (m && !it.unit) it.unit = m.default_unit
 }
 
 function toObjectUrl(f: File) {
@@ -228,7 +228,7 @@ const totalAmount = computed(() => {
 async function loadRefs() {
   const [od, ed, md, ud] = await Promise.all([
     api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<EmployeeListItem>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
+    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
     api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
     api.get<PageResponse<Unit>>(endpoints.units.list + buildQuery({page_size: 1000, ordering: 'code'})),
   ])
@@ -257,7 +257,7 @@ async function loadIfEdit() {
     unit: x.unit,
     quantity: String(x.quantity ?? 0),
     price: String(x.price ?? 0),
-    amount: String(x.amount ?? ((x.quantity ?? 0) * (x.price ?? 0))),
+    amount: String(x.amount ?? (Number(x.quantity ?? 0) * Number(x.price ?? 0))),
   }))
 }
 
@@ -275,36 +275,36 @@ async function onSubmit() {
   saving.value = true
   try {
     // Готовим DTO для серверной модели
-    const payloadItems: PurchaseItemIn[] = items.value.map(it => ({
+    const payloadItems: PurchaseItemRequest[] = items.value.map(it => ({
       material: it.material!,
-      unit: it.unit,
-      quantity: Number(it.quantity || 0),
-      price: it.price !== '' ? Number(it.price) : null,
+      unit: it.unit!,
+      quantity: String(Number(it.quantity || 0)),
+      price: it.price !== '' ? String(Number(it.price)) : undefined,
     }))
 
     let id = idParam
     if (isEdit) {
-      const payload: PurchaseUpdate = {
+      const payload: PatchedPurchaseRequest = {
         date: model.date!,
         object: model.object!,
-        supplier: model.supplier || null,
-        invoice_number: model.invoice_number || null,
+        supplier: model.supplier || undefined,
+        invoice_number: model.invoice_number || undefined,
         vat_included: model.vat_included,
-        comment: model.comment || null,
-        responsible: model.responsible ?? null,
+        comment: model.comment || undefined,
+        responsible: model.responsible ?? undefined,
         items: payloadItems,
       }
       const {data} = await api.patch<Purchase>(endpoints.purchases.one(idParam!), payload)
       id = data.id
     } else {
-      const payload: PurchaseCreate = {
+      const payload: PurchaseRequest = {
         date: model.date!,
         object: model.object!,
-        supplier: model.supplier || null,
-        invoice_number: model.invoice_number || null,
+        supplier: model.supplier || '',
+        invoice_number: model.invoice_number || undefined,
         vat_included: model.vat_included,
-        comment: model.comment || null,
-        responsible: model.responsible ?? null,
+        comment: model.comment || undefined,
+        responsible: model.responsible!,
         items: payloadItems,
       }
       const {data} = await api.post<Purchase>(endpoints.purchases.list, payload)
@@ -332,3 +332,4 @@ onMounted(async () => {
   if (!isEdit && items.value.length === 0) addItem()
 })
 </script>
+

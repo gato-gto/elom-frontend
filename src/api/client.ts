@@ -154,19 +154,60 @@ api.interceptors.response.use(
         // Попытка рефреша при 401
         if (response?.status === 401 && config && !(config as any)._retry) {
             ;(config as any)._retry = true
-            const newToken = await refreshAccessToken()
-            if (!newToken) {
+            
+            // Если это запрос на refresh, не пытаемся обновить токен
+            if (config.url?.includes('/token/refresh/')) {
                 return Promise.reject(error)
             }
-            return new Promise((resolve, reject) => {
-                subscribeTokenRefresh((token) => {
-                    if (!token) return reject(error)
-                    config.headers = config.headers ?? {}
-                    ;(config.headers as any).Authorization = `Bearer ${token}`
-                    resolve(api(config))
-                })
-                onRefreshed(newToken)
-            })
+            
+            const newToken = await refreshAccessToken()
+            if (!newToken) {
+                // Если не удалось обновить токен, показываем сообщение пользователю
+                try {
+                    const ui = uiStoreSafe()
+                    if (ui?.toast) {
+                        ui.toast({ type: 'error', text: 'Сессия истекла. Пожалуйста, войдите снова.' })
+                    }
+                } catch {
+                    // Игнорируем ошибки UI
+                }
+                return Promise.reject(error)
+            }
+            
+            // Обновляем заголовок авторизации и повторяем запрос
+            config.headers = config.headers ?? {}
+            ;(config.headers as any).Authorization = `Bearer ${newToken}`
+            return api(config)
+        }
+
+        // Обработка других ошибок
+        if (response?.status && response.status >= 500) {
+            try {
+                const ui = uiStoreSafe()
+                if (ui?.toast) {
+                    ui.toast({ type: 'error', text: 'Ошибка сервера. Попробуйте позже.' })
+                }
+            } catch {
+                // Игнорируем ошибки UI
+            }
+        } else if (response?.status === 403) {
+            try {
+                const ui = uiStoreSafe()
+                if (ui?.toast) {
+                    ui.toast({ type: 'error', text: 'Недостаточно прав для выполнения операции.' })
+                }
+            } catch {
+                // Игнорируем ошибки UI
+            }
+        } else if (response?.status === 404) {
+            try {
+                const ui = uiStoreSafe()
+                if (ui?.toast) {
+                    ui.toast({ type: 'error', text: 'Запрашиваемый ресурс не найден.' })
+                }
+            } catch {
+                // Игнорируем ошибки UI
+            }
         }
 
         return Promise.reject(error)

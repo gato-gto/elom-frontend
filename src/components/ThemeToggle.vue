@@ -7,7 +7,7 @@
       </svg>
       <span class="ml-2 hidden sm:inline text-xs">{{ activeLabel }}</span>
     </div>
-    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-44 z-50">
+    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-white rounded-box w-44 z-50">
       <li v-for="t in themes" :key="t.value">
         <a @click="setTheme(t.value)" :class="{ active: theme === t.value }">{{ t.label }}</a>
       </li>
@@ -43,3 +43,4 @@ onMounted(() => {
   applyTheme(theme.value)
 })
 </script>
+

@@ -1,6 +1,6 @@
 <template>
   <div class="grid gap-4">
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body grid md:grid-cols-5 gap-4">
         <fieldset class="fieldset">
           <label class="label" for="rp-from"><span class="label-text">Дата с</span></label>
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="overflow-auto border border-base-300 rounded-xl">
+    <div class="overflow-auto border border-gray-200 rounded-xl">
       <table class="table table-zebra w-full">
         <thead>
         <tr>
@@ -38,7 +38,7 @@
           <td class="text-right">{{ r.purchases_count ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
-          <td colspan="3" class="text-center text-base-content/60">Нет данных</td>
+          <td colspan="3" class="text-center text-gray-700-60">Нет данных</td>
         </tr>
         </tbody>
         <tfoot v-if="total">
@@ -105,3 +105,4 @@ const pdfUrl = computed(() => {
 
 onMounted(load)
 </script>
+

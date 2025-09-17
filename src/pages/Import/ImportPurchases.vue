@@ -35,7 +35,7 @@
       <h3 class="font-semibold mb-2">Результат</h3>
       <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ resp }}</pre>
     </div>
-    <p class="text-sm text-red-600" v-if="error">{{ error }}</p>
+    <p class="text-sm text-error" v-if="error">{{ error }}</p>
   </div>
 </template>
 <script setup lang="ts">
@@ -69,3 +69,4 @@ async function run() {
   }
 }
 </script>
+

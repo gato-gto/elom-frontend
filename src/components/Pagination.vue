@@ -1,57 +1,114 @@
-<!-- src/components/Pagination.vue -->
 <template>
-  <div class="flex items-center gap-2 justify-between">
-    <div class="text-sm opacity-70">
-      {{ startItem }}–{{ endItem }} из {{ total }}
-    </div>
-    <div class="join">
-      <button class="join-item btn btn-sm" :disabled="page<=1" @click="go(1)">«</button>
-      <button class="join-item btn btn-sm" :disabled="page<=1" @click="go(page-1)">‹</button>
+  <div v-if="totalPages > 1" class="flex justify-center">
+    <div class="btn-group">
       <button
-          v-for="p in visiblePages"
-          :key="p"
-          class="join-item btn btn-sm"
-          :class="p===page ? 'btn-active' : ''"
-          @click="go(p)"
-      >{{ p }}</button>
-      <button class="join-item btn btn-sm" :disabled="page>=pages" @click="go(page+1)">›</button>
-      <button class="join-item btn btn-sm" :disabled="page>=pages" @click="go(pages)">»</button>
+        class="btn btn-sm"
+        :disabled="currentPage === 1"
+        @click="goToPage(1)"
+      >
+        ««
+      </button>
+      <button
+        class="btn btn-sm"
+        :disabled="currentPage === 1"
+        @click="goToPage(currentPage - 1)"
+      >
+        «
+      </button>
+      
+      <template v-for="page in visiblePages" :key="page">
+        <button
+          v-if="page !== '...'"
+          class="btn btn-sm"
+          :class="{ 'btn-active': page === currentPage }"
+          @click="goToPage(page as number)"
+        >
+          {{ page }}
+        </button>
+        <span v-else class="btn btn-sm btn-disabled">...</span>
+      </template>
+      
+      <button
+        class="btn btn-sm"
+        :disabled="currentPage === totalPages"
+        @click="goToPage(currentPage + 1)"
+      >
+        »
+      </button>
+      <button
+        class="btn btn-sm"
+        :disabled="currentPage === totalPages"
+        @click="goToPage(totalPages)"
+      >
+        »»
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed} from 'vue'
+import { computed } from 'vue'
 
-const props = defineProps<{
-  page: number
-  pageSize: number
-  total: number
-  maxButtons?: number
-}>()
+interface Props {
+  currentPage: number
+  totalPages: number
+  maxVisible?: number
+}
 
-const emit = defineEmits<{
-  (e: 'update:page', page: number): void
-  (e: 'change', page: number): void
-}>()
+interface Emits {
+  (e: 'page-change', page: number): void
+}
 
-const pages = computed(() => Math.max(1, Math.ceil((props.total || 0) / (props.pageSize || 1))))
-const page = computed(() => Math.min(Math.max(1, props.page || 1), pages.value))
-const startItem = computed(() => (page.value - 1) * props.pageSize + 1)
-const endItem = computed(() => Math.min(props.total, page.value * props.pageSize))
-const visiblePages = computed(() => {
-  const max = props.maxButtons ?? 5
-  const half = Math.floor(max / 2)
-  const start = Math.max(1, Math.min(page.value - half, pages.value - max + 1))
-  const end = Math.min(pages.value, start + max - 1)
-  const arr: number[] = []
-  for (let i = start; i <= end; i++) arr.push(i)
-  return arr
+const props = withDefaults(defineProps<Props>(), {
+  maxVisible: 5
 })
 
-function go(p: number) {
-  const np = Math.min(Math.max(1, p), pages.value)
-  emit('update:page', np)
-  emit('change', np)
+const emit = defineEmits<Emits>()
+
+const visiblePages = computed(() => {
+  const { currentPage, totalPages, maxVisible } = props
+  const pages: (number | string)[] = []
+  
+  if (totalPages <= maxVisible) {
+    // Показываем все страницы
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Показываем страницы с многоточием
+    const half = Math.floor(maxVisible / 2)
+    let start = Math.max(1, currentPage - half)
+    let end = Math.min(totalPages, start + maxVisible - 1)
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
+    
+    if (start > 1) {
+      pages.push(1)
+      if (start > 2) {
+        pages.push('...')
+      }
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+    
+    if (end < totalPages) {
+      if (end < totalPages - 1) {
+        pages.push('...')
+      }
+      pages.push(totalPages)
+    }
+  }
+  
+  return pages
+})
+
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= props.totalPages && page !== props.currentPage) {
+    emit('page-change', page)
+  }
 }
 </script>

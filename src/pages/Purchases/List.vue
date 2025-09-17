@@ -5,7 +5,7 @@
       <RouterLink class="btn btn-primary" to="/purchases/new">Новая закупка</RouterLink>
     </div>
 
-    <div class="card bg-base-100 border">
+    <div class="card bg-white border">
       <div class="card-body grid md:grid-cols-6 gap-4">
         <fieldset class="fieldset">
           <label class="label"><span class="label-text">Дата с</span></label>
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class="overflow-auto border border-base-300 rounded-xl">
+    <div class="overflow-auto border border-gray-200 rounded-xl">
       <table class="table table-zebra w-full">
         <thead>
         <tr>
@@ -67,7 +67,7 @@
           </td>
         </tr>
         <tr v-if="!loading && rows.length===0">
-          <td colspan="6" class="text-center text-base-content/60">Нет данных</td>
+          <td colspan="6" class="text-center text-gray-700-60">Нет данных</td>
         </tr>
         </tbody>
       </table>
@@ -86,7 +86,7 @@
 import {computed, onMounted, ref} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, EmployeeListItem} from '@/api/types'
+import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, Employee} from '@/api/types'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
@@ -101,12 +101,12 @@ const filters = ref<PurchaseListFilters>({
 })
 
 const objects = ref<SiteObject[]>([])
-const employees = ref<EmployeeListItem[]>([])
+const employees = ref<Employee[]>([])
 
 async function loadRefs() {
   const [{data: od}, {data: ed}] = await Promise.all([
     api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<EmployeeListItem>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
+    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
   ])
   objects.value = od.results
   employees.value = ed.results
@@ -116,7 +116,7 @@ async function fetchList() {
   loading.value = true
   try {
     const q: PurchaseListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize}
-    const {data} = await api.get<PageResponse<Purchase>>(endpoints.purchases.list + buildQuery(q as Query))
+    const {data} = await api.get<PageResponse<Purchase>>(endpoints.purchases.list + buildQuery(q as unknown as Query))
     rows.value = data.results
     count.value = data.count
   } finally {
@@ -139,3 +139,4 @@ onMounted(async () => {
   await fetchList()
 })
 </script>
+

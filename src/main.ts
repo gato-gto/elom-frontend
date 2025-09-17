@@ -4,9 +4,8 @@ import {createPinia} from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-import '@/assets/tokens.css'
-import '@/assets/tailwind.css'   // если уже есть в проекте
-import '@/assets/ui.css'
+import '@/assets/tailwind.css'
+import '@/assets/daisyui-reference.css' 
 
 const root = document.documentElement
 const saved = localStorage.getItem('theme') as 'light' | 'dark' | null

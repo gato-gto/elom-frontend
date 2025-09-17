@@ -1,198 +1,246 @@
-<!-- src/pages/Materials/List.vue -->
 <template>
   <div class="grid gap-4">
+    <!-- Header -->
     <div class="flex items-center justify-between">
       <h1 class="text-lg font-semibold">Материалы</h1>
-      <button class="btn btn-primary" @click="openCreate" v-if="canEdit">Добавить материал</button>
+      <button 
+        class="btn btn-primary" 
+        @click="openCreate" 
+        v-if="canEdit"
+        :disabled="materialsStore.loading"
+      >
+        Добавить материал
+      </button>
     </div>
 
-    <!-- Фильтры -->
+    <!-- Filters -->
     <div class="flex gap-2 items-end">
-      <label class="grid">
-        <span class="text-xs text-base-content/70">Поиск</span>
-        <input v-model.trim="search" class="input input-bordered input-sm" placeholder="name / sku / category" @keyup.enter="reload(1)"/>
-      </label>
-      <label class="grid">
-        <span class="text-xs text-base-content/70">Сортировка</span>
-        <select v-model="ordering" class="select select-bordered select-sm">
-          <option value="name">name ↑</option>
-          <option value="-name">name ↓</option>
-          <option value="sku">sku ↑</option>
-          <option value="-sku">sku ↓</option>
-          <option value="id">id ↑</option>
-          <option value="-id">id ↓</option>
-        </select>
-      </label>
-      <button class="btn btn-sm" @click="reload(1)">Применить</button>
+      <FormField
+        v-model="materialsStore.filters.search"
+        type="input"
+        placeholder="Поиск по названию, SKU, категории"
+        @keyup.enter="handleSearch"
+        class="flex-1"
+      />
+      <FormField
+        v-model="materialsStore.filters.ordering"
+        type="select"
+        :options="orderingOptions"
+        @change="handleSearch"
+      />
+      <button 
+        class="btn btn-outline btn-sm" 
+        @click="handleSearch"
+        :disabled="materialsStore.loading"
+      >
+        Применить
+      </button>
     </div>
 
-    <!-- Таблица -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <div class="overflow-auto">
-          <table class="table table-zebra w-full">
-            <thead>
-            <tr>
-              <th>ID</th>
-              <th>Фото</th>
-              <th class="text-left">Название</th>
-              <th class="text-left">SKU</th>
-              <th class="text-left">Категория</th>
-              <th class="text-left">Ед.</th>
-              <th class="text-left">Статус</th>
-              <th v-if="canEdit" class="text-right">Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="m in rows" :key="m.id">
-              <td>{{ m.id }}</td>
-              <td>
-                <img v-if="m.photo_url" :src="m.photo_url" alt="" class="h-10 w-10 object-cover rounded"/>
-                <span v-else class="opacity-60">нет</span>
-              </td>
-              <td>{{ m.name }}</td>
-              <td>{{ m.sku || '—' }}</td>
-              <td>{{ m.category_name || '—' }}</td>
-              <td>{{ m.default_unit_code || m.default_unit }}</td>
-              <td>
-                <span class="badge" :class="(m.is_active ?? true) ? 'badge-success' : 'badge-ghost'">
-                  {{ (m.is_active ?? true) ? 'Активен' : 'Выключен' }}
-                </span>
-              </td>
-              <td v-if="canEdit" class="text-right">
-                <div class="inline-flex gap-2">
-                  <button class="btn btn-xs" @click="openEdit(m)">Изм.</button>
-                  <button class="btn btn-xs btn-error" @click="remove(m)" :disabled="deletingId===m.id">
-                    {{ deletingId === m.id ? '...' : 'Удал.' }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!loading && rows.length===0">
-              <td colspan="8" class="text-center opacity-70 py-8">Нет данных</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
+    <!-- Error message -->
+    <div v-if="materialsStore.error" class="alert alert-error">
+      <span>{{ materialsStore.error }}</span>
+      <button class="btn btn-sm btn-ghost" @click="materialsStore.clearError()">×</button>
+    </div>
 
-        <!-- Пагинация -->
-        <Pagination
-            v-if="count>pageSize"
-            :page="page"
-            :pageSize="pageSize"
-            :total="count"
-            @change="reload"
+    <!-- Table -->
+    <Table
+      :data="materialsStore.items"
+      :columns="columns"
+      :actions="actions"
+      :loading="materialsStore.loading"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
+      @sort="handleSort"
+      @action="handleAction"
+    >
+      <!-- Custom photo cell -->
+      <template #cell-photo_url="{ value }">
+        <img 
+          v-if="value" 
+          :src="value" 
+          alt="Фото материала" 
+          class="h-10 w-10 object-cover rounded"
         />
-      </div>
-    </div>
+        <span v-else class="opacity-60 text-sm">нет</span>
+      </template>
 
-    <!-- Модалка -->
+      <!-- Custom status cell -->
+      <template #cell-is_active="{ value }">
+        <span 
+          class="badge" 
+          :class="(value ?? true) ? 'badge-success' : 'badge-ghost'"
+        >
+          {{ (value ?? true) ? 'Активен' : 'Выключен' }}
+        </span>
+      </template>
+    </Table>
+
+    <!-- Pagination -->
+    <Pagination
+      :current-page="materialsStore.pagination.page"
+      :total-pages="Math.ceil(materialsStore.pagination.count / materialsStore.pagination.pageSize)"
+      @page-change="handlePageChange"
+    />
+
+    <!-- Material Form Modal -->
     <Modal v-model="modalOpen" :title="current ? 'Редактировать материал' : 'Новый материал'">
-      <MaterialForm :initial="current" @saved="onSaved" @cancel="modalOpen=false"/>
+      <MaterialForm 
+        :initial="current" 
+        @saved="onSaved" 
+        @cancel="modalOpen = false"
+      />
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, computed, watch} from 'vue'
-import api from '@/api/client'
-import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, Material, Me} from '@/api/types'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import type { Material, Me } from '@/api/types'
 import MaterialForm from './MaterialForm.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useMaterialsStore } from '@/stores/materials'
+import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
+import Table from '@/components/Table.vue'
+import FormField from '@/components/FormField.vue'
 import Pagination from '@/components/Pagination.vue'
-import {useAuthStore} from '@/stores/auth'
-import {useRoute, useRouter} from 'vue-router'
 
-const auth = useAuthStore()
-const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
+const materialsStore = useMaterialsStore()
+const ui = useUiStore()
 
+// Computed
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
   return role === 'admin' || role === 'director'
 })
 
-const rows = ref<Material[]>([])
-const count = ref(0)
-const page = ref<number>(Number(route.query.page || 1) || 1)
-const pageSize = 20
-const search = ref<string>((route.query.search as string) || '')
-const ordering = ref<'name' | '-name' | 'sku' | '-sku' | 'id' | '-id'>(
-    ((route.query.ordering as any) || 'name') as any
-)
+// Table configuration
+const columns = [
+  { key: 'id', title: 'ID', sortable: true, class: 'w-16' },
+  { key: 'photo_url', title: 'Фото', sortable: false, class: 'w-20' },
+  { key: 'name', title: 'Название', sortable: true },
+  { key: 'sku', title: 'SKU', sortable: true, class: 'w-24' },
+  { key: 'category_name', title: 'Категория', sortable: false },
+  { key: 'default_unit_code', title: 'Ед.', sortable: false, class: 'w-16' },
+  { key: 'is_active', title: 'Статус', sortable: false, class: 'w-24' }
+]
 
-const loading = ref(false)
-const deletingId = ref<number | null>(null)
+const actions = computed(() => {
+  if (!canEdit.value) return []
+  
+  return [
+    {
+      key: 'edit',
+      label: 'Изменить',
+      class: 'btn-primary btn-xs'
+    },
+    {
+      key: 'delete',
+      label: 'Удалить',
+      class: 'btn-error btn-xs',
+      disabled: (row: Material) => materialsStore.loading
+    }
+  ]
+})
+
+// Sorting
+const sortBy = ref('')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
+// Ordering options
+const orderingOptions = [
+  { value: 'name', label: 'Название ↑' },
+  { value: '-name', label: 'Название ↓' },
+  { value: 'sku', label: 'SKU ↑' },
+  { value: '-sku', label: 'SKU ↓' },
+  { value: 'id', label: 'ID ↑' },
+  { value: '-id', label: 'ID ↓' }
+]
+
+// Modal state
 const modalOpen = ref(false)
 const current = ref<Material | null>(null)
 
-async function fetchList() {
-  loading.value = true
-  try {
-    const q = buildQuery({
-      page: page.value,
-      page_size: pageSize,
-      search: search.value || undefined,
-      ordering: ordering.value,
-    })
-    const {data} = await api.get<PageResponse<Material>>(endpoints.materials.list + q)
-    rows.value = data.results
-    count.value = data.count
-  } finally {
-    loading.value = false
-  }
-}
-
-function syncQueryToUrl() {
-  router.replace({
-    query: {
-      page: String(page.value),
-      ordering: ordering.value,
-      ...(search.value ? {search: search.value} : {}),
-    },
-  })
-}
-
-function reload(p = page.value) {
-  page.value = p
-  syncQueryToUrl()
-  fetchList()
-}
-
+// Methods
 function openCreate() {
   current.value = null
   modalOpen.value = true
 }
 
-function openEdit(m: Material) {
-  current.value = m
+function openEdit(material: Material) {
+  current.value = material
   modalOpen.value = true
 }
 
-async function remove(m: Material) {
-  if (!confirm(`Удалить материал «${m.name}»?`)) return
-  deletingId.value = m.id
+async function handleSearch() {
   try {
-    await api.delete(endpoints.materials.one(m.id))
-    await fetchList()
-  } finally {
-    deletingId.value = null
+    await materialsStore.fetchList({
+      page: 1,
+      search: materialsStore.filters.search,
+      ordering: materialsStore.filters.ordering
+    })
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка поиска материалов' })
+  }
+}
+
+function handleSort(key: string) {
+  if (sortBy.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = key
+    sortOrder.value = 'asc'
+  }
+  
+  const ordering = sortOrder.value === 'desc' ? `-${key}` : key
+  materialsStore.setFilters({ ordering })
+  handleSearch()
+}
+
+function handlePageChange(page: number) {
+  materialsStore.fetchList({ page })
+}
+
+async function handleAction(action: string, row: Material) {
+  switch (action) {
+    case 'edit':
+      openEdit(row)
+      break
+    case 'delete':
+      await handleDelete(row)
+      break
+  }
+}
+
+async function handleDelete(material: Material) {
+  if (!confirm(`Удалить материал "${material.name}"?`)) return
+  
+  try {
+    await materialsStore.delete(material.id)
+    ui.toast({ type: 'success', text: 'Материал удален' })
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка удаления материала' })
   }
 }
 
 async function onSaved() {
   modalOpen.value = false
-  await fetchList()
+  current.value = null
+  await materialsStore.fetchList()
+  ui.toast({ type: 'success', text: 'Материал сохранен' })
 }
 
-// init
-onMounted(() => reload(page.value))
-
-// react on back/forward
-watch(() => route.query, () => {
-  page.value = Number(route.query.page || 1) || 1
-  search.value = (route.query.search as string) || ''
-  ordering.value = ((route.query.ordering as any) || 'name') as any
+// Lifecycle
+onMounted(async () => {
+  try {
+    await materialsStore.fetchList()
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка загрузки материалов' })
+  }
 })
 </script>
+

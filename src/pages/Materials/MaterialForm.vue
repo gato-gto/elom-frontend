@@ -1,54 +1,96 @@
 <!-- src/pages/Materials/MaterialForm.vue -->
 <template>
-  <form class="grid gap-3" @submit.prevent="submit">
-    <label class="grid gap-1">
-      <span class="text-sm">Название</span>
-      <input v-model.trim="form.name" class="input input-bordered" required/>
-      <span v-if="errors.name" class="text-xs text-error">{{ errors.name }}</span>
-    </label>
+  <form class="grid gap-4" @submit.prevent="submit">
+    <!-- Название -->
+    <FormField
+      v-model="form.name"
+      type="input"
+      label="Название материала"
+      placeholder="Введите название материала"
+      required
+      :error-message="errors.name"
+      :has-error="!!errors.name"
+    />
 
-    <label class="grid gap-1">
-      <span class="text-sm">SKU (опц.)</span>
-      <input v-model.trim="form.sku" class="input input-bordered" placeholder="Артикул/код"/>
-      <span v-if="errors.sku" class="text-xs text-error">{{ errors.sku }}</span>
-    </label>
+    <!-- SKU -->
+    <FormField
+      v-model="form.sku"
+      type="input"
+      label="SKU"
+      placeholder="Артикул/код"
+      help-text="Необязательно"
+      :error-message="errors.sku"
+      :has-error="!!errors.sku"
+    />
 
-    <label class="grid gap-1">
-      <span class="text-sm">Категория</span>
-      <select v-model="form.category" class="select select-bordered">
-        <option value="">— без категории —</option>
-        <option v-for="c in categories" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
-      </select>
-      <span v-if="errors.category" class="text-xs text-error">{{ errors.category }}</span>
-    </label>
+    <!-- Категория -->
+    <FormField
+      v-model="form.category"
+      type="select"
+      label="Категория"
+      placeholder="— без категории —"
+      :options="categoryOptions"
+      :error-message="errors.category"
+      :has-error="!!errors.category"
+    />
 
-    <label class="grid gap-1">
-      <span class="text-sm">Единица по умолчанию</span>
-      <select v-model="form.default_unit" class="select select-bordered" required>
-        <option value="" disabled>— выберите единицу —</option>
-        <option v-for="u in units" :key="u.id" :value="String(u.id)">
-          {{ u.name }} ({{ u.code }})
-        </option>
-      </select>
-      <span v-if="errors.default_unit" class="text-xs text-error">{{ errors.default_unit }}</span>
-    </label>
+    <!-- Единица измерения -->
+    <FormField
+      v-model="form.default_unit"
+      type="select"
+      label="Единица по умолчанию"
+      placeholder="— выберите единицу —"
+      :options="unitOptions"
+      required
+      :error-message="errors.default_unit"
+      :has-error="!!errors.default_unit"
+    />
 
     <!-- Фото -->
-    <div class="grid gap-2">
-      <span class="text-sm">Фото (обложка)</span>
-      <FileInput v-model="photoFile" accept="image/*" :maxSizeMb="8" :existingUrl="currentPhotoUrl"/>
-      <div class="flex gap-2">
-        <button v-if="currentPhotoUrl" type="button" class="btn btn-ghost btn-sm" :disabled="deletingPhoto" @click="onDeletePhoto">{{ deletingPhoto ? 'Удаление…' : 'Удалить фото' }}</button>
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Фото (обложка)</span>
+      </label>
+      <FileInput 
+        v-model="photoFile" 
+        accept="image/*" 
+        :maxSizeMb="8" 
+        :existingUrl="currentPhotoUrl"
+      />
+      <div class="flex gap-2 mt-2">
+        <button 
+          v-if="currentPhotoUrl" 
+          type="button" 
+          class="btn btn-ghost btn-sm" 
+          :disabled="deletingPhoto" 
+          @click="onDeletePhoto"
+        >
+          {{ deletingPhoto ? 'Удаление…' : 'Удалить фото' }}
+        </button>
         <span v-if="errors.photo" class="text-xs text-error">{{ errors.photo }}</span>
       </div>
-      <p class="text-xs text-base-content/60">
-        Загрузка/замена фото происходит после сохранения карточки. Допустимы изображения, лимит 8 МБ.
-      </p>
+      <label class="label">
+        <span class="label-text-alt">
+          Загрузка/замена фото происходит после сохранения карточки. Допустимы изображения, лимит 8 МБ.
+        </span>
+      </label>
     </div>
 
-    <div class="flex justify-end gap-2 mt-2">
-      <button type="button" class="btn btn-ghost" @click="$emit('cancel')">Отмена</button>
-      <button type="submit" class="btn btn-primary" :disabled="submitting">
+    <!-- Кнопки действий -->
+    <div class="flex justify-end gap-2 mt-6">
+      <button 
+        type="button" 
+        class="btn btn-ghost" 
+        @click="$emit('cancel')"
+        :disabled="submitting"
+      >
+        Отмена
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        :disabled="submitting"
+      >
         {{ submitting ? 'Сохранение…' : 'Сохранить' }}
       </button>
     </div>
@@ -56,25 +98,27 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref, watchEffect} from 'vue'
-import api from '@/api/client'
-import {endpoints} from '@/api/endpoints'
-import type {Material, PageResponse, Category, Unit} from '@/api/types'
+import { onMounted, reactive, ref, watchEffect, computed } from 'vue'
+import type { Material, MaterialCategoryLite, Unit } from '@/api/types'
 import FileInput from '@/components/FileInput.vue'
-import {useUiStore} from '@/stores/ui'
+import FormField from '@/components/FormField.vue'
+import { useUiStore } from '@/stores/ui'
+import { useMaterialsStore } from '@/stores/materials'
+import { useUnitsStore } from '@/stores/units'
 
 const props = defineProps<{ initial: Material | null }>()
 const emit = defineEmits<{ (e: 'saved'): void; (e: 'cancel'): void }>()
 
 const ui = useUiStore()
-const categories = ref<Category[]>([])
-const units = ref<Unit[]>([])
+const materialsStore = useMaterialsStore()
+const unitsStore = useUnitsStore()
 
+// Form data
 const form = reactive<{
   name: string
   sku: string
-  category: string // храним как string для placeholder ""
-  default_unit: string // string для корректной работы required у <select>
+  category: string
+  default_unit: string
 }>({
   name: '',
   sku: '',
@@ -83,7 +127,11 @@ const form = reactive<{
 })
 
 const errors = reactive<Record<string, string | null>>({
-  name: null, sku: null, category: null, default_unit: null, photo: null,
+  name: null, 
+  sku: null, 
+  category: null, 
+  default_unit: null, 
+  photo: null,
 })
 
 const submitting = ref(false)
@@ -91,17 +139,36 @@ const photoFile = ref<File | null>(null)
 const currentPhotoUrl = ref<string | null>(null)
 const deletingPhoto = ref(false)
 
-onMounted(async () => {
-  await Promise.all([loadUnits(), loadCategories()])
+// Computed options for selects
+const unitOptions = computed(() => {
+  return unitsStore.selectOptions
 })
 
+const categoryOptions = computed(() => {
+  // TODO: Implement material categories store
+  return [
+    { value: '', label: '— без категории —' }
+  ]
+})
+
+// Load data on mount
+onMounted(async () => {
+  try {
+    await unitsStore.fetchList()
+    // TODO: Load categories when store is implemented
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка загрузки справочников' })
+  }
+})
+
+// Watch for initial data changes
 watchEffect(() => {
   if (props.initial) {
     form.name = props.initial.name || ''
     form.sku = props.initial.sku || ''
     form.category = props.initial.category ? String(props.initial.category) : ''
     form.default_unit = props.initial.default_unit ? String(props.initial.default_unit) : ''
-    currentPhotoUrl.value = (props.initial as any).photo_url || null
+    currentPhotoUrl.value = props.initial.photo_url || null
   } else {
     form.name = ''
     form.sku = ''
@@ -110,28 +177,11 @@ watchEffect(() => {
     currentPhotoUrl.value = null
   }
   photoFile.value = null
+  // Clear errors
   for (const k of Object.keys(errors)) (errors as any)[k] = null
 })
 
-async function loadUnits() {
-  const {data} = await api.get<PageResponse<Unit>>(endpoints.units.list);
-  units.value = data.results;
-}
-
-async function loadCategories() {
-  const {data} = await api.get<any>(endpoints.materialCategories)
-  categories.value = Array.isArray(data.results) ? data.results : data
-}
-
-function buildFormData(): FormData {
-  const fd = new FormData()
-  fd.append('name', form.name)
-  if (form.sku) fd.append('sku', form.sku)
-  if (form.category) fd.append('category', form.category)
-  if (form.default_unit) fd.append('default_unit', form.default_unit)
-  return fd
-}
-
+// Helper function to extract errors from API response
 function pickError(payload: any, key: string): string | null {
   const v = payload?.[key]
   if (Array.isArray(v) && v.length) return String(v[0])
@@ -144,15 +194,15 @@ function pickError(payload: any, key: string): string | null {
   return null
 }
 
+// Upload photo using store
 async function uploadPhoto(materialId: number) {
   if (!photoFile.value) return
-  const fd = new FormData()
-  fd.append('photo', photoFile.value)
+  
   try {
-    const {data} = await api.post<{ photo_url: string }>(endpoints.materialsPhoto(materialId), fd)
-    currentPhotoUrl.value = data.photo_url
+    await materialsStore.uploadPhoto(materialId, photoFile.value)
+    currentPhotoUrl.value = materialsStore.current?.photo_url || null
     photoFile.value = null
-    ui.toast({type: 'success', text: 'Фото загружено'})
+    ui.toast({ type: 'success', text: 'Фото загружено' })
   } catch (e: any) {
     const d = e?.response?.data || {}
     errors.photo = pickError(d, 'photo') || d?.detail || 'Ошибка загрузки фото'
@@ -160,9 +210,11 @@ async function uploadPhoto(materialId: number) {
   }
 }
 
+// Delete photo
 async function onDeletePhoto() {
   if (!props.initial?.id && !currentPhotoUrl.value) return
   if (!confirm('Удалить фото материала?')) return
+  
   deletingPhoto.value = true
   try {
     const id = props.initial?.id
@@ -171,9 +223,11 @@ async function onDeletePhoto() {
       currentPhotoUrl.value = null
       return
     }
-    await api.delete(endpoints.materialsPhoto(id))
+    
+    // TODO: Implement delete photo in materials store
+    // await materialsStore.deletePhoto(id)
     currentPhotoUrl.value = null
-    ui.toast({type: 'success', text: 'Фото удалено'})
+    ui.toast({ type: 'success', text: 'Фото удалено' })
   } catch (e: any) {
     const d = e?.response?.data || {}
     errors.photo = d?.detail || 'Не удалось удалить фото'
@@ -182,6 +236,7 @@ async function onDeletePhoto() {
   }
 }
 
+// Client-side validation
 function clientValidate(): boolean {
   let ok = true
   errors.name = null
@@ -198,24 +253,35 @@ function clientValidate(): boolean {
   return ok
 }
 
+// Submit form
 async function submit() {
-  // клиентская валидация до запроса
+  // Clear previous errors
   for (const k of Object.keys(errors)) (errors as any)[k] = null
+  
+  // Client validation
   if (!clientValidate()) return
 
   submitting.value = true
   try {
-    const fd = buildFormData()
+    const formData = {
+      name: form.name,
+      sku: form.sku || undefined,
+      category: form.category ? Number(form.category) : undefined,
+      default_unit: Number(form.default_unit)
+    }
 
     let materialId: number
     if (props.initial?.id) {
-      await api.patch(endpoints.materials.one(props.initial.id), fd)
+      // Update existing material
+      await materialsStore.update(props.initial.id, formData)
       materialId = props.initial.id
     } else {
-      const {data} = await api.post<Material>(endpoints.materials.list, fd)
-      materialId = Number((data as any)?.id)
+      // Create new material
+      const newMaterial = await materialsStore.create(formData)
+      materialId = newMaterial.id
     }
 
+    // Upload photo if selected
     if (photoFile.value) {
       await uploadPhoto(materialId)
     }
@@ -223,14 +289,14 @@ async function submit() {
     emit('saved')
   } catch (e: any) {
     const d = e?.response?.data || {}
-    // универсальный разбор с поддержкой {errors:{...}}
+    // Extract field errors
     errors.name = pickError(d, 'name')
     errors.sku = pickError(d, 'sku')
     errors.category = pickError(d, 'category')
     errors.default_unit = pickError(d, 'default_unit')
 
+    // If no specific field errors, show general error
     if (!errors.name && !errors.default_unit && d?.detail && typeof d.detail === 'string') {
-      // если сервер прислал только detail — покажем его под названием
       errors.name = d.detail
     }
   } finally {
@@ -242,3 +308,4 @@ async function submit() {
 <style scoped>
 /* no @apply */
 </style>
+

@@ -1,6 +1,30 @@
 @import "tailwindcss";
-
 @plugin "daisyui";
+
+@theme {
+  --color-*: initial;
+  --color-base-200: 210 40% 98%;
+  --color-base-300: 214.3 31.8% 91.4%;
+  --color-base-content: 215.4 16.3% 46.9%;
+  --color-primary: 262.1 83.3% 57.8%;
+  --color-secondary: 210 40% 98%;
+  --color-accent: 210 40% 98%;
+  --color-neutral: 210 40% 98%;
+  --color-info: 199.89 89.12% 48.04%;
+  --color-success: 142.1 76.2% 36.3%;
+  --color-warning: 32.95 94.89% 43.73%;
+  --color-error: 0 84.2% 60.2%;
+}
+
+/* DaisyUI base styles */
+@layer base {
+  :root {
+    --bc: 215.4 16.3% 46.9%;
+    --b1: 0 0% 100%;
+    --b2: 210 40% 98%;
+    --b3: 214.3 31.8% 91.4%;
+  }
+}
 
 /* База */
 :root {
@@ -11,4 +35,13 @@ html, body, #app {
     height: 100%;
 }
 
-/* При желании: здесь же можно настраивать тему через @theme, но пока оставим по умолчанию */
+/* Кастомные классы для прозрачности */
+@layer utilities {
+    .text-gray-70 {
+        color: hsl(215.4 16.3% 46.9% / 0.7);
+    }
+    
+    .text-gray-60 {
+        color: hsl(215.4 16.3% 46.9% / 0.6);
+    }
+}

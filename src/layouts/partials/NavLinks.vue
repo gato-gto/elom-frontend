@@ -24,3 +24,4 @@
 <script setup lang="ts">
 const emit = defineEmits<{ (e: 'navigate'): void }>()
 </script>
+
