@@ -40,11 +40,11 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-for="r in rows" :key="r.material">
-          <td>{{ r.material_name }}</td>
-          <td>{{ r.unit_code ?? '—' }}</td>
-          <td class="text-right">{{ r.total_amount }}</td>
-          <td class="text-right">{{ r.purchases_count ?? '—' }}</td>
+        <tr v-for="r in rows" :key="r.material_id">
+          <td>{{ r.material_name ?? '—' }}</td>
+          <td>{{ r.unit ?? '—' }}</td>
+          <td class="text-right">{{ formatCurrency(r.amount_total) }}</td>
+          <td class="text-right">{{ r.rows ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
           <td colspan="4" class="text-center text-gray-700-60">Нет данных</td>
@@ -54,7 +54,7 @@
         <tr>
           <th>Итого</th>
           <th/>
-          <th class="text-right">{{ total }}</th>
+          <th class="text-right">{{ formatCurrency(total) }}</th>
           <th/>
         </tr>
         </tfoot>
@@ -68,16 +68,28 @@ import {ref, computed, onMounted} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {SiteObject, PageResponse} from '@/api/types'
+import {formatCurrency} from '@/utils/formatters'
 
-type Row = { material: number; material_name: string; unit_code?: string; total_amount: string; purchases_count?: number }
-type ReportResponse = { rows: Row[]; total_amount?: string }
+type ReportRow = {
+  material_id: number
+  material_name: string
+  unit: string
+  qty_total: number | null
+  amount_total: number
+  rows: number
+}
+
+type ReportResponse = { 
+  rows: ReportRow[]
+  total_amount?: number 
+}
 
 const dateFrom = ref<string | undefined>()
 const dateTo = ref<string | undefined>()
 const objectId = ref<number | undefined>()
 const search = ref('')
-const rows = ref<Row[]>([])
-const total = ref<string | null>(null)
+const rows = ref<ReportRow[]>([])
+const total = ref<number | null>(null)
 const loading = ref(false)
 
 const objects = ref<SiteObject[]>([])
@@ -91,14 +103,25 @@ async function load() {
   loading.value = true
   try {
     const q = buildQuery({
-      date_after: dateFrom.value || undefined,
-      date_before: dateTo.value || undefined,
+      date_from: dateFrom.value || undefined,
+      date_to: dateTo.value || undefined,
       object: objectId.value,
       search: search.value || undefined,
     })
     const {data} = await api.get<ReportResponse>(endpoints.reports.byMaterial + q)
-    rows.value = Array.isArray((data as any)) ? (data as any as Row[]) : (data.rows ?? [])
-    total.value = (data as any).total_amount ?? null
+    
+    // Обработка нового формата API
+    if (data && typeof data === 'object' && 'rows' in data) {
+      rows.value = (data as ReportResponse).rows ?? []
+      total.value = (data as ReportResponse).total_amount ?? null
+    } else {
+      rows.value = []
+      total.value = null
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки отчета по материалам:', error)
+    rows.value = []
+    total.value = null
   } finally {
     loading.value = false
   }
@@ -106,21 +129,21 @@ async function load() {
 
 const xlsxUrl = computed(() => {
   const q = buildQuery({
-    date_after: dateFrom.value || undefined,
-    date_before: dateTo.value || undefined,
+    date_from: dateFrom.value || undefined,
+    date_to: dateTo.value || undefined,
     object: objectId.value,
     search: search.value || undefined,
-    format: 'xlsx',
+    export: 'xlsx',
   })
   return endpoints.reports.byMaterial + q
 })
 const pdfUrl = computed(() => {
   const q = buildQuery({
-    date_after: dateFrom.value || undefined,
-    date_before: dateTo.value || undefined,
+    date_from: dateFrom.value || undefined,
+    date_to: dateTo.value || undefined,
     object: objectId.value,
     search: search.value || undefined,
-    format: 'pdf',
+    export: 'pdf',
   })
   return endpoints.reports.byMaterial + q
 })

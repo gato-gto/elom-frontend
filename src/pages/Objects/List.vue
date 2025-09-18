@@ -1,120 +1,142 @@
 <template>
-  <div class="grid gap-4">
+  <div class="list-container">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Объекты</h1>
-      <button 
-        class="btn btn-primary" 
-        @click="openCreate" 
-        v-if="canEdit"
-        :disabled="objectsStore.loading"
-      >
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Добавить объект
-      </button>
-    </div>
+    <ListHeader
+      title="Объекты"
+      subtitle="Управление строительными объектами и их характеристиками"
+      icon="M3 21h18v-2H3v2zM5 10h14V8H5v2zm0-4h14V4H5v2z"
+      :show-create="canEdit"
+      create-text="Добавить объект"
+      :can-create="canEdit"
+      :loading="objectsStore.loading"
+      :show-stats="true"
+      :total-count="objectsStore.pagination.count"
+      :filtered-count="objectsStore.items.length"
+      @create="openCreate"
+    />
 
     <!-- Filters -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Фильтры и поиск</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Search -->
-          <fieldset class="fieldset">
-            <span class="label-text">Поиск</span>
-            <input 
-              v-model="objectsStore.filters.search"
-              type="text"
-              class="input input-bordered"
-              placeholder="Название, адрес"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-          <!-- Status Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Статус</span>
-            <select 
-              v-model="objectsStore.filters.is_active"
-              class="select select-bordered"
-              @change="handleSearch"
-            >
-              <option value="">Все</option>
-              <option value="true">Активные</option>
-              <option value="false">Неактивные</option>
-            </select>
-          </fieldset>
-          
-          <!-- Name Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Название</span>
-            <input 
-              v-model="objectsStore.filters.name"
-              type="text"
-              class="input input-bordered"
-              placeholder="Название объекта"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-          <!-- Ordering -->
-          <fieldset class="fieldset">
-            <span class="label-text">Сортировка</span>
-            <select 
-              v-model="objectsStore.filters.ordering"
-              class="select select-bordered"
-              @change="handleSearch"
-            >
-              <option value="name">Название ↑</option>
-              <option value="-name">Название ↓</option>
-              <option value="id">ID ↑</option>
-              <option value="-id">ID ↓</option>
-            </select>
-          </fieldset>
-        </div>
-        
-        <div class="flex gap-2 mt-4">
-          <button class="btn btn-primary" @click="handleSearch" :disabled="objectsStore.loading">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            Применить
-          </button>
-          <button class="btn btn-outline" @click="handleReset" :disabled="objectsStore.loading">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            Сбросить
-          </button>
-        </div>
-      </div>
-    </div>
+    <FilterPanel
+      :columns="4"
+      :loading="objectsStore.loading"
+      @reset="handleReset"
+    >
+      <FilterField
+        v-model="objectsStore.filters.name"
+        type="text"
+        label="Название"
+        placeholder="Название объекта"
+      />
+      
+      <FilterField
+        v-model="objectsStore.filters.is_active"
+        type="select"
+        label="Статус"
+        :options="statusOptions"
+      />
+      
+    </FilterPanel>
 
     <!-- Table -->
-    <Table
-      :columns="columns"
-      :data="objectsStore.items"
-      :loading="objectsStore.loading"
-      :actions="actions"
-      empty-text="Нет объектов"
-      @action="handleAction"
-    >
-      <template #cell-is_active="{ value }">
-        <div class="badge" :class="value ? 'badge-success' : 'badge-error'">
-          {{ value ? 'Активный' : 'Неактивный' }}
-        </div>
-      </template>
-    </Table>
+    <div class="list-content">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th @click="handleSort('id')" class="cursor-pointer hover:bg-gray-50">
+              ID
+              <span v-if="sortBy === 'id'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('name')" class="cursor-pointer hover:bg-gray-50">
+              Название
+              <span v-if="sortBy === 'name'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('status')" class="cursor-pointer hover:bg-gray-50">
+              Статус
+              <span v-if="sortBy === 'status'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('responsible_person')" class="cursor-pointer hover:bg-gray-50">
+              Ответственный
+              <span v-if="sortBy === 'responsible_person'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('start_date')" class="cursor-pointer hover:bg-gray-50">
+              Дата начала
+              <span v-if="sortBy === 'start_date'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('is_active')" class="cursor-pointer hover:bg-gray-50">
+              Активность
+              <span v-if="sortBy === 'is_active'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="text-right">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="object in objectsStore.items" :key="object.id">
+            <td>{{ object.id }}</td>
+            <td>{{ object.name }}</td>
+            <td>
+              <div v-if="object.status" class="badge" :class="getStatusClass(object.status)">
+                {{ getStatusText(object.status) }}
+              </div>
+              <span v-else class="text-gray-400">—</span>
+            </td>
+            <td>
+              <span v-if="object.responsible_person">{{ object.responsible_person }}</span>
+              <span v-else class="text-gray-400">—</span>
+            </td>
+            <td>
+              <span v-if="object.start_date">{{ formatDate(object.start_date) }}</span>
+              <span v-else class="text-gray-400">—</span>
+            </td>
+            <td>
+              <div class="badge" :class="object.is_active ? 'badge-success' : 'badge-error'">
+                {{ object.is_active ? 'Активный' : 'Неактивный' }}
+              </div>
+            </td>
+            <td class="text-right">
+              <div class="flex gap-1 justify-end">
+                <button 
+                  v-if="canEdit" 
+                  class="btn btn-xs btn-outline" 
+                  @click="handleAction('edit', object)"
+                >
+                  Редактировать
+                </button>
+                <button 
+                  v-if="canEdit" 
+                  class="btn btn-xs btn-error" 
+                  @click="handleAction('delete', object)"
+                >
+                  Удалить
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="!objectsStore.loading && objectsStore.items.length === 0">
+            <td colspan="7" class="text-center text-gray-500">Нет данных</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Pagination -->
-    <Pagination
-      :current="objectsStore.pagination.page"
-      :total="objectsStore.pagination.count"
-      :page-size="objectsStore.pagination.pageSize"
-      @change="handlePageChange"
-    />
+    <div class="modern-pagination">
+      <button class="pagination-btn" :disabled="objectsStore.pagination.page <= 1" @click="handlePageChange(1)">«</button>
+      <button class="pagination-btn" :disabled="objectsStore.pagination.page <= 1" @click="handlePageChange(objectsStore.pagination.page - 1)">Назад</button>
+      <span class="pagination-info">Стр. {{ objectsStore.pagination.page }}</span>
+      <button class="pagination-btn" :disabled="objectsStore.pagination.page * objectsStore.pagination.pageSize >= objectsStore.pagination.count" @click="handlePageChange(objectsStore.pagination.page + 1)">Вперёд</button>
+    </div>
 
     <!-- Modal -->
     <Modal v-model="modalOpen" :title="modalTitle" size="lg" :closable="true">
@@ -124,19 +146,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { debounce } from '@/utils/debounce'
 import { useObjectsStore } from '@/stores/objects'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import type { Object, Me } from '@/api/types'
-import Table from '@/components/Table.vue'
-import Pagination from '@/components/Pagination.vue'
+import type { Object, Me, ObjectStatus } from '@/api/types'
+import { formatDate } from '@/utils/formatters'
 import Modal from '@/components/Modal.vue'
 import ObjectForm from './ObjectForm.vue'
+import ListHeader from '@/components/ListHeader.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import FilterField from '@/components/FilterField.vue'
 
 const objectsStore = useObjectsStore()
 const auth = useAuthStore()
 const ui = useUiStore()
+
+// Автоматические фильтры
+const isSearching = ref(false)
 
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
@@ -150,51 +178,52 @@ const modalTitle = computed(() => {
   return current.value ? 'Редактировать объект' : 'Добавить объект'
 })
 
-const columns = [
-  {
-    key: 'id',
-    title: 'ID',
-    sortable: true,
-    class: 'w-20'
-  },
-  {
-    key: 'name',
-    title: 'Название',
-    sortable: true,
-    class: 'min-w-48'
-  },
-  {
-    key: 'address',
-    title: 'Адрес',
-    sortable: false,
-    class: 'min-w-64'
-  },
-  {
-    key: 'is_active',
-    title: 'Статус',
-    sortable: true,
-    class: 'w-32'
-  }
-]
+// Computed options for filters
+const statusOptions = computed(() => [
+  { value: '', label: 'Все' },
+  { value: 'true', label: 'Активные' },
+  { value: 'false', label: 'Неактивные' }
+])
 
-const actions = computed(() => {
-  if (!canEdit.value) return []
+
+// Функции для форматирования статусов
+function getStatusClass(status: ObjectStatus): string {
+  const classes = {
+    planning: 'badge-info',
+    active: 'badge-success',
+    completed: 'badge-primary',
+    on_hold: 'badge-warning',
+    cancelled: 'badge-error'
+  }
+  return classes[status] || 'badge-ghost'
+}
+
+function getStatusText(status: ObjectStatus): string {
+  const texts = {
+    planning: 'Планирование',
+    active: 'Активный',
+    completed: 'Завершен',
+    on_hold: 'Приостановлен',
+    cancelled: 'Отменен'
+  }
+  return texts[status] || status
+}
+
+// Sorting
+const sortBy = ref('')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
+function handleSort(key: string) {
+  if (sortBy.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = key
+    sortOrder.value = 'asc'
+  }
   
-  return [
-    {
-      key: 'edit',
-      label: 'Изменить',
-      icon: 'svg',
-      class: 'btn-outline btn-xs'
-    },
-    {
-      key: 'delete',
-      label: 'Удалить',
-      icon: 'svg',
-      class: 'btn-error btn-xs'
-    }
-  ]
-})
+  const ordering = sortOrder.value === 'desc' ? `-${key}` : key
+  objectsStore.setFilters({ ordering })
+}
 
 function openCreate() {
   current.value = null
@@ -206,13 +235,30 @@ function openEdit(object: Object) {
   modalOpen.value = true
 }
 
-async function handleSearch() {
-  await objectsStore.fetchList()
-}
+// Debounced функция для автоматического поиска
+const debouncedSearch = debounce(async () => {
+  isSearching.value = true
+  try {
+    await objectsStore.fetchList()
+  } catch (error) {
+    ui.toast({ type: 'error', text: 'Ошибка поиска объектов' })
+  } finally {
+    isSearching.value = false
+  }
+}, 500)
+
+// Watcher для автоматического поиска при изменении фильтров
+watch(
+  () => objectsStore.filters,
+  () => {
+    objectsStore.pagination.page = 1
+    debouncedSearch()
+  },
+  { deep: true }
+)
 
 async function handleReset() {
   objectsStore.resetFilters()
-  await objectsStore.fetchList()
 }
 
 async function handlePageChange(page: number) {

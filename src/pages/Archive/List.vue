@@ -1,76 +1,99 @@
 <template>
-  <div class="grid gap-4">
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Архив периодов</h1>
-      <button class="btn btn-primary" @click="openCloseModal">Закрыть период</button>
-    </div>
+  <div class="list-container">
+    <!-- Header -->
+    <ListHeader
+      title="Архив периодов"
+      subtitle="Управление закрытыми периодами по объектам"
+      icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      :show-create="true"
+      create-text="Закрыть период"
+      :can-create="true"
+      :loading="loading"
+      :show-stats="true"
+      :total-count="count"
+      :filtered-count="rows.length"
+      @create="openCloseModal"
+    />
 
-    <!-- Фильтры -->
-    <div class="card bg-white border">
-      <div class="card-body grid md:grid-cols-3 gap-4">
-        <fieldset class="fieldset">
-          <label class="label" for="ar-month"><span class="label-text">Месяц</span></label>
-          <input id="ar-month" v-model="month" type="month" class="input input-bordered input-sm"/>
-        </fieldset>
+    <!-- Filters -->
+    <FilterPanel
+      :columns="2"
+      :loading="loading"
+      @reset="resetFilters"
+    >
+      <FilterField
+        v-model="month"
+        type="month"
+        label="Месяц"
+      />
+      
+      <FilterField
+        v-model="objectId"
+        type="select"
+        label="Объект"
+        :options="objectOptions"
+      />
+    </FilterPanel>
 
-        <fieldset class="fieldset">
-          <label class="label" for="ar-obj"><span class="label-text">Объект</span></label>
-          <select id="ar-obj" v-model.number="objectId" class="select select-bordered select-sm">
-            <option :value="undefined">Все</option>
-            <option v-for="o in objects" :key="o.id" :value="o.id">{{ o.name }}</option>
-          </select>
-        </fieldset>
-
-        <div class="md:col-span-1 flex items-end justify-end">
-          <button class="btn btn-sm btn-outline" @click="reload(1)">Применить</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Таблица -->
-    <div class="overflow-auto border border-gray-200 rounded-xl">
-      <table class="table table-zebra w-full">
+    <!-- Table -->
+    <div class="list-content">
+      <table class="modern-table">
         <thead>
-        <tr>
-          <th>Месяц</th>
-          <th>Объект</th>
-          <th>Закрыто</th>
-          <th>Статус</th>
-          <th class="text-right">Действия</th>
-        </tr>
+          <tr>
+            <th @click="handleSort('id')" class="cursor-pointer hover:bg-gray-50">
+              ID
+              <span v-if="sortBy === 'id'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('month')" class="cursor-pointer hover:bg-gray-50">
+              Месяц
+              <span v-if="sortBy === 'month'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th>Объект</th>
+            <th>Закрыто</th>
+            <th>Кем закрыто</th>
+            <th>Статус</th>
+            <th class="text-right">Действия</th>
+          </tr>
         </thead>
         <tbody>
-        <tr v-for="p in rows" :key="p.id">
-          <td>{{ p.month }}</td>
-          <td>{{ p.object_name ?? p.object }}</td>
-          <td>{{ p.closed_at ?? '—' }}</td>
-          <td>
-              <span class="badge" :class="p.is_closed ? 'badge-ghost' : 'badge-success'">
-                {{ p.is_closed ? 'Закрыт' : 'Открыт' }}
+          <tr v-for="p in rows" :key="p.id">
+            <td>{{ p.id }}</td>
+            <td>{{ p.month }}</td>
+            <td>{{ p.object_name ?? p.object }}</td>
+            <td>{{ formatDateTime(p.closed_at) }}</td>
+            <td>{{ p.closed_by_name ?? '—' }}</td>
+            <td>
+              <span class="badge" :class="getStatusClass(p.is_closed)">
+                {{ getStatusText(p.is_closed) }}
               </span>
-          </td>
-          <td class="text-right">
-            <button
+            </td>
+            <td class="text-right">
+              <button
                 class="btn btn-xs btn-warning"
                 :disabled="busyId===p.id || !p.is_closed"
                 @click="reopen(p)"
-            >Открыть
-            </button>
-          </td>
-        </tr>
-        <tr v-if="!loading && rows.length===0">
-          <td colspan="5" class="text-center text-gray-700-60">Нет данных</td>
-        </tr>
+              >
+                Открыть
+              </button>
+            </td>
+          </tr>
+          <tr v-if="!loading && rows.length===0">
+            <td colspan="6" class="text-center text-gray-500">Нет данных</td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Пагинация -->
-    <div class="join self-end">
-      <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(1)">«</button>
-      <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(page-1)">Назад</button>
-      <button class="btn btn-sm join-item btn-ghost no-animation">Стр. {{ page }}</button>
-      <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
+    <!-- Pagination -->
+    <div class="modern-pagination">
+      <button class="pagination-btn" :disabled="page<=1" @click="reload(1)">«</button>
+      <button class="pagination-btn" :disabled="page<=1" @click="reload(page-1)">Назад</button>
+      <span class="pagination-info">Стр. {{ page }}</span>
+      <button class="pagination-btn" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
     </div>
 
     <!-- Модалка закрытия периода -->
@@ -105,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, onMounted} from 'vue'
+import {computed, ref, onMounted, watch} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {
@@ -115,6 +138,11 @@ import type {
   ArchiveListQuery,
   SiteObject,
 } from '@/api/types'
+import {formatDateTime, getStatusClass, getStatusText} from '@/utils/formatters'
+import {debounce} from '@/utils/debounce'
+import ListHeader from '@/components/ListHeader.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import FilterField from '@/components/FilterField.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
@@ -123,11 +151,39 @@ const count = ref(0)
 const page = ref(1)
 const pageSize = 20
 const loading = ref(false)
+
+// Debounced функция для поиска
+const debouncedSearch = debounce(() => {
+  reload(1)
+}, 500)
+
+// Sorting
+const sortBy = ref('')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
+function handleSort(key: string) {
+  if (sortBy.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = key
+    sortOrder.value = 'asc'
+  }
+  
+  const ordering = sortOrder.value === 'desc' ? `-${key}` : key
+  // Archive doesn't have ordering in current implementation, but we can add it to API call
+  reload(1)
+}
 const busyId = ref<number | null>(null)
 
 const month = ref<string | undefined>(new Date().toISOString().slice(0, 7)) // YYYY-MM
 const objectId = ref<number | undefined>()
 const objects = ref<SiteObject[]>([])
+
+// Computed options for filters
+const objectOptions = computed(() => [
+  { value: undefined, label: 'Все' },
+  ...objects.value.map(o => ({ value: o.id, label: o.name }))
+])
 
 async function loadRefs() {
   const {data} = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'}))
@@ -154,6 +210,12 @@ async function fetchList() {
 function reload(p = page.value) {
   page.value = p;
   fetchList()
+}
+
+function resetFilters() {
+  month.value = new Date().toISOString().slice(0, 7)
+  objectId.value = undefined
+  reload(1)
 }
 
 // --- Закрытие/открытие периодов ---
@@ -198,6 +260,16 @@ async function reopen(p: ArchivePeriod) {
     busyId.value = null
   }
 }
+
+// Watcher для автоматического поиска при изменении фильтров
+watch(
+  () => [month.value, objectId.value],
+  () => {
+    page.value = 1
+    debouncedSearch()
+  },
+  { deep: true }
+)
 
 onMounted(async () => {
   await loadRefs()

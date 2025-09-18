@@ -222,6 +222,8 @@ import { useUnitsStore } from '@/stores/units'
 import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore } from '@/stores/employees'
 import { useUiStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useAuthStore } from '@/stores/auth'
 import type { Purchase, PurchaseRequest, PurchaseItemRequest } from '@/api/types'
 import FormField from '@/components/FormField.vue'
 
@@ -239,6 +241,8 @@ const unitsStore = useUnitsStore()
 const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
 const ui = useUiStore()
+const notifications = useNotificationsStore()
+const auth = useAuthStore()
 
 const saving = ref(false)
 const deletingPhoto = ref(false)
@@ -370,10 +374,17 @@ async function onSubmit() {
       }))
     }
     
+    let purchaseId: number
+    
     if (isEdit.value) {
-      await purchasesStore.update(Number(route.params.id), purchaseData)
+      purchaseId = Number(route.params.id)
+      await purchasesStore.update(purchaseId, purchaseData)
+      
+      // Уведомление об изменении закупки
+      notifications.notifyPurchaseEdit(purchaseId, auth.me?.username || 'Неизвестный пользователь')
     } else {
-      await purchasesStore.create(purchaseData)
+      const newPurchase = await purchasesStore.create(purchaseData)
+      purchaseId = newPurchase.id
     }
     
     ui.toast({ type: 'success', text: 'Закупка сохранена' })
@@ -390,6 +401,12 @@ async function onSubmit() {
       }
     } else {
       formError.value = 'Ошибка сохранения закупки'
+      
+      // Уведомление об ошибке
+      notifications.notifyPurchaseError(
+        isEdit.value ? Number(route.params.id) : 0, 
+        error.message || 'Неизвестная ошибка'
+      )
     }
   } finally {
     saving.value = false

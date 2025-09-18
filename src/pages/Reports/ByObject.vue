@@ -41,27 +41,19 @@
       <table class="table table-zebra w-full">
         <thead>
         <tr>
-          <th>Дата</th>
           <th>Объект</th>
-          <th>Ответственный</th>
-          <th>Материал</th>
-          <th>Ед.</th>
-          <th class="text-right">Кол-во</th>
+          <th class="text-right">Кол-во закупок</th>
           <th class="text-right">Сумма</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(r, i) in rows" :key="i">
-          <td>{{ r[0] ?? '—' }}</td>
-          <td>{{ r[1] ?? '—' }}</td>
-          <td>{{ r[2] ?? '—' }}</td>
-          <td>{{ r[3] ?? '—' }}</td>
-          <td>{{ r[4] ?? '—' }}</td>
-          <td class="text-right">{{ r[5] ?? '—' }}</td>
-          <td class="text-right">{{ r[6] ?? '—' }}</td>
+        <tr v-for="r in rows" :key="r.object_id">
+          <td>{{ r.object_name ?? '—' }}</td>
+          <td class="text-right">{{ r.purchases ?? '—' }}</td>
+          <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
-          <td colspan="7" class="text-center text-gray-700-60">Нет данных</td>
+          <td colspan="3" class="text-center text-gray-700-60">Нет данных</td>
         </tr>
         </tbody>
       </table>
@@ -81,10 +73,23 @@ import {computed, onMounted, ref} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {PageResponse, ReportResponse, ReportByObjectQuery, SiteObject, Employee, Material} from '@/api/types'
+import {formatDate, formatCurrency, formatNumber} from '@/utils/formatters'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
-const rows = ref<(string | number | null)[][]>([])
+type ReportRow = {
+  object_id: number
+  object_name: string
+  purchases: number
+  total_amount: number
+}
+
+type ReportResponse = { 
+  rows: ReportRow[]
+  total_amount?: number 
+}
+
+const rows = ref<ReportRow[]>([])
 const loading = ref(false)
 const count = ref(0)
 const page = ref(1)
@@ -125,13 +130,19 @@ async function fetchReport() {
   try {
     const q = {...filters.value, page: page.value, page_size: pageSize} as ReportByObjectQuery & { page: number; page_size: number }
     const {data} = await api.get<ReportResponse>(endpoints.reports.byObject + buildQuery(q as unknown as Query))
-    if (Array.isArray(data)) {
-      rows.value = data
-      count.value = data.length
+    
+    // Обработка нового формата API
+    if (data && typeof data === 'object' && 'rows' in data) {
+      rows.value = (data as ReportResponse).rows ?? []
+      count.value = rows.value.length
     } else {
-      rows.value = (data as ReportResponse).rows
-      count.value = (data as ReportResponse).rows.length
+      rows.value = []
+      count.value = 0
     }
+  } catch (error) {
+    console.error('Ошибка загрузки отчета по объектам:', error)
+    rows.value = []
+    count.value = 0
   } finally {
     loading.value = false
   }

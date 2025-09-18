@@ -95,6 +95,14 @@ export const useUnitsStore = defineStore('units', {
 
         return data
       } catch (error: any) {
+        // Если ошибка связана с неправильной страницей, возвращаемся на первую страницу
+        if (error?.response?.data?.detail === 'Неправильная страница' || 
+            error?.response?.status === 404) {
+          console.warn('Invalid page requested, redirecting to page 1')
+          // Рекурсивно вызываем fetchList с первой страницей
+          return this.fetchList({ ...params, page: 1 })
+        }
+        
         this.error = error?.response?.data?.detail || 'Ошибка загрузки единиц измерения'
         throw error
       } finally {
@@ -199,6 +207,11 @@ export const useUnitsStore = defineStore('units', {
       } finally {
         this.loading = false
       }
+    },
+
+    // Set page
+    async setPage(page: number) {
+      await this.fetchList({ page })
     },
 
     // Set filters

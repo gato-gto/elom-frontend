@@ -32,10 +32,10 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-for="r in rows" :key="r.responsible">
+        <tr v-for="r in rows" :key="r.responsible_id">
           <td>{{ r.responsible_name }}</td>
-          <td class="text-right">{{ r.total_amount }}</td>
-          <td class="text-right">{{ r.purchases_count ?? '—' }}</td>
+          <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
+          <td class="text-right">{{ r.purchases ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
           <td colspan="3" class="text-center text-gray-700-60">Нет данных</td>
@@ -44,7 +44,7 @@
         <tfoot v-if="total">
         <tr>
           <th>Итого</th>
-          <th class="text-right">{{ total }}</th>
+          <th class="text-right">{{ formatCurrency(total) }}</th>
           <th/>
         </tr>
         </tfoot>
@@ -57,28 +57,50 @@
 import {ref, computed, onMounted} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
+import {formatCurrency} from '@/utils/formatters'
 
-type Row = { responsible: number; responsible_name: string; total_amount: string; purchases_count?: number }
-type ReportResponse = { rows: Row[]; total_amount?: string }
+type ReportRow = {
+  responsible_id: number
+  responsible_name: string
+  purchases: number
+  total_amount: number
+}
+
+type ReportResponse = { 
+  rows: ReportRow[]
+  total_amount?: number 
+}
+
 
 const dateFrom = ref<string | undefined>()
 const dateTo = ref<string | undefined>()
 const search = ref('')
-const rows = ref<Row[]>([])
-const total = ref<string | null>(null)
+const rows = ref<ReportRow[]>([])
+const total = ref<number | null>(null)
 const loading = ref(false)
 
 async function load() {
   loading.value = true
   try {
     const q = buildQuery({
-      date_after: dateFrom.value || undefined,
-      date_before: dateTo.value || undefined,
+      date_from: dateFrom.value || undefined,
+      date_to: dateTo.value || undefined,
       search: search.value || undefined,
     })
     const {data} = await api.get<ReportResponse>(endpoints.reports.byResponsible + q)
-    rows.value = Array.isArray((data as any)) ? (data as any as Row[]) : (data.rows ?? [])
-    total.value = (data as any).total_amount ?? null
+    
+    // Обработка нового формата API
+    if (data && typeof data === 'object' && 'rows' in data) {
+      rows.value = (data as ReportResponse).rows ?? []
+      total.value = (data as ReportResponse).total_amount ?? null
+    } else {
+      rows.value = []
+      total.value = null
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки отчета по ответственным:', error)
+    rows.value = []
+    total.value = null
   } finally {
     loading.value = false
   }
@@ -86,19 +108,19 @@ async function load() {
 
 const xlsxUrl = computed(() => {
   const q = buildQuery({
-    date_after: dateFrom.value || undefined,
-    date_before: dateTo.value || undefined,
+    date_from: dateFrom.value || undefined,
+    date_to: dateTo.value || undefined,
     search: search.value || undefined,
-    format: 'xlsx',
+    export: 'xlsx',
   })
   return endpoints.reports.byResponsible + q
 })
 const pdfUrl = computed(() => {
   const q = buildQuery({
-    date_after: dateFrom.value || undefined,
-    date_before: dateTo.value || undefined,
+    date_from: dateFrom.value || undefined,
+    date_to: dateTo.value || undefined,
     search: search.value || undefined,
-    format: 'pdf',
+    export: 'pdf',
   })
   return endpoints.reports.byResponsible + q
 })

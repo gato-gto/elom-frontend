@@ -30,7 +30,7 @@ export const usePurchasesStore = defineStore('purchases', {
       material: null as number | null,
       responsible: null as number | null,
       search: '',
-      is_archived: false,
+      is_archived: null as boolean | null,
       ordering: '-date' as string
     }
   }),
@@ -299,7 +299,7 @@ export const usePurchasesStore = defineStore('purchases', {
         material: null,
         responsible: null,
         search: '',
-        is_archived: false,
+        is_archived: null,
         ordering: '-date'
       }
     },

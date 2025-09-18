@@ -47,6 +47,20 @@ export interface Me {
     role: UserRole;
 }
 
+// -------------------- Notifications --------------------
+export interface Notification {
+    id: ID;
+    type: 'info' | 'warning' | 'error' | 'success';
+    title: string;
+    message: string;
+    read: boolean;
+    created_at: string;
+    user_id?: ID;
+    related_type?: 'purchase' | 'object' | 'material' | 'stock';
+    related_id?: ID;
+    action_url?: string;
+}
+
 // -------------------- Employees/Users --------------------
 export type UserRole = "admin" | "buyer" | "site_manager" | "director" | "coordinator";
 
@@ -99,29 +113,88 @@ export interface UnitRequest {
     name: string;
 }
 
+// -------------------- Unit Conversions --------------------
+export interface UnitConversion {
+    id: ID;
+    from_unit: ID;
+    from_unit_name: string;
+    to_unit: ID;
+    to_unit_name: string;
+    conversion_factor: number; // Коэффициент пересчета: to_unit = from_unit * conversion_factor
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface UnitConversionRequest {
+    from_unit: ID;
+    to_unit: ID;
+    conversion_factor: number;
+    is_active?: boolean;
+}
+
+export interface PatchedUnitConversionRequest {
+    from_unit?: ID;
+    to_unit?: ID;
+    conversion_factor?: number;
+    is_active?: boolean;
+}
+
 export interface PatchedUnitRequest {
     code?: string;
     name?: string;
 }
 
 // -------------------- Objects --------------------
+export type ObjectStatus = 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled';
+
 export interface Object {
     id: ID;
     name: string;
     address?: string;
     is_active: boolean;
+    // Новые поля согласно ТЗ
+    coordinates?: {
+        latitude: number;
+        longitude: number;
+    };
+    start_date?: string; // Дата начала работ
+    end_date?: string; // Дата окончания работ
+    status?: ObjectStatus;
+    responsible_person?: string; // Ответственное лицо
+    responsible_phone?: string; // Номер телефона ответственного
 }
 
 export interface ObjectRequest {
     name: string;
     address?: string;
     is_active?: boolean;
+    // Новые поля согласно ТЗ
+    coordinates?: {
+        latitude: number;
+        longitude: number;
+    };
+    start_date?: string;
+    end_date?: string;
+    status?: ObjectStatus;
+    responsible_person?: string;
+    responsible_phone?: string;
 }
 
 export interface PatchedObjectRequest {
     name?: string;
     address?: string;
     is_active?: boolean;
+    // Новые поля согласно ТЗ
+    coordinates?: {
+        latitude: number;
+        longitude: number;
+    };
+    start_date?: string;
+    end_date?: string;
+    status?: ObjectStatus;
+    responsible_person?: string;
+    responsible_phone?: string;
 }
 
 // Type alias for compatibility with existing code

@@ -1,0 +1,89 @@
+import { defineStore } from 'pinia'
+import { ref, watch } from 'vue'
+
+export type Theme = 'light' | 'dark' | 'system'
+
+export const useThemeStore = defineStore('theme', () => {
+  const theme = ref<Theme>('system')
+  const isDark = ref(false)
+
+  // Функция для определения системной темы
+  function getSystemTheme(): boolean {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  // Функция для применения темы
+  function applyTheme(newTheme: Theme) {
+    const html = document.documentElement
+    
+    switch (newTheme) {
+      case 'dark':
+        html.classList.add('dark')
+        html.setAttribute('data-theme', 'dark')
+        isDark.value = true
+        break
+      case 'light':
+        html.classList.remove('dark')
+        html.setAttribute('data-theme', 'light')
+        isDark.value = false
+        break
+      case 'system':
+        const systemIsDark = getSystemTheme()
+        if (systemIsDark) {
+          html.classList.add('dark')
+          html.setAttribute('data-theme', 'dark')
+        } else {
+          html.classList.remove('dark')
+          html.setAttribute('data-theme', 'light')
+        }
+        isDark.value = systemIsDark
+        break
+    }
+  }
+
+  // Функция для переключения темы
+  function setTheme(newTheme: Theme) {
+    theme.value = newTheme
+    applyTheme(newTheme)
+    localStorage.setItem('theme', newTheme)
+  }
+
+  // Функция для переключения между светлой и темной темой
+  function toggleTheme() {
+    if (theme.value === 'system') {
+      setTheme(isDark.value ? 'light' : 'dark')
+    } else {
+      setTheme(theme.value === 'light' ? 'dark' : 'light')
+    }
+  }
+
+  // Инициализация темы
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') as Theme
+    const initialTheme = savedTheme || 'system'
+    
+    theme.value = initialTheme
+    applyTheme(initialTheme)
+
+    // Слушаем изменения системной темы
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    mediaQuery.addEventListener('change', () => {
+      if (theme.value === 'system') {
+        applyTheme('system')
+      }
+    })
+  }
+
+  // Реактивное обновление темы
+  watch(theme, (newTheme) => {
+    applyTheme(newTheme)
+  })
+
+  return {
+    theme,
+    isDark,
+    setTheme,
+    toggleTheme,
+    initTheme
+  }
+})

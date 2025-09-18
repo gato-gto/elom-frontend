@@ -27,8 +27,71 @@
           type="textarea"
           placeholder="Введите адрес объекта"
           :help="'Необязательно'"
-          rows="3"
+          :rows="3"
         />
+
+        <!-- Координаты -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            v-model="coordinates.latitude"
+            label="Широта"
+            type="number"
+            placeholder="41.3111"
+            :help="'Необязательно'"
+            step="0.000001"
+          />
+          <FormField
+            v-model="coordinates.longitude"
+            label="Долгота"
+            type="number"
+            placeholder="69.2797"
+            :help="'Необязательно'"
+            step="0.000001"
+          />
+        </div>
+
+        <!-- Даты работ -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            v-model="form.start_date"
+            label="Дата начала работ"
+            type="date"
+            :help="'Необязательно'"
+          />
+          <FormField
+            v-model="form.end_date"
+            label="Дата окончания работ"
+            type="date"
+            :help="'Необязательно'"
+          />
+        </div>
+
+        <!-- Статус объекта -->
+        <FormField
+          v-model="form.status"
+          label="Статус объекта"
+          type="select"
+          :options="statusOptions"
+          :help="'Необязательно'"
+        />
+
+        <!-- Ответственное лицо -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            v-model="form.responsible_person"
+            label="Ответственное лицо"
+            type="text"
+            placeholder="ФИО ответственного"
+            :help="'Необязательно'"
+          />
+          <FormField
+            v-model="form.responsible_phone"
+            label="Телефон ответственного"
+            type="text"
+            placeholder="+998 90 123 45 67"
+            :help="'Необязательно'"
+          />
+        </div>
 
         <!-- Статус активности -->
         <div class="form-control">
@@ -69,10 +132,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
-import type { Object, ObjectRequest } from '@/api/types'
+import type { Object, ObjectRequest, ObjectStatus } from '@/api/types'
 import FormField from '@/components/FormField.vue'
 
 const props = defineProps<{
@@ -90,16 +153,44 @@ const ui = useUiStore()
 const loading = ref(false)
 const errors = reactive<Record<string, string>>({})
 
+// Опции статусов объектов
+const statusOptions = computed(() => [
+  { value: '', label: 'Не выбран' },
+  { value: 'planning', label: 'Планирование' },
+  { value: 'active', label: 'Активный' },
+  { value: 'completed', label: 'Завершен' },
+  { value: 'on_hold', label: 'Приостановлен' },
+  { value: 'cancelled', label: 'Отменен' }
+])
+
+// Отдельные ref для координат
+const coordinates = reactive({
+  latitude: 0,
+  longitude: 0
+})
+
 const form = reactive<ObjectRequest>({
   name: '',
   address: '',
-  is_active: true
+  is_active: true,
+  start_date: '',
+  end_date: '',
+  status: undefined,
+  responsible_person: '',
+  responsible_phone: ''
 })
 
 function resetForm() {
   form.name = ''
   form.address = ''
   form.is_active = true
+  form.start_date = ''
+  form.end_date = ''
+  form.status = undefined
+  form.responsible_person = ''
+  form.responsible_phone = ''
+  coordinates.latitude = 0
+  coordinates.longitude = 0
   Object.keys(errors).forEach(key => delete errors[key])
 }
 
@@ -108,6 +199,13 @@ function loadInitial() {
     form.name = props.initial.name
     form.address = props.initial.address || ''
     form.is_active = props.initial.is_active
+    form.start_date = props.initial.start_date || ''
+    form.end_date = props.initial.end_date || ''
+    form.status = props.initial.status
+    form.responsible_person = props.initial.responsible_person || ''
+    form.responsible_phone = props.initial.responsible_phone || ''
+    coordinates.latitude = props.initial.coordinates?.latitude || 0
+    coordinates.longitude = props.initial.coordinates?.longitude || 0
   } else {
     resetForm()
   }
@@ -118,10 +216,18 @@ async function submit() {
   Object.keys(errors).forEach(key => delete errors[key])
   
   try {
+    // Подготавливаем данные с координатами
+    const submitData = {
+      ...form,
+      coordinates: coordinates.latitude !== 0 || coordinates.longitude !== 0 
+        ? { latitude: coordinates.latitude, longitude: coordinates.longitude }
+        : undefined
+    }
+    
     if (props.initial) {
-      await objectsStore.update(props.initial.id, form)
+      await objectsStore.update(props.initial.id, submitData)
     } else {
-      await objectsStore.create(form)
+      await objectsStore.create(submitData)
     }
     emit('saved')
   } catch (error: any) {

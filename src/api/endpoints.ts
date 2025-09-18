@@ -32,6 +32,12 @@ export const endpoints = {
         one: (id: number) => join(`/units/${id}/`),
     },
 
+    // Unit Conversions endpoints
+    unitConversions: {
+        list: join('/unit-conversions/'),
+        detail: (id: number) => join(`/unit-conversions/${id}/`),
+    },
+
     // Material Categories endpoints
     materialCategories: {
         list: join('/material-categories/'),
@@ -85,10 +91,10 @@ export const endpoints = {
 
     // Reports endpoints
     reports: {
-        byPeriod: join('/reports/purchases/by-period'),
-        byObject: join('/reports/purchases/by-object'),
-        byResponsible: join('/reports/purchases/by-responsible'),
-        byMaterial: join('/reports/purchases/by-material'),
+        byPeriod: join('/reports/purchases/by-period/'),
+        byObject: join('/reports/purchases/by-object/'),
+        byResponsible: join('/reports/purchases/by-responsible/'),
+        byMaterial: join('/reports/purchases/by-material/'),
     },
 
     // ---------- Алиасы совместимости со старым кодом ----------

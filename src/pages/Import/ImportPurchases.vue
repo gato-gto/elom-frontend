@@ -33,7 +33,41 @@
     </div>
     <div v-if="resp" class="mt-4">
       <h3 class="font-semibold mb-2">Результат</h3>
-      <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ resp }}</pre>
+      <div v-if="resp.ok !== undefined" class="space-y-3">
+        <div class="alert" :class="resp.ok ? 'alert-success' : 'alert-error'">
+          <span>{{ resp.ok ? 'Импорт успешен' : 'Ошибка импорта' }}</span>
+        </div>
+        <div v-if="resp.sheets" class="card bg-base-100 border">
+          <div class="card-body">
+            <h4 class="card-title text-sm">Доступные листы:</h4>
+            <ul class="list-disc list-inside">
+              <li v-for="sheet in resp.sheets" :key="sheet">{{ sheet }}</li>
+            </ul>
+          </div>
+        </div>
+        <div v-if="resp.columns" class="card bg-base-100 border">
+          <div class="card-body">
+            <h4 class="card-title text-sm">Колонки:</h4>
+            <div class="flex flex-wrap gap-2">
+              <span v-for="col in resp.columns" :key="col" class="badge badge-outline">{{ col }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="resp.warnings && resp.warnings.length > 0" class="alert alert-warning">
+          <div>
+            <h4 class="font-bold">Предупреждения:</h4>
+            <ul class="list-disc list-inside">
+              <li v-for="warning in resp.warnings" :key="warning">{{ warning }}</li>
+            </ul>
+          </div>
+        </div>
+        <div v-if="resp.hash" class="text-xs text-base-content-60">
+          Hash: {{ resp.hash }}
+        </div>
+      </div>
+      <div v-else>
+        <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ resp }}</pre>
+      </div>
     </div>
     <p class="text-sm text-error" v-if="error">{{ error }}</p>
   </div>
@@ -61,8 +95,11 @@ async function run() {
     if (!file.value) throw new Error('Не выбран файл')
     fd.append('file', file.value)
     if (mapping.value) fd.append('mapping', mapping.value)
-    const url = `/purchases/import?dry_run=${dryRun.value ? '1':'0'}${sheet.value ? `&sheet=${encodeURIComponent(sheet.value)}`:''}`
-    const { data } = await api.post(url, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (sheet.value) fd.append('sheet', sheet.value)
+    
+    // Используем правильные эндпоинты API
+    const endpoint = dryRun.value ? '/api/v1/purchases/import/dry_run' : '/api/v1/purchases/import/commit'
+    const { data } = await api.post(endpoint, fd)
     resp.value = data
   } catch (e: any) {
     error.value = e?.response?.data?.error || e.message || 'Ошибка импорта'

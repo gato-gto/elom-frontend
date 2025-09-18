@@ -41,6 +41,9 @@ const ReportByResponsible = () => import('@/pages/Reports/ByResponsible.vue')
 // Import
 const ImportPurchases = () => import('@/pages/Import/ImportPurchases.vue')
 
+// Admin
+const UnitConversions = () => import('@/pages/Admin/UnitConversions.vue')
+
 const routes = [
     {
         path: '/login',
@@ -301,6 +304,19 @@ const routes = [
       title: 'Импорт закупок',
       icon: 'upload',
       breadcrumb: 'Импорт'
+    }
+  },
+  
+  // Admin routes
+  {
+    path: '/admin/unit-conversions',
+    name: 'UnitConversions',
+    component: UnitConversions,
+    meta: { 
+      title: 'Конвертации единиц',
+      icon: 'settings',
+      breadcrumb: 'Админка / Конвертации единиц',
+      requiresRole: 'admin'
     }
   },
   

@@ -126,6 +126,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
+import { useUnitConversionsStore } from '@/stores/unitConversions'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import { useUiStore } from '@/stores/ui'
 import type { Material, MaterialRequest } from '@/api/types'
@@ -143,6 +144,7 @@ const emit = defineEmits<{
 
 const materialsStore = useMaterialsStore()
 const unitsStore = useUnitsStore()
+const unitConversionsStore = useUnitConversionsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 const ui = useUiStore()
 
@@ -261,6 +263,9 @@ onMounted(async () => {
   }
   if (materialCategoriesStore.items.length === 0) {
     promises.push(materialCategoriesStore.fetchList())
+  }
+  if (unitConversionsStore.items.length === 0) {
+    promises.push(unitConversionsStore.fetchList({ page_size: 1000 }))
   }
   
   if (promises.length > 0) {

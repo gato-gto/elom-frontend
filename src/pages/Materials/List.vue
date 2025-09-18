@@ -1,98 +1,64 @@
 <template>
-  <div class="grid gap-4">
+  <div class="list-container">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Материалы</h1>
-      <button 
-        class="btn btn-primary" 
-        @click="openCreate" 
-        v-if="canEdit"
-        :disabled="materialsStore.loading"
-      >
-        Добавить материал
-      </button>
-    </div>
+    <ListHeader
+      title="Материалы"
+      subtitle="Управление материалами и их характеристиками"
+      icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+      :show-create="canEdit"
+      create-text="Добавить материал"
+      :can-create="canEdit"
+      :loading="materialsStore.loading"
+      :show-stats="true"
+      :total-count="materialsStore.pagination.count"
+      :filtered-count="materialsStore.items.length"
+      @create="openCreate"
+    >
+      <template #actions>
+        <ExportButton 
+          :data="materialsStore.items"
+          filename="materials"
+          :loading="materialsStore.loading"
+          @export="handleExport"
+        />
+      </template>
+    </ListHeader>
 
     <!-- Filters -->
-    <div class="card bg-white border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Фильтры и поиск</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Search -->
-          <fieldset class="fieldset">
-            <span class="label-text">Поиск</span>
-            <input 
-              v-model="materialsStore.filters.search"
-              type="text"
-              class="input input-bordered"
-              placeholder="Название, SKU, категория"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-          <!-- Category Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Категория</span>
-            <select 
-              v-model="materialsStore.filters.category"
-              class="select select-bordered"
-              @change="handleSearch"
-            >
-              <option v-for="option in categoryFilterOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </fieldset>
-          
-          
-          <!-- Ordering -->
-          <fieldset class="fieldset">
-            <span class="label-text">Сортировка</span>
-            <select 
-              v-model="materialsStore.filters.ordering"
-              class="select select-bordered"
-              @change="handleSearch"
-            >
-              <option v-for="option in orderingOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </fieldset>
-        </div>
-        
-        <!-- Action buttons -->
-        <div class="flex gap-2 mt-4">
-          <button 
-            class="btn btn-primary btn-sm" 
-            @click="handleSearch"
-            :disabled="materialsStore.loading"
-          >
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Поиск
-          </button>
-          
-          <button 
-            class="btn btn-outline btn-sm" 
-            @click="handleResetFilters"
-            :disabled="materialsStore.loading"
-          >
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Сбросить
-          </button>
-          
-          <ExportButton 
-            :data="materialsStore.items"
-            filename="materials"
-            :loading="materialsStore.loading"
-            @export="handleExport"
-          />
-        </div>
-      </div>
-    </div>
+    <FilterPanel
+      :columns="3"
+      :loading="materialsStore.loading"
+      @reset="handleResetFilters"
+    >
+      <FilterField
+        v-model="materialsStore.filters.name"
+        type="text"
+        label="Название"
+        placeholder="Название материала"
+      />
+      
+      <FilterField
+        v-model="materialsStore.filters.sku"
+        type="text"
+        label="SKU"
+        placeholder="Артикул"
+      />
+      
+      <FilterField
+        v-model="materialsStore.filters.category"
+        type="select"
+        label="Категория"
+        :options="categoryFilterOptions"
+      />
+      
+      <FilterField
+        v-model="materialsStore.filters.default_unit"
+        type="select"
+        label="Единица"
+        :options="unitFilterOptions"
+      />
+      
+    </FilterPanel>
 
     <!-- Error message -->
     <div v-if="materialsStore.error" class="alert alert-error">
@@ -101,65 +67,112 @@
     </div>
 
     <!-- Table -->
-    <div class="card bg-white border">
-      <Table
-        :data="materialsStore.items"
-        :columns="columns"
-        :actions="actions"
-        :loading="materialsStore.loading"
-        :sort-by="sortBy"
-        :sort-order="sortOrder"
-        @sort="handleSort"
-        @action="handleAction"
-      >
-        <!-- Custom photo cell -->
-        <template #cell-photo_url="{ value }">
-          <div class="flex items-center justify-center">
-            <img 
-              v-if="value" 
-              :src="value" 
-              alt="Фото материала" 
-              class="h-12 w-12 object-cover rounded-lg border"
-            />
-            <div v-else class="h-12 w-12 bg-gray-100 rounded-lg border flex items-center justify-center">
-              <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-        </template>
-
-        <!-- Custom name cell -->
-        <template #cell-name="{ value, row }">
-          <div class="flex flex-col">
-            <span class="font-medium text-gray-900">{{ value }}</span>
-            <span v-if="row.sku" class="text-sm text-gray-500">SKU: {{ row.sku }}</span>
-          </div>
-        </template>
-
-        <!-- Custom category cell -->
-        <template #cell-category_name="{ value }">
-          <span v-if="value">{{ value }}</span>
-          <span v-else class="text-gray-400 text-sm">—</span>
-        </template>
-
-        <!-- Custom unit cell -->
-        <template #cell-default_unit_code="{ value }">
-          <span class="badge badge-ghost">{{ value }}</span>
-        </template>
-
-      </Table>
+    <div class="list-content">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th @click="handleSort('id')" class="cursor-pointer hover:bg-gray-50">
+              ID
+              <span v-if="sortBy === 'id'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('name')" class="cursor-pointer hover:bg-gray-50">
+              Название
+              <span v-if="sortBy === 'name'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('sku')" class="cursor-pointer hover:bg-gray-50">
+              SKU
+              <span v-if="sortBy === 'sku'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('category_name')" class="cursor-pointer hover:bg-gray-50">
+              Категория
+              <span v-if="sortBy === 'category_name'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('default_unit_code')" class="cursor-pointer hover:bg-gray-50">
+              Единица
+              <span v-if="sortBy === 'default_unit_code'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="text-right">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="material in materialsStore.items" :key="material.id">
+            <td>{{ material.id }}</td>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center">
+                  <img 
+                    v-if="material.photo_url" 
+                    :src="material.photo_url" 
+                    alt="Фото материала" 
+                    class="h-10 w-10 object-cover rounded-lg border"
+                  />
+                  <div v-else class="h-10 w-10 bg-gray-100 rounded-lg border flex items-center justify-center">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-medium text-gray-900">{{ material.name }}</span>
+                  <span v-if="material.sku" class="text-sm text-gray-500">SKU: {{ material.sku }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ material.sku || '—' }}</td>
+            <td>
+              <span v-if="material.category_name">{{ material.category_name }}</span>
+              <span v-else class="text-gray-400 text-sm">—</span>
+            </td>
+            <td>
+              <span v-if="material.default_unit_code" class="badge badge-ghost">{{ material.default_unit_code }}</span>
+              <span v-else class="text-gray-400 text-sm">—</span>
+            </td>
+            <td class="text-right">
+              <div class="flex gap-1 justify-end">
+                <button 
+                  v-if="canEdit" 
+                  class="btn btn-xs btn-outline" 
+                  @click="handleAction('edit', material)"
+                >
+                  Редактировать
+                </button>
+                <button 
+                  v-if="canEdit" 
+                  class="btn btn-xs btn-error" 
+                  @click="handleAction('delete', material)"
+                >
+                  Удалить
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="!materialsStore.loading && materialsStore.items.length === 0">
+            <td colspan="6" class="text-center text-gray-500">Нет данных</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Pagination -->
-    <Pagination
-      :current-page="materialsStore.pagination.page"
-      :total-pages="Math.ceil(materialsStore.pagination.count / materialsStore.pagination.pageSize)"
-      @page-change="handlePageChange"
-    />
+    <div class="modern-pagination">
+      <button class="pagination-btn" :disabled="materialsStore.pagination.page <= 1" @click="handlePageChange(1)">«</button>
+      <button class="pagination-btn" :disabled="materialsStore.pagination.page <= 1" @click="handlePageChange(materialsStore.pagination.page - 1)">Назад</button>
+      <span class="pagination-info">Стр. {{ materialsStore.pagination.page }}</span>
+      <button class="pagination-btn" :disabled="materialsStore.pagination.page * materialsStore.pagination.pageSize >= materialsStore.pagination.count" @click="handlePageChange(materialsStore.pagination.page + 1)">Вперёд</button>
+    </div>
 
     <!-- Material Form Modal -->
-    <Modal v-model="modalOpen" :title="current ? 'Редактировать материал' : 'Новый материал'">
+    <Modal v-model="modalOpen" :title="current ? 'Редактировать материал' : 'Новый материал'" size="3xl">
       <MaterialForm 
         :initial="current" 
         @saved="onSaved" 
@@ -170,19 +183,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Material, Me } from '@/api/types'
+import { debounce } from '@/utils/debounce'
 import MaterialForm from './MaterialForm.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMaterialsStore } from '@/stores/materials'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import Table from '@/components/Table.vue'
 import FormField from '@/components/FormField.vue'
-import Pagination from '@/components/Pagination.vue'
 import ExportButton from '@/components/ExportButton.vue'
+import ListHeader from '@/components/ListHeader.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import FilterField from '@/components/FilterField.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -190,59 +205,37 @@ const materialsStore = useMaterialsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 const ui = useUiStore()
 
+// Автоматические фильтры
+const isSearching = ref(false)
+
 // Computed
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
   return role === 'admin' || role === 'director'
 })
 
-// Table configuration
-const columns = [
-  { key: 'photo_url', title: 'Фото', sortable: false, class: 'w-20' },
-  { key: 'name', title: 'Название', sortable: true },
-  { key: 'category_name', title: 'Категория', sortable: false, class: 'w-32' },
-  { key: 'default_unit_code', title: 'Единица', sortable: false, class: 'w-20' },
-  { key: 'id', title: 'ID', sortable: true, class: 'w-16' }
-]
-
-const actions = computed(() => {
-  if (!canEdit.value) return []
-  
-  return [
-    {
-      key: 'edit',
-      label: 'Изменить',
-      class: 'btn-outline btn-xs'
-    },
-    {
-      key: 'delete',
-      label: 'Удалить',
-      class: 'btn-error btn-xs',
-      disabled: (row: Material) => materialsStore.loading
-    }
-  ]
-})
 
 // Sorting
 const sortBy = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 
-// Ordering options
-const orderingOptions = [
-  { value: 'name', label: 'Название ↑' },
-  { value: '-name', label: 'Название ↓' },
-  { value: 'sku', label: 'SKU ↑' },
-  { value: '-sku', label: 'SKU ↓' },
-  { value: 'id', label: 'ID ↑' },
-  { value: '-id', label: 'ID ↓' },
-  { value: 'created_at', label: 'Дата создания ↑' },
-  { value: '-created_at', label: 'Дата создания ↓' }
-]
 
 // Category filter options
 const categoryFilterOptions = computed(() => [
   { value: '', label: 'Все категории' },
   ...materialCategoriesStore.selectOptions
+])
+
+// Unit filter options
+const unitFilterOptions = computed(() => [
+  { value: '', label: 'Все единицы' },
+  { value: 'кг', label: 'кг' },
+  { value: 'шт', label: 'шт' },
+  { value: 'м', label: 'м' },
+  { value: 'м²', label: 'м²' },
+  { value: 'м³', label: 'м³' },
+  { value: 'л', label: 'л' },
+  { value: 'т', label: 'т' }
 ])
 
 
@@ -261,26 +254,30 @@ function openEdit(material: Material) {
   modalOpen.value = true
 }
 
-async function handleSearch() {
+// Debounced функция для автоматического поиска
+const debouncedSearch = debounce(async () => {
+  isSearching.value = true
   try {
-    await materialsStore.fetchList({
-      page: 1,
-      search: materialsStore.filters.search,
-      category: materialsStore.filters.category,
-      ordering: materialsStore.filters.ordering
-    })
+    await materialsStore.fetchList()
   } catch (error) {
     ui.toast({ type: 'error', text: 'Ошибка поиска материалов' })
+  } finally {
+    isSearching.value = false
   }
-}
+}, 500)
+
+// Watcher для автоматического поиска при изменении фильтров
+watch(
+  () => materialsStore.filters,
+  () => {
+    materialsStore.pagination.page = 1
+    debouncedSearch()
+  },
+  { deep: true }
+)
 
 function handleResetFilters() {
-  materialsStore.setFilters({
-    search: '',
-    category: '',
-    ordering: 'name'
-  })
-  handleSearch()
+  materialsStore.resetFilters()
 }
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
@@ -358,11 +355,10 @@ function handleSort(key: string) {
   
   const ordering = sortOrder.value === 'desc' ? `-${key}` : key
   materialsStore.setFilters({ ordering })
-  handleSearch()
 }
 
 function handlePageChange(page: number) {
-  materialsStore.fetchList({ page })
+  materialsStore.setPage(page)
 }
 
 async function handleAction(action: string, row: Material) {
