@@ -514,6 +514,7 @@ export interface ReportByMaterialQuery {
     object?: ID[];
     responsible?: ID;
     ordering?: string; // Для серверной сортировки
+    [key: string]: any; // Index signature для buildQuery
 }
 
 export interface ReportByObjectQuery {
@@ -524,6 +525,7 @@ export interface ReportByObjectQuery {
     object?: ID[];
     responsible?: ID;
     ordering?: string; // Для серверной сортировки
+    [key: string]: any; // Index signature для buildQuery
 }
 
 export interface ReportByPeriodQuery {
@@ -535,6 +537,7 @@ export interface ReportByPeriodQuery {
     period?: "day" | "month";
     responsible?: ID;
     ordering?: string; // Для серверной сортировки
+    [key: string]: any; // Index signature для buildQuery
 }
 
 export interface ReportByResponsibleQuery {
@@ -545,6 +548,7 @@ export interface ReportByResponsibleQuery {
     object?: ID[];
     responsible?: ID;
     ordering?: string; // Для серверной сортировки
+    [key: string]: any; // Index signature для buildQuery
 }
 
 // Типы для строк отчетов

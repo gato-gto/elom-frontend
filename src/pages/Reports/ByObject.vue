@@ -105,7 +105,7 @@
 import {computed, onMounted, ref, watch} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, ReportByObjectQuery, SiteObject, Employee, Material} from '@/api/types'
+import type {PageResponse, ReportByObjectQuery, SiteObject, Employee, Material, ObjectReportRow, ObjectReportResponse} from '@/api/types'
 import {formatDate, formatCurrency, formatNumber} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'

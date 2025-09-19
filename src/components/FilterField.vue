@@ -87,7 +87,7 @@ interface Option {
 }
 
 interface Props {
-  modelValue?: string | number | boolean | null
+  modelValue?: string | number | boolean | null | (string | number)[]
   type?: 'text' | 'email' | 'password' | 'number' | 'date' | 'month' | 'select' | 'textarea'
   label?: string
   placeholder?: string
@@ -108,7 +108,7 @@ withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number | boolean | null]
+  'update:modelValue': [value: string | number | boolean | null | (string | number)[]]
 }>()
 
 function handleSelectChange(event: Event) {
