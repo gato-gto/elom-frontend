@@ -214,6 +214,11 @@ dist
 src/**/*.js
 src/**/*.js.map
 
+# Config file duplicates (prevent .js versions of .ts configs)
+vite.config.js
+eslint.config.js
+postcss.config.js
+
 ### WebStorm template
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
