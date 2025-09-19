@@ -78,7 +78,7 @@ const gridClass = computed(() => {
 }
 
 .filter-panel::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;
@@ -194,7 +194,7 @@ const gridClass = computed(() => {
 }
 
 .filter-btn::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;

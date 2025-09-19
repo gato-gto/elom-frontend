@@ -61,7 +61,26 @@
     </div>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': materialsStore.loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="materialsStore.loading && materialsStore.items.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка материалов..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="materialsStore.loading && materialsStore.items.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
+
       <table class="modern-table">
         <thead>
           <tr>
@@ -92,8 +111,17 @@
             <th class="text-right">Действия</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="material in materialsStore.items" :key="material.id">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="materialsStore.loading && materialsStore.items.length === 0"
+          :rows="materialsStore.pagination.pageSize"
+          :columns="5"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+          <tr v-for="material in materialsStore.items" :key="material.id" class="table-row">
             <td>{{ material.id }}</td>
             <td>
               <div class="flex items-center gap-3">
@@ -141,19 +169,28 @@
             </td>
           </tr>
           <tr v-if="!materialsStore.loading && materialsStore.items.length === 0">
-            <td colspan="6" class="text-center text-gray-500">Нет данных</td>
+            <td colspan="5" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <span class="text-sm">Нет материалов</span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="modern-pagination">
-      <button class="pagination-btn" :disabled="materialsStore.pagination.page <= 1" @click="handlePageChange(1)">«</button>
-      <button class="pagination-btn" :disabled="materialsStore.pagination.page <= 1" @click="handlePageChange(materialsStore.pagination.page - 1)">Назад</button>
-      <span class="pagination-info">Стр. {{ materialsStore.pagination.page }}</span>
-      <button class="pagination-btn" :disabled="materialsStore.pagination.page * materialsStore.pagination.pageSize >= materialsStore.pagination.count" @click="handlePageChange(materialsStore.pagination.page + 1)">Вперёд</button>
-    </div>
+    <ModernPagination
+      :current-page="materialsStore.pagination.page"
+      :total-pages="Math.ceil(materialsStore.pagination.count / materialsStore.pagination.pageSize)"
+      :total-items="materialsStore.pagination.count"
+      :page-size="materialsStore.pagination.pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
 
     <!-- Material Form Modal -->
     <Modal v-model="modalOpen" :title="current ? 'Редактировать материал' : 'Новый материал'" size="3xl">
@@ -182,6 +219,9 @@ import ExportButton from '@/components/ExportButton.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -333,6 +373,10 @@ function handlePageChange(page: number) {
   materialsStore.setPage(page)
 }
 
+async function handlePageSizeChange(size: number) {
+  materialsStore.setPageSize(size)
+}
+
 async function handleAction(action: string, row: Material) {
   switch (action) {
     case 'edit':
@@ -374,4 +418,8 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>
 

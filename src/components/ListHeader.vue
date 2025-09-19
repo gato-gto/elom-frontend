@@ -81,7 +81,7 @@ defineEmits<{
 }
 
 .list-header::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;
@@ -152,7 +152,7 @@ defineEmits<{
 }
 
 .action-btn::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;

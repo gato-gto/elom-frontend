@@ -54,7 +54,26 @@
     </FilterPanel>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="loading && rows.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка отчета по объектам..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="loading && rows.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
+
       <table class="modern-table">
         <thead>
           <tr>
@@ -78,26 +97,45 @@
             </th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="r in rows" :key="r.object_id">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="loading && rows.length === 0"
+          :rows="pageSize"
+          :columns="3"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+          <tr v-for="r in rows" :key="r.object_id" class="table-row">
             <td>{{ r.object_name ?? '—' }}</td>
             <td class="text-right">{{ r.purchases ?? '—' }}</td>
             <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
           </tr>
-          <tr v-if="!loading && rows.length===0">
-            <td colspan="3" class="text-center text-gray-500">Нет данных</td>
+          <tr v-if="!loading && rows.length === 0">
+            <td colspan="3" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2 empty-state">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span class="text-sm">Нет данных по объектам</span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="modern-pagination" v-if="isPaginated">
-      <button class="pagination-btn" :disabled="page <= 1" @click="reload(1)">«</button>
-      <button class="pagination-btn" :disabled="page <= 1" @click="reload(page - 1)">Назад</button>
-      <span class="pagination-info">Стр. {{ page }}</span>
-      <button class="pagination-btn" :disabled="page * pageSize >= count" @click="reload(page + 1)">Вперёд</button>
-    </div>
+    <ModernPagination
+      v-if="rows.length > 0"
+      :current-page="page"
+      :total-pages="Math.ceil(count / pageSize)"
+      :total-items="count"
+      :page-size="pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
   </div>
 </template>
 
@@ -111,12 +149,15 @@ import { debounce } from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 
 const rows = ref<ObjectReportRow[]>([])
 const loading = ref(false)
 const count = ref(0)
 const page = ref(1)
-const pageSize = 50
+const pageSize = ref(50)
 
 const filters = ref<ReportByObjectQuery>({date_from: undefined, date_to: undefined, object: undefined, responsible: undefined})
 
@@ -176,6 +217,10 @@ async function fetchReport() {
     if (filters.value.date_to) query.date_to = filters.value.date_to
     if (filters.value.object && filters.value.object.length > 0) query.object = filters.value.object
     if (filters.value.responsible) query.responsible = filters.value.responsible
+    
+    // Добавляем пагинацию
+    query.page = page.value
+    query.page_size = pageSize.value
     
     // Добавляем сортировку если задана
     if (sortBy.value) {
@@ -243,6 +288,17 @@ const debouncedFetch = debounce(() => {
 }, 500)
 
 // Watcher для автоматического поиска при изменении фильтров
+function handlePageChange(newPage: number) {
+  page.value = newPage
+  fetchReport()
+}
+
+function handlePageSizeChange(newSize: number) {
+  pageSize.value = newSize
+  page.value = 1
+  fetchReport()
+}
+
 watch(
   () => filters.value,
   () => {
@@ -256,4 +312,8 @@ onMounted(async () => {
   await fetchReport()
 })
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>
 

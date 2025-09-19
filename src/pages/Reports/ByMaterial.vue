@@ -53,7 +53,26 @@
     </FilterPanel>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="loading && rows.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка отчета по материалам..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="loading && rows.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
+
       <table class="modern-table">
         <thead>
           <tr>
@@ -83,15 +102,31 @@
             </th>
           </tr>
         </thead>
-        <tbody>
-        <tr v-for="r in rows" :key="r.material_id">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="loading && rows.length === 0"
+          :rows="pageSize"
+          :columns="4"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+        <tr v-for="r in rows" :key="r.material_id" class="table-row">
           <td>{{ r.material_name ?? '—' }}</td>
           <td>{{ r.unit ?? '—' }}</td>
           <td class="text-right">{{ formatCurrency(r.amount_total) }}</td>
           <td class="text-right">{{ r.rows ?? '—' }}</td>
         </tr>
-        <tr v-if="!loading && rows.length===0">
-          <td colspan="4" class="text-center text-gray-700-60">Нет данных</td>
+        <tr v-if="!loading && rows.length === 0">
+          <td colspan="4" class="text-center text-gray-500 py-8">
+            <div class="flex flex-col items-center gap-2 empty-state">
+              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span class="text-sm">Нет данных по материалам</span>
+            </div>
+          </td>
         </tr>
         </tbody>
         <tfoot v-if="total">
@@ -104,6 +139,17 @@
         </tfoot>
       </table>
     </div>
+
+    <!-- Pagination -->
+    <ModernPagination
+      v-if="rows.length > 0"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalItems"
+      :page-size="pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
   </div>
 </template>
 
@@ -117,6 +163,9 @@ import { debounce } from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 
 type ReportRow = {
   material_id: number
@@ -137,6 +186,12 @@ const dateTo = ref<string | undefined>()
 const objectId = ref<number | undefined>()
 const rows = ref<MaterialReportRow[]>([])
 const total = ref<number | null>(null)
+
+// Pagination
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalItems = ref(0)
+const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 
 // Sorting
 const sortBy = ref('')
@@ -160,6 +215,10 @@ async function load() {
     if (dateTo.value) query.date_to = dateTo.value
     if (objectId.value) query.object = [objectId.value]
     
+    // Добавляем пагинацию
+    query.page = currentPage.value
+    query.page_size = pageSize.value
+    
     // Добавляем сортировку если задана
     if (sortBy.value) {
       query.ordering = sortOrder.value === 'desc' ? `-${sortBy.value}` : sortBy.value
@@ -170,9 +229,11 @@ async function load() {
     
     if (data && data.rows) {
       rows.value = data.rows
+      totalItems.value = data.rows.length
       total.value = data.rows.reduce((sum, r) => sum + r.amount_total, 0)
     } else {
       rows.value = []
+      totalItems.value = 0
       total.value = null
     }
   } catch (error) {
@@ -228,6 +289,17 @@ function handleSort(key: string) {
   load()
 }
 
+function handlePageChange(newPage: number) {
+  currentPage.value = newPage
+  load()
+}
+
+function handlePageSizeChange(newSize: number) {
+  pageSize.value = newSize
+  currentPage.value = 1
+  load()
+}
+
 // Debounced функция для автоматического поиска
 const debouncedLoad = debounce(() => {
   load()
@@ -243,4 +315,8 @@ onMounted(async () => {
   await load()
 })
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>
 

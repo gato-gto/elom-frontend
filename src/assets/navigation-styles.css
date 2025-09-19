@@ -23,7 +23,7 @@
 }
 
 .sidebar-header::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;
@@ -61,7 +61,7 @@
 }
 
 .nav-item::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;
@@ -104,7 +104,7 @@
 }
 
 .nav-link.active::after {
-  content: '';
+  
   position: absolute;
   right: 0;
   top: 50%;
@@ -142,7 +142,7 @@
 }
 
 .topbar::after {
-  content: '';
+  
   position: absolute;
   left: 0;
   right: 0;
@@ -190,7 +190,7 @@
 }
 
 .btn-nav::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: -100%;
@@ -523,7 +523,7 @@
 }
 
 .admin-title span::after {
-  content: '';
+  
   position: absolute;
   bottom: -4px;
   left: 0;
@@ -562,7 +562,7 @@
 }
 
 .list-content::before {
-  content: '';
+  
   position: absolute;
   top: 0;
   left: 0;

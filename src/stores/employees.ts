@@ -246,6 +246,13 @@ export const useEmployeesStore = defineStore('employees', {
       await this.fetchList({ page })
     },
 
+    // Set page size
+    async setPageSize(size: number) {
+      this.pagination.pageSize = size
+      this.pagination.page = 1
+      await this.fetchList()
+    },
+
     // Set filters
     setFilters(filters: Partial<typeof this.filters>) {
       Object.assign(this.filters, filters)

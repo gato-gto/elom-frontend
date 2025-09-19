@@ -56,7 +56,26 @@
     </FilterPanel>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="loading && rows.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка отчета по периодам..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="loading && rows.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
+
       <table class="modern-table">
         <thead>
           <tr>
@@ -80,14 +99,30 @@
             </th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="r in rows" :key="r.period">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="loading && rows.length === 0"
+          :rows="pageSize"
+          :columns="3"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+          <tr v-for="r in rows" :key="r.period" class="table-row">
             <td>{{ formatDate(r.period) }}</td>
             <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
             <td class="text-right">{{ r.purchases ?? '—' }}</td>
           </tr>
           <tr v-if="!loading && rows.length === 0">
-            <td colspan="3" class="text-center text-gray-500">Нет данных</td>
+            <td colspan="3" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2 empty-state">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm">Нет данных по периодам</span>
+              </div>
+            </td>
           </tr>
         </tbody>
         <tfoot v-if="total">
@@ -99,6 +134,17 @@
         </tfoot>
       </table>
     </div>
+
+    <!-- Pagination -->
+    <ModernPagination
+      v-if="rows.length > 0"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalItems"
+      :page-size="pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
   </div>
 </template>
 
@@ -111,6 +157,9 @@ import { debounce } from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 import type { PeriodReportRow, PeriodReportResponse, ReportByPeriodQuery } from '@/api/types'
 
 const dateFrom = ref<string | undefined>()
@@ -118,6 +167,12 @@ const dateTo = ref<string | undefined>()
 const period = ref<'day' | 'month'>('month')
 const rows = ref<PeriodReportRow[]>([])
 const total = ref<number | null>(null)
+
+// Pagination
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalItems = ref(0)
+const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 
 // Sorting
 const sortBy = ref('')
@@ -134,6 +189,10 @@ async function load() {
     if (dateTo.value) query.date_to = dateTo.value
     if (period.value) query.period = period.value
     
+    // Добавляем пагинацию
+    query.page = currentPage.value
+    query.page_size = pageSize.value
+    
     // Добавляем сортировку если задана
     if (sortBy.value) {
       query.ordering = sortOrder.value === 'desc' ? `-${sortBy.value}` : sortBy.value
@@ -144,15 +203,18 @@ async function load() {
     
     if (data && data.rows) {
       rows.value = data.rows
+      totalItems.value = data.rows.length
       // Вычисляем общую сумму
       total.value = data.rows.reduce((sum, row) => sum + row.total_amount, 0)
     } else {
       rows.value = []
+      totalItems.value = 0
       total.value = null
     }
   } catch (error) {
     console.error('Ошибка загрузки отчета по периодам:', error)
     rows.value = []
+    totalItems.value = 0
     total.value = null
   } finally {
     loading.value = false
@@ -184,6 +246,18 @@ function resetFilters() {
   dateFrom.value = undefined
   dateTo.value = undefined
   period.value = 'month'
+  currentPage.value = 1
+}
+
+function handlePageChange(newPage: number) {
+  currentPage.value = newPage
+  load()
+}
+
+function handlePageSizeChange(newSize: number) {
+  pageSize.value = newSize
+  currentPage.value = 1
+  load()
 }
 
 function handleSort(key: string) {
@@ -210,4 +284,8 @@ watch([dateFrom, dateTo, period], () => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>
 

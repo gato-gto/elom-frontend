@@ -144,6 +144,11 @@ export function createBaseStore<T extends Record<string, any>, F extends BaseFil
       error.value = null
     }
 
+    const setPageSize = (size: number) => {
+      pagination.value.pageSize = size
+      pagination.value.page = 1 // Сбрасываем на первую страницу
+    }
+
     return {
       // State
       items,
@@ -172,7 +177,8 @@ export function createBaseStore<T extends Record<string, any>, F extends BaseFil
       setCurrent,
       setFilters,
       resetFilters,
-      clearError
+      clearError,
+      setPageSize
     }
   })
 }

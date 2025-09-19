@@ -44,7 +44,25 @@
     </FilterPanel>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': employeesStore.loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="employeesStore.loading && employeesStore.items.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка сотрудников..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="employeesStore.loading && employeesStore.items.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
       <table class="modern-table">
         <thead>
           <tr>
@@ -93,8 +111,17 @@
             <th class="text-right">Действия</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="employee in employeesStore.items" :key="employee.id">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="employeesStore.loading && employeesStore.items.length === 0"
+          :rows="employeesStore.pagination.pageSize"
+          :columns="8"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+          <tr v-for="employee in employeesStore.items" :key="employee.id" class="table-row">
             <td>{{ employee.id }}</td>
             <td>{{ employee.username }}</td>
             <td>{{ employee.first_name || '—' }}</td>
@@ -130,19 +157,28 @@
             </td>
           </tr>
           <tr v-if="!employeesStore.loading && employeesStore.items.length === 0">
-            <td colspan="8" class="text-center text-gray-500">Нет данных</td>
+            <td colspan="8" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                <span class="text-sm">Нет сотрудников</span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="modern-pagination">
-      <button class="pagination-btn" :disabled="employeesStore.pagination.page <= 1" @click="handlePageChange(1)">«</button>
-      <button class="pagination-btn" :disabled="employeesStore.pagination.page <= 1" @click="handlePageChange(employeesStore.pagination.page - 1)">Назад</button>
-      <span class="pagination-info">Стр. {{ employeesStore.pagination.page }}</span>
-      <button class="pagination-btn" :disabled="employeesStore.pagination.page * employeesStore.pagination.pageSize >= employeesStore.pagination.count" @click="handlePageChange(employeesStore.pagination.page + 1)">Вперёд</button>
-    </div>
+    <ModernPagination
+      :current-page="employeesStore.pagination.page"
+      :total-pages="Math.ceil(employeesStore.pagination.count / employeesStore.pagination.pageSize)"
+      :total-items="employeesStore.pagination.count"
+      :page-size="employeesStore.pagination.pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
 
     <!-- Modal -->
     <Modal v-model="modalOpen" :title="modalTitle" size="lg" :closable="true">
@@ -163,6 +199,9 @@ import EmployeeForm from './EmployeeForm.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 
 const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
@@ -187,9 +226,6 @@ const debouncedSearch = debounce(() => {
 const modalTitle = computed(() => {
   return current.value ? 'Редактировать сотрудника' : 'Добавить сотрудника'
 })
-
-
-
 
 // Sorting
 const sortBy = ref('')
@@ -268,6 +304,10 @@ async function handlePageChange(page: number) {
   await employeesStore.setPage(page)
 }
 
+async function handlePageSizeChange(size: number) {
+  employeesStore.setPageSize(size)
+}
+
 async function handleAction(action: string, employee: Employee) {
   switch (action) {
     case 'edit':
@@ -311,3 +351,7 @@ onMounted(() => {
   employeesStore.fetchList()
 })
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>

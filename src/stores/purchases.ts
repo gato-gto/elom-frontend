@@ -221,6 +221,18 @@ export const usePurchasesStore = defineStore('purchases', {
       }
     },
 
+    // Set page
+    async setPage(page: number) {
+      await this.fetchList({ page })
+    },
+
+    // Set page size
+    async setPageSize(size: number) {
+      this.pagination.pageSize = size
+      this.pagination.page = 1
+      await this.fetchList()
+    },
+
     // Upload photo for purchase
     async uploadPhoto(id: number, data: PurchasePhotoUploadRequest) {
       this.loading = true

@@ -7,7 +7,8 @@ import router from './router'
 import '@/assets/tailwind.css'
 import '@/assets/daisyui-reference.css'
 import '@/assets/login-animations.css'
-import '@/assets/navigation-styles.css' 
+import '@/assets/navigation-styles.css'
+import '@/styles/animations.css' 
 
 const app = createApp(App)
 const pinia = createPinia()

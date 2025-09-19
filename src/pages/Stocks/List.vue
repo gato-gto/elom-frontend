@@ -52,7 +52,26 @@
     </FilterPanel>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="loading && rows.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка остатков..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="loading && rows.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
+
       <table class="modern-table">
         <thead>
         <tr>
@@ -76,8 +95,17 @@
           <th>Ответственный</th>
         </tr>
         </thead>
-        <tbody>
-        <tr v-for="s in rows" :key="s.id">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="loading && rows.length === 0"
+          :rows="pageSize"
+          :columns="8"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+        <tr v-for="s in rows" :key="s.id" class="table-row">
           <td>{{ s.id }}</td>
             <td>{{ formatDate(s.date) }}</td>
           <td>{{ objectName(s.object) ?? s.object }}</td>
@@ -129,20 +157,29 @@
             </td>
           <td>{{ responsibleName(s.responsible) ?? '—' }}</td>
         </tr>
-        <tr v-if="!loading && rows.length===0">
-            <td colspan="7" class="text-center text-gray-500">Нет данных</td>
+        <tr v-if="!loading && rows.length === 0">
+            <td colspan="8" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <span class="text-sm">Нет остатков</span>
+              </div>
+            </td>
         </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="modern-pagination">
-      <button class="pagination-btn" :disabled="page<=1" @click="reload(1)">«</button>
-      <button class="pagination-btn" :disabled="page<=1" @click="reload(page-1)">Назад</button>
-      <span class="pagination-info">Стр. {{ page }}</span>
-      <button class="pagination-btn" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
-    </div>
+    <ModernPagination
+      :current-page="page"
+      :total-pages="Math.ceil(count / pageSize)"
+      :total-items="count"
+      :page-size="pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
   </div>
 </template>
 
@@ -156,14 +193,17 @@ import {debounce} from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
 const rows = ref<StockSnapshot[]>([])
 const count = ref(0)
 const page = ref(1)
-const pageSize = 20
+const pageSize = ref(20)
 const loading = ref(false)
 
 // Debounced функция для поиска
@@ -293,9 +333,24 @@ watch(
   { deep: true }
 )
 
+function handlePageChange(newPage: number) {
+  page.value = newPage
+  fetchList()
+}
+
+function handlePageSizeChange(newSize: number) {
+  pageSize.value = newSize
+  page.value = 1
+  fetchList()
+}
+
 onMounted(async () => {
   await loadRefs();
   await fetchList()
 })
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>
 

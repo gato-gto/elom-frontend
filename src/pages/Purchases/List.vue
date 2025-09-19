@@ -73,7 +73,26 @@
     </FilterPanel>
 
     <!-- Table -->
-    <div class="list-content">
+    <div class="list-content" :class="{ 'relative': loading }">
+      <!-- Loading Overlay -->
+      <LoadingSpinner 
+        v-if="loading && rows.length === 0"
+        size="lg"
+        variant="primary"
+        text="Загрузка закупок..."
+        :overlay="false"
+      />
+      
+      <!-- Loading Skeleton for existing data -->
+      <div v-if="loading && rows.length > 0" class="loading-overlay">
+        <LoadingSpinner 
+          size="md"
+          variant="primary"
+          text="Обновление данных..."
+          :overlay="true"
+        />
+      </div>
+
       <table class="modern-table">
         <thead>
           <tr>
@@ -96,8 +115,17 @@
             <th class="text-right">Действия</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="p in rows" :key="p.id">
+        
+        <!-- Skeleton Loading -->
+        <TableSkeleton 
+          v-if="loading && rows.length === 0"
+          :rows="pageSize"
+          :columns="7"
+        />
+        
+        <!-- Actual Data -->
+        <tbody v-else>
+          <tr v-for="p in rows" :key="p.id" class="table-row">
             <td>{{ p.id }}</td>
             <td>{{ formatDate(p.date) }}</td>
             <td>{{ p.object_name || '—' }}</td>
@@ -112,19 +140,28 @@
             </td>
           </tr>
           <tr v-if="!loading && rows.length===0">
-            <td colspan="6" class="text-center text-gray-500">Нет данных</td>
+            <td colspan="7" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2 empty-state">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="text-sm">Нет закупок</span>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="modern-pagination">
-      <button class="pagination-btn" :disabled="page<=1" @click="reload(1)">«</button>
-      <button class="pagination-btn" :disabled="page<=1" @click="reload(page-1)">Назад</button>
-      <span class="pagination-info">Стр. {{ page }}</span>
-      <button class="pagination-btn" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
-    </div>
+    <ModernPagination
+      :current-page="page"
+      :total-pages="Math.ceil(count / pageSize)"
+      :total-items="count"
+      :page-size="pageSize"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
 
     <!-- Modal for creating new purchase -->
     <Modal v-model="modalOpen" :title="'Новая закупка'" size="6xl" :closable="true">
@@ -145,13 +182,16 @@ import PurchaseForm from './PurchaseForm.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import ModernPagination from '@/components/ModernPagination.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
 const rows = ref<Purchase[]>([])
 const count = ref(0)
 const page = ref(1)
-const pageSize = 20
+const pageSize = ref(20)
 const loading = ref(false)
 const modalOpen = ref(false)
 
@@ -225,7 +265,7 @@ async function loadRefs() {
 async function fetchList() {
   loading.value = true
   try {
-    const q: PurchaseListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize}
+    const q: PurchaseListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize.value}
     const {data} = await api.get<PageResponse<Purchase>>(endpoints.purchases.list + buildQuery(q as unknown as Query))
     rows.value = data.results
     count.value = data.count
@@ -282,9 +322,24 @@ watch(
   { deep: true }
 )
 
+function handlePageChange(newPage: number) {
+  page.value = newPage
+  fetchList()
+}
+
+function handlePageSizeChange(newSize: number) {
+  pageSize.value = newSize
+  page.value = 1
+  fetchList()
+}
+
 onMounted(async () => {
   await loadRefs();
   await fetchList()
 })
 </script>
+
+<style scoped>
+/* Все анимации теперь в @/styles/animations.css */
+</style>
 
