@@ -1,43 +1,87 @@
 <template>
-  <div class="grid gap-4">
-    <div class="card bg-white border">
-      <div class="card-body grid md:grid-cols-6 gap-4">
-        <fieldset class="fieldset">
-          <label class="label" for="rm-from"><span class="label-text">Дата с</span></label>
-          <input id="rm-from" v-model="dateFrom" type="date" class="input input-bordered input-sm"/>
-        </fieldset>
-        <fieldset class="fieldset">
-          <label class="label" for="rm-to"><span class="label-text">Дата по</span></label>
-          <input id="rm-to" v-model="dateTo" type="date" class="input input-bordered input-sm"/>
-        </fieldset>
-        <fieldset class="fieldset">
-          <label class="label" for="rm-object"><span class="label-text">Объект</span></label>
-          <select id="rm-object" v-model.number="objectId" class="select select-bordered select-sm">
-            <option :value="undefined">Все</option>
-            <option v-for="o in objects" :key="o.id" :value="o.id">{{ o.name }}</option>
-          </select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <label class="label" for="rm-search"><span class="label-text">Поиск</span></label>
-          <input id="rm-search" v-model.trim="search" class="input input-bordered input-sm" placeholder="название материала / SKU" @keyup.enter="load"/>
-        </fieldset>
-        <div class="flex items-end gap-2 md:col-span-2">
-          <button class="btn btn-sm btn-outline" @click="load">Показать</button>
-          <a class="btn btn-sm" :href="xlsxUrl" target="_blank" rel="noreferrer">Экспорт .xlsx</a>
-          <a class="btn btn-sm btn-ghost" :href="pdfUrl" target="_blank" rel="noreferrer">PDF</a>
-        </div>
-      </div>
-    </div>
+  <div class="list-container">
+    <!-- Header -->
+    <ListHeader
+      title="Отчёт по материалам"
+      subtitle="Анализ закупок по материалам и объектам"
+      icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+      :show-create="false"
+      :show-stats="true"
+      :total-count="rows.length"
+      :filtered-count="rows.length"
+    >
+      <template #actions>
+        <a class="action-btn action-btn-outline" :href="xlsxUrl" target="_blank" rel="noreferrer">
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Экспорт .xlsx
+        </a>
+        <a class="action-btn action-btn-outline" :href="pdfUrl" target="_blank" rel="noreferrer">
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          PDF
+        </a>
+      </template>
+    </ListHeader>
 
-    <div class="overflow-auto border border-gray-200 rounded-xl">
-      <table class="table table-zebra w-full">
+    <!-- Filters -->
+    <FilterPanel
+      :columns="3"
+      :loading="loading"
+      @reset="resetFilters"
+    >
+      <FilterField
+        v-model="dateFrom"
+        type="date"
+        label="Дата с"
+      />
+      
+      <FilterField
+        v-model="dateTo"
+        type="date"
+        label="Дата по"
+      />
+      
+      <FilterField
+        v-model="objectId"
+        type="select"
+        label="Объект"
+        :options="objectOptions"
+      />
+    </FilterPanel>
+
+    <!-- Table -->
+    <div class="list-content">
+      <table class="modern-table">
         <thead>
-        <tr>
-          <th>Материал</th>
-          <th>Ед.</th>
-          <th class="text-right">Сумма</th>
-          <th class="text-right">Кол-во закупок</th>
-        </tr>
+          <tr>
+            <th @click="handleSort('material_name')" class="cursor-pointer hover:bg-gray-50">
+              Материал
+              <span v-if="sortBy === 'material_name'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('unit_code')" class="cursor-pointer hover:bg-gray-50">
+              Ед.
+              <span v-if="sortBy === 'unit_code'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('total_amount')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Сумма
+              <span v-if="sortBy === 'total_amount'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('purchases')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Кол-во закупок
+              <span v-if="sortBy === 'purchases'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+          </tr>
         </thead>
         <tbody>
         <tr v-for="r in rows" :key="r.material_id">
@@ -64,11 +108,15 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, watch} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {SiteObject, PageResponse} from '@/api/types'
+import type {SiteObject, PageResponse, MaterialReportRow, MaterialReportResponse, ReportByMaterialQuery} from '@/api/types'
 import {formatCurrency} from '@/utils/formatters'
+import { debounce } from '@/utils/debounce'
+import ListHeader from '@/components/ListHeader.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import FilterField from '@/components/FilterField.vue'
 
 type ReportRow = {
   material_id: number
@@ -87,9 +135,12 @@ type ReportResponse = {
 const dateFrom = ref<string | undefined>()
 const dateTo = ref<string | undefined>()
 const objectId = ref<number | undefined>()
-const search = ref('')
-const rows = ref<ReportRow[]>([])
+const rows = ref<MaterialReportRow[]>([])
 const total = ref<number | null>(null)
+
+// Sorting
+const sortBy = ref('')
+const sortOrder = ref<'asc' | 'desc'>('asc')
 const loading = ref(false)
 
 const objects = ref<SiteObject[]>([])
@@ -102,18 +153,24 @@ async function loadObjects() {
 async function load() {
   loading.value = true
   try {
-    const q = buildQuery({
-      date_from: dateFrom.value || undefined,
-      date_to: dateTo.value || undefined,
-      object: objectId.value,
-      search: search.value || undefined,
-    })
-    const {data} = await api.get<ReportResponse>(endpoints.reports.byMaterial + q)
+    // Создаем запрос только с заданными параметрами
+    const query: ReportByMaterialQuery = {}
     
-    // Обработка нового формата API
-    if (data && typeof data === 'object' && 'rows' in data) {
-      rows.value = (data as ReportResponse).rows ?? []
-      total.value = (data as ReportResponse).total_amount ?? null
+    if (dateFrom.value) query.date_from = dateFrom.value
+    if (dateTo.value) query.date_to = dateTo.value
+    if (objectId.value) query.object = [objectId.value]
+    
+    // Добавляем сортировку если задана
+    if (sortBy.value) {
+      query.ordering = sortOrder.value === 'desc' ? `-${sortBy.value}` : sortBy.value
+    }
+    
+    const q = buildQuery(query)
+    const {data} = await api.get<MaterialReportResponse>(endpoints.reports.byMaterial + q)
+    
+    if (data && data.rows) {
+      rows.value = data.rows
+      total.value = data.rows.reduce((sum, r) => sum + r.amount_total, 0)
     } else {
       rows.value = []
       total.value = null
@@ -128,24 +185,57 @@ async function load() {
 }
 
 const xlsxUrl = computed(() => {
-  const q = buildQuery({
-    date_from: dateFrom.value || undefined,
-    date_to: dateTo.value || undefined,
-    object: objectId.value,
-    search: search.value || undefined,
-    export: 'xlsx',
-  })
+  const query: ReportByMaterialQuery = { export: 'xlsx' }
+  
+  if (dateFrom.value) query.date_from = dateFrom.value
+  if (dateTo.value) query.date_to = dateTo.value
+  if (objectId.value) query.object = [objectId.value]
+  
+  const q = buildQuery(query)
   return endpoints.reports.byMaterial + q
 })
 const pdfUrl = computed(() => {
-  const q = buildQuery({
-    date_from: dateFrom.value || undefined,
-    date_to: dateTo.value || undefined,
-    object: objectId.value,
-    search: search.value || undefined,
-    export: 'pdf',
-  })
+  const query: ReportByMaterialQuery = { export: 'pdf' }
+  
+  if (dateFrom.value) query.date_from = dateFrom.value
+  if (dateTo.value) query.date_to = dateTo.value
+  if (objectId.value) query.object = [objectId.value]
+  
+  const q = buildQuery(query)
   return endpoints.reports.byMaterial + q
+})
+
+const objectOptions = computed(() => [
+  { value: '', label: 'Все объекты' },
+  ...objects.value.map(obj => ({ value: obj.id, label: obj.name }))
+])
+
+function resetFilters() {
+  dateFrom.value = undefined
+  dateTo.value = undefined
+  objectId.value = undefined
+}
+
+function handleSort(key: string) {
+  if (sortBy.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = key
+    sortOrder.value = 'asc'
+  }
+  
+  // Сортировка происходит на сервере
+  load()
+}
+
+// Debounced функция для автоматического поиска
+const debouncedLoad = debounce(() => {
+  load()
+}, 500)
+
+// Watcher для автоматического поиска при изменении фильтров
+watch([dateFrom, dateTo, objectId], () => {
+  debouncedLoad()
 })
 
 onMounted(async () => {

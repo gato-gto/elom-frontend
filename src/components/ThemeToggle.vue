@@ -62,7 +62,7 @@ const showDropdown = ref(false)
 const { theme, isDark, setTheme, toggleTheme } = themeStore
 
 const themeTitle = computed(() => {
-  return isDark.value ? 'Переключить на светлую тему' : 'Переключить на темную тему'
+  return isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'
 })
 
 const themeOptions = [

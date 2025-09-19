@@ -123,7 +123,7 @@ export const filterUtils = {
     includeEmpty = true,
     emptyLabel = 'Все'
   ) => {
-    const options = items.map(item => ({
+    const options: Array<{ value: number | string; label: string }> = items.map(item => ({
       value: item.id,
       label: item.name || item.title || `Item ${item.id}`
     }))
@@ -137,7 +137,7 @@ export const filterUtils = {
 
   // Создание опций для boolean полей
   createBooleanOptions: (includeEmpty = true) => {
-    const options = [
+    const options: Array<{ value: boolean | null; label: string }> = [
       { value: true, label: 'Да' },
       { value: false, label: 'Нет' }
     ]

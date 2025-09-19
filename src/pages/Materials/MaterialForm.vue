@@ -35,17 +35,6 @@
             :options="categoryOptions"
           />
 
-          <!-- Единица измерения -->
-          <FormField
-            v-model="form.default_unit"
-            label="Единица измерения"
-            type="select"
-            :error="errors.default_unit"
-            placeholder="— выберите единицу —"
-            :options="unitOptions"
-            required
-          />
-
           <!-- Дата создания -->
           <FormField
             v-model="form.created_date"
@@ -97,6 +86,26 @@
       </div>
     </div>
 
+    <!-- Техническая информация -->
+    <div class="mt-6 p-4 bg-base-200 rounded-lg">
+      <h3 class="text-sm font-medium text-base-content/70 mb-3">Техническая информация</h3>
+      
+      <!-- Единица измерения -->
+      <FormField
+        v-model="form.default_unit"
+        label="Базовая единица измерения"
+        type="select"
+        :error="errors.default_unit"
+        placeholder="— выберите единицу —"
+        :options="unitOptions"
+        required
+        class="text-sm"
+      />
+      
+      <p class="text-xs text-base-content/60 mt-2">
+        Базовая единица будет использоваться для автоматического округления значений (например, 1000г → 1кг).
+      </p>
+    </div>
 
     <!-- Кнопки действий -->
     <div class="flex justify-end gap-2">
@@ -126,7 +135,6 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
-import { useUnitConversionsStore } from '@/stores/unitConversions'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import { useUiStore } from '@/stores/ui'
 import type { Material, MaterialRequest } from '@/api/types'
@@ -144,7 +152,6 @@ const emit = defineEmits<{
 
 const materialsStore = useMaterialsStore()
 const unitsStore = useUnitsStore()
-const unitConversionsStore = useUnitConversionsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 const ui = useUiStore()
 
@@ -263,9 +270,6 @@ onMounted(async () => {
   }
   if (materialCategoriesStore.items.length === 0) {
     promises.push(materialCategoriesStore.fetchList())
-  }
-  if (unitConversionsStore.items.length === 0) {
-    promises.push(unitConversionsStore.fetchList({ page_size: 1000 }))
   }
   
   if (promises.length > 0) {

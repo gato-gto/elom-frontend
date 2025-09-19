@@ -24,8 +24,8 @@ export const usePurchasesStore = defineStore('purchases', {
       previous: null as string | null
     },
     filters: {
-      date_from: '',
-      date_to: '',
+      date_after: '',
+      date_before: '',
       object: null as number | null,
       material: null as number | null,
       responsible: null as number | null,
@@ -84,8 +84,8 @@ export const usePurchasesStore = defineStore('purchases', {
         const queryParams = {
           page: params?.page || this.pagination.page,
           page_size: this.pagination.pageSize,
-          date_from: params?.date_from ?? this.filters.date_from ?? undefined,
-          date_to: params?.date_to ?? this.filters.date_to ?? undefined,
+          date_after: params?.date_after ?? this.filters.date_after ?? undefined,
+          date_before: params?.date_before ?? this.filters.date_before ?? undefined,
           object: params?.object ?? this.filters.object ?? undefined,
           material: params?.material ?? this.filters.material ?? undefined,
           responsible: params?.responsible ?? this.filters.responsible ?? undefined,
@@ -126,7 +126,9 @@ export const usePurchasesStore = defineStore('purchases', {
       this.error = null
 
       try {
+        console.log('Fetching purchase from API:', endpoints.purchases.one(id))
         const { data } = await api.get<Purchase>(endpoints.purchases.one(id))
+        console.log('API response:', data)
         this.current = data
 
         // Update in list if exists
@@ -293,8 +295,8 @@ export const usePurchasesStore = defineStore('purchases', {
     // Reset filters
     resetFilters() {
       this.filters = {
-        date_from: '',
-        date_to: '',
+        date_after: '',
+        date_before: '',
         object: null,
         material: null,
         responsible: null,

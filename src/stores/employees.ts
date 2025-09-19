@@ -79,7 +79,7 @@ export const useEmployeesStore = defineStore('employees', {
       is_active?: boolean
       object?: number
       ordering?: string
-    }) {
+    }): Promise<void> {
       this.loading = true
       this.error = null
 
@@ -110,8 +110,6 @@ export const useEmployeesStore = defineStore('employees', {
         if (params) {
           Object.assign(this.filters, params)
         }
-
-        return data
       } catch (error: any) {
         // Если ошибка связана с неправильной страницей, возвращаемся на первую страницу
         if (error?.response?.data?.detail === 'Неправильная страница' || 

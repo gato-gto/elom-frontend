@@ -1,101 +1,128 @@
 <template>
-  <div class="grid gap-4">
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Отчёт по объектам</h1>
-      <a class="btn btn-primary" :href="exportUrl" target="_blank" rel="noreferrer">Экспорт .xlsx</a>
-    </div>
+  <div class="list-container">
+    <!-- Header -->
+    <ListHeader
+      title="Отчёт по объектам"
+      subtitle="Анализ закупок по объектам и ответственным"
+      icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+      :show-create="false"
+      :show-stats="true"
+      :total-count="rows.length"
+      :filtered-count="rows.length"
+    >
+      <template #actions>
+        <a class="action-btn action-btn-outline" :href="exportUrl" target="_blank" rel="noreferrer">
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Экспорт .xlsx
+        </a>
+      </template>
+    </ListHeader>
 
-    <div class="card bg-white border">
-      <div class="card-body grid md:grid-cols-6 gap-4">
-        <fieldset class="fieldset">
-          <label class="label"><span class="label-text">Дата с</span></label>
-          <input v-model="filters.date_from" type="date" class="input input-bordered input-sm"/>
-        </fieldset>
-        <fieldset class="fieldset">
-          <label class="label"><span class="label-text">Дата по</span></label>
-          <input v-model="filters.date_to" type="date" class="input input-bordered input-sm"/>
-        </fieldset>
-        <fieldset class="fieldset">
-          <label class="label"><span class="label-text">Объект</span></label>
-          <select v-model.number="filters.object" class="select select-bordered select-sm">
-            <option :value="undefined">Все</option>
-            <option v-for="o in objects" :key="o.id" :value="o.id">{{ o.name }}</option>
-          </select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <label class="label"><span class="label-text">Ответственный</span></label>
-          <select v-model.number="filters.responsible" class="select select-bordered select-sm">
-            <option :value="undefined">Все</option>
-            <option v-for="e in employees" :key="e.id" :value="e.id">
-              {{ e.first_name || e.username }} {{ e.last_name || '' }}
-            </option>
-          </select>
-        </fieldset>
-        <div class="md:col-span-2 flex items-end justify-end">
-          <button class="btn btn-sm btn-outline" @click="reload(1)">Применить</button>
-        </div>
-      </div>
-    </div>
+    <!-- Filters -->
+    <FilterPanel
+      :columns="4"
+      :loading="loading"
+      @reset="resetFilters"
+    >
+      <FilterField
+        v-model="filters.date_from"
+        type="date"
+        label="Дата с"
+      />
+      
+      <FilterField
+        v-model="filters.date_to"
+        type="date"
+        label="Дата по"
+      />
+      
+      <FilterField
+        v-model="filters.object"
+        type="select"
+        label="Объект"
+        :options="objectOptions"
+      />
+      
+      <FilterField
+        v-model="filters.responsible"
+        type="select"
+        label="Ответственный"
+        :options="employeeOptions"
+      />
+    </FilterPanel>
 
-    <div class="overflow-auto border border-gray-200 rounded-xl">
-      <table class="table table-zebra w-full">
+    <!-- Table -->
+    <div class="list-content">
+      <table class="modern-table">
         <thead>
-        <tr>
-          <th>Объект</th>
-          <th class="text-right">Кол-во закупок</th>
-          <th class="text-right">Сумма</th>
-        </tr>
+          <tr>
+            <th @click="handleSort('object_name')" class="cursor-pointer hover:bg-gray-50">
+              Объект
+              <span v-if="sortBy === 'object_name'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('purchases')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Кол-во закупок
+              <span v-if="sortBy === 'purchases'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('total_amount')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Сумма
+              <span v-if="sortBy === 'total_amount'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+          </tr>
         </thead>
         <tbody>
-        <tr v-for="r in rows" :key="r.object_id">
-          <td>{{ r.object_name ?? '—' }}</td>
-          <td class="text-right">{{ r.purchases ?? '—' }}</td>
-          <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
-        </tr>
-        <tr v-if="!loading && rows.length===0">
-          <td colspan="3" class="text-center text-gray-700-60">Нет данных</td>
-        </tr>
+          <tr v-for="r in rows" :key="r.object_id">
+            <td>{{ r.object_name ?? '—' }}</td>
+            <td class="text-right">{{ r.purchases ?? '—' }}</td>
+            <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
+          </tr>
+          <tr v-if="!loading && rows.length===0">
+            <td colspan="3" class="text-center text-gray-500">Нет данных</td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="join self-end" v-if="isPaginated">
-      <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(1)">«</button>
-      <button class="btn btn-sm join-item" :disabled="page<=1" @click="reload(page-1)">Назад</button>
-      <button class="btn btn-sm join-item btn-ghost no-animation">Стр. {{ page }}</button>
-      <button class="btn btn-sm join-item" :disabled="page*pageSize>=count" @click="reload(page+1)">Вперёд</button>
+    <!-- Pagination -->
+    <div class="modern-pagination" v-if="isPaginated">
+      <button class="pagination-btn" :disabled="page <= 1" @click="reload(1)">«</button>
+      <button class="pagination-btn" :disabled="page <= 1" @click="reload(page - 1)">Назад</button>
+      <span class="pagination-info">Стр. {{ page }}</span>
+      <button class="pagination-btn" :disabled="page * pageSize >= count" @click="reload(page + 1)">Вперёд</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, ReportResponse, ReportByObjectQuery, SiteObject, Employee, Material} from '@/api/types'
+import type {PageResponse, ReportByObjectQuery, SiteObject, Employee, Material} from '@/api/types'
 import {formatDate, formatCurrency, formatNumber} from '@/utils/formatters'
+import { debounce } from '@/utils/debounce'
+import ListHeader from '@/components/ListHeader.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import FilterField from '@/components/FilterField.vue'
 
-type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
-
-type ReportRow = {
-  object_id: number
-  object_name: string
-  purchases: number
-  total_amount: number
-}
-
-type ReportResponse = { 
-  rows: ReportRow[]
-  total_amount?: number 
-}
-
-const rows = ref<ReportRow[]>([])
+const rows = ref<ObjectReportRow[]>([])
 const loading = ref(false)
 const count = ref(0)
 const page = ref(1)
 const pageSize = 50
 
 const filters = ref<ReportByObjectQuery>({date_from: undefined, date_to: undefined, object: undefined, responsible: undefined})
+
+// Sorting
+const sortBy = ref('')
+const sortOrder = ref<'asc' | 'desc'>('asc')
 
 const objects = ref<SiteObject[]>([])
 const employees = ref<Employee[]>([])
@@ -114,6 +141,20 @@ function materialName(id?: number) {
 
 const isPaginated = computed(() => count.value > rows.value.length)
 
+// Filter options
+const objectOptions = computed(() => [
+  { value: '', label: 'Все объекты' },
+  ...objects.value.map(obj => ({ value: obj.id, label: obj.name }))
+])
+
+const employeeOptions = computed(() => [
+  { value: '', label: 'Все ответственные' },
+  ...employees.value.map(emp => ({ 
+    value: emp.id, 
+    label: `${emp.first_name || emp.username} ${emp.last_name || ''}`.trim()
+  }))
+])
+
 async function loadRefs() {
   const [{data: od}, {data: ed}, {data: md}] = await Promise.all([
     api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
@@ -128,13 +169,25 @@ async function loadRefs() {
 async function fetchReport() {
   loading.value = true
   try {
-    const q = {...filters.value, page: page.value, page_size: pageSize} as ReportByObjectQuery & { page: number; page_size: number }
-    const {data} = await api.get<ReportResponse>(endpoints.reports.byObject + buildQuery(q as unknown as Query))
+    // Создаем запрос только с заданными параметрами
+    const query: ReportByObjectQuery = {}
     
-    // Обработка нового формата API
-    if (data && typeof data === 'object' && 'rows' in data) {
-      rows.value = (data as ReportResponse).rows ?? []
-      count.value = rows.value.length
+    if (filters.value.date_from) query.date_from = filters.value.date_from
+    if (filters.value.date_to) query.date_to = filters.value.date_to
+    if (filters.value.object && filters.value.object.length > 0) query.object = filters.value.object
+    if (filters.value.responsible) query.responsible = filters.value.responsible
+    
+    // Добавляем сортировку если задана
+    if (sortBy.value) {
+      query.ordering = sortOrder.value === 'desc' ? `-${sortBy.value}` : sortBy.value
+    }
+    
+    const q = buildQuery(query)
+    const {data} = await api.get<ObjectReportResponse>(endpoints.reports.byObject + q)
+    
+    if (data && data.rows) {
+      rows.value = data.rows
+      count.value = data.rows.length
     } else {
       rows.value = []
       count.value = 0
@@ -154,9 +207,49 @@ function reload(p = page.value) {
 }
 
 const exportUrl = computed(() => {
-  const q = {...filters.value, export: 'xlsx'} as ReportByObjectQuery
-  return endpoints.reports.byObject + buildQuery(q as unknown as Query)
+  // Создаем запрос только с заданными параметрами
+  const query: ReportByObjectQuery = { export: 'xlsx' }
+  
+  if (filters.value.date_from) query.date_from = filters.value.date_from
+  if (filters.value.date_to) query.date_to = filters.value.date_to
+  if (filters.value.object && filters.value.object.length > 0) query.object = filters.value.object
+  if (filters.value.responsible) query.responsible = filters.value.responsible
+  
+  const q = buildQuery(query)
+  return endpoints.reports.byObject + q
 })
+
+function resetFilters() {
+  filters.value = { date_from: undefined, date_to: undefined, object: undefined, responsible: undefined }
+  page.value = 1
+}
+
+function handleSort(key: string) {
+  if (sortBy.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = key
+    sortOrder.value = 'asc'
+  }
+  
+  // Сортировка происходит на сервере
+  fetchReport()
+}
+
+// Debounced функция для автоматического поиска
+const debouncedFetch = debounce(() => {
+  page.value = 1
+  fetchReport()
+}, 500)
+
+// Watcher для автоматического поиска при изменении фильтров
+watch(
+  () => filters.value,
+  () => {
+    debouncedFetch()
+  },
+  { deep: true }
+)
 
 onMounted(async () => {
   await loadRefs();

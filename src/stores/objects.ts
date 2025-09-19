@@ -64,7 +64,7 @@ export const useObjectsStore = defineStore('objects', {
       name?: string
       is_active?: boolean
       ordering?: string
-    }) {
+    }): Promise<void> {
       this.loading = true
       this.error = null
 
@@ -94,8 +94,6 @@ export const useObjectsStore = defineStore('objects', {
         if (params) {
           Object.assign(this.filters, params)
         }
-
-        return data
       } catch (error: any) {
         // Если ошибка связана с неправильной страницей, возвращаемся на первую страницу
         if (error?.response?.data?.detail === 'Неправильная страница' || 

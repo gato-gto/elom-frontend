@@ -107,7 +107,7 @@
             <td class="text-right">
               <div class="flex gap-1 justify-end">
                 <span v-if="p.is_archived" class="badge badge-warning badge-xs">Архив</span>
-                <RouterLink class="btn btn-xs btn-outline" :to="`/purchases/${p.id}`">Открыть</RouterLink>
+                <RouterLink class="btn btn-xs btn-outline" :to="`/purchases/${p.id}/edit`">Открыть</RouterLink>
               </div>
             </td>
           </tr>

@@ -62,7 +62,7 @@ export const useUnitsStore = defineStore('units', {
       code?: string
       name?: string
       ordering?: string
-    }) {
+    }): Promise<void> {
       this.loading = true
       this.error = null
 
@@ -92,8 +92,6 @@ export const useUnitsStore = defineStore('units', {
         if (params) {
           Object.assign(this.filters, params)
         }
-
-        return data
       } catch (error: any) {
         // Если ошибка связана с неправильной страницей, возвращаемся на первую страницу
         if (error?.response?.data?.detail === 'Неправильная страница' || 

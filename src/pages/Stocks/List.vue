@@ -70,7 +70,6 @@
           </th>
           <th>Объект</th>
           <th>Материал</th>
-          <th>Ед.</th>
           <th class="text-right">Факт. остаток</th>
             <th class="text-right">Закуплено</th>
             <th class="text-right">Списано</th>
@@ -83,14 +82,55 @@
             <td>{{ formatDate(s.date) }}</td>
           <td>{{ objectName(s.object) ?? s.object }}</td>
           <td>{{ materialName(s.material) ?? s.material }}</td>
-          <td>{{ s.unit_code ?? '—' }}</td>
-            <td class="text-right">{{ formatNumber(s.quantity) }}</td>
-            <td class="text-right">{{ formatNumber(s.purchased_qty) }}</td>
-            <td class="text-right">{{ formatNumber(s.write_off_qty) }}</td>
+            <td class="text-right">
+              <SmartUnitValue 
+                v-if="s.smart_quantity" 
+                :smart-quantity="s.smart_quantity" 
+                :show-original="true"
+                class-name="font-mono text-sm"
+              />
+              <SmartUnitValue 
+                v-else
+                :value="parseFloat(s.quantity)" 
+                :unit="s.unit_code"
+                :show-original="false"
+                class-name="font-mono text-sm"
+              />
+            </td>
+            <td class="text-right">
+              <SmartUnitValue 
+                v-if="s.smart_purchased_qty" 
+                :smart-quantity="s.smart_purchased_qty" 
+                :show-original="true"
+                class-name="font-mono text-sm"
+              />
+              <SmartUnitValue 
+                v-else
+                :value="parseFloat(s.purchased_qty)" 
+                :unit="s.unit_code"
+                :show-original="false"
+                class-name="font-mono text-sm"
+              />
+            </td>
+            <td class="text-right">
+              <SmartUnitValue 
+                v-if="s.smart_write_off_qty" 
+                :smart-quantity="s.smart_write_off_qty" 
+                :show-original="true"
+                class-name="font-mono text-sm"
+              />
+              <SmartUnitValue 
+                v-else
+                :value="parseFloat(s.write_off_qty)" 
+                :unit="s.unit_code"
+                :show-original="false"
+                class-name="font-mono text-sm"
+              />
+            </td>
           <td>{{ responsibleName(s.responsible) ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length===0">
-            <td colspan="8" class="text-center text-gray-500">Нет данных</td>
+            <td colspan="7" class="text-center text-gray-500">Нет данных</td>
         </tr>
         </tbody>
       </table>
@@ -116,6 +156,7 @@ import {debounce} from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
+import SmartUnitValue from '@/components/SmartUnitValue.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 

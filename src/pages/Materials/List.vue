@@ -51,12 +51,6 @@
         :options="categoryFilterOptions"
       />
       
-      <FilterField
-        v-model="materialsStore.filters.default_unit"
-        type="select"
-        label="Единица"
-        :options="unitFilterOptions"
-      />
       
     </FilterPanel>
 
@@ -95,12 +89,6 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('default_unit_code')" class="cursor-pointer hover:bg-gray-50">
-              Единица
-              <span v-if="sortBy === 'default_unit_code'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
             <th class="text-right">Действия</th>
           </tr>
         </thead>
@@ -131,10 +119,6 @@
             <td>{{ material.sku || '—' }}</td>
             <td>
               <span v-if="material.category_name">{{ material.category_name }}</span>
-              <span v-else class="text-gray-400 text-sm">—</span>
-            </td>
-            <td>
-              <span v-if="material.default_unit_code" class="badge badge-ghost">{{ material.default_unit_code }}</span>
               <span v-else class="text-gray-400 text-sm">—</span>
             </td>
             <td class="text-right">
@@ -226,17 +210,6 @@ const categoryFilterOptions = computed(() => [
   ...materialCategoriesStore.selectOptions
 ])
 
-// Unit filter options
-const unitFilterOptions = computed(() => [
-  { value: '', label: 'Все единицы' },
-  { value: 'кг', label: 'кг' },
-  { value: 'шт', label: 'шт' },
-  { value: 'м', label: 'м' },
-  { value: 'м²', label: 'м²' },
-  { value: 'м³', label: 'м³' },
-  { value: 'л', label: 'л' },
-  { value: 'т', label: 'т' }
-])
 
 
 // Modal state
@@ -304,13 +277,12 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 }
 
 function exportToCSV(data: Material[], filename: string) {
-  const headers = ['ID', 'Название', 'SKU', 'Категория', 'Единица', 'Статус', 'Дата создания']
+  const headers = ['ID', 'Название', 'SKU', 'Категория', 'Дата создания']
   const rows = data.map(item => [
     item.id,
     item.name,
     item.sku || '',
     item.category_name || '',
-    item.default_unit_code || '',
     item.id ? new Date().toLocaleDateString('ru-RU') : ''
   ])
 

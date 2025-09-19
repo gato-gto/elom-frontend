@@ -27,10 +27,21 @@
           type="text"
           placeholder="Введите код единицы (например: кг, м, шт)"
           :error="errors.code"
-          :help="'Короткий код для использования в системе'"
+          :help="getCodeHelpText()"
           required
           class="font-mono"
         />
+
+        <!-- Подсказка по умной конвертации -->
+        <div v-if="form.code" class="alert" :class="getSmartConversionAlertClass()">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+          </svg>
+          <div>
+            <h3 class="font-bold">{{ getSmartConversionTitle() }}</h3>
+            <div class="text-xs">{{ getSmartConversionDescription() }}</div>
+          </div>
+        </div>
 
         <!-- Кнопки действий -->
         <div class="flex justify-end gap-2 mt-6">
@@ -127,6 +138,61 @@ async function submit() {
   } finally {
     loading.value = false
   }
+}
+
+// Функции для подсказок по умной конвертации
+function isUsedInSmartConversion(unitCode: string): boolean {
+  const smartConversionUnits = [
+    // Масса
+    'г', 'кг', 'т',
+    // Длина
+    'мм', 'см', 'м', 'км',
+    // Площадь
+    'см²', 'м²', 'га',
+    // Объем
+    'см³', 'м³', 'л', 'мл'
+  ]
+  
+  return smartConversionUnits.includes(unitCode)
+}
+
+function getCodeHelpText(): string {
+  if (!form.code) {
+    return 'Короткий код для использования в системе (например: кг, м, шт)'
+  }
+  
+  const isSmart = isUsedInSmartConversion(form.code)
+  if (isSmart) {
+    return '✅ Этот код поддерживает умную конвертацию'
+  }
+  
+  return 'Код будет использоваться как есть, без автоматической конвертации'
+}
+
+function getSmartConversionAlertClass(): string {
+  if (!form.code) return 'alert-info'
+  
+  const isSmart = isUsedInSmartConversion(form.code)
+  return isSmart ? 'alert-success' : 'alert-warning'
+}
+
+function getSmartConversionTitle(): string {
+  if (!form.code) return 'Введите код единицы'
+  
+  const isSmart = isUsedInSmartConversion(form.code)
+  return isSmart ? 'Умная конвертация поддерживается' : 'Умная конвертация не поддерживается'
+}
+
+function getSmartConversionDescription(): string {
+  if (!form.code) return 'После ввода кода здесь появится информация о поддержке умной конвертации'
+  
+  const isSmart = isUsedInSmartConversion(form.code)
+  
+  if (isSmart) {
+    return `Единица "${form.code}" будет автоматически конвертироваться (например, 1000г → 1кг). Пользователи увидят удобные значения.`
+  }
+  
+  return `Единица "${form.code}" будет отображаться как есть, без автоматической конвертации. Рекомендуется использовать стандартные коды: г, кг, т, мм, см, м, км, см², м², га, мл, л, м³.`
 }
 
 onMounted(() => {

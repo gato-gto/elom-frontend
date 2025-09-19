@@ -27,7 +27,6 @@ export const useMaterialsStore = defineStore('materials', {
       name: '',
       sku: '',
       category: '' as string,
-      default_unit: '' as string,
       ordering: 'name' as string
     }
   }),
@@ -65,9 +64,8 @@ export const useMaterialsStore = defineStore('materials', {
       name?: string
       sku?: string
       category?: string
-      default_unit?: string
       ordering?: string
-    }) {
+    }): Promise<void> {
       this.loading = true
       this.error = null
 
@@ -79,7 +77,6 @@ export const useMaterialsStore = defineStore('materials', {
           name: params?.name ?? this.filters.name ?? undefined,
           sku: params?.sku ?? this.filters.sku ?? undefined,
           category: params?.category ?? this.filters.category ?? undefined,
-          default_unit: params?.default_unit ?? this.filters.default_unit ?? undefined,
           ordering: params?.ordering ?? this.filters.ordering
         }
 
@@ -99,8 +96,6 @@ export const useMaterialsStore = defineStore('materials', {
         if (params) {
           Object.assign(this.filters, params)
         }
-
-        return data
       } catch (error: any) {
         // Если ошибка связана с неправильной страницей, возвращаемся на первую страницу
         if (error?.response?.data?.detail === 'Неправильная страница' || 
@@ -184,7 +179,7 @@ export const useMaterialsStore = defineStore('materials', {
         if (data.default_unit) formData.append('default_unit', data.default_unit.toString())
         if (data.created_date) formData.append('created_date', data.created_date)
 
-        const { data: updatedMaterial } = await api.post<Material>(endpoints.materials.one(id), formData)
+        const { data: updatedMaterial } = await api.patch<Material>(endpoints.materials.one(id), formData)
         
         // Update in list
         const index = this.items.findIndex(item => item.id === id)
@@ -250,7 +245,6 @@ export const useMaterialsStore = defineStore('materials', {
         name: '',
         sku: '',
         category: '',
-        default_unit: '',
         ordering: 'name'
       }
     },

@@ -1,4 +1,5 @@
 // Утилиты для debounce и throttle
+import { ref, watch } from 'vue'
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,

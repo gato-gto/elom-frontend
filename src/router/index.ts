@@ -32,7 +32,6 @@ const StocksList = () => import('@/pages/Stocks/List.vue')
 const ArchiveList = () => import('@/pages/Archive/List.vue')
 
 // Reports
-const ReportsIndex = () => import('@/pages/Reports/Index.vue')
 const ReportByPeriod = () => import('@/pages/Reports/ByPeriod.vue')
 const ReportByObject = () => import('@/pages/Reports/ByObject.vue')
 const ReportByMaterial = () => import('@/pages/Reports/ByMaterial.vue')
@@ -41,8 +40,6 @@ const ReportByResponsible = () => import('@/pages/Reports/ByResponsible.vue')
 // Import
 const ImportPurchases = () => import('@/pages/Import/ImportPurchases.vue')
 
-// Admin
-const UnitConversions = () => import('@/pages/Admin/UnitConversions.vue')
 
 const routes = [
     {
@@ -249,16 +246,6 @@ const routes = [
   
   // Reports routes
   {
-    path: '/reports',
-    name: 'ReportsIndex',
-    component: ReportsIndex,
-    meta: { 
-      title: 'Отчеты',
-      icon: 'assessment',
-      breadcrumb: 'Отчеты'
-    }
-  },
-  {
     path: '/reports/by-period',
     name: 'ReportByPeriod',
     component: ReportByPeriod,
@@ -307,18 +294,6 @@ const routes = [
     }
   },
   
-  // Admin routes
-  {
-    path: '/admin/unit-conversions',
-    name: 'UnitConversions',
-    component: UnitConversions,
-    meta: { 
-      title: 'Конвертации единиц',
-      icon: 'settings',
-      breadcrumb: 'Админка / Конвертации единиц',
-      requiresRole: 'admin'
-    }
-  },
   
   // 404 fallback
   {

@@ -113,10 +113,10 @@
                 </select>
               </td>
               <td>
-                <select v-model.number="it.unit" class="select select-bordered select-sm w-full">
-                  <option :value="undefined">—</option>
-                  <option v-for="u in units" :key="u.id" :value="u.id">{{ u.code ?? u.id }} — {{ u.name }}</option>
-                </select>
+                <div class="text-sm text-gray-600 p-2">
+                  {{ getUnitName(it.unit) || '—' }}
+                </div>
+                <input type="hidden" v-model.number="it.unit" />
               </td>
               <td>
                 <input v-model="it.quantity" type="number" step="0.001" min="0" class="input input-bordered input-sm w-full" @input="recalc(it)"/>
@@ -321,6 +321,11 @@ function onMaterialChange(item: any) {
   }
 }
 
+function getUnitName(unitId: number) {
+  const unit = units.value.find(u => u.id === unitId)
+  return unit ? unit.code : null
+}
+
 function recalc(item: any) {
   const quantity = parseFloat(item.quantity || '0')
   const price = parseFloat(item.price || '0')
@@ -425,7 +430,9 @@ async function loadData() {
   // Load purchase data if editing
   if (isEdit.value) {
     try {
+      console.log('Loading purchase with ID:', route.params.id)
       const purchase = await purchasesStore.fetchOne(Number(route.params.id))
+      console.log('Loaded purchase:', purchase)
       if (purchase) {
         model.date = purchase.date
         model.object = purchase.object

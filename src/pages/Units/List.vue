@@ -1,80 +1,62 @@
 <template>
-  <div class="grid gap-4">
+  <div class="list-container">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Единицы измерения</h1>
-      <button 
-        class="btn btn-primary" 
-        @click="openCreate" 
-        v-if="canEdit"
-        :disabled="unitsStore.loading"
-      >
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Добавить единицу
-      </button>
-    </div>
+    <ListHeader
+      title="Единицы измерения"
+      subtitle="Управление базовыми единицами для материалов и закупок"
+      icon="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h3a1 1 0 110 2h-1v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6H4a1 1 0 110-2h3zM9 4h6V3H9v1z"
+      :show-create="canEdit"
+      create-text="Добавить единицу"
+      :can-create="canEdit"
+      :loading="unitsStore.loading"
+      :show-stats="true"
+      :total-count="unitsStore.pagination.count"
+      :filtered-count="unitsStore.items.length"
+      @create="openCreate"
+    />
 
-    <!-- Filters -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Фильтры и поиск</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Search -->
-          <fieldset class="fieldset">
-            <span class="label-text">Поиск</span>
-            <input 
-              v-model="unitsStore.filters.search"
-              type="text"
-              class="input input-bordered"
-              placeholder="Название, код"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-          <!-- Code Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Код</span>
-            <input 
-              v-model="unitsStore.filters.code"
-              type="text"
-              class="input input-bordered"
-              placeholder="Код единицы"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-          <!-- Name Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Название</span>
-        <input 
-              v-model="unitsStore.filters.name"
-              type="text"
-              class="input input-bordered"
-              placeholder="Название единицы"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-        </div>
-        
-        <div class="flex gap-2 mt-4">
-          <button class="btn btn-primary" @click="handleSearch" :disabled="unitsStore.loading">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-        Применить
-      </button>
-          <button class="btn btn-outline" @click="handleReset" :disabled="unitsStore.loading">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            Сбросить
-          </button>
+    <!-- Admin Info -->
+    <div class="alert alert-info">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+      </svg>
+      <div>
+        <h3 class="font-bold">Для администраторов</h3>
+        <div class="text-xs">
+          Создавайте единицы измерения для материалов. Пользователи видят автоматически конвертированные значения (например, 1000г → 1кг).
+          <br>
+          <strong>Поддерживаемые категории:</strong> масса (г, кг, т), длина (мм, см, м, км), площадь (см², м², га), объем (мл, л, м³).
         </div>
       </div>
     </div>
+
+    <!-- Filters -->
+    <FilterPanel
+      :columns="3"
+      :loading="unitsStore.loading"
+      @reset="handleReset"
+    >
+      <FilterField
+        v-model="unitsStore.filters.search"
+        type="text"
+        label="Поиск"
+        placeholder="Название, код"
+      />
+      
+      <FilterField
+        v-model="unitsStore.filters.code"
+        type="text"
+        label="Код"
+        placeholder="Код единицы"
+      />
+      
+      <FilterField
+        v-model="unitsStore.filters.name"
+        type="text"
+        label="Название"
+        placeholder="Название единицы"
+      />
+    </FilterPanel>
 
     <!-- Table -->
     <!-- Table -->
@@ -100,6 +82,7 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
+            <th>Умная конвертация</th>
             <th class="text-right">Действия</th>
         </tr>
         </thead>
@@ -109,6 +92,20 @@
             <td>{{ unit.name }}</td>
           <td>
               <div class="text-sm text-gray-600 font-mono">{{ unit.code }}</div>
+          </td>
+          <td>
+            <span v-if="isUsedInSmartConversion(unit.code)" class="badge badge-success badge-xs">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              Поддерживается
+            </span>
+            <span v-else class="badge badge-ghost badge-xs">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+              </svg>
+              Не поддерживается
+            </span>
           </td>
             <td class="text-right">
               <div class="flex gap-1 justify-end">
@@ -160,6 +157,7 @@ import type { Unit, Me } from '@/api/types'
 import { debounce } from '@/utils/debounce'
 import Modal from '@/components/Modal.vue'
 import UnitForm from './UnitForm.vue'
+import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
 
@@ -262,7 +260,24 @@ async function handleAction(action: string, unit: Unit) {
 }
 
 async function handleDelete(unit: Unit) {
-  if (!confirm(`Удалить единицу измерения "${unit.name}"?`)) return
+  // Проверяем, используется ли единица в умной конвертации
+  const isSmartUnit = isUsedInSmartConversion(unit.code)
+  
+  let confirmMessage = `Удалить единицу измерения "${unit.name}" (${unit.code})?`
+  
+  if (isSmartUnit) {
+    confirmMessage += `\n\n⚠️ ВНИМАНИЕ: Эта единица поддерживает умную конвертацию!`
+    confirmMessage += `\nУдаление может нарушить работу автоматического округления значений.`
+    confirmMessage += `\n\nРекомендуется оставить единицу для корректной работы системы.`
+  }
+  
+  if (!confirm(confirmMessage)) return
+  
+  // Дополнительное подтверждение для умных единиц
+  if (isSmartUnit) {
+    const doubleConfirm = confirm(`Вы уверены, что хотите удалить единицу "${unit.name}"?\n\nЭто может нарушить работу умной конвертации!`)
+    if (!doubleConfirm) return
+  }
   
   try {
     await unitsStore.delete(unit.id)
@@ -279,6 +294,24 @@ async function onSaved() {
   await unitsStore.fetchList()
 }
 
+// Сортировка
+const sortBy = ref<string>('id')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
+function handleSort(field: string) {
+  if (sortBy.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = field
+    sortOrder.value = 'asc'
+  }
+  
+  // Обновляем ordering в store
+  unitsStore.filters.ordering = sortOrder.value === 'asc' ? field : `-${field}`
+  unitsStore.pagination.page = 1
+  debouncedSearch()
+}
+
 // Watcher для автоматического поиска при изменении фильтров
 watch(
   () => unitsStore.filters,
@@ -288,6 +321,23 @@ watch(
   },
   { deep: true }
 )
+
+// Функция для проверки поддержки умной конвертации
+function isUsedInSmartConversion(unitCode: string): boolean {
+  // Единицы, поддерживаемые умной конвертацией (из бэкенда)
+  const smartConversionUnits = [
+    // Масса
+    'г', 'кг', 'т',
+    // Длина
+    'мм', 'см', 'м', 'км',
+    // Площадь
+    'см²', 'м²', 'га',
+    // Объем
+    'см³', 'м³', 'л', 'мл'
+  ]
+  
+  return smartConversionUnits.includes(unitCode)
+}
 
 onMounted(() => {
   unitsStore.fetchList()

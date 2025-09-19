@@ -1,4 +1,4 @@
-# ELOM API Documentation
+# ELOM Frontend API Documentation
 
 ## Общая информация
 
@@ -48,34 +48,27 @@ Content-Type: application/json
 }
 ```
 
+### Использование токена
+```http
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
 ## Роли пользователей
 
-- **director/admin** - Полные права на все операции
-- **coordinator** - Только чтение
-- **buyer/site_manager** - CRUD только по закрепленным объектам
+- **admin** - Полный доступ ко всем функциям
+- **director** - Доступ к отчетам и управлению
+- **coordinator** - Координация процессов
+- **buyer** - Управление закупками
+- **site_manager** - Управление объектами и остатками
 
-## Общие параметры
+## API Endpoints
 
-### Пагинация
-Все списки поддерживают пагинацию:
-- `page` - номер страницы
-- `page_size` - размер страницы (по умолчанию 50)
+### Пользователи
 
-### Поиск и сортировка
-- `search` - текстовый поиск
-- `ordering` - сортировка (используйте `-` для убывания)
-
-### Фильтрация
-Каждый endpoint поддерживает специфичные фильтры.
-
-## Endpoints
-
-### 1. Пользователи
-
-#### Текущий пользователь
+#### Получить текущего пользователя
 ```http
 GET /api/v1/users/me
-Authorization: Bearer <token>
+Authorization: Bearer {token}
 ```
 
 **Ответ:**
@@ -83,639 +76,312 @@ Authorization: Bearer <token>
 {
   "id": 1,
   "username": "admin",
+  "email": "admin@example.com",
   "first_name": "Admin",
   "last_name": "",
-  "email": "admin@example.com",
   "role": "director"
 }
 ```
 
-#### Список сотрудников
-```http
-GET /api/v1/employees/
-Authorization: Bearer <token>
-```
+### Категории материалов
 
-**Параметры:**
-- `search` - поиск по username, first_name, last_name, email
-- `role` - фильтр по роли (admin|buyer|site_manager|director|coordinator)
-- `is_active` - фильтр по активности
-- `object` - фильтр по закрепленному объекту
-
-**Ответ:**
-```json
-{
-  "count": 5,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": 1,
-      "username": "admin",
-      "first_name": "Admin",
-      "last_name": "",
-      "email": "admin@example.com",
-      "is_active": true,
-      "role": "director",
-      "assigned_object_ids": [1, 2]
-    }
-  ]
-}
-```
-
-#### Создание сотрудника
-```http
-POST /api/v1/employees/
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "username": "newuser",
-  "first_name": "New",
-  "last_name": "User",
-  "email": "new@example.com",
-  "password": "password123",
-  "role": "buyer",
-  "assigned_object_ids": [1, 2]
-}
-```
-
-#### Смена пароля
-```http
-POST /api/v1/employees/{id}/set_password/
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "password": "newpassword123"
-}
-```
-
-### 2. Справочники
-
-#### Единицы измерения
-```http
-GET /api/v1/units/
-Authorization: Bearer <token>
-```
-
-**Параметры:**
-- `search` - поиск по code, name
-- `code` - точное совпадение кода
-- `name` - точное совпадение имени
-
-**Ответ:**
-```json
-{
-  "count": 10,
-  "results": [
-    {
-      "id": 1,
-      "code": "шт",
-      "name": "Штука"
-    }
-  ]
-}
-```
-
-#### Категории материалов
+#### Список категорий
 ```http
 GET /api/v1/material-categories/
-Authorization: Bearer <token>
-```
-
-**Ответ:**
-```json
-{
-  "count": 5,
-  "results": [
-    {
-      "id": 1,
-      "name": "Кабели",
-      "parent": null
-    }
-  ]
-}
-```
-
-#### Материалы
-```http
-GET /api/v1/materials/
-Authorization: Bearer <token>
+Authorization: Bearer {token}
 ```
 
 **Параметры:**
-- `search` - поиск по name, sku, category__name
-- `name` - точное имя
-- `sku` - артикул/код
-- `category` - ID категории
-- `default_unit` - ID базовой единицы
+- `search` - поиск по названию
+- `parent` - ID родительской категории
+- `has_parent` - только корневые (false) или дочерние (true)
+- `has_children` - категории с дочерними элементами
+- `has_materials` - категории с материалами
 
 **Ответ:**
 ```json
 {
-  "count": 50,
+  "count": 14,
   "results": [
     {
       "id": 1,
-      "name": "Кабель ВВГ 3x2.5",
-      "sku": "CAB-001",
-      "category": 1,
-      "category_name": "Кабели",
-      "default_unit": 2,
-      "default_unit_code": "м",
-      "photo_url": "http://localhost:8000/media/materials/2025/01/cable.jpg"
+      "name": "Строительные материалы",
+      "parent": null,
+      "parent_name": null,
+      "children_count": 4,
+      "materials_count": 12,
+      "full_path": "Строительные материалы",
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
     }
   ]
 }
 ```
 
-#### Загрузка фото материала
+#### Создать категорию
 ```http
-POST /api/v1/materials/{id}/photo/
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
-
-photo: <file>
-```
-
-#### Удаление фото материала
-```http
-DELETE /api/v1/materials/{id}/photo/
-Authorization: Bearer <token>
-```
-
-#### Объекты
-```http
-GET /api/v1/objects/
-Authorization: Bearer <token>
-```
-
-**Параметры:**
-- `search` - поиск по name, address
-- `name` - точное имя
-- `is_active` - только активные
-
-**Ответ:**
-```json
-{
-  "count": 3,
-  "results": [
-    {
-      "id": 1,
-      "name": "Объект А",
-      "address": "ул. Примерная, 1",
-      "is_active": true
-    }
-  ]
-}
-```
-
-### 3. Закупки
-
-#### Список закупок
-```http
-GET /api/v1/purchases/
-Authorization: Bearer <token>
-```
-
-**Параметры:**
-- `search` - поиск по supplier, invoice_number, comment
-- `date_from` - дата >= (YYYY-MM-DD)
-- `date_to` - дата <= (YYYY-MM-DD)
-- `object` - ID объекта
-- `responsible` - ID ответственного
-- `is_archived` - только архив/неархив
-
-**Ответ:**
-```json
-{
-  "count": 25,
-  "results": [
-    {
-      "id": 1,
-      "date": "2025-01-15",
-      "object": 1,
-      "object_name": "Объект А",
-      "supplier": "Ali-Termiz",
-      "invoice_number": "INV-001",
-      "vat_included": false,
-      "currency": "UZS",
-      "comment": "",
-      "responsible": 3,
-      "responsible_name": "Aziz I.",
-      "total_amount": "125000.00",
-      "is_archived": false,
-      "cover_photo_url": null,
-      "items": [
-        {
-          "id": 1,
-          "material": 5,
-          "material_name": "Кабель ВВГ",
-          "unit": 2,
-          "unit_code": "м",
-          "quantity": "50.000",
-          "price": "2500.00",
-          "amount": "125000.00"
-        }
-      ],
-      "photos": [],
-      "created_at": "2025-01-15T08:00:00Z",
-      "updated_at": "2025-01-15T08:05:00Z"
-    }
-  ]
-}
-```
-
-#### Создание закупки
-```http
-POST /api/v1/purchases/
-Authorization: Bearer <token>
+POST /api/v1/material-categories/
+Authorization: Bearer {token}
 Content-Type: application/json
 
 {
-  "date": "2025-01-15",
-  "object": 1,
-  "supplier": "Ali-Termiz",
-  "invoice_number": "INV-001",
-  "vat_included": false,
-  "currency": "UZS",
-  "comment": "",
-  "responsible": 3,
-  "items": [
+  "name": "Новая категория",
+  "parent": 1
+}
+```
+
+#### Дерево категорий
+```http
+GET /api/v1/material-categories/tree/
+Authorization: Bearer {token}
+```
+
+**Ответ:**
+```json
+{
+  "categories": [
     {
-      "material": 5,
-      "unit": 2,
-      "quantity": "50.000",
-      "price": "2500.00"
+      "id": 1,
+      "name": "Строительные материалы",
+      "parent": null,
+      "children": [
+        {
+          "id": 2,
+          "name": "Кирпич и блоки",
+          "parent": 1,
+          "children": []
+        }
+      ]
     }
   ]
 }
 ```
 
-#### Загрузка фото закупки
+#### Дочерние категории
 ```http
-POST /api/v1/purchases/{id}/photos/
-Authorization: Bearer <token>
+GET /api/v1/material-categories/children/?parent_id=1
+Authorization: Bearer {token}
+```
+
+### Журнал аудита
+
+#### Список записей аудита
+```http
+GET /api/v1/audit-logs/
+Authorization: Bearer {token}
+```
+
+**Параметры:**
+- `user` - ID пользователя
+- `action` - действие (create, update, delete, etc.)
+- `model` - модель (Unit, Material, Purchase, etc.)
+- `ts_from` - с даты (YYYY-MM-DDTHH:MM:SS)
+- `ts_to` - по дату (YYYY-MM-DDTHH:MM:SS)
+
+**Ответ:**
+```json
+{
+  "count": 150,
+  "results": [
+    {
+      "id": 1,
+      "ts": "2025-01-15T10:30:00Z",
+      "user": 1,
+      "user_name": "Admin User",
+      "user_role": "admin",
+      "action": "create",
+      "action_display": "Создание",
+      "model": "Material",
+      "model_display": "Материалы",
+      "object_id": "5",
+      "detail": "Создан новый материал",
+      "ip": "192.168.1.100"
+    }
+  ]
+}
+```
+
+### Фото закупок
+
+#### Список фото закупки
+```http
+GET /api/v1/purchases/{id}/photos/
+Authorization: Bearer {token}
+```
+
+**Ответ:**
+```json
+[
+  {
+    "id": 1,
+    "url": "http://localhost:8000/media/purchases/2025/01/photo1.jpg",
+    "is_cover": true,
+    "mime": "image/jpeg",
+    "size_bytes": 245760,
+    "created_at": "2025-01-15T10:30:00Z"
+  }
+]
+```
+
+#### Загрузить фото
+```http
+POST /api/v1/purchases/{id}/photos/upload/
+Authorization: Bearer {token}
 Content-Type: multipart/form-data
 
-photo: <file>
+photo: [binary file]
 is_cover: true
 ```
 
-### 4. Импорт закупок
-
-#### Анализ Excel файла
+#### Удалить фото
 ```http
-POST /api/v1/purchases/import/prepare
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
+DELETE /api/v1/purchases/{id}/photos/{photo_id}/
+Authorization: Bearer {token}
+```
 
-file: <excel_file>
+#### Установить обложку
+```http
+POST /api/v1/purchases/{id}/photos/{photo_id}/set-cover/
+Authorization: Bearer {token}
 ```
 
 **Ответ:**
 ```json
 {
-  "header": ["Дата", "Объект", "Поставщик", "Материал", "Ед.", "Кол-во", "Цена"],
-  "auto_mapping": {
-    "date": 0,
-    "object": 1,
-    "supplier": 2,
-    "invoice_number": null,
-    "material": 3,
-    "unit": 4,
-    "quantity": 5,
-    "price": 6,
-    "comment": null
-  }
+  "detail": "Cover photo updated"
 }
 ```
 
-#### Проверка данных (dry-run)
-```http
-POST /api/v1/purchases/import/dry_run
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
+## Коды ответов
 
-file: <excel_file>
-mapping: {"date": 0, "object": 1, ...}
-```
+- **200** - Успешный запрос
+- **201** - Ресурс создан
+- **204** - Успешное удаление
+- **400** - Ошибка валидации
+- **401** - Не авторизован
+- **403** - Доступ запрещен
+- **404** - Ресурс не найден
+- **500** - Внутренняя ошибка сервера
 
-**Ответ:**
-```json
-{
-  "rows_scanned": 120,
-  "errors": [
-    {
-      "row": 2,
-      "field": "date",
-      "message": "invalid date"
-    }
-  ]
-}
-```
+## Обработка ошибок
 
-#### Импорт данных
-```http
-POST /api/v1/purchases/import/commit
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
-
-file: <excel_file>
-mapping: {"date": 0, "object": 1, ...}
-```
-
-**Ответ:**
-```json
-{
-  "created": 4,
-  "content_hash": "8b3f...a9"
-}
-```
-
-### 5. Остатки
-
-#### Список снапшотов
-```http
-GET /api/v1/stock/snapshots/
-Authorization: Bearer <token>
-```
-
-**Параметры:**
-- `search` - поиск по comment, material__name, object__name
-- `date_from` - дата >= (YYYY-MM-DD)
-- `date_to` - дата <= (YYYY-MM-DD)
-- `object` - ID объекта
-- `material` - ID материала
-- `stage` - after_rough|after_handover
-- `is_archived` - флаг архива
-
-**Ответ:**
-```json
-{
-  "count": 15,
-  "results": [
-    {
-      "id": 1,
-      "date": "2025-01-15",
-      "object": 1,
-      "object_name": "Объект А",
-      "material": 5,
-      "material_name": "Кабель ВВГ",
-      "unit": 2,
-      "unit_code": "м",
-      "quantity": "12.500",
-      "stage": "after_rough",
-      "responsible": 3,
-      "responsible_name": "Aziz I.",
-      "comment": "",
-      "is_archived": false,
-      "created_at": "2025-01-15T08:10:00Z",
-      "updated_at": "2025-01-15T08:10:00Z"
-    }
-  ]
-}
-```
-
-#### Создание снапшота
-```http
-POST /api/v1/stock/snapshots/
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "date": "2025-01-15",
-  "object": 1,
-  "material": 5,
-  "unit": 2,
-  "quantity": "12.500",
-  "stage": "after_rough",
-  "responsible": 3,
-  "comment": ""
-}
-```
-
-### 6. Архив
-
-#### Список закрытых периодов
-```http
-GET /api/v1/archive/periods/
-Authorization: Bearer <token>
-```
-
-**Ответ:**
-```json
-{
-  "count": 3,
-  "results": [
-    {
-      "id": 1,
-      "month": "2025-01-01",
-      "object": 1,
-      "object_name": "Объект А",
-      "closed_at": "2025-01-31T18:05:00Z",
-      "closed_by": 2,
-      "closed_by_name": "Director"
-    }
-  ]
-}
-```
-
-#### Закрытие периода
-```http
-POST /api/v1/archive/periods/close
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "object": 1,
-  "month": "2025-01"
-}
-```
-
-#### Открытие периода
-```http
-POST /api/v1/archive/periods/reopen
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "id": 1
-}
-```
-
-### 7. Отчеты
-
-#### Отчет по периодам
-```http
-GET /api/v1/reports/purchases/by-period?period=month&date_from=2025-01-01&date_to=2025-01-31&export=xlsx
-Authorization: Bearer <token>
-```
-
-**Параметры:**
-- `period` - day|month (по умолчанию month)
-- `date_from` - дата начала (YYYY-MM-DD)
-- `date_to` - дата окончания (YYYY-MM-DD)
-- `object` - ID объектов (множественный)
-- `responsible` - ID ответственного
-- `is_archived` - флаг архива
-- `export` - xlsx|pdf
-
-**Ответ (JSON):**
-```json
-{
-  "rows": [
-    ["2025-01", 12, 3450000.0],
-    ["2025-02", 8, 1250000.0]
-  ]
-}
-```
-
-#### Отчет по объектам
-```http
-GET /api/v1/reports/purchases/by-object?date_from=2025-01-01&export=xlsx
-Authorization: Bearer <token>
-```
-
-**Ответ:**
-```json
-{
-  "rows": [
-    [1, "Объект А", 7, 980000.0],
-    [2, "Объект Б", 3, 270000.0]
-  ]
-}
-```
-
-#### Отчет по ответственным
-```http
-GET /api/v1/reports/purchases/by-responsible?date_from=2025-01-01&export=xlsx
-Authorization: Bearer <token>
-```
-
-**Ответ:**
-```json
-{
-  "rows": [
-    [3, "Aziz I.", 6, 750000.0],
-    [7, "Javlon R.", 4, 520000.0]
-  ]
-}
-```
-
-#### Отчет по материалам
-```http
-GET /api/v1/reports/purchases/by-material?date_from=2025-01-01&export=xlsx
-Authorization: Bearer <token>
-```
-
-**Ответ:**
-```json
-{
-  "rows": [
-    [5, "Кабель ВВГ", "м", 150.0, 3750000.0, 12],
-    [9, "Автомат 16A", "шт", null, 820000.0, 7]
-  ]
-}
-```
-
-## Коды ошибок
-
-### Общие ошибки
-- `400` - Ошибка валидации
-- `401` - Не авторизован
-- `403` - Доступ запрещен
-- `404` - Не найдено
-- `500` - Внутренняя ошибка сервера
-
-### Формат ошибок
+### Ошибка валидации
 ```json
 {
   "detail": "Validation error",
   "errors": {
-    "field_name": ["Error message"],
-    "non_field_errors": ["General error"]
+    "name": ["Это поле обязательно."],
+    "parent": ["Неверный ID родительской категории."]
   }
 }
 ```
 
-## Особенности
+### Ошибка доступа
+```json
+{
+  "detail": "You do not have permission to perform this action."
+}
+```
 
-### Архивирование
-- Архивные записи (`is_archived=true`) доступны только для чтения
-- Закрытие периода архивирует все закупки и снапшоты за месяц
-- Только director/admin могут закрывать/открывать периоды
+### Ошибка аутентификации
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
 
-### Импорт Excel
-- Поддерживает автоматическое маппирование колонок
-- Идемпотентность по хешу файла
-- Dry-run для проверки данных перед импортом
-- Группировка по (дата, объект, поставщик, накладная)
+## Пагинация
 
-### Конвертация единиц
-- Система поддерживает конвертацию между единицами измерения
-- В отчетах по материалам количество приводится к базовой единице
-- Если конвертация невозможна, возвращается `null`
+Все списки поддерживают пагинацию:
 
-### Файлы
-- Фото материалов: `/media/materials/YYYY/MM/`
-- Фото закупок: `/media/purchases/YYYY/MM/`
-- Поддержка multipart/form-data для загрузки
+```json
+{
+  "count": 150,
+  "next": "http://localhost:8000/api/v1/material-categories/?page=3",
+  "previous": "http://localhost:8000/api/v1/material-categories/?page=1",
+  "results": [...]
+}
+```
+
+**Параметры:**
+- `page` - номер страницы (начиная с 1)
+- `page_size` - количество элементов на странице (по умолчанию 20)
+
+## Фильтрация и поиск
+
+### Поиск
+Параметр `search` поддерживается для текстовых полей:
+```http
+GET /api/v1/material-categories/?search=строительные
+```
+
+### Сортировка
+Параметр `ordering` для сортировки:
+```http
+GET /api/v1/material-categories/?ordering=name
+GET /api/v1/material-categories/?ordering=-created_at  # по убыванию
+```
+
+### Фильтрация
+Специфичные фильтры для каждого endpoint:
+```http
+GET /api/v1/audit-logs/?action=create&model=Material
+GET /api/v1/material-categories/?has_parent=false
+```
 
 ## Примеры использования
 
-### Получение всех материалов с поиском
+### Получение дерева категорий для UI
 ```javascript
-const response = await fetch('/api/v1/materials/?search=кабель&category=1', {
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-});
-const data = await response.json();
-```
-
-### Создание закупки
-```javascript
-const purchaseData = {
-  date: '2025-01-15',
-  object: 1,
-  supplier: 'Поставщик',
-  items: [
-    {
-      material: 5,
-      unit: 2,
-      quantity: '50.000',
-      price: '2500.00'
-    }
-  ]
-};
-
-const response = await fetch('/api/v1/purchases/', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(purchaseData)
-});
-```
-
-### Экспорт отчета в Excel
-```javascript
-const response = await fetch('/api/v1/reports/purchases/by-period?export=xlsx&date_from=2025-01-01', {
+const response = await fetch('/api/v1/material-categories/tree/', {
   headers: {
     'Authorization': `Bearer ${token}`
   }
 });
-
-if (response.ok) {
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'report.xlsx';
-  a.click();
-}
+const data = await response.json();
+// data.categories содержит иерархическое дерево
 ```
+
+### Загрузка фото закупки
+```javascript
+const formData = new FormData();
+formData.append('photo', fileInput.files[0]);
+formData.append('is_cover', 'true');
+
+const response = await fetch(`/api/v1/purchases/${purchaseId}/photos/upload/`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  },
+  body: formData
+});
+```
+
+### Просмотр журнала аудита
+```javascript
+const response = await fetch('/api/v1/audit-logs/?ts_from=2025-01-01T00:00:00&action=create', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+const auditLogs = await response.json();
+```
+
+## Безопасность
+
+- Все endpoints требуют JWT аутентификации
+- Роли пользователей определяют доступ к функциям
+- Журнал аудита доступен только admin/director
+- Файлы загружаются с валидацией типа и размера
+- Все операции логируются в системе аудита
+
+## Версионирование
+
+API использует версионирование через URL:
+- Текущая версия: `/api/v1/`
+- Будущие версии: `/api/v2/`, `/api/v3/`, etc.
+
+## Поддержка
+
+Для вопросов по API обращайтесь к документации Swagger:
+`http://localhost:8000/api/docs/`

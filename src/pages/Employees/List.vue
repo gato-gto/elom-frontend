@@ -1,85 +1,47 @@
 <template>
-  <div class="grid gap-4">
+  <div class="list-container">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold">Сотрудники</h1>
-      <button 
-        class="btn btn-primary" 
-        @click="openCreate" 
-        v-if="canEdit"
-        :disabled="employeesStore.loading"
-      >
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Добавить сотрудника
-      </button>
-    </div>
+    <ListHeader
+      title="Сотрудники"
+      subtitle="Управление пользователями системы и их ролями"
+      icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+      :show-create="canEdit"
+      create-text="Добавить сотрудника"
+      :can-create="canEdit"
+      :loading="employeesStore.loading"
+      :show-stats="true"
+      :total-count="employeesStore.pagination.count"
+      :filtered-count="employeesStore.items.length"
+      @create="openCreate"
+    />
 
     <!-- Filters -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Фильтры и поиск</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Search -->
-          <fieldset class="fieldset">
-            <span class="label-text">Поиск</span>
-            <input 
-              v-model="employeesStore.filters.search"
-              type="text"
-              class="input input-bordered"
-              placeholder="Имя, email, роль"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-          <!-- Role Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Роль</span>
-            <select 
-              v-model="employeesStore.filters.role"
-              class="select select-bordered"
-              @change="handleSearch"
-            >
-              <option value="">Все роли</option>
-              <option value="admin">Администратор</option>
-              <option value="director">Директор</option>
-              <option value="coordinator">Координатор</option>
-              <option value="site_manager">Бригадир</option>
-              <option value="buyer">Закупщик</option>
-            </select>
-          </fieldset>
-          
-          <!-- First Name Filter -->
-          <fieldset class="fieldset">
-            <span class="label-text">Имя</span>
-            <input 
-              v-model="employeesStore.filters.search"
-              type="text"
-              class="input input-bordered"
-              placeholder="Имя сотрудника"
-              @keyup.enter="handleSearch"
-            />
-          </fieldset>
-          
-        </div>
-        
-        <div class="flex gap-2 mt-4">
-          <button class="btn btn-primary" @click="handleSearch" :disabled="employeesStore.loading">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            Применить
-          </button>
-          <button class="btn btn-outline" @click="handleReset" :disabled="employeesStore.loading">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            Сбросить
-          </button>
-        </div>
-      </div>
-    </div>
+    <FilterPanel
+      :columns="3"
+      :loading="employeesStore.loading"
+      @reset="handleReset"
+    >
+      <FilterField
+        v-model="employeesStore.filters.search"
+        type="text"
+        label="Поиск"
+        placeholder="Имя, email, роль"
+      />
+      
+      <FilterField
+        v-model="employeesStore.filters.role"
+        type="select"
+        label="Роль"
+        :options="roleFilterOptions"
+      />
+      
+      <FilterField
+        v-model="employeesStore.filters.is_active"
+        type="select"
+        label="Статус"
+        :options="statusFilterOptions"
+      />
+    </FilterPanel>
 
     <!-- Table -->
     <div class="list-content">
@@ -198,6 +160,7 @@ import type { Employee, Me } from '@/api/types'
 import { debounce } from '@/utils/debounce'
 import Modal from '@/components/Modal.vue'
 import EmployeeForm from './EmployeeForm.vue'
+import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
 
@@ -225,6 +188,9 @@ const modalTitle = computed(() => {
   return current.value ? 'Редактировать сотрудника' : 'Добавить сотрудника'
 })
 
+
+
+
 // Sorting
 const sortBy = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
@@ -251,15 +217,10 @@ const roleFilterOptions = computed(() => [
   { value: 'buyer', label: 'Закупщик' }
 ])
 
-const activeFilterOptions = computed(() => [
-  { value: '', label: 'Все' },
-  { value: true, label: 'Активные' },
-  { value: false, label: 'Неактивные' }
-])
-
-const objectFilterOptions = computed(() => [
-  { value: '', label: 'Все объекты' }
-  // TODO: Добавить опции объектов из store
+const statusFilterOptions = computed(() => [
+  { value: '', label: 'Все статусы' },
+  { value: 'true', label: 'Активный' },
+  { value: 'false', label: 'Неактивный' }
 ])
 
 function getRoleDisplayName(role: string): string {

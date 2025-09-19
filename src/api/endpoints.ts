@@ -32,11 +32,6 @@ export const endpoints = {
         one: (id: number) => join(`/units/${id}/`),
     },
 
-    // Unit Conversions endpoints
-    unitConversions: {
-        list: join('/unit-conversions/'),
-        detail: (id: number) => join(`/unit-conversions/${id}/`),
-    },
 
     // Material Categories endpoints
     materialCategories: {

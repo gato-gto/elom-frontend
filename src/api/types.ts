@@ -113,32 +113,6 @@ export interface UnitRequest {
     name: string;
 }
 
-// -------------------- Unit Conversions --------------------
-export interface UnitConversion {
-    id: ID;
-    from_unit: ID;
-    from_unit_name: string;
-    to_unit: ID;
-    to_unit_name: string;
-    conversion_factor: number; // Коэффициент пересчета: to_unit = from_unit * conversion_factor
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface UnitConversionRequest {
-    from_unit: ID;
-    to_unit: ID;
-    conversion_factor: number;
-    is_active?: boolean;
-}
-
-export interface PatchedUnitConversionRequest {
-    from_unit?: ID;
-    to_unit?: ID;
-    conversion_factor?: number;
-    is_active?: boolean;
-}
 
 export interface PatchedUnitRequest {
     code?: string;
@@ -423,6 +397,14 @@ export interface ImportCommitResponse {
 // -------------------- Stock Snapshots --------------------
 export type StageEnum = "after_rough" | "after_handover";
 
+// Умные значения для конвертации единиц измерения
+export interface SmartQuantity {
+    value: number;
+    unit: string;
+    original_value: number;
+    original_unit: string;
+}
+
 export interface StockSnapshot {
     id: ID;
     date: string;
@@ -439,6 +421,10 @@ export interface StockSnapshot {
     is_archived: boolean;
     purchased_qty: string;
     write_off_qty: string;
+    // Умные поля для автоматической конвертации
+    smart_quantity?: SmartQuantity;
+    smart_purchased_qty?: SmartQuantity;
+    smart_write_off_qty?: SmartQuantity;
     created_at: string;
     updated_at: string;
 }
@@ -527,6 +513,7 @@ export interface ReportByMaterialQuery {
     material?: ID;
     object?: ID[];
     responsible?: ID;
+    ordering?: string; // Для серверной сортировки
 }
 
 export interface ReportByObjectQuery {
@@ -536,6 +523,7 @@ export interface ReportByObjectQuery {
     is_archived?: boolean;
     object?: ID[];
     responsible?: ID;
+    ordering?: string; // Для серверной сортировки
 }
 
 export interface ReportByPeriodQuery {
@@ -546,6 +534,7 @@ export interface ReportByPeriodQuery {
     object?: ID[];
     period?: "day" | "month";
     responsible?: ID;
+    ordering?: string; // Для серверной сортировки
 }
 
 export interface ReportByResponsibleQuery {
@@ -555,10 +544,58 @@ export interface ReportByResponsibleQuery {
     is_archived?: boolean;
     object?: ID[];
     responsible?: ID;
+    ordering?: string; // Для серверной сортировки
 }
 
-export interface ReportResponse {
-    rows: (string | number | null)[][];
+// Типы для строк отчетов
+export interface PeriodReportRow {
+    period: string;        // "2025-01" или "2025-01-15"
+    purchases: number;     // Количество закупок
+    total_amount: number;  // Общая сумма в UZS
+}
+
+export interface ObjectReportRow {
+    object_id: number;     // ID объекта
+    object_name: string;   // Название объекта
+    purchases: number;     // Количество закупок
+    total_amount: number;  // Общая сумма в UZS
+}
+
+export interface ResponsibleReportRow {
+    responsible_id: number;    // ID пользователя
+    responsible_name: string;  // Имя пользователя (first_name + last_name или username)
+    purchases: number;         // Количество закупок
+    total_amount: number;      // Общая сумма в UZS
+}
+
+export interface MaterialReportRow {
+    material_id: number;     // ID материала
+    material_name: string;   // Название материала
+    unit: string;           // Базовая единица измерения
+    qty_total: number | null; // Общее количество (с конвертацией) или null
+    amount_total: number;   // Общая сумма в UZS
+    rows: number;           // Количество строк закупок
+}
+
+// Базовый интерфейс для ответов отчетов
+export interface BaseReportResponse {
+    rows: any[];
+}
+
+export interface PeriodReportResponse extends BaseReportResponse {
+    rows: PeriodReportRow[];
+}
+
+export interface ObjectReportResponse extends BaseReportResponse {
+    rows: ObjectReportRow[];
+}
+
+export interface ResponsibleReportResponse extends BaseReportResponse {
+    rows: ResponsibleReportRow[];
+}
+
+export interface MaterialReportResponse extends BaseReportResponse {
+    rows: MaterialReportRow[];
 }
 
 // -------------------- Paginated Lists --------------------

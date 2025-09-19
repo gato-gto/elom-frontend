@@ -1,19 +1,22 @@
 <template>
-  <div class="grid md:grid-cols-2 gap-6">
-    <div class="card bg-white border">
-      <div class="card-body">
-        <h2 class="card-title text-lg">Состояние API</h2>
-        <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ health }}</pre>
-        <button class="btn btn-outline mt-3" @click="load">Обновить</button>
+  <div class="space-y-6">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card bg-white border">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Состояние API</h2>
+          <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ health }}</pre>
+          <button class="btn btn-outline mt-3" @click="load">Обновить</button>
+        </div>
       </div>
-    </div>
 
-    <div class="card bg-white border">
-      <div class="card-body">
-        <h2 class="card-title text-lg">Текущий пользователь</h2>
-        <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ me }}</pre>
+      <div class="card bg-white border">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Текущий пользователь</h2>
+          <pre class="bg-gray-50 rounded-xl p-3 text-sm overflow-auto">{{ me }}</pre>
+        </div>
       </div>
     </div>
+    
   </div>
 </template>
 
