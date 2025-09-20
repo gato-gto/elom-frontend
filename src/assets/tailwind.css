@@ -65,4 +65,34 @@ html, body, #app {
     .text-gray-60 {
         color: hsl(215.4 16.3% 46.9% / 0.6);
     }
+
+    /* Responsive tables like Bootstrap's .table-responsive */
+    .list-content {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure tables scroll instead of collapsing columns */
+    .list-content .modern-table {
+        width: 100%;
+        min-width: 48rem; /* 768px baseline; prevents squashing on mobile */
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    /* Sticky header for better readability during horizontal scroll */
+    .list-content .modern-table thead th {
+        position: sticky;
+        top: 0;
+        background-color: hsl(var(--b1));
+        z-index: 1;
+    }
+
+    /* Wrap long content without truncation */
+    .list-content .modern-table th,
+    .list-content .modern-table td {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
 }

@@ -430,7 +430,7 @@ function updateChart() {
     plugins: {
       tooltip: {
         callbacks: {
-          afterLabel: (context) => {
+          afterLabel: (context: any) => {
             const index = context.dataIndex
             const row = sortedRows[index]
             return [

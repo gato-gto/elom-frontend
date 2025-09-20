@@ -1,4 +1,4 @@
-import { ChartConfiguration, ChartData, ChartOptions } from 'chart.js'
+import { ChartConfiguration, ChartOptions, TooltipItem } from 'chart.js'
 
 // DaisyUI color palette
 export const DAISY_COLORS = [
@@ -137,7 +137,7 @@ export function createLineChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context) => {
+            label: (context: TooltipItem<'line'>) => {
               const label = context.dataset.label || ''
               const value = context.parsed.y
               return `${label}: ${formatCurrencyTooltip(value)}`
@@ -199,7 +199,7 @@ export function createBarChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context) => {
+            label: (context: TooltipItem<'bar'>) => {
               const label = context.dataset.label || ''
               const value = context.parsed.y
               return `${label}: ${formatCurrencyTooltip(value)}`
@@ -262,7 +262,7 @@ export function createHorizontalBarChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context) => {
+            label: (context: TooltipItem<'bar'>) => {
               const label = context.dataset.label || ''
               const value = context.parsed.x
               return `${label}: ${formatCurrencyTooltip(value)}`
@@ -332,7 +332,7 @@ export function createPieChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context) => {
+            label: (context: TooltipItem<'pie'>) => {
               const label = context.label || ''
               const value = context.parsed
               const total = context.dataset.data.reduce((a: number, b: any) => a + (typeof b === 'number' ? b : 0), 0)
@@ -377,7 +377,7 @@ export function createDoughnutChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context) => {
+            label: (context: TooltipItem<'doughnut'>) => {
               const label = context.label || ''
               const value = context.parsed
               const total = context.dataset.data.reduce((a: number, b: any) => a + (typeof b === 'number' ? b : 0), 0)

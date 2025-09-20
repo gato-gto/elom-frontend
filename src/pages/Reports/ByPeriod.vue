@@ -443,7 +443,7 @@ function updateChart() {
         display: true,
         position: 'left',
         ticks: {
-          callback: (value) => formatCurrencyTooltip(Number(value))
+          callback: (value: any) => formatCurrencyTooltip(Number(value))
         }
       },
       y1: {
@@ -454,7 +454,7 @@ function updateChart() {
           drawOnChartArea: false,
         },
         ticks: {
-          callback: (value) => new Intl.NumberFormat('ru-RU').format(Number(value))
+          callback: (value: any) => new Intl.NumberFormat('ru-RU').format(Number(value))
         }
       }
     }
