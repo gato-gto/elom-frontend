@@ -447,7 +447,8 @@ function updateChart() {
   try {
     chartContainer.value.createChart(config)
   } catch (error) {
-    console.error('Error creating chart:', error)
+    // eslint-disable-next-line no-console
+    if (typeof console !== 'undefined' && console.error) { console.error('Error creating chart:', error) }
   }
 }
 

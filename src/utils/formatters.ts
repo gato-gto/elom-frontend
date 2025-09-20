@@ -47,7 +47,7 @@ export function formatNumber(value: number | string | null | undefined): string 
   if (value === null || value === undefined || value === '') { return '—' }
   
   const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '—'
+  if (isNaN(num)) { return '—' }
   
   return num.toLocaleString('ru-RU', {
     minimumFractionDigits: 0,
@@ -62,7 +62,7 @@ export function formatCurrency(value: number | string | null | undefined): strin
   if (value === null || value === undefined || value === '') { return '—' }
   
   const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '—'
+  if (isNaN(num)) { return '—' }
   
   return num.toLocaleString('ru-RU', {
     style: 'currency',

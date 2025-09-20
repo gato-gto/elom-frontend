@@ -297,7 +297,7 @@ const currentPageTitle = computed(() => {
 // User initials for avatar
 const userInitials = computed(() => {
   const user = auth.me
-  if (!user) return '?'
+  if (!user) { return '?' }
   
   const first = user.first_name?.[0] || user.username[0]
   const last = user.last_name?.[0] || ''
@@ -338,7 +338,8 @@ const logout = async () => {
     ui.toast({ type: 'success', text: 'Вы вышли из системы' })
     await router.push('/login')
   } catch (error) {
-    console.error('Logout error:', error)
+    // eslint-disable-next-line no-console
+    if (typeof console !== 'undefined' && console.error) { console.error('Logout error:', error) }
     ui.toast({ type: 'error', text: 'Ошибка при выходе' })
   }
 }
