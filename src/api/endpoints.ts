@@ -124,10 +124,10 @@ export const endpoints = {
 export type Query = | Record<string, string | number | boolean | Array<string | number> | undefined | null>;
 
 export function buildQuery(params?: Query): string {
-    if (!params) return '';
+    if (!params) { return ''; }
     const q = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
-        if (v === undefined || v === null) return;
+        if (v === undefined || v === null) { return; }
         // Не добавляем пустые строки для boolean параметров
         if (typeof v === 'boolean') {
             q.set(k, String(v));

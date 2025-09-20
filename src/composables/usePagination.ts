@@ -55,7 +55,7 @@ export function usePagination(
       // Показываем страницы с многоточием
       const half = Math.floor(maxVisiblePages / 2)
       let start = Math.max(1, pagination.page - half)
-      let end = Math.min(totalPages.value, start + maxVisiblePages - 1)
+      const end = Math.min(totalPages.value, start + maxVisiblePages - 1)
       
       if (end - start + 1 < maxVisiblePages) {
         start = Math.max(1, end - maxVisiblePages + 1)

@@ -6,7 +6,7 @@
  * Форматирует дату в читаемый вид
  */
 export function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return '—'
+  if (!dateString) { return '—' }
   
   try {
     const date = new Date(dateString)
@@ -24,7 +24,7 @@ export function formatDate(dateString: string | null | undefined): string {
  * Форматирует дату и время в читаемый вид
  */
 export function formatDateTime(dateString: string | null | undefined): string {
-  if (!dateString) return '—'
+  if (!dateString) { return '—' }
   
   try {
     const date = new Date(dateString)
@@ -44,7 +44,7 @@ export function formatDateTime(dateString: string | null | undefined): string {
  * Форматирует число с разделителями тысяч
  */
 export function formatNumber(value: number | string | null | undefined): string {
-  if (value === null || value === undefined || value === '') return '—'
+  if (value === null || value === undefined || value === '') { return '—' }
   
   const num = typeof value === 'string' ? parseFloat(value) : value
   if (isNaN(num)) return '—'
@@ -59,7 +59,7 @@ export function formatNumber(value: number | string | null | undefined): string 
  * Форматирует валюту
  */
 export function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined || value === '') return '—'
+  if (value === null || value === undefined || value === '') { return '—' }
   
   const num = typeof value === 'string' ? parseFloat(value) : value
   if (isNaN(num)) return '—'
@@ -77,7 +77,7 @@ export function formatCurrency(value: number | string | null | undefined): strin
  */
 export function formatQuantity(value: number | string | null | undefined, unit?: string): string {
   const formatted = formatNumber(value)
-  if (formatted === '—') return '—'
+  if (formatted === '—') { return '—' }
   
   return unit ? `${formatted} ${unit}` : formatted
 }

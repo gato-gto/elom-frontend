@@ -229,9 +229,9 @@ async function load() {
     // Создаем запрос только с заданными параметрами
     const query: ReportByMaterialQuery = {}
     
-    if (dateFrom.value) query.date_from = dateFrom.value
-    if (dateTo.value) query.date_to = dateTo.value
-    if (objectId.value && String(objectId.value) !== '') query.object = [Number(objectId.value)]
+    if (dateFrom.value) { query.date_from = dateFrom.value }
+    if (dateTo.value) { query.date_to = dateTo.value }
+    if (objectId.value && String(objectId.value) !== '') { query.object = [Number(objectId.value)] }
     
     // Добавляем пагинацию
     query.page = currentPage.value

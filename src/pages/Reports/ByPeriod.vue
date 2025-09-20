@@ -218,9 +218,9 @@ async function load() {
     // Создаем запрос только с заданными параметрами
     const query: ReportByPeriodQuery = {}
     
-    if (dateFrom.value) query.date_from = dateFrom.value
-    if (dateTo.value) query.date_to = dateTo.value
-    if (period.value) query.period = period.value
+    if (dateFrom.value) { query.date_from = dateFrom.value }
+    if (dateTo.value) { query.date_to = dateTo.value }
+    if (period.value) { query.period = period.value }
     
     // Добавляем пагинацию
     query.page = currentPage.value

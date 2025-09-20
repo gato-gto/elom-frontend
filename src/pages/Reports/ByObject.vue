@@ -238,10 +238,10 @@ async function fetchReport() {
     // Создаем запрос только с заданными параметрами
     const query: ReportByObjectQuery = {}
     
-    if (filters.value.date_from) query.date_from = filters.value.date_from
-    if (filters.value.date_to) query.date_to = filters.value.date_to
-    if (filters.value.object && String(filters.value.object) !== '') query.object = [Number(filters.value.object)]
-    if (filters.value.responsible && String(filters.value.responsible) !== '') query.responsible = Number(filters.value.responsible)
+    if (filters.value.date_from) { query.date_from = filters.value.date_from }
+    if (filters.value.date_to) { query.date_to = filters.value.date_to }
+    if (filters.value.object && String(filters.value.object) !== '') { query.object = [Number(filters.value.object)] }
+    if (filters.value.responsible && String(filters.value.responsible) !== '') { query.responsible = Number(filters.value.responsible) }
     
     // Добавляем пагинацию
     query.page = currentPage.value

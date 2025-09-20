@@ -35,13 +35,13 @@ function uiStoreSafe() {
 // Работа с токенами через localStorage (и стор, если есть)
 function getAccessToken(): string | null {
     const s = authStoreSafe()
-    if (s?.accessToken) return s.accessToken as string
+    if (s?.accessToken) { return s.accessToken as string }
     return localStorage.getItem(ACCESS_KEY)
 }
 
 function getRefreshToken(): string | null {
     const s = authStoreSafe()
-    if (s?.refreshToken) return s.refreshToken as string
+    if (s?.refreshToken) { return s.refreshToken as string }
     return localStorage.getItem(REFRESH_KEY)
 }
 
@@ -51,8 +51,8 @@ function setTokens(access?: string | null, refresh?: string | null) {
         s.saveTokens({access, refresh})
         return
     }
-    if (access) localStorage.setItem(ACCESS_KEY, access)
-    if (refresh) localStorage.setItem(REFRESH_KEY, refresh)
+    if (access) { localStorage.setItem(ACCESS_KEY, access) }
+    if (refresh) { localStorage.setItem(REFRESH_KEY, refresh) }
 }
 
 function clearTokensAndLogout() {
@@ -93,7 +93,7 @@ function onRefreshed(token: string | null) {
  */
 async function refreshAccessToken(): Promise<string | null> {
     const refresh = getRefreshToken()
-    if (!refresh) return null
+    if (!refresh) { return null }
 
     if (!isRefreshing) {
         isRefreshing = true
@@ -126,6 +126,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     try {
         uiStoreSafe()?.start?.()
     } catch {
+        // no-op
     }
     const access = getAccessToken()
     if (access) {
@@ -140,6 +141,7 @@ api.interceptors.response.use(
         try {
             uiStoreSafe()?.done?.()
         } catch {
+            // no-op
         }
         return r
     },
@@ -149,6 +151,7 @@ api.interceptors.response.use(
             // завершить прогресс и при ошибке
             uiStoreSafe()?.done?.()
         } catch {
+            // no-op
         }
 
         // Попытка рефреша при 401

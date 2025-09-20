@@ -277,10 +277,10 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const getInputType = () => {
-  if (props.type === 'email') return 'email'
-  if (props.type === 'password') return 'password'
-  if (props.type === 'number') return 'number'
-  if (props.type === 'date') return 'date'
+  if (props.type === 'email') { return 'email' }
+  if (props.type === 'password') { return 'password' }
+  if (props.type === 'number') { return 'number' }
+  if (props.type === 'date') { return 'date' }
   return props.inputType
 }
 

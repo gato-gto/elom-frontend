@@ -40,12 +40,12 @@ const fileName = computed(() => props.modelValue?.name || null)
 const hasFile = computed(() => !!props.modelValue)
 
 const previewUrl = computed(() => {
-  if (props.modelValue) return URL.createObjectURL(props.modelValue)
+  if (props.modelValue) { return URL.createObjectURL(props.modelValue) }
   return props.existingUrl || null
 })
 
 watch(() => props.modelValue, (f) => {
-  if (!f) error.value = null
+  if (!f) { error.value = null }
 })
 
 function onChange(e: Event) {
@@ -73,7 +73,7 @@ function onChange(e: Event) {
 
 function clear() {
   emit('update:modelValue', null)
-  if (fileEl.value) fileEl.value.value = ''
+  if (fileEl.value) { fileEl.value.value = '' }
 }
 </script>
 

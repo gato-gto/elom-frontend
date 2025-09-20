@@ -192,8 +192,8 @@ async function load() {
     // Создаем запрос только с заданными параметрами
     const query: ReportByResponsibleQuery = {}
     
-    if (dateFrom.value) query.date_from = dateFrom.value
-    if (dateTo.value) query.date_to = dateTo.value
+    if (dateFrom.value) { query.date_from = dateFrom.value }
+    if (dateTo.value) { query.date_to = dateTo.value }
     
     // Добавляем пагинацию
     query.page = currentPage.value

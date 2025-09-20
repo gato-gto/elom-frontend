@@ -260,7 +260,7 @@ const daisyColors = [
 
 // Methods
 function createChart(config: ChartConfiguration) {
-  if (!chartCanvas.value) return
+  if (!chartCanvas.value) { return }
 
   // Destroy existing chart completely
   if (chartInstance.value) {
@@ -326,7 +326,7 @@ function destroyChart() {
 }
 
 function downloadChart() {
-  if (!chartInstance.value) return
+  if (!chartInstance.value) { return }
 
   const url = chartInstance.value.toBase64Image('image/png', 1.0)
   const link = document.createElement('a')

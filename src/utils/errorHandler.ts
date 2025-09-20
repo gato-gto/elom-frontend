@@ -32,7 +32,8 @@ export function handleApiError(
   } = options
 
   if (logError) {
-    console.error('API Error:', error)
+    // eslint-disable-next-line no-console
+    if (typeof console !== 'undefined' && console.error) { console.error('API Error:', error) }
   }
 
   // Инициализация результата
@@ -175,7 +176,7 @@ export const ErrorHandlers = {
  * Проверяет, является ли ошибка конкретным типом
  */
 export function isErrorType(error: any, type: string): boolean {
-  if (!error?.response?.data?.detail) return false
+  if (!error?.response?.data?.detail) { return false }
   
   const detail = error.response.data.detail.toLowerCase()
   return detail.includes(type.toLowerCase())

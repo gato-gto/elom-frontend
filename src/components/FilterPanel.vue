@@ -51,12 +51,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 const gridClass = computed(() => {
   const cols = props.columns
-  if (cols === 1) return 'filter-grid-1'
-  if (cols === 2) return 'filter-grid-2'
-  if (cols === 3) return 'filter-grid-3'
-  if (cols === 4) return 'filter-grid-4'
-  if (cols === 5) return 'filter-grid-5'
-  if (cols === 6) return 'filter-grid-6'
+  if (cols === 1) { return 'filter-grid-1' }
+  if (cols === 2) { return 'filter-grid-2' }
+  if (cols === 3) { return 'filter-grid-3' }
+  if (cols === 4) { return 'filter-grid-4' }
+  if (cols === 5) { return 'filter-grid-5' }
+  if (cols === 6) { return 'filter-grid-6' }
   return 'filter-grid-4'
 })
 </script>

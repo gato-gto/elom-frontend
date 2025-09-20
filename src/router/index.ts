@@ -323,10 +323,11 @@ router.beforeEach(async (to, from, next) => {
   // Protected routes
   if (!auth.isAuthenticated) {
     // Try to hydrate from localStorage
-        try {
-            await auth.tryHydrate()
+    try {
+        await auth.tryHydrate()
     } catch (error) {
-      console.warn('Auth hydration failed:', error)
+      // eslint-disable-next-line no-console
+      if (typeof console !== 'undefined' && console.warn) { console.warn('Auth hydration failed:', error) }
     }
     
     // If still not authenticated, redirect to login
@@ -348,7 +349,7 @@ router.beforeEach(async (to, from, next) => {
 
 // Helper function for role-based access
 function hasRequiredRole(userRole: string | null, requiredRole: string | string[] | undefined): boolean {
-  if (!userRole || !requiredRole) return false
+  if (!userRole || !requiredRole) { return false }
   
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
   return roles.includes(userRole)
