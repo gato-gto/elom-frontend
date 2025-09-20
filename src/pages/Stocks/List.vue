@@ -3,30 +3,52 @@
     <!-- Header -->
     <ListHeader
       title="Остатки"
-      subtitle="Просмотр остатков материалов по объектам"
+      subtitle="Просмотр и управление остатками материалов по объектам"
       icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-      :show-create="false"
+      :show-create="canEdit"
+      create-text="Новое движение"
+      :can-create="canEdit"
+      :loading="loading"
       :show-stats="true"
       :total-count="count"
       :filtered-count="rows.length"
-    />
+      @create="handleCreate"
+    >
+      <template #actions>
+        <ExportButton 
+          :data="rows"
+          filename="stocks"
+          :loading="loading"
+          @export="handleExport"
+        />
+      </template>
+    </ListHeader>
 
     <!-- Filters -->
     <FilterPanel
-      :columns="3"
+      :columns="4"
       :loading="loading"
       @reset="resetFilters"
     >
       <FilterField
-        v-model="filters.date_after"
+        v-model="filters.search"
+        type="text"
+        label="Поиск"
+        placeholder="Поиск по материалам, объектам..."
+        @update:modelValue="handleSearchChange"
+      />
+      <FilterField
+        v-model="filters.date_from"
         type="date"
         label="Дата с"
+        @update:modelValue="(value) => stockSnapshotsStore.setFilters({ date_from: value as string })"
       />
       
       <FilterField
-        v-model="filters.date_before"
+        v-model="filters.date_to"
         type="date"
         label="Дата по"
+        @update:modelValue="(value) => stockSnapshotsStore.setFilters({ date_to: value as string })"
       />
       
       <FilterField
@@ -34,6 +56,7 @@
         type="select"
         label="Объект"
         :options="objectOptions"
+        @update:modelValue="(value) => stockSnapshotsStore.setFilters({ object: value as number })"
       />
       
       <FilterField
@@ -41,6 +64,23 @@
         type="select"
         label="Материал"
         :options="materialOptions"
+        @update:modelValue="(value) => stockSnapshotsStore.setFilters({ material: value as number })"
+      />
+      
+      <FilterField
+        v-model="filters.source_type"
+        type="select"
+        label="Тип"
+        :options="sourceTypeOptions"
+        @update:modelValue="handleSourceTypeChange"
+      />
+      
+      <FilterField
+        v-model="filters.stage"
+        type="select"
+        label="Этап"
+        :options="stageOptions"
+        @update:modelValue="(value) => stockSnapshotsStore.setFilters({ stage: value as any })"
       />
       
       <FilterField
@@ -48,8 +88,15 @@
         type="select"
         label="Ответственный"
         :options="employeeOptions"
+        @update:modelValue="(value) => stockSnapshotsStore.setFilters({ responsible: value as number })"
       />
     </FilterPanel>
+
+    <!-- Error message -->
+    <div v-if="stockSnapshotsStore.error" class="alert alert-error">
+      <span>{{ stockSnapshotsStore.error }}</span>
+      <button class="btn btn-sm btn-ghost" @click="stockSnapshotsStore.clearError()">×</button>
+    </div>
 
     <!-- Table -->
     <div class="list-content" :class="{ 'relative': loading }">
@@ -89,10 +136,12 @@
           </th>
           <th>Объект</th>
           <th>Материал</th>
-          <th class="text-right">Факт. остаток</th>
-            <th class="text-right">Закуплено</th>
-            <th class="text-right">Списано</th>
+          <th class="text-right">Количество</th>
+          <th>Тип</th>
+          <th>Этап</th>
+          <th>Источник</th>
           <th>Ответственный</th>
+          <th class="text-right">Действия</th>
         </tr>
         </thead>
         
@@ -100,70 +149,62 @@
         <TableSkeleton 
           v-if="loading && rows.length === 0"
           :rows="pageSize"
-          :columns="8"
+          :columns="10"
         />
         
         <!-- Actual Data -->
         <tbody v-else>
         <tr v-for="s in rows" :key="s.id" class="table-row">
           <td>{{ s.id }}</td>
-            <td>{{ formatDate(s.date) }}</td>
+          <td>{{ formatDate(s.date) }}</td>
           <td>{{ objectName(s.object) ?? s.object }}</td>
           <td>{{ materialName(s.material) ?? s.material }}</td>
-            <td class="text-right">
-              <SmartUnitValue 
-                v-if="s.smart_quantity" 
-                :smart-quantity="s.smart_quantity" 
-                :show-original="true"
-                class-name="font-mono text-sm"
-              />
-              <SmartUnitValue 
-                v-else
-                :value="parseFloat(s.quantity)" 
-                :unit="s.unit_code"
-                :show-original="false"
-                class-name="font-mono text-sm"
-              />
-            </td>
-            <td class="text-right">
-              <SmartUnitValue 
-                v-if="s.smart_purchased_qty" 
-                :smart-quantity="s.smart_purchased_qty" 
-                :show-original="true"
-                class-name="font-mono text-sm"
-              />
-              <SmartUnitValue 
-                v-else
-                :value="parseFloat(s.purchased_qty)" 
-                :unit="s.unit_code"
-                :show-original="false"
-                class-name="font-mono text-sm"
-              />
-            </td>
-            <td class="text-right">
-              <SmartUnitValue 
-                v-if="s.smart_write_off_qty" 
-                :smart-quantity="s.smart_write_off_qty" 
-                :show-original="true"
-                class-name="font-mono text-sm"
-              />
-              <SmartUnitValue 
-                v-else
-                :value="parseFloat(s.write_off_qty)" 
-                :unit="s.unit_code"
-                :show-original="false"
-                class-name="font-mono text-sm"
-              />
-            </td>
+          <td class="text-right">
+            <SmartUnitValue 
+              v-if="s.smart_quantity" 
+              :smart-quantity="s.smart_quantity" 
+              :show-original="true"
+              :class-name="parseFloat(s.quantity_signed) >= 0 ? 'font-mono text-sm text-green-600' : 'font-mono text-sm text-red-600'"
+            />
+            <span 
+              v-else
+              :class="parseFloat(s.quantity_signed) >= 0 ? 'font-mono text-sm text-green-600' : 'font-mono text-sm text-red-600'"
+            >
+              {{ parseFloat(s.quantity_signed) >= 0 ? '+' : '' }}{{ s.quantity_signed }} {{ s.unit_code }}
+            </span>
+          </td>
+          <td>
+            <span 
+              :class="parseFloat(s.quantity_signed) >= 0 ? 'badge badge-success badge-xs' : 'badge badge-error badge-xs'"
+            >
+              {{ parseFloat(s.quantity_signed) >= 0 ? 'Приход' : 'Расход' }}
+            </span>
+          </td>
+          <td>
+            <span class="badge badge-outline badge-xs">
+              {{ getStageDisplayName(s.stage) }}
+            </span>
+          </td>
+          <td>
+            <span class="text-xs text-gray-600">
+              {{ s.source_description || `${getSourceTypeDisplayName(s.source_type)} #${s.source_id}` }}
+            </span>
+          </td>
           <td>{{ responsibleName(s.responsible) ?? '—' }}</td>
+          <td class="text-right">
+            <div class="flex gap-1 justify-end">
+              <span v-if="s.is_archived" class="badge badge-warning badge-xs">Архив</span>
+              <RouterLink class="btn btn-xs btn-outline" :to="`/stocks/${s.id}/edit`">Редактировать</RouterLink>
+            </div>
+          </td>
         </tr>
         <tr v-if="!loading && rows.length === 0">
-            <td colspan="8" class="text-center text-gray-500 py-8">
-              <div class="flex flex-col items-center gap-2">
+            <td colspan="10" class="text-center text-gray-500 py-8">
+              <div class="flex flex-col items-center gap-2 empty-state">
                 <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span class="text-sm">Нет остатков</span>
+                <span class="text-sm">Нет движений остатков</span>
               </div>
             </td>
         </tr>
@@ -180,36 +221,75 @@
       @page-change="handlePageChange"
       @page-size-change="handlePageSizeChange"
     />
+
+    <!-- Modal for creating/editing stock snapshot -->
+    <Modal v-model="modalOpen" :title="modalTitle" size="4xl" :closable="true">
+      <StockSnapshotForm 
+        :initial="editingStockSnapshot" 
+        @saved="onStockSnapshotSaved" 
+        @cancel="modalOpen = false" 
+      />
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from 'vue'
-import api from '@/api/client'
-import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, StockSnapshot, StockListFilters, SiteObject, Material, Employee} from '@/api/types'
+import { useRouter } from 'vue-router'
+import { useStockSnapshotsStore } from '@/stores/stockSnapshots'
+import { useObjectsStore } from '@/stores/objects'
+import { useMaterialsStore } from '@/stores/materials'
+import { useEmployeesStore } from '@/stores/employees'
+import { useAuthStore } from '@/stores/auth'
+import { useUiStore } from '@/stores/ui'
+import { ErrorHandlers } from '@/utils/errorHandler'
+import type {StockSnapshot, StockSnapshotFilterParams, SiteObject, Material, Employee, Me} from '@/api/types'
 import {formatDate, formatNumber} from '@/utils/formatters'
 import {debounce} from '@/utils/debounce'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
+import Modal from '@/components/Modal.vue'
+import StockSnapshotForm from './StockSnapshotForm.vue'
 import FilterField from '@/components/FilterField.vue'
 import ModernPagination from '@/components/ModernPagination.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
+import ExportButton from '@/components/ExportButton.vue'
 
-type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
+// Router and stores
+const router = useRouter()
+const stockSnapshotsStore = useStockSnapshotsStore()
+const objectsStore = useObjectsStore()
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore()
+const auth = useAuthStore()
+const ui = useUiStore()
 
-const rows = ref<StockSnapshot[]>([])
-const count = ref(0)
-const page = ref(1)
-const pageSize = ref(20)
-const loading = ref(false)
+// Computed из stores
+const rows = computed(() => stockSnapshotsStore.rows)
+const count = computed(() => stockSnapshotsStore.count)
+const page = computed(() => stockSnapshotsStore.page)
+const pageSize = computed(() => stockSnapshotsStore.pageSize)
+const loading = computed(() => stockSnapshotsStore.loading)
+const filters = computed(() => stockSnapshotsStore.filters)
 
-// Debounced функция для поиска
-const debouncedSearch = debounce(() => {
-  reload(1)
-}, 500)
+// Modal state
+const modalOpen = ref(false)
+const editingStockSnapshot = ref<StockSnapshot | null>(null)
+
+// Computed properties
+const modalTitle = computed(() => {
+  return editingStockSnapshot.value ? 'Редактировать движение' : 'Новое движение'
+})
+
+// Computed
+const canEdit = computed(() => {
+  const role = auth.role as Me['role'] | undefined
+  return role === 'admin' || role === 'director'
+})
+
+// Debounced функция для поиска (удалена, так как теперь используется в handleSearchChange)
 
 // Sorting
 const sortBy = ref('')
@@ -224,40 +304,51 @@ function handleSort(key: string) {
   }
   
   const ordering = sortOrder.value === 'desc' ? `-${key}` : key
-  // Stocks doesn't have ordering in filters, so we'll add it to the API call directly
-  reload(1)
+  stockSnapshotsStore.setFilters({ ordering })
 }
 
-const filters = ref<StockListFilters>({
-  date_after: undefined, date_before: undefined, object: undefined, material: undefined, responsible: undefined,
-})
-
-const objects = ref<SiteObject[]>([])
-const materials = ref<Material[]>([])
-const employees = ref<Employee[]>([])
+// Computed для справочников
+const objects = computed(() => objectsStore.items)
+const materials = computed(() => materialsStore.items)
+const employees = computed(() => employeesStore.items)
 
 // Computed options for filters
 const objectOptions = computed(() => [
   { value: undefined, label: 'Все' },
-  ...objects.value.map(o => ({ value: o.id, label: o.name }))
+  ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
 ])
 
 const materialOptions = computed(() => [
   { value: undefined, label: 'Все' },
-  ...materials.value.map(m => ({ value: m.id, label: m.name }))
+  ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
 const employeeOptions = computed(() => [
   { value: undefined, label: 'Все' },
-  ...employees.value.map(e => ({ 
+  ...employees.value.map((e: Employee) => ({ 
     value: e.id, 
     label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
   }))
 ])
 
-const oMap = computed(() => new Map(objects.value.map(o => [o.id, o.name])))
-const mMap = computed(() => new Map(materials.value.map(m => [m.id, m.name])))
-const eMap = computed(() => new Map(employees.value.map(e => [e.id, `${e.first_name || e.username}${e.last_name ? ' ' + e.last_name : ''}`])))
+const sourceTypeOptions = computed(() => [
+  { value: undefined, label: 'Все' },
+  { value: 'purchase_item', label: 'Закупка' },
+  { value: 'writeoff', label: 'Списание' }
+])
+
+const stageOptions = computed(() => [
+  { value: undefined, label: 'Все' },
+  { value: 'acceptance', label: 'Приемка' },
+  { value: 'request', label: 'Заявка' },
+  { value: 'delivery_fixed', label: 'Доставка' },
+  { value: 'post_rough', label: 'После черновых' },
+  { value: 'handover', label: 'Сдача' }
+])
+
+const oMap = computed(() => new Map(objects.value.map((o: SiteObject) => [o.id, o.name])))
+const mMap = computed(() => new Map(materials.value.map((m: Material) => [m.id, m.name])))
+const eMap = computed(() => new Map(employees.value.map((e: Employee) => [e.id, `${e.first_name || e.username}${e.last_name ? ' ' + e.last_name : ''}`])))
 
 function objectName(id?: number) {
   return id ? oMap.value.get(id) : undefined
@@ -271,82 +362,157 @@ function responsibleName(id: number | null | undefined) {
   return id ? eMap.value.get(id) : undefined
 }
 
-async function loadRefs() {
-  const [od, md, ed] = await Promise.all([
-    api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
-  ])
-  objects.value = od.data.results
-  materials.value = md.data.results
-  employees.value = ed.data.results
-  
-  // Отладка: показываем загруженных сотрудников
-  console.log('Loaded employees for stocks:', employees.value.length, employees.value.map(e => ({id: e.id, name: `${e.first_name || e.username} ${e.last_name || ''}`.trim()})))
+function getStageDisplayName(stage: string) {
+  const stageNames: Record<string, string> = {
+    'acceptance': 'Приемка',
+    'request': 'Заявка',
+    'delivery_fixed': 'Доставка',
+    'post_rough': 'После черновых',
+    'handover': 'Сдача'
+  }
+  return stageNames[stage] || stage
 }
 
-async function fetchList() {
-  loading.value = true
-  try {
-    // Очищаем undefined значения перед отправкой
-    const cleanFilters = Object.entries(filters.value).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        acc[key] = value
-      }
-      return acc
-    }, {} as Record<string, any>)
-    
-    const q = {...cleanFilters, page: page.value, page_size: pageSize}
-    // Отладка: показываем, что отправляется в запросе
-    console.log('Stocks filters (cleaned):', q)
-    const {data} = await api.get<PageResponse<StockSnapshot>>(endpoints.stockSnapshots.list + buildQuery(q as unknown as Query))
-    rows.value = data.results
-    count.value = data.count
-  } finally {
-    loading.value = false
+function getSourceTypeDisplayName(sourceType: string) {
+  const sourceTypeNames: Record<string, string> = {
+    'purchase_item': 'Закупка',
+    'writeoff': 'Списание'
   }
+  return sourceTypeNames[sourceType] || sourceType
+}
+
+async function loadRefs() {
+  await Promise.all([
+    objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
+    materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
+    employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any)
+  ])
+  
+  // Отладка: показываем загруженных сотрудников (можно убрать в продакшене)
+  // console.log('Loaded employees for stocks:', employees.value.length, employees.value.map((e: Employee) => ({id: e.id, name: `${e.first_name || e.username} ${e.last_name || ''}`.trim()})))
 }
 
 function reload(p = page.value) {
-  page.value = p;
-  fetchList()
+  stockSnapshotsStore.setPage(p)
 }
 
 function resetFilters() {
-  filters.value = {
-    date_after: undefined, 
-    date_before: undefined, 
-    object: undefined, 
-    material: undefined, 
-    responsible: undefined
-  }
-  reload(1)
+  stockSnapshotsStore.resetFilters()
 }
 
+function handleSourceTypeChange(value: string | number | boolean | null | undefined | (string | number)[]) {
+  // console.log('Stocks List - source_type changed to:', value)
+  stockSnapshotsStore.setFilters({ source_type: value as any })
+}
+
+function handleSearchChange(value: string | number | boolean | null | undefined | (string | number)[]) {
+  // console.log('Stocks List - search changed to:', value)
+  debouncedSearch(value as string)
+}
+
+// Debounced функция для поиска
+const debouncedSearch = debounce((value: string) => {
+  stockSnapshotsStore.setFilters({ search: value })
+}, 500)
+
 // Watcher для автоматического поиска при изменении фильтров
-watch(
-  () => filters.value,
-  () => {
-    page.value = 1
-    debouncedSearch()
-  },
-  { deep: true }
-)
+// Убираем watcher, так как setFilters уже вызывает fetchList
 
 function handlePageChange(newPage: number) {
-  page.value = newPage
-  fetchList()
+  stockSnapshotsStore.setPage(newPage)
 }
 
 function handlePageSizeChange(newSize: number) {
-  pageSize.value = newSize
-  page.value = 1
-  fetchList()
+  stockSnapshotsStore.setPageSize(newSize)
+}
+
+function handleCreate() {
+  editingStockSnapshot.value = null
+  modalOpen.value = true
+}
+
+function onStockSnapshotSaved() {
+  modalOpen.value = false
+  editingStockSnapshot.value = null
+  // Reload the list to show the updated stock snapshot
+  stockSnapshotsStore.fetchList()
+}
+
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `stocks_${new Date().toISOString().split('T')[0]}`
+
+    switch (format) {
+      case 'csv':
+        exportToCSV(data, filename)
+        break
+      case 'excel':
+        exportToExcel(data, filename)
+        break
+      case 'pdf':
+        exportToPDF(data, filename)
+        break
+    }
+
+    ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
+}
+
+function exportToCSV(data: StockSnapshot[], filename: string) {
+  const headers = ['ID', 'Дата', 'Объект', 'Материал', 'Количество', 'Тип', 'Этап', 'Источник', 'Ответственный']
+  const rows = data.map(item => [
+    item.id,
+    formatDate(item.date),
+    objectName(item.object) || item.object,
+    materialName(item.material) || item.material,
+    item.quantity_signed,
+    parseFloat(item.quantity_signed) >= 0 ? 'Приход' : 'Расход',
+    getStageDisplayName(item.stage),
+    item.source_description || `${getSourceTypeDisplayName(item.source_type)} #${item.source_id}`,
+    responsibleName(item.responsible) || '—'
+  ])
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n')
+
+  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
+}
+
+function exportToExcel(data: StockSnapshot[], filename: string) {
+  // For now, export as CSV with .xlsx extension
+  // In a real app, you'd use a library like xlsx
+  exportToCSV(data, filename.replace('.xlsx', ''))
+  ui.toast({ type: 'info', text: 'Excel экспорт временно недоступен. Скачан CSV файл.' })
+}
+
+function exportToPDF(data: StockSnapshot[], filename: string) {
+  // For now, show info message
+  ui.toast({ type: 'info', text: 'PDF экспорт временно недоступен' })
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 onMounted(async () => {
-  await loadRefs();
-  await fetchList()
+  try {
+    await loadRefs()
+    await stockSnapshotsStore.fetchList()
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
 })
 </script>
 

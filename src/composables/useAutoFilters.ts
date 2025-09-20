@@ -1,4 +1,5 @@
-import { ref, watch, type Ref } from 'vue'
+import { ref, watch } from 'vue'
+// import { type Ref } from 'vue' // Не используется
 import { debounce } from '@/utils/debounce'
 
 // Типы для фильтров

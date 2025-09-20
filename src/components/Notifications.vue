@@ -132,7 +132,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useNotificationsStore } from '@/stores/notifications'
-import type { Notification, ID } from '@/api/types'
+import type { ID } from '@/api/types'
+// import type { Notification } from '@/api/types' // Не используется
 import NotificationItem from './NotificationItem.vue'
 import Modal from './Modal.vue'
 

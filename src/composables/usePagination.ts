@@ -1,4 +1,5 @@
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
+// import { ref, watch } from 'vue' // Не используются
 import type { PaginationState } from '@/stores/base'
 
 export interface PaginationConfig {

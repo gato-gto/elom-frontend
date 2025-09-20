@@ -109,10 +109,10 @@ const props = withDefaults(defineProps<Props>(), {
   showActions: false
 })
 
-const emit = defineEmits<{
-  read: [id: ID]
-  remove: [id: ID]
-}>()
+// const emit = defineEmits<{ // Не используется
+//   read: [id: ID]
+//   remove: [id: ID]
+// }>()
 
 const router = useRouter()
 

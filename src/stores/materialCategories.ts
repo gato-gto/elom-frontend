@@ -10,7 +10,7 @@ export const useMaterialCategoriesStore = defineStore('materialCategories', () =
   const error = ref<string | null>(null)
 
   const selectOptions = computed(() => 
-    items.value.map(category => ({
+    items.value.map((category: MaterialCategoryLite) => ({
       value: category.id,
       label: category.name
     }))
@@ -59,7 +59,7 @@ export const useMaterialCategoriesStore = defineStore('materialCategories', () =
   async function update(id: number, categoryData: { name?: string; parent?: number }) {
     try {
       const { data } = await api.patch<MaterialCategoryLite>(endpoints.materialCategories.one(id), categoryData)
-      const index = items.value.findIndex(item => item.id === id)
+      const index = items.value.findIndex((item: MaterialCategoryLite) => item.id === id)
       if (index !== -1) {
         items.value[index] = data
       }
@@ -74,7 +74,7 @@ export const useMaterialCategoriesStore = defineStore('materialCategories', () =
   async function remove(id: number) {
     try {
       await api.delete(endpoints.materialCategories.one(id))
-      const index = items.value.findIndex(item => item.id === id)
+      const index = items.value.findIndex((item: MaterialCategoryLite) => item.id === id)
       if (index !== -1) {
         items.value.splice(index, 1)
       }

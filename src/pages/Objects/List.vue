@@ -73,21 +73,16 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('status')" class="cursor-pointer hover:bg-gray-50">
-              Статус
-              <span v-if="sortBy === 'status'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th @click="handleSort('responsible_person')" class="cursor-pointer hover:bg-gray-50">
-              Ответственный
-              <span v-if="sortBy === 'responsible_person'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th @click="handleSort('start_date')" class="cursor-pointer hover:bg-gray-50">
+            <th>Адрес</th>
+            <th @click="handleSort('date_start')" class="cursor-pointer hover:bg-gray-50">
               Дата начала
-              <span v-if="sortBy === 'start_date'" class="ml-1">
+              <span v-if="sortBy === 'date_start'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('date_end')" class="cursor-pointer hover:bg-gray-50">
+              Дата окончания
+              <span v-if="sortBy === 'date_end'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
@@ -114,17 +109,15 @@
             <td>{{ object.id }}</td>
             <td>{{ object.name }}</td>
             <td>
-              <div v-if="object.status" class="badge" :class="getStatusClass(object.status)">
-                {{ getStatusText(object.status) }}
-              </div>
+              <span v-if="object.address">{{ object.address }}</span>
               <span v-else class="text-gray-400">—</span>
             </td>
             <td>
-              <span v-if="object.responsible_person">{{ object.responsible_person }}</span>
+              <span v-if="object.date_start">{{ formatDate(object.date_start) }}</span>
               <span v-else class="text-gray-400">—</span>
             </td>
             <td>
-              <span v-if="object.start_date">{{ formatDate(object.start_date) }}</span>
+              <span v-if="object.date_end">{{ formatDate(object.date_end) }}</span>
               <span v-else class="text-gray-400">—</span>
             </td>
             <td>
@@ -188,7 +181,8 @@ import { debounce } from '@/utils/debounce'
 import { useObjectsStore } from '@/stores/objects'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import type { Object, Me, ObjectStatus } from '@/api/types'
+import { ErrorHandlers } from '@/utils/errorHandler'
+import type { Object, Me } from '@/api/types'
 import { formatDate } from '@/utils/formatters'
 import Modal from '@/components/Modal.vue'
 import ObjectForm from './ObjectForm.vue'
@@ -227,8 +221,8 @@ const statusOptions = computed(() => [
 
 
 // Функции для форматирования статусов
-function getStatusClass(status: ObjectStatus): string {
-  const classes = {
+function getStatusClass(status: string): string {
+  const classes: Record<string, string> = {
     planning: 'badge-info',
     active: 'badge-success',
     completed: 'badge-primary',
@@ -238,8 +232,8 @@ function getStatusClass(status: ObjectStatus): string {
   return classes[status] || 'badge-ghost'
 }
 
-function getStatusText(status: ObjectStatus): string {
-  const texts = {
+function getStatusText(status: string): string {
+  const texts: Record<string, string> = {
     planning: 'Планирование',
     active: 'Активный',
     completed: 'Завершен',
@@ -281,7 +275,7 @@ const debouncedSearch = debounce(async () => {
   try {
     await objectsStore.fetchList()
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка поиска объектов' })
+    ErrorHandlers.dataLoading(error)
   } finally {
     isSearching.value = false
   }
@@ -327,8 +321,7 @@ async function handleDelete(object: Object) {
     await objectsStore.delete(object.id)
     ui.toast({ type: 'success', text: `Объект "${object.name}" удален` })
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка удаления объекта' })
-    console.error('Error deleting object:', error)
+    ErrorHandlers.delete(error)
   }
 }
 

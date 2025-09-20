@@ -27,6 +27,11 @@ const EmployeeForm = () => import('@/pages/Employees/EmployeeForm.vue')
 
 // Stocks
 const StocksList = () => import('@/pages/Stocks/List.vue')
+const StockSnapshotForm = () => import('@/pages/Stocks/StockSnapshotForm.vue')
+
+// WriteOffs
+const WriteOffsList = () => import('@/pages/WriteOffs/List.vue')
+const WriteOffForm = () => import('@/pages/WriteOffs/WriteOffForm.vue')
 
 // Archive
 const ArchiveList = () => import('@/pages/Archive/List.vue')
@@ -100,33 +105,6 @@ const routes = [
       title: 'Закупки',
       icon: 'shopping_cart',
       breadcrumb: 'Закупки'
-    }
-  },
-  {
-    path: '/purchases/create',
-    name: 'PurchaseCreate',
-    component: PurchaseForm,
-    meta: { 
-      title: 'Новая закупка',
-      breadcrumb: 'Закупки / Новая'
-    }
-  },
-  {
-    path: '/purchases/new',
-    name: 'PurchaseNew',
-    component: PurchaseForm,
-    meta: { 
-      title: 'Новая закупка',
-      breadcrumb: 'Закупки / Новая'
-    }
-  },
-  {
-    path: '/purchases/:id/edit',
-    name: 'PurchaseEdit',
-    component: PurchaseForm,
-    meta: { 
-      title: 'Редактировать закупку',
-      breadcrumb: 'Закупки / Редактировать'
     }
   },
   
@@ -229,6 +207,18 @@ const routes = [
       title: 'Остатки',
       icon: 'warehouse',
       breadcrumb: 'Остатки'
+    }
+  },
+
+  // WriteOffs routes
+  {
+    path: '/writeoffs',
+    name: 'WriteOffsList',
+    component: WriteOffsList,
+    meta: { 
+      title: 'Списания',
+      icon: 'minus-circle',
+      breadcrumb: 'Списания'
     }
   },
   

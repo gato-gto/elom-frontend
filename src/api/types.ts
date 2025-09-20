@@ -1,403 +1,282 @@
-// src/api/types.ts
-// Строгие DTO для фронта. Соответствуют OpenAPI схеме ELOM API v1.0.0
+// ELOM API Types
+// Generated from backend models and serializers
 
-export type ID = number;
+export type UserRole = 
+  | "admin"
+  | "director" 
+  | "coordinator"
+  | "brigadier"
+  | "buyer"
+  | "site_manager";
 
-// Общие формы пагинации DRF (PageNumberPagination)
-export interface PageMeta {
-    count: number;
-    next: string | null;
-    previous: string | null;
-}
+export type Stage = 
+  | "acceptance"
+  | "request"
+  | "delivery_fixed"
+  | "post_rough"
+  | "handover";
 
-export interface PageResponse<T> extends PageMeta {
-    results: T[];
-}
+export type SourceType = 
+  | "purchase_item"
+  | "writeoff";
 
-// -------------------- Auth --------------------
-export interface TokenObtainPair {
-    access: string;
-    refresh: string;
-}
+export type Currency = "UZS";
 
-export interface TokenObtainPairRequest {
+
+// ===== AUTHENTICATION =====
+
+export interface LoginRequest {
     username: string;
     password: string;
 }
 
-export interface TokenRefresh {
+export interface LoginResponse {
     access: string;
     refresh: string;
 }
 
-export interface TokenRefreshRequest {
+export interface RefreshTokenRequest {
     refresh: string;
 }
 
-export interface TokenVerifyRequest {
-    token: string;
+export interface RefreshTokenResponse {
+  access: string;
 }
 
-export interface Me {
-    id: ID;
+export interface VerifyTokenRequest {
+  token: string;
+}
+
+// ===== USER TYPES =====
+
+export interface User {
+  id: number;
     username: string;
-    email?: string;
-    first_name?: string;
-    last_name?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
     role: UserRole;
 }
 
-// -------------------- Notifications --------------------
-export interface Notification {
-    id: ID;
-    type: 'info' | 'warning' | 'error' | 'success';
-    title: string;
-    message: string;
-    read: boolean;
-    created_at: string;
-    user_id?: ID;
-    related_type?: 'purchase' | 'object' | 'material' | 'stock';
-    related_id?: ID;
-    action_url?: string;
+export interface EmployeeCreateRequest {
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  role: UserRole;
+  assigned_object_ids?: number[];
+  password?: string;
 }
 
-// -------------------- Employees/Users --------------------
-export type UserRole = "admin" | "buyer" | "site_manager" | "director" | "coordinator";
-
-export interface Employee {
-    id: ID;
-    username: string;
+export interface EmployeeUpdateRequest {
     first_name?: string;
     last_name?: string;
     email?: string;
-    is_active: boolean;
-    role: UserRole;
-    assigned_object_ids: number[];
-}
-
-export interface EmployeeRequest {
-    username: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    is_active?: boolean;
-    role: UserRole;
-    assigned_object_ids?: number[];
-    password?: string;
-}
-
-export interface PatchedEmployeeRequest {
-    username?: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    is_active?: boolean;
     role?: UserRole;
     assigned_object_ids?: number[];
-    password?: string;
+  is_active?: boolean;
 }
 
 export interface SetPasswordRequest {
     password: string;
 }
 
-// -------------------- Units --------------------
+// ===== COMMON TYPES =====
+
 export interface Unit {
-    id: ID;
+  id: number;
     code: string;
     name: string;
 }
 
-export interface UnitRequest {
-    code: string;
+export interface MaterialCategory {
+  id: number;
     name: string;
+  parent?: number;
+  parent_name?: string;
+  children_count: number;
+  materials_count: number;
+  full_path: string;
+  created_at: string;
+  updated_at: string;
 }
 
-
-export interface PatchedUnitRequest {
-    code?: string;
-    name?: string;
-}
-
-// -------------------- Objects --------------------
-export type ObjectStatus = 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled';
-
-export interface Object {
-    id: ID;
-    name: string;
-    address?: string;
-    is_active: boolean;
-    // Новые поля согласно ТЗ
-    coordinates?: {
-        latitude: number;
-        longitude: number;
-    };
-    start_date?: string; // Дата начала работ
-    end_date?: string; // Дата окончания работ
-    status?: ObjectStatus;
-    responsible_person?: string; // Ответственное лицо
-    responsible_phone?: string; // Номер телефона ответственного
-}
-
-export interface ObjectRequest {
-    name: string;
-    address?: string;
-    is_active?: boolean;
-    // Новые поля согласно ТЗ
-    coordinates?: {
-        latitude: number;
-        longitude: number;
-    };
-    start_date?: string;
-    end_date?: string;
-    status?: ObjectStatus;
-    responsible_person?: string;
-    responsible_phone?: string;
-}
-
-export interface PatchedObjectRequest {
-    name?: string;
-    address?: string;
-    is_active?: boolean;
-    // Новые поля согласно ТЗ
-    coordinates?: {
-        latitude: number;
-        longitude: number;
-    };
-    start_date?: string;
-    end_date?: string;
-    status?: ObjectStatus;
-    responsible_person?: string;
-    responsible_phone?: string;
-}
-
-// Type alias for compatibility with existing code
-export type SiteObject = Object;
-
-// -------------------- Materials --------------------
 export interface Material {
-    id: ID;
+  id: number;
     name: string;
     sku?: string;
-    category?: ID;
-    category_name?: string;
-    default_unit: ID;
-    default_unit_code?: string;
+  category?: number;
+  category_name: string;
+  default_unit: number;
+  default_unit_code: string;
+  description?: string;
+  manufacturer?: string;
+  average_price?: string; // decimal as string
     photo_url?: string;
-    is_active?: boolean;
-}
-
-export interface MaterialRequest {
-    name: string;
-    sku?: string;
-    category?: ID;
-    default_unit: ID;
+  is_active: boolean;
     created_date?: string;
+  purchases_count: number;
+  total_purchased_amount: string; // decimal as string
+    last_purchase_date?: string;
+  current_stock: string; // decimal as string
+  created_at: string;
+  updated_at: string;
 }
 
-export interface PatchedMaterialRequest {
-    name?: string;
-    sku?: string;
-    category?: ID;
-    default_unit?: ID;
-    created_date?: string;
+export interface SiteObject {
+  id: number;
+  name: string;
+  address: string;
+  is_active: boolean;
+  lat?: string; // decimal as string
+  lng?: string; // decimal as string
+  responsible?: number;
+  date_start?: string;
+  date_end?: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface MaterialPhotoUploadRequest {
-    photo: File;
+// Alias for backward compatibility
+export type Object = SiteObject;
+
+export interface AuditLog {
+  id: number;
+  ts: string;
+  user?: number;
+  user_name?: string;
+  user_role?: string;
+  action: string;
+  action_display: string;
+  model: string;
+  model_display: string;
+  object_id: string;
+  detail: string;
+  ip?: string;
 }
 
-// -------------------- Material Categories --------------------
-export interface MaterialCategoryLite {
-    id: ID;
-    name: string;
-    parent?: ID;
-}
+// ===== PURCHASE TYPES =====
 
-export interface MaterialCategoryLiteRequest {
-    name: string;
-    parent?: ID;
-}
-
-export interface PatchedMaterialCategoryLiteRequest {
-    name?: string;
-    parent?: ID;
-}
-
-// -------------------- Purchases --------------------
 export interface PurchaseItem {
-    id: ID;
-    material: ID;
+  id: number;
+  material: number;
     material_name: string;
-    unit: ID;
+  unit: number;
     unit_code: string;
-    quantity: string;
-    price?: string;
-    amount: string;
+  quantity: string; // decimal as string
+  price?: string; // decimal as string, nullable
+  amount: string; // decimal as string
     created_at: string;
     updated_at: string;
 }
 
-export interface PurchaseItemRequest {
-    material: ID;
-    unit: ID;
-    quantity: string;
-    price?: string;
-    amount?: string;
-}
-
-// Type alias for compatibility with existing code
-export type PurchaseItemIn = PurchaseItemRequest;
-
 export interface PurchasePhoto {
-    id: ID;
+  id: number;
     url: string;
     is_cover: boolean;
-    mime?: string;
-    size_bytes?: number;
+  mime: string;
+  size_bytes: number;
     created_at: string;
 }
 
-export interface PurchasePhotoRequest {
-    is_cover?: boolean;
-    mime?: string;
-    size_bytes?: number;
-}
-
-export interface PurchasePhotoUploadRequest {
-    photo: File;
-    is_cover?: boolean;
-}
-
 export interface Purchase {
-    id: ID;
+  id: number;
     date: string;
-    object: ID;
+  object: number;
     object_name: string;
     supplier: string;
     invoice_number?: string;
     vat_included: boolean;
-    currency: string;
+  currency: Currency;
     comment?: string;
-    responsible: ID;
-    responsible_name: string;
-    total_amount: string;
+  responsible: number;
+  total_amount: string; // decimal as string
     is_archived: boolean;
     cover_photo_url?: string;
+  purchase_no: string;
     items: PurchaseItem[];
     photos: PurchasePhoto[];
     created_at: string;
     updated_at: string;
 }
 
-export interface PurchaseRequest {
+export interface PurchaseCreateRequest {
     date: string;
-    object: ID;
+  object: number;
     supplier: string;
     invoice_number?: string;
-    vat_included?: boolean;
-    currency?: string;
+  vat_included: boolean;
+  currency: Currency;
     comment?: string;
-    responsible: ID;
-    total_amount?: string;
-    is_archived?: boolean;
-    items: PurchaseItemRequest[];
+  responsible: number;
+  items: PurchaseItemCreateRequest[];
 }
 
-// Type aliases for compatibility with existing code
-export type PurchaseCreate = PurchaseRequest;
-export type PurchaseUpdate = PatchedPurchaseRequest;
-
-export interface PatchedPurchaseRequest {
+export interface PurchaseUpdateRequest {
     date?: string;
-    object?: ID;
+  object?: number;
     supplier?: string;
     invoice_number?: string;
     vat_included?: boolean;
-    currency?: string;
+  currency?: Currency;
     comment?: string;
-    responsible?: ID;
-    total_amount?: string;
-    is_archived?: boolean;
-    items?: PurchaseItemRequest[];
+  responsible?: number;
 }
 
-export interface PurchaseListFilters {
-    date_after?: string;      // YYYY-MM-DD
-    date_before?: string;     // YYYY-MM-DD
-    object?: ID;
-    material?: ID;
-    responsible?: ID;
-    search?: string;
-    ordering?: string;        // e.g. "-date"
-    page?: number;
-    page_size?: number;
-    is_archived?: boolean;    // если фильтр поддерживается
+export interface PurchaseItemCreateRequest {
+  material: number;
+  unit: number;
+  quantity: string; // decimal as string
+  price?: string; // decimal as string, nullable
+  amount: string; // decimal as string
 }
 
-export interface PurchaseExportQuery extends PurchaseListFilters {
-    export: "xlsx";
+export interface PurchaseItemUpdateRequest {
+  material?: number;
+  unit?: number;
+  quantity?: string; // decimal as string
+  price?: string; // decimal as string
+  amount?: string; // decimal as string
 }
 
-// -------------------- Purchases: Import --------------------
-export type ImportHash = string;
-
-export interface ImportPrepareRequest {
-    file: File;          // фронт отправит multipart
-    sheet?: string;      // имя листа
+export interface PurchaseDuplicateRequest {
+  date: string;
+  object: number;
 }
 
-export interface ImportPrepareResponse {
-    ok: boolean;
-    sheets: string[];      // список распознанных листов
-    columns?: string[];    // если удалось извлечь заголовки
-    hash: ImportHash;
-    warnings?: string[];
+export interface PurchaseBulkArchiveRequest {
+  purchase_ids: number[];
 }
 
-export interface ImportMapping {
-    // отображение колонок файла -> поля системы
-    // Например: { "Дата": "date", "Объект": "object", "Материал": "material", ... }
-    [fileColumn: string]: string;
+export interface PurchaseBulkDeleteRequest {
+  purchase_ids: number[];
 }
 
-export interface ImportDryRunRequest {
-    hash: ImportHash;
-    mapping: ImportMapping;
-    sheet?: string;
+export interface PurchaseItemBulkCreateRequest {
+  items: PurchaseItemCreateRequest[];
 }
 
-export interface ImportDryRunRowError {
-    row: number;
-    field: string;
-    message: string;
-    value?: unknown;
+export interface PurchaseItemBulkUpdateRequest {
+  items: Array<{
+    id: number;
+    material?: number;
+    unit?: number;
+    quantity?: string; // decimal as string
+    price?: string; // decimal as string
+    amount?: string; // decimal as string
+  }>;
 }
 
-export interface ImportDryRunResponse {
-    ok: boolean;
-    rows_total: number;
-    rows_valid: number;
-    rows_invalid: number;
-    errors: ImportDryRunRowError[];
-    warnings?: string[];
-    hash: ImportHash;
+export interface PurchasePhotoBulkUploadRequest {
+  files: File[];
 }
 
-export interface ImportCommitRequest {
-    hash: ImportHash;
+export interface PurchasePhotoReorderRequest {
+  photo_ids: number[];
 }
 
-export interface ImportCommitResponse {
-    imported: number;
-    skipped: number;
-    hash: ImportHash;
-}
+// ===== STOCK TYPES =====
 
-// -------------------- Stock Snapshots --------------------
-export type StageEnum = "after_rough" | "after_handover";
-
-// Умные значения для конвертации единиц измерения
 export interface SmartQuantity {
     value: number;
     unit: string;
@@ -406,208 +285,733 @@ export interface SmartQuantity {
 }
 
 export interface StockSnapshot {
-    id: ID;
+  id: number;
     date: string;
-    object: ID;
+  object: number;
     object_name: string;
-    material: ID;
+  material: number;
     material_name: string;
-    unit: ID;
+  unit: number;
     unit_code: string;
-    quantity: string;
-    stage: StageEnum;
-    responsible: ID;
+  quantity_signed: string; // decimal as string
+  stage: Stage;
+  source_type: SourceType;
+  source_id: number;
+  responsible: number;
     comment?: string;
     is_archived: boolean;
-    purchased_qty: string;
-    write_off_qty: string;
-    // Умные поля для автоматической конвертации
-    smart_quantity?: SmartQuantity;
-    smart_purchased_qty?: SmartQuantity;
-    smart_write_off_qty?: SmartQuantity;
+  smart_quantity: SmartQuantity;
+  source_description: string;
     created_at: string;
     updated_at: string;
 }
 
-export interface StockSnapshotRequest {
+export interface WriteOff {
+  id: number;
     date: string;
-    object: ID;
-    material: ID;
-    unit: ID;
-    quantity: string;
-    stage: StageEnum;
-    responsible: ID;
+  object: number;
+  object_name: string;
+  material: number;
+  material_name: string;
+  unit: number;
+  unit_code: string;
+  quantity: string; // decimal as string
+  stage: Stage;
+  responsible: number;
     comment?: string;
-    is_archived?: boolean;
+  is_archived: boolean;
+  current_balance: string; // decimal as string
+  smart_quantity: SmartQuantity;
+  validation_warnings: string[];
+  created_at: string;
+  updated_at: string;
 }
 
-export interface PatchedStockSnapshotRequest {
-    date?: string;
-    object?: ID;
-    material?: ID;
-    unit?: ID;
-    quantity?: string;
-    stage?: StageEnum;
-    responsible?: ID;
+export interface WriteOffCreateRequest {
+  date: string;
+  object: number;
+  material: number;
+  unit: number;
+  quantity: string; // decimal as string
+  stage: Stage;
+  responsible: number;
     comment?: string;
-    is_archived?: boolean;
 }
 
-export interface StockListFilters {
-    date_after?: string;
-    date_before?: string;
-    object?: ID;
-    material?: ID;
-    responsible?: ID;
-    page?: number;
-    page_size?: number;
-    is_archived?: boolean;
+export interface WriteOffUpdateRequest {
+  date?: string;
+  object?: number;
+  material?: number;
+  unit?: number;
+  quantity?: string; // decimal as string
+  stage?: Stage;
+  responsible?: number;
+  comment?: string;
 }
 
-export interface StockSummaryQuery {
-    month: string; // YYYY-MM
-    object?: ID;
-    material?: ID;
+export interface StockSnapshotCreateRequest {
+  date: string;
+  object: number;
+  material: number;
+  unit: number;
+  quantity_signed: string; // decimal as string
+  stage: Stage;
+  source_type: SourceType;
+  source_id: number;
+  responsible: number;
+  comment?: string;
 }
 
-export interface StockSummaryItem {
-    material: ID;
-    material_name?: string;
-    purchased: number; // закуплено за период
-    actual: number;    // остаток факт
-    writeoff: number;  // списание = purchased - actual
-    unit_name?: string;
+export interface StockSnapshotUpdateRequest {
+  date?: string;
+  object?: number;
+  material?: number;
+  unit?: number;
+  quantity_signed?: string; // decimal as string
+  stage?: Stage;
+  source_type?: SourceType;
+  source_id?: number;
+  responsible?: number;
+  comment?: string;
 }
 
-// -------------------- Archive --------------------
 export interface ArchivePeriod {
-    id: ID;
+  id: number;
     month: string;
-    object: ID;
+  object: number;
     object_name: string;
     closed_at: string;
-    closed_by: ID;
-    closed_by_name?: string;
-    is_closed?: boolean;
+  closed_by: number;
+  closed_by_name: string;
+  is_closed: boolean;
 }
 
-export interface ArchivePeriodRequest {
-    month: string;
-    object: ID;
+export interface ClosePeriodRequest {
+  object: number;
+  month: string; // YYYY-MM
 }
 
 export interface ArchiveListQuery {
-    month?: string; // YYYY-MM
-    object?: ID;
-    responsible?: ID;
+  object?: number;
+  month?: string;
+    is_closed?: boolean;
+  page?: number;
+  page_size?: number;
+  ordering?: string;
+}
+
+export interface ArchivePeriodRequest {
+  object: number;
+    month: string;
+}
+
+// ===== REPORT TYPES =====
+
+export interface ObjectReportItem {
+  object_id: number;
+  object_name: string;
+  object_address: string;
+  object_is_active: boolean;
+  first_purchase_date?: string;
+  last_purchase_date?: string;
+  purchases: number;
+  total_amount: number;
+  unique_materials: number;
+  unique_responsibles: number;
+}
+
+export interface ResponsibleReportItem {
+  responsible_id: number;
+  responsible_name: string;
+  responsible_username: string;
+  responsible_email: string;
+  purchases: number;
+  total_amount: number;
+  unique_objects: number;
+  unique_materials: number;
+}
+
+export interface MaterialReportItem {
+  material_id: number;
+  material_name: string;
+  material_sku?: string;
+  material_category: string;
+  unit: string;
+  qty_total: number;
+  amount_total: number;
+  avg_price: number;
+  min_price: number;
+  max_price: number;
+  rows: number;
+}
+
+// ===== IMPORT TYPES =====
+
+export interface ImportPrepareResponse {
+  file_hash: string;
+  headers: string[];
+  preview: any[][];
+  suggested_mapping: Record<string, string>;
+}
+
+export interface ImportDryRunRequest {
+  file_hash: string;
+  mapping: Record<string, string>;
+}
+
+export interface ImportDryRunResponse {
+  valid_rows: number;
+  invalid_rows: number;
+  errors: string[];
+  preview: any[][];
+}
+
+export interface ImportCommitRequest {
+  file_hash: string;
+  mapping: Record<string, string>;
+  object_id: number;
+  responsible_id: number;
+}
+
+export interface ImportCommitResponse {
+  created_purchases: number;
+  created_items: number;
+  errors: string[];
+}
+
+// ===== API RESPONSE TYPES =====
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: T[];
+}
+
+export interface ApiError {
+  detail?: string;
+  [key: string]: string[] | string | undefined;
+}
+
+// ===== QUERY PARAMETERS =====
+
+export interface PaginationParams {
     page?: number;
     page_size?: number;
 }
 
-// -------------------- Reports --------------------
+export interface SearchParams {
+  search?: string;
+}
+
+export interface OrderingParams {
+  ordering?: string;
+}
+
+export interface DateFilterParams {
+    date_from?: string;
+    date_to?: string;
+}
+
+export interface PurchaseFilterParams extends PaginationParams, SearchParams, OrderingParams, DateFilterParams {
+  object?: number;
+  responsible?: number;
+    is_archived?: boolean;
+  currency?: Currency;
+  material?: number;
+  date_after?: string;
+  date_before?: string;
+}
+
+export interface MaterialFilterParams extends PaginationParams, SearchParams, OrderingParams {
+  category?: number;
+  is_active?: boolean;
+  default_unit?: number;
+  page_size?: number;
+}
+
+export interface WriteOffFilterParams extends PaginationParams, SearchParams, OrderingParams, DateFilterParams {
+  object?: number;
+  material?: number;
+  stage?: Stage;
+  responsible?: number;
+    is_archived?: boolean;
+}
+
+export interface StockSnapshotFilterParams extends PaginationParams, SearchParams, OrderingParams, DateFilterParams {
+  object?: number;
+  material?: number;
+  stage?: Stage;
+  source_type?: SourceType;
+  source_id?: number;
+  responsible?: number;
+    is_archived?: boolean;
+}
+
+export interface ObjectFilterParams extends PaginationParams, SearchParams, OrderingParams {
+  is_active?: boolean;
+  responsible?: number;
+  date_start?: string;
+  date_end?: string;
+  page_size?: number;
+}
+
+export interface EmployeeFilterParams extends PaginationParams, SearchParams, OrderingParams {
+  role?: UserRole;
+  is_active?: boolean;
+  object?: number;
+  page_size?: number;
+}
+
+export interface UnitFilterParams extends PaginationParams, SearchParams, OrderingParams {
+  code?: string;
+  name?: string;
+  page_size?: number;
+}
+
+export interface ReportFilterParams extends DateFilterParams {
+  object?: number;
+  responsible?: number;
+  material?: number;
+  export?: 'xlsx' | 'pdf';
+  ordering?: string;
+}
+
+// ===== FORM TYPES =====
+
+export interface PurchaseFormData {
+  date: string;
+  object: number;
+  supplier: string;
+  invoice_number?: string;
+  vat_included: boolean;
+  currency: Currency;
+  comment?: string;
+  responsible: number;
+  items: Array<{
+    material: number;
+    unit: number;
+    quantity: string; // decimal as string
+    price?: string; // decimal as string, nullable
+    amount: string; // decimal as string
+  }>;
+}
+
+export interface WriteOffFormData {
+  date: string;
+  object: number;
+  material: number;
+  unit: number;
+  quantity: string; // decimal as string
+  stage: Stage;
+  responsible: number;
+  comment?: string;
+}
+
+export interface MaterialFormData {
+  name: string;
+  sku?: string;
+  category?: number;
+  default_unit: number;
+  description?: string;
+  manufacturer?: string;
+  average_price?: string; // decimal as string
+  is_active: boolean;
+}
+
+export interface ObjectFormData {
+  name: string;
+  address: string;
+  is_active: boolean;
+  lat?: string; // decimal as string
+  lng?: string; // decimal as string
+  responsible?: number;
+  date_start?: string;
+  date_end?: string;
+}
+
+export interface EmployeeFormData {
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  assigned_object_ids: number[];
+  password: string;
+  is_active: boolean;
+}
+
+// ===== MISSING TYPES FOR COMPATIBILITY =====
+
+// Employee types
+export interface Employee {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+  assigned_object_ids: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmployeeRequest {
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  assigned_object_ids?: number[];
+  password?: string;
+  is_active?: boolean;
+}
+
+export interface PatchedEmployeeRequest {
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  role?: UserRole;
+  assigned_object_ids?: number[];
+  is_active?: boolean;
+}
+
+// Material request types
+export interface MaterialRequest {
+  name: string;
+  sku?: string;
+  category?: number;
+  default_unit: number;
+  description?: string;
+  manufacturer?: string;
+  average_price?: string;
+  is_active: boolean;
+  created_date?: string;
+}
+
+export interface PatchedMaterialRequest {
+  name?: string;
+  sku?: string;
+  category?: number;
+  default_unit?: number;
+  description?: string;
+  manufacturer?: string;
+  average_price?: string;
+  is_active?: boolean;
+  created_date?: string;
+}
+
+// Object request types
+export interface ObjectRequest {
+  name: string;
+  address: string;
+  is_active: boolean;
+  lat?: string;
+  lng?: string;
+  responsible?: number;
+  date_start?: string;
+  date_end?: string;
+}
+
+export interface PatchedObjectRequest {
+  name?: string;
+  address?: string;
+  is_active?: boolean;
+  lat?: string;
+  lng?: string;
+  responsible?: number;
+  date_start?: string;
+  date_end?: string;
+}
+
+// Unit request types
+export interface UnitRequest {
+  code: string;
+  name: string;
+}
+
+export interface PatchedUnitRequest {
+  code?: string;
+  name?: string;
+}
+
+// Purchase request types
+export interface PurchaseRequest {
+  date: string;
+  object: number;
+  supplier: string;
+  invoice_number?: string;
+  purchase_no?: string;
+  vat_included?: boolean;
+  currency: Currency;
+  comment?: string;
+  responsible: number;
+  items: PurchaseItemCreateRequest[];
+}
+
+export interface PatchedPurchaseRequest {
+  date?: string;
+  object?: number;
+  supplier?: string;
+  invoice_number?: string;
+  purchase_no?: string;
+  vat_included?: boolean;
+  currency?: Currency;
+  comment?: string;
+  responsible?: number;
+}
+
+export interface PurchaseItemRequest {
+  material: number;
+  unit: number;
+  quantity: string;
+  price?: string;
+  amount: string;
+  _k?: string;
+  total?: number;
+}
+
+// Material category types
+export interface MaterialCategoryLite {
+  id: number;
+  name: string;
+  parent?: number;
+  parent_name?: string;
+  children_count: number;
+  materials_count: number;
+  full_path: string;
+}
+
+// Pagination and response types
+export interface PageResponse<T> {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: T[];
+}
+
+export interface PaginationState {
+  count: number;
+  page: number;
+  pageSize: number;
+  next: string | null | undefined;
+  previous: string | null | undefined;
+}
+
+// Paginated list types
+export interface PaginatedEmployeeList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Employee[];
+}
+
+export interface PaginatedMaterialList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Material[];
+}
+
+export interface PaginatedObjectList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Object[];
+}
+
+export interface PaginatedPurchaseList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Purchase[];
+}
+
+export interface PaginatedUnitList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Unit[];
+}
+
+// Purchase filter types
+export interface PurchaseListFilters {
+  search?: string;
+  object?: number;
+  responsible?: number;
+  is_archived?: boolean;
+  currency?: Currency;
+    date_from?: string;
+    date_to?: string;
+  ordering?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface PurchaseExportQuery {
+  search?: string;
+  object?: number;
+  responsible?: number;
+    is_archived?: boolean;
+  currency?: Currency;
+  date_from?: string;
+  date_to?: string;
+  ordering?: string;
+  export?: 'xlsx' | 'pdf';
+}
+
+// Report types
+export interface MaterialReportRow {
+  material_id: number;
+  material_name: string;
+  material_sku?: string;
+  material_category: string;
+  unit: string;
+  qty_total: number;
+  amount_total: number;
+  avg_price: number;
+  min_price: number;
+  max_price: number;
+  rows: number;
+}
+
+export interface MaterialReportResponse {
+  count: number;
+  results: MaterialReportRow[];
+}
+
 export interface ReportByMaterialQuery {
-    date_from?: string;
-    date_to?: string;
-    export?: "pdf" | "xlsx";
-    is_archived?: boolean;
-    material?: ID;
-    object?: ID[];
-    responsible?: ID;
-    ordering?: string; // Для серверной сортировки
-    [key: string]: any; // Index signature для buildQuery
-}
-
-export interface ReportByObjectQuery {
-    date_from?: string;
-    date_to?: string;
-    export?: "pdf" | "xlsx";
-    is_archived?: boolean;
-    object?: ID[];
-    responsible?: ID;
-    ordering?: string; // Для серверной сортировки
-    [key: string]: any; // Index signature для buildQuery
-}
-
-export interface ReportByPeriodQuery {
-    date_from?: string;
-    date_to?: string;
-    export?: "pdf" | "xlsx";
-    is_archived?: boolean;
-    object?: ID[];
-    period?: "day" | "month";
-    responsible?: ID;
-    ordering?: string; // Для серверной сортировки
-    [key: string]: any; // Index signature для buildQuery
-}
-
-export interface ReportByResponsibleQuery {
-    date_from?: string;
-    date_to?: string;
-    export?: "pdf" | "xlsx";
-    is_archived?: boolean;
-    object?: ID[];
-    responsible?: ID;
-    ordering?: string; // Для серверной сортировки
-    [key: string]: any; // Index signature для buildQuery
-}
-
-// Типы для строк отчетов
-export interface PeriodReportRow {
-    period: string;        // "2025-01" или "2025-01-15"
-    purchases: number;     // Количество закупок
-    total_amount: number;  // Общая сумма в UZS
+  object?: number | number[];
+  material?: number;
+  date_from?: string;
+  date_to?: string;
+  export?: 'xlsx' | 'pdf';
+  ordering?: string;
+  page?: number;
+  page_size?: number;
+  [key: string]: string | number | boolean | (string | number)[] | null | undefined;
 }
 
 export interface ObjectReportRow {
-    object_id: number;     // ID объекта
-    object_name: string;   // Название объекта
-    purchases: number;     // Количество закупок
-    total_amount: number;  // Общая сумма в UZS
+  object_id: number;
+  object_name: string;
+  object_address: string;
+  object_is_active: boolean;
+  first_purchase_date?: string;
+  last_purchase_date?: string;
+  purchases: number;
+  total_amount: number;
+  unique_materials: number;
+  unique_responsibles: number;
+}
+
+export interface ObjectReportResponse {
+  count: number;
+  results: ObjectReportRow[];
+}
+
+export interface ReportByObjectQuery {
+  object?: number | number[];
+  responsible?: number;
+  date_from?: string;
+  date_to?: string;
+  export?: 'xlsx' | 'pdf';
+  ordering?: string;
+  page?: number;
+  page_size?: number;
+  [key: string]: string | number | boolean | (string | number)[] | null | undefined;
+}
+
+export interface PeriodReportRow {
+  period: string;
+  purchases: number;
+  total_amount: number;
+  unique_objects: number;
+  unique_materials: number;
+  unique_responsibles: number;
+  avg_amount?: number;
+}
+
+export interface PeriodReportResponse {
+  count: number;
+    results: PeriodReportRow[];
+}
+
+export interface ReportByPeriodQuery {
+  object?: number;
+  responsible?: number;
+  date_from?: string;
+  date_to?: string;
+  export?: 'xlsx' | 'pdf';
+  ordering?: string;
+  period?: string;
+  page?: number;
+  page_size?: number;
+  [key: string]: string | number | boolean | (string | number)[] | null | undefined;
 }
 
 export interface ResponsibleReportRow {
-    responsible_id: number;    // ID пользователя
-    responsible_name: string;  // Имя пользователя (first_name + last_name или username)
-    purchases: number;         // Количество закупок
-    total_amount: number;      // Общая сумма в UZS
+  responsible_id: number;
+  responsible_name: string;
+  responsible_username: string;
+  responsible_email: string;
+  purchases: number;
+  total_amount: number;
+  unique_objects: number;
+  unique_materials: number;
 }
 
-export interface MaterialReportRow {
-    material_id: number;     // ID материала
-    material_name: string;   // Название материала
-    unit: string;           // Базовая единица измерения
-    qty_total: number | null; // Общее количество (с конвертацией) или null
-    amount_total: number;   // Общая сумма в UZS
-    rows: number;           // Количество строк закупок
+export interface ResponsibleReportResponse {
+  count: number;
+    results: ResponsibleReportRow[];
 }
 
-// Базовый интерфейс для ответов отчетов
-export interface BaseReportResponse {
-    rows: any[];
+export interface ReportByResponsibleQuery {
+  object?: number;
+  responsible?: number;
+  date_from?: string;
+  date_to?: string;
+  export?: 'xlsx' | 'pdf';
+  ordering?: string;
+  page?: number;
+  page_size?: number;
+  [key: string]: string | number | boolean | (string | number)[] | null | undefined;
 }
 
-export interface PeriodReportResponse extends BaseReportResponse {
-    rows: PeriodReportRow[];
+// User/Me types
+export interface Me {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+  assigned_object_ids: number[];
 }
 
-export interface ObjectReportResponse extends BaseReportResponse {
-    rows: ObjectReportRow[];
+// Photo upload types
+export interface PurchasePhotoUploadRequest {
+  photo: File;
+  is_cover?: boolean;
 }
 
-export interface ResponsibleReportResponse extends BaseReportResponse {
-    rows: ResponsibleReportRow[];
-}
+// ID type
+export type ID = number;
 
-export interface MaterialReportResponse extends BaseReportResponse {
-    rows: MaterialReportRow[];
+// Notification type
+export interface Notification {
+  id: number;
+  type: 'info' | 'warning' | 'error' | 'success';
+  title: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+  is_read?: boolean;
+  user_id?: number;
+  related_type?: 'object' | 'material' | 'purchase' | 'stock';
+  related_id?: number;
+  action_url?: string;
 }
-
-// -------------------- Paginated Lists --------------------
-export interface PaginatedUnitList extends PageResponse<Unit> {}
-export interface PaginatedObjectList extends PageResponse<Object> {}
-export interface PaginatedMaterialList extends PageResponse<Material> {}
-export interface PaginatedMaterialCategoryLiteList extends PageResponse<MaterialCategoryLite> {}
-export interface PaginatedEmployeeList extends PageResponse<Employee> {}
-export interface PaginatedPurchaseList extends PageResponse<Purchase> {}
-export interface PaginatedStockSnapshotList extends PageResponse<StockSnapshot> {}
-export interface PaginatedArchivePeriodList extends PageResponse<ArchivePeriod> {}

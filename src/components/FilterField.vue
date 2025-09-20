@@ -57,12 +57,12 @@
     <!-- Select -->
     <select
       v-else-if="type === 'select'"
-      :value="String(modelValue || '')"
+      :value="modelValue === undefined ? 'undefined' : String(modelValue || '')"
       :disabled="disabled"
       class="filter-select"
       @change="handleSelectChange"
     >
-      <option v-for="option in options" :key="String(option.value)" :value="String(option.value || '')">
+      <option v-for="option in options" :key="String(option.value)" :value="option.value === undefined ? 'undefined' : String(option.value || '')">
         {{ option.label }}
       </option>
     </select>
@@ -108,12 +108,19 @@ withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number | boolean | null | (string | number)[]]
+  'update:modelValue': [value: string | number | boolean | null | undefined | (string | number)[]]
 }>()
 
 function handleSelectChange(event: Event) {
   const target = event.target as HTMLSelectElement
-  emit('update:modelValue', target.value)
+  const value = target.value
+  
+  // Если значение пустое или равно 'undefined', возвращаем undefined
+  if (value === '' || value === 'undefined') {
+    emit('update:modelValue', undefined)
+  } else {
+    emit('update:modelValue', value)
+  }
 }
 </script>
 

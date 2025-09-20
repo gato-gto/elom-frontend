@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+// import { computed } from 'vue' // Не используется
 
 interface Column {
   key: string
@@ -121,12 +121,15 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  data: () => [],
+  columns: () => [],
   actions: () => [],
   loading: false,
   emptyText: 'Нет данных',
   sortBy: '',
   sortOrder: 'asc'
 })
+void props
 
 const emit = defineEmits<Emits>()
 

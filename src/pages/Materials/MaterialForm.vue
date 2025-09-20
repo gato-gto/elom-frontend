@@ -43,6 +43,53 @@
             :error="errors.created_date"
             required
           />
+
+          <!-- Производитель -->
+          <FormField
+            v-model="form.manufacturer"
+            label="Производитель/Бренд"
+            type="input"
+            placeholder="Введите название производителя"
+            :error="errors.manufacturer"
+          />
+
+          <!-- Активность -->
+          <FormField
+            v-model="form.is_active"
+            label="Активен"
+            type="checkbox"
+            :error="errors.is_active"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Дополнительная информация -->
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Дополнительная информация</h2>
+        <div class="grid gap-4">
+          <!-- Описание -->
+          <FormField
+            v-model="form.description"
+            label="Описание"
+            type="textarea"
+            placeholder="Введите описание материала"
+            :error="errors.description"
+            :rows="3"
+          />
+
+
+          <!-- Средняя цена -->
+          <FormField
+            v-model="form.average_price"
+            label="Средняя цена (UZS)"
+            type="number"
+            placeholder="Введите среднюю цену за единицу"
+            :error="errors.average_price"
+            step="0.01"
+            min="0"
+          />
         </div>
       </div>
     </div>
@@ -140,6 +187,7 @@ import { useUiStore } from '@/stores/ui'
 import type { Material, MaterialRequest } from '@/api/types'
 import FormField from '@/components/FormField.vue'
 import FileInput from '@/components/FileInput.vue'
+import { ErrorHandlers } from '@/utils/errorHandler'
 
 const props = defineProps<{
   initial?: Material | null
@@ -164,7 +212,11 @@ const form = reactive<MaterialRequest>({
   sku: '',
   category: undefined,
   default_unit: 1, // Default to first unit
-  created_date: new Date().toISOString().split('T')[0]
+  created_date: new Date().toISOString().split('T')[0],
+  description: '',
+  manufacturer: '',
+  average_price: undefined,
+  is_active: true
 })
 
 const photoFile = ref<File | null>(null)
@@ -182,6 +234,10 @@ function resetForm() {
   form.category = undefined
   form.default_unit = 1
   form.created_date = new Date().toISOString().split('T')[0]
+  form.description = ''
+  form.manufacturer = ''
+  form.average_price = undefined
+  form.is_active = true
   photoFile.value = null
   currentPhotoUrl.value = null
   Object.keys(errors).forEach(key => delete errors[key])
@@ -193,7 +249,11 @@ function loadInitial() {
     form.sku = props.initial.sku || ''
     form.category = props.initial.category
     form.default_unit = props.initial.default_unit
-    form.created_date = new Date().toISOString().split('T')[0] // Default to today for existing materials
+    form.created_date = props.initial.created_date || new Date().toISOString().split('T')[0]
+    form.description = props.initial.description || ''
+    form.manufacturer = props.initial.manufacturer || ''
+    form.average_price = props.initial.average_price
+    form.is_active = props.initial.is_active ?? true
     
     if (props.initial.photo_url) {
       currentPhotoUrl.value = props.initial.photo_url
@@ -242,18 +302,12 @@ async function submit() {
     
     emit('saved')
   } catch (error: any) {
-    if (error.response?.status === 400 && error.response?.data) {
-      const data = error.response.data
-      if (typeof data === 'object') {
-        Object.keys(data).forEach(key => {
-          if (Array.isArray(data[key]) && data[key].length > 0) {
-            errors[key] = data[key][0]
-          }
-        })
-      }
-    } else {
-      ui.toast({ type: 'error', text: 'Ошибка сохранения материала' })
-    }
+    const errorResult = ErrorHandlers.formValidation(error)
+    
+    // Устанавливаем ошибки полей
+    Object.keys(errorResult.fieldErrors).forEach(field => {
+      errors[field] = errorResult.fieldErrors[field]
+    })
   } finally {
     loading.value = false
   }

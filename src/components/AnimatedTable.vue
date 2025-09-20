@@ -92,8 +92,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Computed свойства
 const hasData = computed(() => props.items.length > 0)
-const showSkeleton = computed(() => props.loading && !hasData.value)
-const showOverlay = computed(() => props.loading && hasData.value)
+// const showSkeleton = computed(() => props.loading && !hasData.value) // Не используется
+// const showOverlay = computed(() => props.loading && hasData.value) // Не используется
 </script>
 
 <style scoped>

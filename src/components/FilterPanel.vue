@@ -45,9 +45,9 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
-const emit = defineEmits<{
-  reset: []
-}>()
+// const emit = defineEmits<{ // Не используется
+//   reset: []
+// }>()
 
 const gridClass = computed(() => {
   const cols = props.columns

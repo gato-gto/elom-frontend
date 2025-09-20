@@ -84,10 +84,10 @@ export const usePurchasesStore = defineStore('purchases', {
         const queryParams = {
           page: params?.page || this.pagination.page,
           page_size: this.pagination.pageSize,
-          date_after: params?.date_after ?? this.filters.date_after ?? undefined,
-          date_before: params?.date_before ?? this.filters.date_before ?? undefined,
+          date_after: (params as any)?.date_after ?? (this.filters as any).date_after ?? undefined,
+          date_before: (params as any)?.date_before ?? (this.filters as any).date_before ?? undefined,
           object: params?.object ?? this.filters.object ?? undefined,
-          material: params?.material ?? this.filters.material ?? undefined,
+          material: (params as any)?.material ?? (this.filters as any).material ?? undefined,
           responsible: params?.responsible ?? this.filters.responsible ?? undefined,
           search: params?.search ?? this.filters.search ?? undefined,
           is_archived: params?.is_archived ?? this.filters.is_archived ?? undefined,
@@ -102,8 +102,8 @@ export const usePurchasesStore = defineStore('purchases', {
           count: data.count,
           page: queryParams.page || 1,
           pageSize: this.pagination.pageSize,
-          next: data.next,
-          previous: data.previous
+          next: data.next || null,
+          previous: data.previous || null
         }
 
         // Update filters
@@ -240,7 +240,9 @@ export const usePurchasesStore = defineStore('purchases', {
 
       try {
         const formData = new FormData()
-        formData.append('photo', data.photo)
+        if (data.photo) {
+          formData.append('photo', data.photo)
+        }
         if (data.is_cover !== undefined) {
           formData.append('is_cover', data.is_cover.toString())
         }
@@ -257,6 +259,26 @@ export const usePurchasesStore = defineStore('purchases', {
         return true
       } catch (error: any) {
         this.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Delete photo for purchase
+    async deletePhoto(id: number, photoId: number) {
+      this.loading = true
+      this.error = null
+
+      try {
+        await api.delete(endpoints.purchases.deletePhoto(id, photoId))
+
+        // Refresh the purchase to get updated photos
+        await this.fetchOne(id)
+
+        return true
+      } catch (error: any) {
+        this.error = error?.response?.data?.detail || 'Ошибка удаления фото'
         throw error
       } finally {
         this.loading = false

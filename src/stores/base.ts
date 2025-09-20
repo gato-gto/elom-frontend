@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Ref, ComputedRef } from 'vue'
+import type { Ref } from 'vue'
+// import type { ComputedRef } from 'vue' // Не используется
 
 // Базовые типы для пагинации
 export interface PaginationState {

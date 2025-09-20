@@ -5,52 +5,70 @@
     <!-- Main content -->
     <div class="drawer-content flex flex-col">
       <!-- Top navigation bar -->
-      <div class="topbar navbar">
-        <div class="flex-none lg:hidden">
-          <label for="drawer-toggle" class="mobile-menu-btn btn btn-square btn-ghost icon-btn">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="navbar bg-gradient-to-r from-base-100 to-base-200 shadow-xl border-b border-base-300/50 h-20 sticky top-0 z-50 backdrop-blur-sm">
+        <!-- Mobile menu button -->
+        <div class="navbar-start">
+          <label for="drawer-toggle" class="btn btn-ghost btn-square lg:hidden hover:bg-primary/10 transition-all duration-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </label>
         </div>
         
-        <div class="flex-1">
-          <h1 class="topbar-title text-lg font-semibold animate-fade-in-up">{{ currentPageTitle }}</h1>
+        <!-- Page title with enhanced styling -->
+        <div class="navbar-center">
+          <h1 class="text-xl font-bold">
+            {{ pageTitle }}
+          </h1>
         </div>
         
-        <div class="flex-none topbar-actions">
-          <!-- Notifications -->
-          <Notifications />
-          
-          <!-- Theme toggle -->
-          <ThemeToggle />
-          
-          <!-- User menu -->
-          <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="user-avatar btn btn-ghost btn-circle avatar">
-              <div class="w-8 rounded-full flex items-center justify-center">
-                <span class="text-sm font-medium">
-                  {{ userInitials }}
-                </span>
-              </div>
-            </div>
-            <ul tabindex="0" class="dropdown-menu menu menu-sm dropdown-content mt-3 z-[1] p-2 w-52">
-              <li>
-                <div class="dropdown-item text-sm opacity-70">
-                  <div class="font-medium">{{ auth.me?.username }}</div>
-                  <div class="text-xs">{{ roleDisplayName }}</div>
+        <!-- Right side actions -->
+        <div class="navbar-end">
+          <div class="flex items-center gap-2">
+            <!-- Theme toggle with enhanced styling -->
+            <button @click="toggleTheme" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-all duration-200 group" title="Переключить тему">
+              <svg v-if="isDark" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <svg v-else class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            </button>
+            
+            <!-- User menu with enhanced styling -->
+            <div class="dropdown dropdown-end">
+              <div tabindex="0" role="button" class="btn btn-ghost hover:bg-primary/10 transition-all duration-200 group">
+                <div class="avatar">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200">
+                    <span class="text-xl font-bold">{{ userInitials }}</span>
+                  </div>
                 </div>
-              </li>
-              <li><hr class="my-1" /></li>
-              <li>
-                <a @click="logout" class="dropdown-item text-error btn-nav">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Выйти
-                </a>
-              </li>
-            </ul>
+                <div class="hidden sm:block ml-3 text-left">
+                  <div class="text-sm font-semibold text-base-content">{{ auth.me?.username }}</div>
+                  <div class="text-xs text-base-content/60">{{ roleDisplayName }}</div>
+                </div>
+                <svg class="w-4 h-4 ml-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-2xl bg-base-100 rounded-xl w-52 border border-base-300/50">
+                <li>
+                  <div class="text-sm px-3 py-2 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg">
+                    <div class="font-semibold text-base-content">{{ auth.me?.username }}</div>
+                    <div class="text-xs text-base-content/60">{{ roleDisplayName }}</div>
+                  </div>
+                </li>
+                <li><div class="divider my-2"></div></li>
+                <li>
+                  <a @click="logout" class="text-error hover:bg-error/10 hover:text-error transition-all duration-200 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Выйти
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -66,22 +84,20 @@
       <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
       <aside class="sidebar min-h-full w-64">
         <!-- Logo/Brand -->
-        <div class="sidebar-header p-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-              </svg>
+        <div class="sidebar-header h-20 flex items-center p-4">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <span class="text-white font-bold text-sm">E</span>
             </div>
             <div>
-              <h2 class="sidebar-logo text-xl font-bold">ELOM</h2>
-              <p class="sidebar-subtitle text-sm">Energy Life</p>
+              <h2 class="sidebar-logo text-lg font-bold">ELOM</h2>
+              <p class="sidebar-subtitle text-xs">Energy Life</p>
             </div>
           </div>
         </div>
         
         <!-- Navigation menu -->
-        <nav class="p-4 w-full animate-slide-in-left">
+        <nav class="p-3 w-full animate-slide-in-left">
           <ul class="space-y-1">
             <!-- Dashboard -->
             <li class="nav-item" :class="{ 'active': $route.name === 'Dashboard' }">
@@ -92,7 +108,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                   </svg>
                 </div>
-                Панель управления
+                Дашборд
               </router-link>
             </li>
             
@@ -145,6 +161,18 @@
               </router-link>
             </li>
             
+            <!-- WriteOffs -->
+            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/writeoffs') }">
+              <router-link to="/writeoffs" class="nav-link">
+                <div class="nav-icon-wrapper">
+                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                Списания
+              </router-link>
+            </li>
+            
             <!-- Archive -->
             <li class="nav-item" :class="{ 'active': $route.path.startsWith('/archive') }">
               <router-link to="/archive" class="nav-link">
@@ -169,23 +197,23 @@
                   Отчеты
                 </summary>
                 <ul class="ml-4">
-                  <li class="nav-item">
+                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-period' }">
                     <router-link to="/reports/by-period" class="nav-link text-sm">По периодам</router-link>
                   </li>
-                  <li class="nav-item">
+                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-object' }">
                     <router-link to="/reports/by-object" class="nav-link text-sm">По объектам</router-link>
                   </li>
-                  <li class="nav-item">
+                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-material' }">
                     <router-link to="/reports/by-material" class="nav-link text-sm">По материалам</router-link>
                   </li>
-                  <li class="nav-item">
+                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-responsible' }">
                     <router-link to="/reports/by-responsible" class="nav-link text-sm">По ответственным</router-link>
                    </li>
                 </ul>
               </details>
             </li>
             
-            <!-- Import -->
+            <!-- Import
             <li class="nav-item" :class="{ 'active': $route.path.startsWith('/import') }">
               <router-link to="/import" class="nav-link">
                 <div class="nav-icon-wrapper">
@@ -196,7 +224,7 @@
                 Импорт
               </router-link>
             </li>
-            
+             -->
             <!-- Admin section (only for admin/director) -->
             <template v-if="canManageUsers">
               <li><hr class="admin-divider" /></li>
@@ -247,14 +275,19 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import ThemeToggle from '@/components/ThemeToggle.vue'
-import Notifications from '@/components/Notifications.vue'
+import { useThemeStore } from '@/stores/theme'
 import type { UserRole } from '@/api/types'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const ui = useUiStore()
+
+// Computed properties
+const pageTitle = computed(() => {
+  return (route.meta.title as string) || 'ELOM'
+})
+const theme = useThemeStore()
 
 // Current page title
 const currentPageTitle = computed(() => {
@@ -277,8 +310,9 @@ const roleDisplayName = computed(() => {
     admin: 'Администратор',
     director: 'Директор',
     coordinator: 'Координатор',
-    site_manager: 'Бригадир',
-    buyer: 'Закупщик'
+    site_manager: 'Менеджер объекта',
+    buyer: 'Закупщик',
+    brigadier: 'Бригадир'
   }
   return roleNames[auth.role as UserRole] || auth.role || 'Пользователь'
 })
@@ -288,6 +322,14 @@ const canManageUsers = computed(() => {
   const role = auth.role
   return role === 'admin' || role === 'director'
 })
+
+// Theme state
+const isDark = computed(() => theme.isDark)
+
+// Toggle theme function
+const toggleTheme = () => {
+  theme.toggleTheme()
+}
 
 // Logout function
 const logout = async () => {

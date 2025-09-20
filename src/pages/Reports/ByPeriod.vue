@@ -11,18 +11,12 @@
       :filtered-count="rows.length"
     >
       <template #actions>
-        <a class="action-btn action-btn-outline" :href="xlsxUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Экспорт .xlsx
-        </a>
-        <a class="action-btn action-btn-outline" :href="pdfUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          PDF
-        </a>
+        <ExportButton 
+          :data="rows"
+          filename="periods_report"
+          :loading="loading"
+          @export="handleExport"
+        />
       </template>
     </ListHeader>
 
@@ -54,6 +48,22 @@
         ]"
       />
     </FilterPanel>
+
+    <!-- Chart Section -->
+    <div v-if="rows.length > 0" class="chart-section mb-6">
+      <ChartContainer
+        ref="chartContainer"
+        title="Динамика закупок по периодам"
+        subtitle="График показывает изменение суммы закупок во времени"
+        :loading="loading"
+        :has-data="rows.length > 0"
+        :chart-height="getChartHeight(rows.length)"
+        :legend-items="chartLegendItems"
+        :stats="chartStats"
+        :last-updated="new Date().toISOString()"
+        @download="handleChartDownload"
+      />
+    </div>
 
     <!-- Table -->
     <div class="list-content" :class="{ 'relative': loading }">
@@ -97,14 +107,26 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
+            <th @click="handleSort('avg_amount')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Средняя сумма
+              <span v-if="sortBy === 'avg_amount'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th @click="handleSort('unique_objects')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Объектов
+              <span v-if="sortBy === 'unique_objects'" class="ml-1">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
           </tr>
         </thead>
         
         <!-- Skeleton Loading -->
         <TableSkeleton 
           v-if="loading && rows.length === 0"
-          :rows="pageSize"
-          :columns="3"
+          :rows="5"
+          :columns="5"
         />
         
         <!-- Actual Data -->
@@ -113,9 +135,11 @@
             <td>{{ formatDate(r.period) }}</td>
             <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
             <td class="text-right">{{ r.purchases ?? '—' }}</td>
+            <td class="text-right">{{ r.avg_amount ? formatCurrency(r.avg_amount) : '—' }}</td>
+            <td class="text-right">{{ r.unique_objects ?? '—' }}</td>
           </tr>
           <tr v-if="!loading && rows.length === 0">
-            <td colspan="3" class="text-center text-gray-500 py-8">
+            <td colspan="5" class="text-center text-gray-500 py-8">
               <div class="flex flex-col items-center gap-2 empty-state">
                 <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -129,6 +153,8 @@
           <tr>
             <th>Итого</th>
             <th class="text-right">{{ formatCurrency(total) }}</th>
+            <th/>
+            <th/>
             <th/>
           </tr>
         </tfoot>
@@ -149,17 +175,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import api from '@/api/client'
 import endpoints, { buildQuery } from '@/api/endpoints'
 import { formatDate, formatCurrency } from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
+import { ErrorHandlers } from '@/utils/errorHandler'
+import { createLineChartConfig, getColor, getChartHeight, formatCurrencyTooltip } from '@/utils/chartUtils'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
 import ModernPagination from '@/components/ModernPagination.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
+import ChartContainer from '@/components/ChartContainer.vue'
+import ExportButton from '@/components/ExportButton.vue'
 import type { PeriodReportRow, PeriodReportResponse, ReportByPeriodQuery } from '@/api/types'
 
 const dateFrom = ref<string | undefined>()
@@ -178,6 +208,9 @@ const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 const sortBy = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 const loading = ref(false)
+
+// Chart
+const chartContainer = ref<InstanceType<typeof ChartContainer>>()
 
 async function load() {
   loading.value = true
@@ -201,52 +234,104 @@ async function load() {
     const q = buildQuery(query)
     const { data } = await api.get<PeriodReportResponse>(endpoints.reports.byPeriod + q)
     
-    if (data && data.rows) {
-      rows.value = data.rows
-      totalItems.value = data.rows.length
+    if (data && data.results) {
+      // Обрабатываем данные и проверяем корректность сумм
+      rows.value = data.results.map((row: PeriodReportRow) => ({
+        ...row,
+        total_amount: row.total_amount || 0,
+        purchases: row.purchases || 0,
+        unique_objects: row.unique_objects || 0,
+        unique_materials: row.unique_materials || 0,
+        unique_responsibles: row.unique_responsibles || 0,
+        avg_amount: row.avg_amount || 0
+      }))
+      totalItems.value = data.count
       // Вычисляем общую сумму
-      total.value = data.rows.reduce((sum, row) => sum + row.total_amount, 0)
+      total.value = rows.value.reduce((sum: number, row: PeriodReportRow) => sum + row.total_amount, 0)
+      
+      // Update chart after data is loaded
+      nextTick(() => {
+        updateChart()
+      })
     } else {
       rows.value = []
       totalItems.value = 0
       total.value = null
     }
   } catch (error) {
-    console.error('Ошибка загрузки отчета по периодам:', error)
+    ErrorHandlers.dataLoading(error)
     rows.value = []
-    totalItems.value = 0
     total.value = null
   } finally {
     loading.value = false
   }
 }
 
-const xlsxUrl = computed(() => {
-  const query: ReportByPeriodQuery = { export: 'xlsx' }
-  
-  if (dateFrom.value) query.date_from = dateFrom.value
-  if (dateTo.value) query.date_to = dateTo.value
-  if (period.value) query.period = period.value
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byPeriod + q
-})
-const pdfUrl = computed(() => {
-  const query: ReportByPeriodQuery = { export: 'pdf' }
-  
-  if (dateFrom.value) query.date_from = dateFrom.value
-  if (dateTo.value) query.date_to = dateTo.value
-  if (period.value) query.period = period.value
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byPeriod + q
-})
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `periods_report_${new Date().toISOString().split('T')[0]}`
+
+    const headers = ['Месяц', 'Сумма', 'Кол-во закупок', 'Средняя сумма', 'Объектов']
+    const formattedData = data.map(item => ({
+      'Месяц': formatDate(item.period),
+      'Сумма': item.total_amount,
+      'Кол-во закупок': item.purchases || 0,
+      'Средняя сумма': item.avg_amount || 0,
+      'Объектов': item.unique_objects || 0
+    }))
+
+    switch (format) {
+      case 'csv':
+        exportToCSV(formattedData, filename, headers)
+        break
+      case 'excel':
+        exportToExcel(formattedData, filename, headers)
+        break
+      case 'pdf':
+        exportToPDF(formattedData, filename, headers)
+        break
+    }
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
+}
+
+function exportToCSV(data: any[], filename: string, headers: string[]) {
+  const rows = data.map(item => headers.map(header => item[header] || ''))
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n')
+
+  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
+}
+
+function exportToExcel(data: any[], filename: string, headers: string[]) {
+  // For now, export as CSV with .xlsx extension
+  exportToCSV(data, filename.replace('.xlsx', ''), headers)
+}
+
+function exportToPDF(data: any[], filename: string, headers: string[]) {
+  // For now, show info message
+  console.log('PDF export not implemented yet')
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 
 function resetFilters() {
   dateFrom.value = undefined
   dateTo.value = undefined
   period.value = 'month'
-  currentPage.value = 1
 }
 
 function handlePageChange(newPage: number) {
@@ -281,6 +366,138 @@ const debouncedLoad = debounce(() => {
 watch([dateFrom, dateTo, period], () => {
   debouncedLoad()
 })
+
+// Watcher для обновления графика при изменении данных
+watch(
+  () => rows.value,
+  (newRows, oldRows) => {
+    // Обновляем график только если данные действительно изменились
+    if (newRows.length !== oldRows?.length || JSON.stringify(newRows) !== JSON.stringify(oldRows)) {
+      nextTick(() => {
+        updateChart()
+      })
+    }
+  },
+  { deep: true }
+)
+
+// Chart functions
+function updateChart() {
+  if (!chartContainer.value || rows.value.length === 0) {
+    // Destroy chart if no data
+    if (chartContainer.value) {
+      chartContainer.value.destroyChart()
+    }
+    return
+  }
+
+  // Validate data
+  if (!Array.isArray(rows.value) || rows.value.length === 0) {
+    console.warn('No data available for chart')
+    return
+  }
+
+  const labels = rows.value.map(row => {
+    const date = new Date(row.period)
+    return period.value === 'month' 
+      ? date.toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' })
+      : date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  })
+
+  const amounts = rows.value.map(row => Number(row.total_amount) || 0)
+  const purchases = rows.value.map(row => Number(row.purchases) || 0)
+
+  // Validate that we have valid data
+  if (amounts.every(amount => amount === 0) && purchases.every(purchase => purchase === 0)) {
+    console.warn('All chart data is zero')
+    return
+  }
+
+  const config = createLineChartConfig({
+    labels,
+    datasets: [
+      {
+        label: 'Сумма закупок',
+        data: amounts,
+        borderColor: getColor(0),
+        backgroundColor: getColor(0) + '20',
+        fill: true,
+        tension: 0.4,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Количество закупок',
+        data: purchases,
+        borderColor: getColor(1),
+        backgroundColor: getColor(1) + '20',
+        fill: false,
+        tension: 0.4,
+        yAxisID: 'y1'
+      }
+    ],
+    type: 'line'
+  }, {
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        ticks: {
+          callback: (value) => formatCurrencyTooltip(Number(value))
+        }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        grid: {
+          drawOnChartArea: false,
+        },
+        ticks: {
+          callback: (value) => new Intl.NumberFormat('ru-RU').format(Number(value))
+        }
+      }
+    }
+  })
+
+  try {
+    chartContainer.value.createChart(config)
+  } catch (error) {
+    console.error('Error creating chart:', error)
+  }
+}
+
+const chartLegendItems = computed(() => [
+  { label: 'Сумма закупок', color: getColor(0) },
+  { label: 'Количество закупок', color: getColor(1) }
+])
+
+const chartStats = computed(() => {
+  if (rows.value.length === 0) return undefined
+  
+  const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
+  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
+  const avgAmount = totalAmount / rows.value.length
+  
+  return {
+    totalAmount: {
+      label: 'Общая сумма',
+      value: formatCurrency(totalAmount)
+    },
+    totalPurchases: {
+      label: 'Всего закупок',
+      value: totalPurchases.toString()
+    },
+    avgAmount: {
+      label: 'Средняя сумма',
+      value: formatCurrency(avgAmount)
+    }
+  }
+})
+
+function handleChartDownload() {
+  console.log('Chart download requested')
+}
 
 onMounted(load)
 </script>

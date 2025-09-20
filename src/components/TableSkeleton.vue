@@ -20,6 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
   columns: 6,
   variant: 'default'
 })
+void props
 
 function getSkeletonClass(column: number) {
   // Разные типы скелетонов для разных колонок

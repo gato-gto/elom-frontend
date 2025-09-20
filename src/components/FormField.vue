@@ -8,7 +8,7 @@
     
     <!-- Input -->
     <input
-      v-if="type === 'input' || type === 'text' || type === 'email' || type === 'password' || type === 'number'"
+      v-if="type === 'input' || type === 'text' || type === 'email' || type === 'password' || type === 'number' || type === 'date'"
       :value="modelValue"
       :type="getInputType()"
       class="input input-bordered w-full"
@@ -220,7 +220,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+// import { computed } from 'vue' // Не используется
 
 interface Option {
   value: string | number | boolean

@@ -15,12 +15,12 @@
       @create="openCreateModal"
     >
       <template #actions>
-        <a class="action-btn action-btn-outline" :href="exportUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Экспорт .xlsx
-        </a>
+        <ExportButton 
+          :data="rows"
+          filename="purchases"
+          :loading="loading"
+          @export="handleExport"
+        />
       </template>
     </ListHeader>
 
@@ -31,13 +31,13 @@
       @reset="resetFilters"
     >
       <FilterField
-        v-model="filters.date_after"
+        v-model="filters.date_from"
         type="date"
         label="Дата с"
       />
       
       <FilterField
-        v-model="filters.date_before"
+        v-model="filters.date_to"
         type="date"
         label="Дата по"
       />
@@ -49,12 +49,6 @@
         :options="objectOptions"
       />
       
-      <FilterField
-        v-model="filters.material"
-        type="select"
-        label="Материал"
-        :options="materialOptions"
-      />
       
       <FilterField
         v-model="filters.responsible"
@@ -108,6 +102,7 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
+            <th>№ закупки</th>
             <th>Объект</th>
             <th>Поставщик</th>
             <th>Ответственный</th>
@@ -120,7 +115,7 @@
         <TableSkeleton 
           v-if="loading && rows.length === 0"
           :rows="pageSize"
-          :columns="7"
+          :columns="8"
         />
         
         <!-- Actual Data -->
@@ -128,14 +123,15 @@
           <tr v-for="p in rows" :key="p.id" class="table-row">
             <td>{{ p.id }}</td>
             <td>{{ formatDate(p.date) }}</td>
+            <td>{{ p.purchase_no || '—' }}</td>
             <td>{{ p.object_name || '—' }}</td>
             <td>{{ p.supplier || '—' }}</td>
-            <td>{{ p.responsible_name || '—' }}</td>
+            <td>{{ responsibleName(p.responsible) || '—' }}</td>
             <td class="text-right">{{ p.items?.length ?? 0 }}</td>
             <td class="text-right">
               <div class="flex gap-1 justify-end">
                 <span v-if="p.is_archived" class="badge badge-warning badge-xs">Архив</span>
-                <RouterLink class="btn btn-xs btn-outline" :to="`/purchases/${p.id}/edit`">Открыть</RouterLink>
+                <button class="btn btn-xs btn-outline" @click="openEditModal(p)">Открыть</button>
               </div>
             </td>
           </tr>
@@ -163,9 +159,13 @@
       @page-size-change="handlePageSizeChange"
     />
 
-    <!-- Modal for creating new purchase -->
-    <Modal v-model="modalOpen" :title="'Новая закупка'" size="6xl" :closable="true">
-      <PurchaseForm @saved="onPurchaseSaved" @cancel="modalOpen = false" />
+    <!-- Modal for creating/editing purchase -->
+    <Modal v-model="modalOpen" :title="modalTitle" size="6xl" :closable="true">
+      <PurchaseForm 
+        :initial="editingPurchase" 
+        @saved="onPurchaseSaved" 
+        @cancel="modalOpen = false" 
+      />
     </Modal>
   </div>
 </template>
@@ -174,9 +174,10 @@
 import {computed, onMounted, ref, watch} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, Employee, Material} from '@/api/types'
+import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, Employee} from '@/api/types'
 import {formatDate, formatCurrency, getStatusClass, getStatusText} from '@/utils/formatters'
 import {debounce} from '@/utils/debounce'
+import { ErrorHandlers } from '@/utils/errorHandler'
 import Modal from '@/components/Modal.vue'
 import PurchaseForm from './PurchaseForm.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -185,6 +186,7 @@ import FilterField from '@/components/FilterField.vue'
 import ModernPagination from '@/components/ModernPagination.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
+import ExportButton from '@/components/ExportButton.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
@@ -194,6 +196,12 @@ const page = ref(1)
 const pageSize = ref(20)
 const loading = ref(false)
 const modalOpen = ref(false)
+const editingPurchase = ref<Purchase | null>(null)
+
+// Computed properties
+const modalTitle = computed(() => {
+  return editingPurchase.value ? 'Редактировать закупку' : 'Новая закупка'
+})
 
 // Sorting
 const sortBy = ref('')
@@ -213,33 +221,26 @@ function handleSort(key: string) {
 }
 
 const filters = ref<PurchaseListFilters>({
-  date_after: undefined, 
-  date_before: undefined, 
+  date_from: undefined, 
+  date_to: undefined, 
   object: undefined, 
-  material: undefined,
   responsible: undefined, 
   is_archived: undefined,
   ordering: '-date',
-})
+} as any)
 
 const objects = ref<SiteObject[]>([])
 const employees = ref<Employee[]>([])
-const materials = ref<Material[]>([])
 
 // Computed options for filters
 const objectOptions = computed(() => [
   { value: undefined, label: 'Все' },
-  ...objects.value.map(o => ({ value: o.id, label: o.name }))
-])
-
-const materialOptions = computed(() => [
-  { value: undefined, label: 'Все' },
-  ...materials.value.map(m => ({ value: m.id, label: m.name }))
+  ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
 ])
 
 const employeeOptions = computed(() => [
   { value: undefined, label: 'Все' },
-  ...employees.value.map(e => ({ 
+  ...employees.value.map((e: Employee) => ({ 
     value: e.id, 
     label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
   }))
@@ -247,25 +248,33 @@ const employeeOptions = computed(() => [
 
 const statusOptions = computed(() => [
   { value: undefined, label: 'Все' },
-  { value: false, label: 'Активные' },
-  { value: true, label: 'Архивные' }
+  { value: 'false', label: 'Активные' },
+  { value: 'true', label: 'Архивные' }
 ])
 
 async function loadRefs() {
-  const [{data: od}, {data: ed}, {data: md}] = await Promise.all([
+  const [{data: od}, {data: ed}] = await Promise.all([
     api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
     api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
-    api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
   ])
   objects.value = od.results
   employees.value = ed.results
-  materials.value = md.results
 }
 
 async function fetchList() {
   loading.value = true
   try {
-    const q: PurchaseListFilters & { page: number; page_size: number } = {...filters.value, page: page.value, page_size: pageSize.value}
+    // Очищаем undefined значения для корректной работы фильтров
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters.value).filter(([_, v]) => v !== undefined && v !== null)
+    )
+    
+    const q: PurchaseListFilters & { page: number; page_size: number } = {
+      ...cleanFilters, 
+      page: page.value, 
+      page_size: pageSize.value
+    }
+    
     const {data} = await api.get<PageResponse<Purchase>>(endpoints.purchases.list + buildQuery(q as unknown as Query))
     rows.value = data.results
     count.value = data.count
@@ -280,25 +289,32 @@ function reload(p = page.value) {
 }
 
 function openCreateModal() {
+  editingPurchase.value = null
+  modalOpen.value = true
+}
+
+function openEditModal(purchase: Purchase) {
+  editingPurchase.value = purchase
   modalOpen.value = true
 }
 
 function onPurchaseSaved() {
   modalOpen.value = false
-  // Reload the list to show the new purchase
+  editingPurchase.value = null
+  // Reload the list to show the updated purchase
   fetchList()
 }
 
 function resetFilters() {
   filters.value = {
-    date_after: undefined, 
-    date_before: undefined, 
-    object: undefined, 
+    date_after: undefined,
+    date_before: undefined,
+    object: undefined,
     material: undefined,
     responsible: undefined, 
     is_archived: undefined,
     ordering: '-date',
-  }
+  } as any
   reload(1)
 }
 
@@ -307,10 +323,76 @@ const debouncedSearch = debounce(() => {
   reload(1)
 }, 500)
 
-const exportUrl = computed(() => {
-  const q: PurchaseExportQuery = {...filters.value, export: 'xlsx'} as PurchaseExportQuery
-  return endpoints.purchases.list + buildQuery(q as unknown as Query)
-})
+function responsibleName(id: number): string {
+  const employee = employees.value.find((e: Employee) => e.id === id)
+  return employee ? `${employee.first_name || employee.username} ${employee.last_name || ''}`.trim() : '—'
+}
+
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `purchases_${new Date().toISOString().split('T')[0]}`
+
+    switch (format) {
+      case 'csv':
+        exportToCSV(data, filename)
+        break
+      case 'excel':
+        exportToExcel(data, filename)
+        break
+      case 'pdf':
+        exportToPDF(data, filename)
+        break
+    }
+
+    // ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
+}
+
+function exportToCSV(data: Purchase[], filename: string) {
+  const headers = ['ID', 'Дата', '№ закупки', 'Объект', 'Поставщик', 'Ответственный', 'Позиций']
+  const rows = data.map(item => [
+    item.id,
+    formatDate(item.date),
+    item.purchase_no || '',
+    item.object_name || '',
+    item.supplier || '',
+    responsibleName(item.responsible) || '',
+    item.items?.length ?? 0
+  ])
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n')
+
+  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
+}
+
+function exportToExcel(data: Purchase[], filename: string) {
+  // For now, export as CSV with .xlsx extension
+  // In a real app, you'd use a library like xlsx
+  exportToCSV(data, filename.replace('.xlsx', ''))
+  // ui.toast({ type: 'info', text: 'Excel экспорт временно недоступен. Скачан CSV файл.' })
+}
+
+function exportToPDF(data: Purchase[], filename: string) {
+  // For now, show info message
+  // ui.toast({ type: 'info', text: 'PDF экспорт временно недоступен' })
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 
 // Watcher для автоматического поиска при изменении фильтров
 watch(

@@ -72,8 +72,8 @@ defineEmits<{
 
 <style scoped>
 .list-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  background: linear-gradient(135deg, hsl(var(--b1)) 0%, hsl(var(--b2)) 100%);
+  border: 1px solid hsl(var(--b3));
   border-radius: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -109,7 +109,7 @@ defineEmits<{
   gap: 0.75rem;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0;
   line-height: 1.2;
 }
@@ -123,7 +123,7 @@ defineEmits<{
 
 .list-subtitle {
   margin: 0.5rem 0 0 0;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.7);
   font-size: 0.875rem;
   line-height: 1.4;
 }

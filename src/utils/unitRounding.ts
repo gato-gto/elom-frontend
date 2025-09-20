@@ -233,7 +233,7 @@ export function autoRoundAndFormat(
 export function getBestUnitRepresentation(
   value: number,
   unit: string,
-  precision: number = 2
+  _precision: number = 2 // Не используется
 ): SmartConversionResult {
   return smartConvert(value, unit)
 }

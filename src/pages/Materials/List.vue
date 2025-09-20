@@ -213,6 +213,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMaterialsStore } from '@/stores/materials'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import { useUiStore } from '@/stores/ui'
+import { ErrorHandlers } from '@/utils/errorHandler'
 import Modal from '@/components/Modal.vue'
 import FormField from '@/components/FormField.vue'
 import ExportButton from '@/components/ExportButton.vue'
@@ -273,7 +274,7 @@ const debouncedSearch = debounce(async () => {
   try {
     await materialsStore.fetchList()
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка поиска материалов' })
+    ErrorHandlers.dataLoading(error)
   } finally {
     isSearching.value = false
   }
@@ -312,7 +313,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 
     ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка экспорта' })
+    ErrorHandlers.dataLoading(error)
   }
 }
 
@@ -395,7 +396,7 @@ async function handleDelete(material: Material) {
     await materialsStore.delete(material.id)
     ui.toast({ type: 'success', text: 'Материал удален' })
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка удаления материала' })
+    ErrorHandlers.delete(error)
   }
 }
 
@@ -414,7 +415,7 @@ onMounted(async () => {
       materialCategoriesStore.fetchList()
     ])
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка загрузки данных' })
+    ErrorHandlers.dataLoading(error)
   }
 })
 </script>

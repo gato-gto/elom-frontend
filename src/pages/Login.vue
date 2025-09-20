@@ -123,6 +123,7 @@ import {computed, onMounted, ref} from 'vue'
 import {useAuthStore} from '@/stores/auth'
 import {useRoute, useRouter} from 'vue-router'
 import {useUiStore} from '@/stores/ui'
+import { ErrorHandlers } from '@/utils/errorHandler'
 
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -159,7 +160,7 @@ async function submit() {
       ui.toast({type: 'error', text: auth.error || 'Ошибка входа'})
     }
   } catch (e: any) {
-    ui.toast({type: 'error', text: e?.response?.data?.detail ?? 'Ошибка входа'})
+    ErrorHandlers.auth(e)
   }
 }
 </script>

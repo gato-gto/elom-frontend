@@ -11,12 +11,12 @@
       :filtered-count="rows.length"
     >
       <template #actions>
-        <a class="action-btn action-btn-outline" :href="exportUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Экспорт .xlsx
-        </a>
+        <ExportButton 
+          :data="rows"
+          filename="objects_report"
+          :loading="loading"
+          @export="handleExport"
+        />
       </template>
     </ListHeader>
 
@@ -52,6 +52,22 @@
         :options="employeeOptions"
       />
     </FilterPanel>
+
+    <!-- Chart Section -->
+    <div v-if="rows.length > 0" class="chart-section mb-6">
+      <ChartContainer
+        ref="chartContainer"
+        title="Сравнение объектов по закупкам"
+        subtitle="График показывает сумму закупок по каждому объекту"
+        :loading="loading"
+        :has-data="rows.length > 0"
+        :chart-height="getChartHeight(rows.length)"
+        :legend-items="chartLegendItems"
+        :stats="chartStats"
+        :last-updated="new Date().toISOString()"
+        @download="handleChartDownload"
+      />
+    </div>
 
     <!-- Table -->
     <div class="list-content" :class="{ 'relative': loading }">
@@ -101,7 +117,7 @@
         <!-- Skeleton Loading -->
         <TableSkeleton 
           v-if="loading && rows.length === 0"
-          :rows="pageSize"
+          :rows="5"
           :columns="3"
         />
         
@@ -129,9 +145,9 @@
     <!-- Pagination -->
     <ModernPagination
       v-if="rows.length > 0"
-      :current-page="page"
-      :total-pages="Math.ceil(count / pageSize)"
-      :total-items="count"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalItems"
       :page-size="pageSize"
       @page-change="handlePageChange"
       @page-size-change="handlePageSizeChange"
@@ -140,24 +156,30 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch, nextTick} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {PageResponse, ReportByObjectQuery, SiteObject, Employee, Material, ObjectReportRow, ObjectReportResponse} from '@/api/types'
 import {formatDate, formatCurrency, formatNumber} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
+import { ErrorHandlers } from '@/utils/errorHandler'
+import { createBarChartConfig, getColor, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
 import ModernPagination from '@/components/ModernPagination.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
+import ChartContainer from '@/components/ChartContainer.vue'
+import ExportButton from '@/components/ExportButton.vue'
 
 const rows = ref<ObjectReportRow[]>([])
 const loading = ref(false)
 const count = ref(0)
-const page = ref(1)
+const currentPage = ref(1)
 const pageSize = ref(50)
+const totalItems = ref(0)
+const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 
 const filters = ref<ReportByObjectQuery>({date_from: undefined, date_to: undefined, object: undefined, responsible: undefined})
 
@@ -169,7 +191,10 @@ const objects = ref<SiteObject[]>([])
 const employees = ref<Employee[]>([])
 const materials = ref<Material[]>([])
 
-const objMap = computed(() => new Map(objects.value.map(o => [o.id, o.name])))
+// Chart
+const chartContainer = ref<InstanceType<typeof ChartContainer>>()
+
+const objMap = computed(() => new Map(objects.value.map((o: SiteObject) => [o.id, o.name])))
 const matMap = computed(() => new Map(materials.value.map(m => [m.id, m.name])))
 
 function objectName(id?: number) {
@@ -185,12 +210,12 @@ const isPaginated = computed(() => count.value > rows.value.length)
 // Filter options
 const objectOptions = computed(() => [
   { value: '', label: 'Все объекты' },
-  ...objects.value.map(obj => ({ value: obj.id, label: obj.name }))
+  ...objects.value.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
 ])
 
 const employeeOptions = computed(() => [
   { value: '', label: 'Все ответственные' },
-  ...employees.value.map(emp => ({ 
+  ...employees.value.map((emp: Employee) => ({ 
     value: emp.id, 
     label: `${emp.first_name || emp.username} ${emp.last_name || ''}`.trim()
   }))
@@ -215,11 +240,11 @@ async function fetchReport() {
     
     if (filters.value.date_from) query.date_from = filters.value.date_from
     if (filters.value.date_to) query.date_to = filters.value.date_to
-    if (filters.value.object && filters.value.object.length > 0) query.object = filters.value.object
-    if (filters.value.responsible) query.responsible = filters.value.responsible
+    if (filters.value.object && String(filters.value.object) !== '') query.object = [Number(filters.value.object)]
+    if (filters.value.responsible && String(filters.value.responsible) !== '') query.responsible = Number(filters.value.responsible)
     
     // Добавляем пагинацию
-    query.page = page.value
+    query.page = currentPage.value
     query.page_size = pageSize.value
     
     // Добавляем сортировку если задана
@@ -230,15 +255,20 @@ async function fetchReport() {
     const q = buildQuery(query)
     const {data} = await api.get<ObjectReportResponse>(endpoints.reports.byObject + q)
     
-    if (data && data.rows) {
-      rows.value = data.rows
-      count.value = data.rows.length
+    if (data && data.results) {
+      rows.value = data.results
+      totalItems.value = data.count
+      
+      // Update chart after data is loaded
+      nextTick(() => {
+        updateChart()
+      })
     } else {
       rows.value = []
-      count.value = 0
+      totalItems.value = 0
     }
   } catch (error) {
-    console.error('Ошибка загрузки отчета по объектам:', error)
+    ErrorHandlers.dataLoading(error)
     rows.value = []
     count.value = 0
   } finally {
@@ -246,27 +276,73 @@ async function fetchReport() {
   }
 }
 
-function reload(p = page.value) {
-  page.value = p;
+function reload(p = currentPage.value) {
+  currentPage.value = p;
   fetchReport()
 }
 
-const exportUrl = computed(() => {
-  // Создаем запрос только с заданными параметрами
-  const query: ReportByObjectQuery = { export: 'xlsx' }
-  
-  if (filters.value.date_from) query.date_from = filters.value.date_from
-  if (filters.value.date_to) query.date_to = filters.value.date_to
-  if (filters.value.object && filters.value.object.length > 0) query.object = filters.value.object
-  if (filters.value.responsible) query.responsible = filters.value.responsible
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byObject + q
-})
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `objects_report_${new Date().toISOString().split('T')[0]}`
+
+    const headers = ['Объект', 'Кол-во закупок', 'Сумма']
+    const formattedData = data.map(item => ({
+      'Объект': item.object_name || '',
+      'Кол-во закупок': item.purchases || 0,
+      'Сумма': item.total_amount
+    }))
+
+    switch (format) {
+      case 'csv':
+        exportToCSV(formattedData, filename, headers)
+        break
+      case 'excel':
+        exportToExcel(formattedData, filename, headers)
+        break
+      case 'pdf':
+        exportToPDF(formattedData, filename, headers)
+        break
+    }
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
+}
+
+function exportToCSV(data: any[], filename: string, headers: string[]) {
+  const rows = data.map(item => headers.map(header => item[header] || ''))
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n')
+
+  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
+}
+
+function exportToExcel(data: any[], filename: string, headers: string[]) {
+  // For now, export as CSV with .xlsx extension
+  exportToCSV(data, filename.replace('.xlsx', ''), headers)
+}
+
+function exportToPDF(data: any[], filename: string, headers: string[]) {
+  // For now, show info message
+  console.log('PDF export not implemented yet')
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 
 function resetFilters() {
   filters.value = { date_from: undefined, date_to: undefined, object: undefined, responsible: undefined }
-  page.value = 1
+  currentPage.value = 1
 }
 
 function handleSort(key: string) {
@@ -283,19 +359,19 @@ function handleSort(key: string) {
 
 // Debounced функция для автоматического поиска
 const debouncedFetch = debounce(() => {
-  page.value = 1
+  currentPage.value = 1
   fetchReport()
 }, 500)
 
 // Watcher для автоматического поиска при изменении фильтров
 function handlePageChange(newPage: number) {
-  page.value = newPage
+  currentPage.value = newPage
   fetchReport()
 }
 
 function handlePageSizeChange(newSize: number) {
   pageSize.value = newSize
-  page.value = 1
+  currentPage.value = 1
   fetchReport()
 }
 
@@ -306,6 +382,105 @@ watch(
   },
   { deep: true }
 )
+
+// Watcher для обновления графика при изменении данных
+watch(
+  () => rows.value,
+  (newRows, oldRows) => {
+    // Обновляем график только если данные действительно изменились
+    if (newRows.length !== oldRows?.length || JSON.stringify(newRows) !== JSON.stringify(oldRows)) {
+      nextTick(() => {
+        updateChart()
+      })
+    }
+  },
+  { deep: true }
+)
+
+// Chart functions
+function updateChart() {
+  if (!chartContainer.value || rows.value.length === 0) {
+    // Destroy chart if no data
+    if (chartContainer.value) {
+      chartContainer.value.destroyChart()
+    }
+    return
+  }
+
+  // Sort by total_amount descending for better visualization
+  const sortedRows = [...rows.value].sort((a, b) => b.total_amount - a.total_amount)
+  
+  const labels = sortedRows.map(row => truncateLabel(row.object_name || 'Неизвестный объект', 15))
+  const amounts = sortedRows.map(row => Number(row.total_amount) || 0)
+  const purchases = sortedRows.map(row => Number(row.purchases) || 0)
+
+  const config = createBarChartConfig({
+    labels,
+    datasets: [
+      {
+        label: 'Сумма закупок',
+        data: amounts,
+        backgroundColor: getColor(0) + '80',
+        borderColor: getColor(0),
+        borderWidth: 1
+      }
+    ],
+    type: 'bar'
+  }, {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          afterLabel: (context) => {
+            const index = context.dataIndex
+            const row = sortedRows[index]
+            return [
+              `Закупок: ${row.purchases || 0}`,
+              `Уникальных материалов: ${row.unique_materials || 0}`,
+              `Ответственных: ${row.unique_responsibles || 0}`
+            ]
+          }
+        }
+      }
+    }
+  })
+
+  try {
+    chartContainer.value.createChart(config)
+  } catch (error) {
+    console.error('Error creating chart:', error)
+  }
+}
+
+const chartLegendItems = computed(() => [
+  { label: 'Сумма закупок', color: getColor(0) }
+])
+
+const chartStats = computed(() => {
+  if (rows.value.length === 0) return undefined
+  
+  const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
+  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
+  const avgAmount = totalAmount / rows.value.length
+  
+  return {
+    totalAmount: {
+      label: 'Общая сумма',
+      value: formatCurrency(totalAmount)
+    },
+    totalPurchases: {
+      label: 'Всего закупок',
+      value: totalPurchases.toString()
+    },
+    avgAmount: {
+      label: 'Средняя сумма',
+      value: formatCurrency(avgAmount)
+    }
+  }
+})
+
+function handleChartDownload() {
+  console.log('Chart download requested')
+}
 
 onMounted(async () => {
   await loadRefs();

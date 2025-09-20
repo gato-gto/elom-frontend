@@ -43,7 +43,12 @@ export const endpoints = {
     materials: {
         list: join('/materials/'),
         one: (id: number) => join(`/materials/${id}/`),
-        uploadPhoto: (id: number) => join(`/materials/${id}/photo/`),
+        uploadPhoto: (id: number) => join(`/materials/${id}/upload-photo/`),
+        // Новые endpoints
+        lite: join('/materials/lite/'),
+        search: join('/materials/search/'),
+        stats: join('/materials/stats/'),
+        bulkUpdate: join('/materials/bulk-update/'),
     },
 
     // Objects endpoints
@@ -56,7 +61,13 @@ export const endpoints = {
     purchases: {
         list: join('/purchases/'),
         one: (id: number) => join(`/purchases/${id}/`),
-        uploadPhoto: (id: number) => join(`/purchases/${id}/photos/`),
+        uploadPhoto: (id: number) => join(`/purchases/${id}/photos/upload/`),
+        bulkUploadPhotos: (id: number) => join(`/purchases/${id}/photos/bulk-upload/`),
+        getPhotos: (id: number) => join(`/purchases/${id}/photos/`),
+        updatePhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/`),
+        deletePhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/`),
+        setCoverPhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/set-cover/`),
+        reorderPhotos: (id: number) => join(`/purchases/${id}/photos/reorder/`),
         import: {
             prepare: join('/purchases/import/prepare'),
             dryRun: join('/purchases/import/dry_run'),
@@ -68,6 +79,12 @@ export const endpoints = {
     stockSnapshots: {
         list: join('/stock/snapshots/'),
         one: (id: number) => join(`/stock/snapshots/${id}/`),
+    },
+
+    // WriteOff endpoints
+    writeOffs: {
+        list: join('/writeoffs/'),
+        one: (id: number) => join(`/writeoffs/${id}/`),
     },
 
     // Archive endpoints
@@ -111,8 +128,14 @@ export function buildQuery(params?: Query): string {
     const q = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
         if (v === undefined || v === null) return;
-        if (Array.isArray(v)) v.forEach((i) => q.append(k, String(i)));
-        else q.set(k, String(v));
+        // Не добавляем пустые строки для boolean параметров
+        if (typeof v === 'boolean') {
+            q.set(k, String(v));
+        } else if (Array.isArray(v)) {
+            v.forEach((i) => q.append(k, String(i)));
+        } else if (String(v).trim() !== '') {
+            q.set(k, String(v));
+        }
     });
     const s = q.toString();
     return s ? `?${s}` : '';

@@ -1,90 +1,103 @@
-<!-- src/pages/Employees/EmployeeForm.vue -->
 <template>
-  <div class="card bg-base-100 shadow-xl">
-    <div class="card-body">
-      <h2 class="card-title text-2xl mb-6">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-        </svg>
-        {{ props.initial ? 'Редактировать сотрудника' : 'Новый сотрудник' }}
-      </h2>
-      
-      <form class="space-y-6" @submit.prevent="submit">
-        <!-- Имя -->
-        <FormField
-          v-model="form.first_name"
-          label="Имя"
-          type="text"
-          placeholder="Введите имя"
-          :error="errors.first_name"
-          required
-        />
+  <form class="grid gap-4" @submit.prevent="submit">
 
-        <!-- Фамилия -->
-        <FormField
-          v-model="form.last_name"
-          label="Фамилия"
-          type="text"
-          placeholder="Введите фамилию"
-          :error="errors.last_name"
-          required
-        />
+    <!-- Основная информация -->
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Основная информация</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Имя -->
+          <FormField
+            v-model="form.first_name"
+            label="Имя"
+            type="input"
+            placeholder="Введите имя"
+            :error="errors.first_name"
+          />
 
-        <!-- Email -->
-        <FormField
-          v-model="form.email"
-          label="Email"
-          type="email"
-          placeholder="Введите email"
-          :error="errors.email"
-          required
-        />
+          <!-- Фамилия -->
+          <FormField
+            v-model="form.last_name"
+            label="Фамилия"
+            type="input"
+            placeholder="Введите фамилию"
+            :error="errors.last_name"
+          />
 
-        <!-- Username -->
-        <FormField
-          v-model="form.username"
-          label="Имя пользователя"
-          type="text"
-          placeholder="Введите имя пользователя"
-          :error="errors.username"
-          required
-        />
+          <!-- Email -->
+          <FormField
+            v-model="form.email"
+            label="Email"
+            type="email"
+            placeholder="Введите email"
+            :error="errors.email"
+          />
 
-        <!-- Роль -->
-        <FormField
-          v-model="form.role"
-          label="Роль"
-          type="select"
-          :error="errors.role"
-          placeholder="Выберите роль"
-          :options="roleOptions"
-          required
-        />
-
-        <!-- Кнопки действий -->
-        <div class="flex justify-end gap-2 mt-6">
-          <button 
-            type="button" 
-            class="btn btn-outline" 
-            @click="$emit('cancel')"
-            :disabled="loading"
-          >
-            Отмена
-          </button>
-          <button 
-            type="submit" 
-            class="btn btn-primary" 
-            :disabled="loading"
-          >
-            <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
-          </button>
+          <!-- Username -->
+          <FormField
+            v-model="form.username"
+            label="Имя пользователя"
+            type="input"
+            placeholder="Введите имя пользователя"
+            :error="errors.username"
+            required
+          />
         </div>
-      </form>
+      </div>
     </div>
-  </div>
+
+    <!-- Роль и доступы -->
+    <div class="card bg-base-100 border">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Роль и доступы</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Роль -->
+          <FormField
+            v-model="form.role"
+            label="Роль"
+            type="select"
+            :error="errors.role"
+            placeholder="— выберите роль —"
+            :options="roleOptions"
+            required
+          />
+
+          <!-- Пароль (только для новых сотрудников) -->
+          <FormField
+            v-if="!props.initial"
+            v-model="form.password"
+            label="Пароль"
+            type="password"
+            placeholder="Введите пароль"
+            :error="errors.password"
+            required
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="flex justify-end gap-2">
+      <button 
+        type="button" 
+        class="btn btn-outline" 
+        @click="$emit('cancel')"
+        :disabled="loading"
+      >
+        Отмена
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        :disabled="loading"
+      >
+        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
+      </button>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">
@@ -93,6 +106,7 @@ import { useEmployeesStore } from '@/stores/employees'
 import { useUiStore } from '@/stores/ui'
 import type { Employee, EmployeeRequest } from '@/api/types'
 import FormField from '@/components/FormField.vue'
+import { ErrorHandlers } from '@/utils/errorHandler'
 
 const props = defineProps<{
   initial?: Employee | null
@@ -114,7 +128,8 @@ const form = reactive<EmployeeRequest>({
   last_name: '',
   email: '',
   username: '',
-  role: 'buyer'
+  role: 'buyer',
+  password: undefined
 })
 
 const roleOptions = [
@@ -126,11 +141,12 @@ const roleOptions = [
 ]
 
 function resetForm() {
-  form.first_name = ''
-  form.last_name = ''
-  form.email = ''
+    form.first_name = ''
+    form.last_name = ''
+    form.email = ''
   form.username = ''
   form.role = 'buyer'
+  form.password = undefined
   Object.keys(errors).forEach(key => delete errors[key])
 }
 
@@ -141,6 +157,7 @@ function loadInitial() {
     form.email = props.initial.email
     form.username = props.initial.username
     form.role = props.initial.role
+    form.password = undefined // Не загружаем пароль
   } else {
     resetForm()
   }
@@ -158,18 +175,12 @@ async function submit() {
     }
     emit('saved')
   } catch (error: any) {
-    if (error.response?.status === 400 && error.response?.data) {
-      const data = error.response.data
-      if (typeof data === 'object') {
-        Object.keys(data).forEach(key => {
-          if (Array.isArray(data[key]) && data[key].length > 0) {
-            errors[key] = data[key][0]
-          }
-        })
-      }
-    } else {
-      ui.toast({ type: 'error', text: 'Ошибка сохранения сотрудника' })
-    }
+    const errorResult = ErrorHandlers.formValidation(error)
+    
+    // Устанавливаем ошибки полей
+    Object.keys(errorResult.fieldErrors).forEach(field => {
+      errors[field] = errorResult.fieldErrors[field]
+    })
   } finally {
     loading.value = false
   }

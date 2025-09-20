@@ -11,18 +11,12 @@
       :filtered-count="rows.length"
     >
       <template #actions>
-        <a class="action-btn action-btn-outline" :href="xlsxUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Экспорт .xlsx
-        </a>
-        <a class="action-btn action-btn-outline" :href="pdfUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          PDF
-        </a>
+        <ExportButton 
+          :data="rows"
+          filename="materials_report"
+          :loading="loading"
+          @export="handleExport"
+        />
       </template>
     </ListHeader>
 
@@ -51,6 +45,22 @@
         :options="objectOptions"
       />
     </FilterPanel>
+
+    <!-- Chart Section -->
+    <div v-if="rows.length > 0" class="chart-section mb-6">
+      <ChartContainer
+        ref="chartContainer"
+        title="Доли материалов в закупках"
+        subtitle="Круговая диаграмма показывает распределение сумм по материалам"
+        :loading="loading"
+        :has-data="rows.length > 0"
+        :chart-height="getChartHeight(rows.length)"
+        :legend-items="chartLegendItems"
+        :stats="chartStats"
+        :last-updated="new Date().toISOString()"
+        @download="handleChartDownload"
+      />
+    </div>
 
     <!-- Table -->
     <div class="list-content" :class="{ 'relative': loading }">
@@ -106,7 +116,7 @@
         <!-- Skeleton Loading -->
         <TableSkeleton 
           v-if="loading && rows.length === 0"
-          :rows="pageSize"
+          :rows="5"
           :columns="4"
         />
         
@@ -154,18 +164,23 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, watch} from 'vue'
+import {ref, computed, onMounted, watch, nextTick} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {SiteObject, PageResponse, MaterialReportRow, MaterialReportResponse, ReportByMaterialQuery} from '@/api/types'
 import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
+import { ErrorHandlers } from '@/utils/errorHandler'
+import { createDoughnutChartConfig, getColors, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
+import { exportToCSV, exportToExcel, exportToPDF, downloadFile } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
 import ModernPagination from '@/components/ModernPagination.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
+import ExportButton from '@/components/ExportButton.vue'
+import ChartContainer from '@/components/ChartContainer.vue'
 
 type ReportRow = {
   material_id: number
@@ -200,6 +215,9 @@ const loading = ref(false)
 
 const objects = ref<SiteObject[]>([])
 
+// Chart
+const chartContainer = ref<InstanceType<typeof ChartContainer>>()
+
 async function loadObjects() {
   const {data} = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000}))
   objects.value = data.results
@@ -213,7 +231,7 @@ async function load() {
     
     if (dateFrom.value) query.date_from = dateFrom.value
     if (dateTo.value) query.date_to = dateTo.value
-    if (objectId.value) query.object = [objectId.value]
+    if (objectId.value && String(objectId.value) !== '') query.object = [Number(objectId.value)]
     
     // Добавляем пагинацию
     query.page = currentPage.value
@@ -227,17 +245,27 @@ async function load() {
     const q = buildQuery(query)
     const {data} = await api.get<MaterialReportResponse>(endpoints.reports.byMaterial + q)
     
-    if (data && data.rows) {
-      rows.value = data.rows
-      totalItems.value = data.rows.length
-      total.value = data.rows.reduce((sum, r) => sum + r.amount_total, 0)
+    if (data && data.results) {
+      // Обрабатываем данные и заменяем null значения
+      rows.value = data.results.map((r: MaterialReportRow) => ({
+        ...r,
+        material_name: r.material_name || 'Неизвестный материал',
+        unit: r.unit || '—',
+        amount_total: r.amount_total || 0,
+        rows: r.rows || 0
+      }))
+      total.value = rows.value.reduce((sum: number, r: MaterialReportRow) => sum + r.amount_total, 0)
+      
+      // Update chart after data is loaded
+      nextTick(() => {
+        updateChart()
+      })
     } else {
       rows.value = []
-      totalItems.value = 0
       total.value = null
     }
   } catch (error) {
-    console.error('Ошибка загрузки отчета по материалам:', error)
+    ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
   } finally {
@@ -245,30 +273,42 @@ async function load() {
   }
 }
 
-const xlsxUrl = computed(() => {
-  const query: ReportByMaterialQuery = { export: 'xlsx' }
-  
-  if (dateFrom.value) query.date_from = dateFrom.value
-  if (dateTo.value) query.date_to = dateTo.value
-  if (objectId.value) query.object = [objectId.value]
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byMaterial + q
-})
-const pdfUrl = computed(() => {
-  const query: ReportByMaterialQuery = { export: 'pdf' }
-  
-  if (dateFrom.value) query.date_from = dateFrom.value
-  if (dateTo.value) query.date_to = dateTo.value
-  if (objectId.value) query.object = [objectId.value]
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byMaterial + q
-})
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `materials_report_${new Date().toISOString().split('T')[0]}`
+
+    const headers = ['Материал', 'Единица', 'Сумма', 'Кол-во закупок']
+    const formattedData = data.map(item => ({
+      'Материал': item.material_name || '',
+      'Единица': item.unit || '',
+      'Сумма': item.amount_total,
+      'Кол-во закупок': item.rows || 0
+    }))
+
+    switch (format) {
+      case 'csv':
+        exportToCSV(formattedData, filename, headers)
+        break
+      case 'excel':
+        exportToExcel(formattedData, filename, headers)
+        break
+      case 'pdf':
+        exportToPDF(formattedData, filename, headers)
+        break
+    }
+
+    // ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
+}
+
+// Функции экспорта уже импортированы из utils/export
 
 const objectOptions = computed(() => [
   { value: '', label: 'Все объекты' },
-  ...objects.value.map(obj => ({ value: obj.id, label: obj.name }))
+  ...objects.value.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
 ])
 
 function resetFilters() {
@@ -309,6 +349,122 @@ const debouncedLoad = debounce(() => {
 watch([dateFrom, dateTo, objectId], () => {
   debouncedLoad()
 })
+
+// Watcher для обновления графика при изменении данных
+watch(
+  () => rows.value,
+  (newRows, oldRows) => {
+    // Обновляем график только если данные действительно изменились
+    if (newRows.length !== oldRows?.length || JSON.stringify(newRows) !== JSON.stringify(oldRows)) {
+      nextTick(() => {
+        updateChart()
+      })
+    }
+  },
+  { deep: true }
+)
+
+// Chart functions
+function updateChart() {
+  if (!chartContainer.value || rows.value.length === 0) {
+    // Destroy chart if no data
+    if (chartContainer.value) {
+      chartContainer.value.destroyChart()
+    }
+    return
+  }
+
+  // Sort by amount_total descending and take top 10 for better visualization
+  const sortedRows = [...rows.value]
+    .sort((a, b) => b.amount_total - a.amount_total)
+    .slice(0, 10)
+  
+  const labels = sortedRows.map(row => truncateLabel(row.material_name || 'Неизвестный материал', 20))
+  const amounts = sortedRows.map(row => Number(row.amount_total) || 0)
+  
+  const isDark = document.documentElement.classList.contains('dark')
+  const colors = getColors(isDark)
+
+  const config = createDoughnutChartConfig({
+    labels,
+    datasets: [
+      {
+        label: 'Сумма закупок',
+        data: amounts,
+        backgroundColor: colors.slice(0, labels.length),
+        borderColor: '#ffffff',
+        borderWidth: 2
+      }
+    ],
+    type: 'doughnut'
+  }, {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          afterLabel: (context) => {
+            const index = context.dataIndex
+            const row = sortedRows[index]
+            return [
+              `Закупок: ${row.rows || 0}`,
+              `Средняя цена: ${formatCurrency(row.avg_price || 0)}`,
+              `Мин. цена: ${formatCurrency(row.min_price || 0)}`,
+              `Макс. цена: ${formatCurrency(row.max_price || 0)}`
+            ]
+          }
+        }
+      }
+    }
+  })
+
+  try {
+    chartContainer.value.createChart(config)
+  } catch (error) {
+    console.error('Error creating chart:', error)
+  }
+}
+
+const chartLegendItems = computed(() => {
+  if (rows.value.length === 0) return []
+  
+  const sortedRows = [...rows.value]
+    .sort((a, b) => b.amount_total - a.amount_total)
+    .slice(0, 10)
+  
+  const isDark = document.documentElement.classList.contains('dark')
+  const colors = getColors(isDark)
+  
+  return sortedRows.map((row, index) => ({
+    label: truncateLabel(row.material_name || 'Неизвестный материал', 20),
+    color: colors[index % colors.length]
+  }))
+})
+
+const chartStats = computed(() => {
+  if (rows.value.length === 0) return undefined
+  
+  const totalAmount = rows.value.reduce((sum, row) => sum + row.amount_total, 0)
+  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.rows || 0), 0)
+  const uniqueMaterials = rows.value.length
+  
+  return {
+    totalAmount: {
+      label: 'Общая сумма',
+      value: formatCurrency(totalAmount)
+    },
+    totalPurchases: {
+      label: 'Всего закупок',
+      value: totalPurchases.toString()
+    },
+    uniqueMaterials: {
+      label: 'Уникальных материалов',
+      value: uniqueMaterials.toString()
+    }
+  }
+})
+
+function handleChartDownload() {
+  console.log('Chart download requested')
+}
 
 onMounted(async () => {
   await loadObjects()

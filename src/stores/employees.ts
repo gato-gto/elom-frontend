@@ -34,29 +34,29 @@ export const useEmployeesStore = defineStore('employees', {
   getters: {
     // Get employee by ID
     getById: (state) => (id: number) => {
-      return state.items.find(item => item.id === id)
+      return state.items.find((item: Employee) => item.id === id)
     },
 
     // Get employees by role
     getByRole: (state) => (role: UserRole) => {
-      return state.items.filter(item => item.role === role)
+      return state.items.filter((item: Employee) => item.role === role)
     },
 
     // Get active employees only
     activeEmployees: (state) => {
-      return state.items.filter(item => item.is_active)
+      return state.items.filter((item: Employee) => item.is_active)
     },
 
     // Check if employee exists
     exists: (state) => (id: number) => {
-      return state.items.some(item => item.id === id)
+      return state.items.some((item: Employee) => item.id === id)
     },
 
     // Get employees for select options
     selectOptions: (state) => {
       return state.items
-        .filter(item => item.is_active)
-        .map(emp => ({
+        .filter((item: Employee) => item.is_active)
+        .map((emp: Employee) => ({
           value: emp.id,
           label: `${emp.username}${emp.first_name ? ` (${emp.first_name})` : ''}`
         }))
@@ -64,7 +64,7 @@ export const useEmployeesStore = defineStore('employees', {
 
     // Get employees by object
     getByObject: (state) => (objectId: number) => {
-      return state.items.filter(item => 
+      return state.items.filter((item: Employee) => 
         item.assigned_object_ids.includes(objectId)
       )
     }
@@ -102,8 +102,8 @@ export const useEmployeesStore = defineStore('employees', {
           count: data.count,
           page: queryParams.page,
           pageSize: this.pagination.pageSize,
-          next: data.next,
-          previous: data.previous
+      next: data.next || null,
+      previous: data.previous || null
         }
 
         // Update filters
@@ -136,7 +136,7 @@ export const useEmployeesStore = defineStore('employees', {
         this.current = data
 
         // Update in list if exists
-        const index = this.items.findIndex(item => item.id === id)
+        const index = this.items.findIndex((item: Employee) => item.id === id)
         if (index !== -1) {
           this.items[index] = data
         }
@@ -180,7 +180,7 @@ export const useEmployeesStore = defineStore('employees', {
         const { data: updatedEmployee } = await api.patch<Employee>(endpoints.employees.one(id), data)
         
         // Update in list
-        const index = this.items.findIndex(item => item.id === id)
+        const index = this.items.findIndex((item: Employee) => item.id === id)
         if (index !== -1) {
           this.items[index] = updatedEmployee
         }
@@ -208,7 +208,7 @@ export const useEmployeesStore = defineStore('employees', {
         await api.delete(endpoints.employees.one(id))
         
         // Remove from list
-        this.items = this.items.filter(item => item.id !== id)
+        this.items = this.items.filter((item: Employee) => item.id !== id)
         this.pagination.count--
 
         // Clear current if it's the same

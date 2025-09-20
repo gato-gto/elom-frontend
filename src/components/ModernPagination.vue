@@ -125,7 +125,7 @@ const visiblePages = computed(() => {
     // Показываем страницы с многоточием
     const half = Math.floor(maxVisible / 2)
     let start = Math.max(1, currentPage - half)
-    let end = Math.min(totalPages, start + maxVisible - 1)
+    const end = Math.min(totalPages, start + maxVisible - 1)
     
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1)
@@ -160,18 +160,18 @@ const goToPage = (page: number) => {
   }
 }
 
-const handlePageSizeChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  const newSize = parseInt(target.value)
-  emit('page-size-change', newSize)
-}
+// const handlePageSizeChange = (event: Event) => { // Не используется
+//   const target = event.target as HTMLSelectElement
+//   const newSize = parseInt(target.value)
+//   emit('page-size-change', newSize)
+// }
 
-const handleJumpToPage = () => {
-  if (jumpPage.value && jumpPage.value >= 1 && jumpPage.value <= props.totalPages) {
-    goToPage(jumpPage.value)
-    jumpPage.value = null
-  }
-}
+// const handleJumpToPage = () => { // Не используется
+//   if (jumpPage.value && jumpPage.value >= 1 && jumpPage.value <= props.totalPages) {
+//     goToPage(jumpPage.value)
+//     jumpPage.value = null
+//   }
+// }
 
 // Сброс jumpPage при изменении текущей страницы
 watch(() => props.currentPage, () => {

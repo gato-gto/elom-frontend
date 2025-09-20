@@ -86,8 +86,8 @@ export const useObjectsStore = defineStore('objects', {
           count: data.count,
           page: queryParams.page,
           pageSize: this.pagination.pageSize,
-          next: data.next,
-          previous: data.previous
+          next: data.next || null,
+          previous: data.previous || null
         }
 
         // Update filters

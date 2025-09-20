@@ -11,18 +11,12 @@
       :filtered-count="rows.length"
     >
       <template #actions>
-        <a class="action-btn action-btn-outline" :href="xlsxUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Экспорт .xlsx
-        </a>
-        <a class="action-btn action-btn-outline" :href="pdfUrl" target="_blank" rel="noreferrer">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          PDF
-        </a>
+        <ExportButton 
+          :data="rows"
+          filename="responsible_report"
+          :loading="loading"
+          @export="handleExport"
+        />
       </template>
     </ListHeader>
 
@@ -44,6 +38,22 @@
         label="Дата по"
       />
     </FilterPanel>
+
+    <!-- Chart Section -->
+    <div v-if="rows.length > 0" class="chart-section mb-6">
+      <ChartContainer
+        ref="chartContainer"
+        title="Рейтинг ответственных по закупкам"
+        subtitle="Горизонтальная диаграмма показывает сумму закупок по каждому ответственному"
+        :loading="loading"
+        :has-data="rows.length > 0"
+        :chart-height="getChartHeight(rows.length)"
+        :legend-items="chartLegendItems"
+        :stats="chartStats"
+        :last-updated="new Date().toISOString()"
+        @download="handleChartDownload"
+      />
+    </div>
 
     <!-- Table -->
     <div class="list-content" :class="{ 'relative': loading }">
@@ -93,7 +103,7 @@
         <!-- Skeleton Loading -->
         <TableSkeleton 
           v-if="loading && rows.length === 0"
-          :rows="pageSize"
+          :rows="5"
           :columns="3"
         />
         
@@ -139,17 +149,22 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, watch} from 'vue'
+import {ref, computed, onMounted, watch, nextTick} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
+import { ErrorHandlers } from '@/utils/errorHandler'
+import { createHorizontalBarChartConfig, getColor, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
+import { exportToCSV as utilsExportToCSV, exportToExcel as utilsExportToExcel, exportToPDF as utilsExportToPDF, downloadFile as utilsDownloadFile } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
 import ModernPagination from '@/components/ModernPagination.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
+import ExportButton from '@/components/ExportButton.vue'
+import ChartContainer from '@/components/ChartContainer.vue'
 import type { ResponsibleReportRow, ResponsibleReportResponse, ReportByResponsibleQuery } from '@/api/types'
 
 const dateFrom = ref<string | undefined>()
@@ -167,6 +182,9 @@ const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 const sortBy = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 const loading = ref(false)
+
+// Chart
+const chartContainer = ref<InstanceType<typeof ChartContainer>>()
 
 async function load() {
   loading.value = true
@@ -189,17 +207,22 @@ async function load() {
     const q = buildQuery(query)
     const {data} = await api.get<ResponsibleReportResponse>(endpoints.reports.byResponsible + q)
     
-    if (data && data.rows) {
-      rows.value = data.rows
-      totalItems.value = data.rows.length
-      total.value = data.rows.reduce((sum, r) => sum + r.total_amount, 0)
+    if (data && data.results) {
+      rows.value = data.results
+      
+      total.value = data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
+      
+      // Update chart after data is loaded
+      nextTick(() => {
+        updateChart()
+      })
     } else {
       rows.value = []
-      totalItems.value = 0
+      
       total.value = null
     }
   } catch (error) {
-    console.error('Ошибка загрузки отчета по ответственным:', error)
+    ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
   } finally {
@@ -207,29 +230,71 @@ async function load() {
   }
 }
 
-const xlsxUrl = computed(() => {
-  const query: ReportByResponsibleQuery = { export: 'xlsx' }
-  
-  if (dateFrom.value) query.date_from = dateFrom.value
-  if (dateTo.value) query.date_to = dateTo.value
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byResponsible + q
-})
-const pdfUrl = computed(() => {
-  const query: ReportByResponsibleQuery = { export: 'pdf' }
-  
-  if (dateFrom.value) query.date_from = dateFrom.value
-  if (dateTo.value) query.date_to = dateTo.value
-  
-  const q = buildQuery(query)
-  return endpoints.reports.byResponsible + q
-})
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `responsible_report_${new Date().toISOString().split('T')[0]}`
+
+    switch (format) {
+      case 'csv':
+        exportToCSV(data, filename)
+        break
+      case 'excel':
+        exportToExcel(data, filename)
+        break
+      case 'pdf':
+        exportToPDF(data, filename)
+        break
+    }
+
+    // ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
+}
+
+function exportToCSV(data: ResponsibleReportRow[], filename: string) {
+  const headers = ['Ответственный', 'Сумма', 'Кол-во закупок']
+  const rows = data.map(item => [
+    item.responsible_name,
+    item.total_amount,
+    item.purchases || 0
+  ])
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n')
+
+  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
+}
+
+function exportToExcel(data: ResponsibleReportRow[], filename: string) {
+  // For now, export as CSV with .xlsx extension
+  // In a real app, you'd use a library like xlsx
+  exportToCSV(data, filename.replace('.xlsx', ''))
+  // ui.toast({ type: 'info', text: 'Excel экспорт временно недоступен. Скачан CSV файл.' })
+}
+
+function exportToPDF(data: ResponsibleReportRow[], filename: string) {
+  // For now, show info message
+  // ui.toast({ type: 'info', text: 'PDF экспорт временно недоступен' })
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 
 function resetFilters() {
   dateFrom.value = undefined
   dateTo.value = undefined
-  currentPage.value = 1
 }
 
 function handlePageChange(newPage: number) {
@@ -264,6 +329,104 @@ const debouncedLoad = debounce(() => {
 watch([dateFrom, dateTo], () => {
   debouncedLoad()
 })
+
+// Watcher для обновления графика при изменении данных
+watch(
+  () => rows.value,
+  (newRows, oldRows) => {
+    // Обновляем график только если данные действительно изменились
+    if (newRows.length !== oldRows?.length || JSON.stringify(newRows) !== JSON.stringify(oldRows)) {
+      nextTick(() => {
+        updateChart()
+      })
+    }
+  },
+  { deep: true }
+)
+
+// Chart functions
+function updateChart() {
+  if (!chartContainer.value || rows.value.length === 0) {
+    // Destroy chart if no data
+    if (chartContainer.value) {
+      chartContainer.value.destroyChart()
+    }
+    return
+  }
+
+  // Sort by total_amount descending for better visualization
+  const sortedRows = [...rows.value].sort((a, b) => b.total_amount - a.total_amount)
+  
+  const labels = sortedRows.map(row => truncateLabel(row.responsible_name || 'Неизвестный ответственный', 25))
+  const amounts = sortedRows.map(row => Number(row.total_amount) || 0)
+
+  const config = createHorizontalBarChartConfig({
+    labels,
+    datasets: [
+      {
+        label: 'Сумма закупок',
+        data: amounts,
+        backgroundColor: getColor(0) + '80',
+        borderColor: getColor(0),
+        borderWidth: 1
+      }
+    ],
+    type: 'horizontalBar'
+  }, {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          afterLabel: (context) => {
+            const index = context.dataIndex
+            const row = sortedRows[index]
+            return [
+              `Закупок: ${row.purchases || 0}`,
+              `Уникальных объектов: ${row.unique_objects || 0}`,
+              `Уникальных материалов: ${row.unique_materials || 0}`
+            ]
+          }
+        }
+      }
+    }
+  })
+
+  try {
+    chartContainer.value.createChart(config)
+  } catch (error) {
+    console.error('Error creating chart:', error)
+  }
+}
+
+const chartLegendItems = computed(() => [
+  { label: 'Сумма закупок', color: getColor(0) }
+])
+
+const chartStats = computed(() => {
+  if (rows.value.length === 0) return undefined
+  
+  const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
+  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
+  const avgAmount = totalAmount / rows.value.length
+  
+  return {
+    totalAmount: {
+      label: 'Общая сумма',
+      value: formatCurrency(totalAmount)
+    },
+    totalPurchases: {
+      label: 'Всего закупок',
+      value: totalPurchases.toString()
+    },
+    avgAmount: {
+      label: 'Средняя сумма',
+      value: formatCurrency(avgAmount)
+    }
+  }
+})
+
+function handleChartDownload() {
+  console.log('Chart download requested')
+}
 
 onMounted(load)
 </script>

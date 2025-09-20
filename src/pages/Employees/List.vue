@@ -192,6 +192,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useEmployeesStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { ErrorHandlers } from '@/utils/errorHandler'
 import type { Employee, Me } from '@/api/types'
 import { debounce } from '@/utils/debounce'
 import Modal from '@/components/Modal.vue'
@@ -326,8 +327,7 @@ async function handleDelete(employee: Employee) {
     await employeesStore.delete(employee.id)
     ui.toast({ type: 'success', text: `Сотрудник "${employee.first_name} ${employee.last_name}" удален` })
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка удаления сотрудника' })
-    console.error('Error deleting employee:', error)
+    ErrorHandlers.delete(error)
   }
 }
 

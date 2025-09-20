@@ -189,6 +189,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useUnitsStore } from '@/stores/units'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { ErrorHandlers } from '@/utils/errorHandler'
 import type { Unit, Me } from '@/api/types'
 import { debounce } from '@/utils/debounce'
 import Modal from '@/components/Modal.vue'
@@ -326,8 +327,7 @@ async function handleDelete(unit: Unit) {
     await unitsStore.delete(unit.id)
     ui.toast({ type: 'success', text: `Единица измерения "${unit.name}" удалена` })
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка удаления единицы измерения' })
-    console.error('Error deleting unit:', error)
+    ErrorHandlers.delete(error)
   }
 }
 

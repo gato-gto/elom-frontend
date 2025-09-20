@@ -1,6 +1,5 @@
 <template>
-  <div class="grid gap-4">
-    <div v-if="formError" class="alert alert-error"><span>{{ formError }}</span></div>
+  <form class="grid gap-4" @submit.prevent="onSubmit">
 
     <!-- Шапка -->
     <div class="card bg-base-100 border">
@@ -53,6 +52,15 @@
             type="text"
             placeholder="A-12345"
             :error="errors.invoice_number"
+          />
+
+          <!-- Номер закупки -->
+          <FormField
+            v-model="model.purchase_no"
+            label="№ закупки"
+            type="text"
+            placeholder="P0001"
+            :error="errors.purchase_no"
           />
 
           <!-- НДС -->
@@ -210,7 +218,7 @@
         {{ saving ? 'Сохранение...' : 'Сохранить' }}
       </button>
     </div>
-  </div>
+  </form>
 </template>
 
 <script setup lang="ts">
@@ -224,16 +232,24 @@ import { useEmployeesStore } from '@/stores/employees'
 import { useUiStore } from '@/stores/ui'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useAuthStore } from '@/stores/auth'
-import type { Purchase, PurchaseRequest, PurchaseItemRequest } from '@/api/types'
-import FormField from '@/components/FormField.vue'
 
-const router = useRouter()
-const route = useRoute()
+// Props
+const props = defineProps<{
+  initial?: Purchase | null
+}>()
 
+// Emits
 const emit = defineEmits<{
   saved: []
   cancel: []
 }>()
+import type { Purchase, PurchaseRequest, PurchaseItemRequest, Employee } from '@/api/types'
+import FormField from '@/components/FormField.vue'
+import { ErrorHandlers } from '@/utils/errorHandler'
+
+const router = useRouter()
+const route = useRoute()
+
 
 const purchasesStore = usePurchasesStore()
 const materialsStore = useMaterialsStore()
@@ -246,10 +262,9 @@ const auth = useAuthStore()
 
 const saving = ref(false)
 const deletingPhoto = ref(false)
-const formError = ref('')
 const errors = reactive<Record<string, string>>({})
 
-const isEdit = computed(() => !!route.params.id)
+const isEdit = computed(() => !!props.initial || !!route.params.id)
 
 const model = reactive<PurchaseRequest>({
   date: new Date().toISOString().split('T')[0],
@@ -257,7 +272,9 @@ const model = reactive<PurchaseRequest>({
   responsible: 0, // Will be set from form
   supplier: '',
   invoice_number: '',
-  vat_included: undefined,
+  purchase_no: '',
+  vat_included: false,
+  currency: 'UZS',
   comment: '',
   items: []
 })
@@ -276,7 +293,7 @@ const objectOptions = computed(() =>
 )
 
 const employeeOptions = computed(() => 
-  employees.value.map(emp => ({ 
+  employees.value.map((emp: Employee) => ({ 
     value: emp.id, 
     label: `${emp.first_name || emp.username} ${emp.last_name || ''}`.trim()
   }))
@@ -288,7 +305,7 @@ const vatOptions = [
 ]
 
 const total = computed(() => {
-  return items.value.reduce((sum, item) => sum + (item.total || 0), 0)
+  return items.value.reduce((sum: number, item: any) => sum + (item.total || 0), 0)
 })
 
 function formatMoney(amount: number): string {
@@ -306,6 +323,7 @@ function addItem() {
     unit: 0,
     quantity: '0',
     price: '0',
+    amount: '0',
     total: 0
   })
 }
@@ -345,9 +363,14 @@ async function onDeletePhoto(index: number) {
   
   deletingPhoto.value = true
   try {
-    // TODO: Implement photo deletion in store
-    currentPhotos.value.splice(index, 1)
-    ui.toast({ type: 'success', text: 'Фото удалено' })
+    const purchaseId = Number(route.params.id)
+    const purchase = purchasesStore.current
+    
+    if (purchase && purchase.photos && purchase.photos[index]) {
+      const photoId = purchase.photos[index].id
+      await purchasesStore.deletePhoto(purchaseId, photoId)
+      ui.toast({ type: 'success', text: 'Фото удалено' })
+    }
   } catch (error) {
     ui.toast({ type: 'error', text: 'Ошибка удаления фото' })
     console.error('Error deleting photo:', error)
@@ -358,7 +381,6 @@ async function onDeletePhoto(index: number) {
 
 async function onSubmit() {
   saving.value = true
-  formError.value = ''
   Object.keys(errors).forEach(key => delete errors[key])
   
   try {
@@ -369,20 +391,27 @@ async function onSubmit() {
       responsible: model.responsible,
       supplier: model.supplier,
       invoice_number: model.invoice_number,
+      purchase_no: model.purchase_no,
       vat_included: model.vat_included,
+      currency: model.currency,
       comment: model.comment,
-      items: items.value.map(item => ({
+      items: items.value.map((item: any) => ({
         material: item.material,
         unit: item.unit,
         quantity: item.quantity,
-        price: item.price
+        price: item.price,
+        amount: item.amount
       }))
     }
     
     let purchaseId: number
     
     if (isEdit.value) {
-      purchaseId = Number(route.params.id)
+      if (props.initial) {
+        purchaseId = props.initial.id
+      } else {
+        purchaseId = Number(route.params.id)
+      }
       await purchasesStore.update(purchaseId, purchaseData)
       
       // Уведомление об изменении закупки
@@ -392,27 +421,36 @@ async function onSubmit() {
       purchaseId = newPurchase.id
     }
     
+    // Upload photos if any
+    if (photoFiles.value.length > 0) {
+      for (const photoFile of photoFiles.value) {
+        try {
+          await purchasesStore.uploadPhoto(purchaseId, {
+            photo: photoFile,
+            is_cover: false // First photo will be cover by default
+          })
+        } catch (error) {
+          console.error('Error uploading photo:', error)
+          ui.toast({ type: 'error', text: 'Ошибка загрузки фото' })
+        }
+      }
+    }
+    
     ui.toast({ type: 'success', text: 'Закупка сохранена' })
     emit('saved')
   } catch (error: any) {
-    if (error.response?.status === 400 && error.response?.data) {
-      const data = error.response.data
-      if (typeof data === 'object') {
-        Object.keys(data).forEach(key => {
-          if (Array.isArray(data[key]) && data[key].length > 0) {
-            errors[key] = data[key][0]
-          }
-        })
-      }
-    } else {
-      formError.value = 'Ошибка сохранения закупки'
-      
-      // Уведомление об ошибке
-      notifications.notifyPurchaseError(
-        isEdit.value ? Number(route.params.id) : 0, 
-        error.message || 'Неизвестная ошибка'
-      )
-    }
+    const errorResult = ErrorHandlers.formValidation(error)
+    
+    // Устанавливаем ошибки полей
+    Object.keys(errorResult.fieldErrors).forEach(field => {
+      errors[field] = errorResult.fieldErrors[field]
+    })
+    
+    // Уведомление об ошибке
+    notifications.notifyPurchaseError(
+      isEdit.value ? Number(route.params.id) : 0, 
+      errorResult.detail
+    )
   } finally {
     saving.value = false
   }
@@ -430,15 +468,25 @@ async function loadData() {
   // Load purchase data if editing
   if (isEdit.value) {
     try {
-      console.log('Loading purchase with ID:', route.params.id)
-      const purchase = await purchasesStore.fetchOne(Number(route.params.id))
-      console.log('Loaded purchase:', purchase)
+      let purchase: Purchase | null = null
+      
+      if (props.initial) {
+        // Use provided initial data
+        purchase = props.initial
+      } else if (route.params.id) {
+        // Load from API
+        console.log('Loading purchase with ID:', route.params.id)
+        purchase = await purchasesStore.fetchOne(Number(route.params.id))
+        console.log('Loaded purchase:', purchase)
+      }
+      
       if (purchase) {
         model.date = purchase.date
         model.object = purchase.object
         model.responsible = purchase.responsible
         model.supplier = purchase.supplier || ''
         model.invoice_number = purchase.invoice_number || ''
+        model.purchase_no = purchase.purchase_no || ''
         model.vat_included = purchase.vat_included
         model.comment = purchase.comment || ''
         
@@ -449,6 +497,7 @@ async function loadData() {
           unit: item.unit,
           quantity: item.quantity,
           price: item.price || '0',
+          amount: item.amount,
           total: parseFloat(item.quantity) * parseFloat(item.price || '0')
         })) || []
         

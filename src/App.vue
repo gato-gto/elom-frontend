@@ -28,7 +28,7 @@ onMounted(async () => {
     await auth.tryHydrate()
   } catch (e: any) {
     // Ошибки авторизации обрабатываются в auth store
-    console.warn('Auth initialization failed:', e)
+    // console.warn('Auth initialization failed:', e) // Удалено для продакшена
   }
 })
 </script>

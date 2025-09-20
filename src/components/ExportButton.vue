@@ -1,110 +1,83 @@
 <template>
-  <div class="relative">
-    <button 
-      class="btn btn-outline btn-sm"
-      :class="{ 'btn-disabled': loading }"
-      @click="toggleDropdown"
-      :disabled="loading"
-    >
-      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div class="dropdown dropdown-end">
+    <div tabindex="0" role="button" class="btn btn-outline btn-sm" :class="{ 'btn-disabled': loading }" :disabled="loading">
+      <svg v-if="loading" class="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
       {{ loading ? 'Экспорт...' : 'Экспорт' }}
-    </button>
-
-    <!-- Dropdown menu -->
-    <div 
-      v-if="showDropdown" 
-      class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-    >
-      <div class="py-1">
+    </div>
+    
+    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+      <li>
         <button 
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+          class="flex items-center"
           @click="exportToCSV"
           :disabled="loading"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           CSV файл
         </button>
-        
+      </li>
+      
+      <li>
         <button 
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+          class="flex items-center"
           @click="exportToExcel"
           :disabled="loading"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Excel файл
         </button>
-        
+      </li>
+      
+      <li>
         <button 
-          class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+          class="flex items-center"
           @click="exportToPDF"
           :disabled="loading"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           PDF файл
         </button>
-      </div>
-    </div>
+      </li>
+    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-
-const props = defineProps<{
-  data: any[]
+const props = withDefaults(defineProps<{
+  data?: any[]
   filename?: string
   loading?: boolean
-}>()
+}>(), {
+  data: () => [],
+  filename: 'export',
+  loading: false
+})
+void props
 
 const emit = defineEmits<{
   (e: 'export', format: 'csv' | 'excel' | 'pdf'): void
 }>()
 
-const showDropdown = ref(false)
-
-function toggleDropdown() {
-  showDropdown.value = !showDropdown.value
-}
-
 function exportToCSV() {
-  showDropdown.value = false
   emit('export', 'csv')
 }
 
 function exportToExcel() {
-  showDropdown.value = false
   emit('export', 'excel')
 }
 
 function exportToPDF() {
-  showDropdown.value = false
   emit('export', 'pdf')
 }
-
-// Close dropdown when clicking outside
-function handleClickOutside(event: Event) {
-  const target = event.target as HTMLElement
-  if (!target.closest('.relative')) {
-    showDropdown.value = false
-  }
-}
-
-// Add event listener when component mounts
-import { onMounted, onUnmounted } from 'vue'
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
