@@ -19,4 +19,20 @@ export default defineConfig({
         },
     },
     server: {port: 5173, host: true},
+    build: {
+        target: ['es2020', 'chrome80', 'firefox78', 'safari13.1', 'edge80'],
+        cssTarget: ['chrome80', 'firefox78', 'safari13.1', 'edge80'],
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['vue', 'vue-router', 'pinia'],
+                    charts: ['chart.js', 'vue-chartjs'],
+                    utils: ['axios', '@vueuse/core']
+                }
+            }
+        }
+    },
+    esbuild: {
+        target: 'es2020'
+    }
 })

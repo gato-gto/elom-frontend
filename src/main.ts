@@ -4,6 +4,12 @@ import {createPinia} from 'pinia'
 import App from './App.vue'
 import router from './router'
 
+// Импортируем полифиллы для совместимости со старыми браузерами
+import '@/utils/polyfills'
+
+// Проверяем поддержку браузера
+import '@/utils/browserSupport'
+
 import '@/assets/tailwind.css'
 import '@/assets/daisyui-reference.css'
 import '@/assets/login-animations.css'

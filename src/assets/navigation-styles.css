@@ -4,7 +4,10 @@
 /* Основные стили для сайдбара */
 .sidebar {
   background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+  /* Fallback for browsers that don't support backdrop-filter */
+  background-color: #1e293b;
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
 }
@@ -133,7 +136,10 @@
 /* Стили для топбара */
 .topbar {
   background: rgba(255, 255, 255, 0.95);
+  /* Fallback for browsers that don't support backdrop-filter */
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: sticky;

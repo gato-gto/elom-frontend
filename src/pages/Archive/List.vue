@@ -306,7 +306,7 @@ function closeDialog() {
 }
 
 async function closePeriod() {
-  if (!canClose.value) return
+  if (!canClose.value) { return }
   closing.value = true
   try {
     const payload: ArchivePeriodRequest = {month: closeMonth.value!, object: closeObjectId.value!}
@@ -319,8 +319,8 @@ async function closePeriod() {
 }
 
 async function reopen(p: ArchivePeriod) {
-  if (!p.is_closed) return
-  if (!confirm(`Открыть период ${p.month} по объекту "${p.object_name ?? p.object}"?`)) return
+  if (!p.is_closed) { return }
+  if (!confirm(`Открыть период ${p.month} по объекту "${p.object_name ?? p.object}"?`)) { return }
   busyId.value = p.id
   try {
     // По спецификации ReopenRequest = {month, object}

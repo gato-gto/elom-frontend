@@ -321,7 +321,7 @@ async function handleAction(action: string, employee: Employee) {
 }
 
 async function handleDelete(employee: Employee) {
-  if (!confirm(`Удалить сотрудника "${employee.first_name} ${employee.last_name}"?`)) return
+  if (!confirm(`Удалить сотрудника "${employee.first_name} ${employee.last_name}"?`)) { return }
   
   try {
     await employeesStore.delete(employee.id)

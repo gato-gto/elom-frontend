@@ -218,8 +218,8 @@ async function run() {
   try {
     const fd = new FormData()
     fd.append('file', file.value)
-    if (mapping.value) fd.append('mapping', mapping.value)
-    if (sheet.value) fd.append('sheet', sheet.value)
+    if (mapping.value) { fd.append('mapping', mapping.value) }
+    if (sheet.value) { fd.append('sheet', sheet.value) }
     
     // Используем правильные эндпоинты API
     const endpoint = dryRun.value ? '/api/v1/purchases/import/dry_run' : '/api/v1/purchases/import/commit'
