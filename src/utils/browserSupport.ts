@@ -62,8 +62,14 @@ class BrowserSupportChecker {
   private checkES6(): boolean {
     try {
       // Проверяем поддержку arrow functions, const/let, template literals
-      eval('const test = () => `test`; let x = 1; const y = 2;');
-      return true;
+      // Используем Function constructor вместо eval для безопасности
+      const testArrowFunction = new Function('return () => "test"')();
+      const testConst = new Function('return (() => { const x = 1; return x; })()')();
+      const testTemplateLiteral = new Function('return `test-${1}`')();
+      
+      return typeof testArrowFunction === 'function' && 
+             testConst === 1 && 
+             testTemplateLiteral === 'test-1';
     } catch {
       return false;
     }
