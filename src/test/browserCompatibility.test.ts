@@ -180,6 +180,39 @@ describe('Browser Compatibility', () => {
     })
   })
 
+  describe('ES6 Support', () => {
+    it('should detect ES6 support', () => {
+      // Мокаем Function constructor для тестирования ES6
+      const originalFunction = window.Function
+      window.Function = vi.fn().mockImplementation((code: string) => {
+        if (code.includes('() => "test"')) return () => 'test'
+        if (code.includes('const x = 1')) return () => 1
+        if (code.includes('`test-${1}`')) return () => 'test-1'
+        return originalFunction(code)
+      }) as any
+
+      const support = browserSupport.getSupport()
+      expect(support.es6).toBe(true)
+
+      // Восстанавливаем оригинальный Function
+      window.Function = originalFunction
+    })
+
+    it('should detect lack of ES6 support', () => {
+      // Мокаем Function constructor для имитации ошибки
+      const originalFunction = window.Function
+      window.Function = vi.fn().mockImplementation(() => {
+        throw new Error('ES6 not supported')
+      }) as any
+
+      const support = browserSupport.getSupport()
+      expect(support.es6).toBe(false)
+
+      // Восстанавливаем оригинальный Function
+      window.Function = originalFunction
+    })
+  })
+
   describe('Full Support Check', () => {
     it('should return true for fully supported browser', () => {
       // Мокаем все необходимые функции
@@ -189,8 +222,20 @@ describe('Browser Compatibility', () => {
       mockWindow.IntersectionObserver = vi.fn()
       mockWindow.ResizeObserver = vi.fn()
 
+      // Мокаем Function для ES6 поддержки
+      const originalFunction = window.Function
+      window.Function = vi.fn().mockImplementation((code: string) => {
+        if (code.includes('() => "test"')) return () => 'test'
+        if (code.includes('const x = 1')) return () => 1
+        if (code.includes('`test-${1}`')) return () => 'test-1'
+        return originalFunction(code)
+      }) as any
+
       const isSupported = browserSupport.isFullySupported()
       expect(isSupported).toBe(true)
+
+      // Восстанавливаем оригинальный Function
+      window.Function = originalFunction
     })
 
     it('should return false for unsupported browser', () => {
