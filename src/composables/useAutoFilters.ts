@@ -1,9 +1,8 @@
 import { ref, watch } from 'vue'
-// import { type Ref } from 'vue' // Не используется
 import { debounce } from '@/utils/debounce'
 
-// Типы для фильтров
-export interface FilterConfig {
+// Конфигурация для автоматических фильтров
+export interface AutoFilterConfig {
   debounceMs?: number
   autoSearch?: boolean
 }
@@ -11,7 +10,7 @@ export interface FilterConfig {
 // Универсальный composable для автоматических фильтров
 export function useAutoFilters<T extends Record<string, any>>(
   store: any,
-  config: FilterConfig = {}
+  config: AutoFilterConfig = {}
 ) {
   const { debounceMs = 500, autoSearch = true } = config
   
@@ -90,28 +89,28 @@ export function useMaterialsFilters() {
 
 export function useObjectsFilters() {
   const { useObjectsStore } = require('@/stores/objects')
-  const store = useObjectsStore()
+  const store = useObjectsStore
   
   return useAutoFilters(store, { debounceMs: 400 })
 }
 
 export function useEmployeesFilters() {
   const { useEmployeesStore } = require('@/stores/employees')
-  const store = useEmployeesStore()
+  const store = useEmployeesStore
   
   return useAutoFilters(store, { debounceMs: 400 })
 }
 
 export function useUnitsFilters() {
   const { useUnitsStore } = require('@/stores/units')
-  const store = useUnitsStore()
+  const store = useUnitsStore
   
   return useAutoFilters(store, { debounceMs: 400 })
 }
 
 export function usePurchasesFilters() {
   const { usePurchasesStore } = require('@/stores/purchases')
-  const store = usePurchasesStore()
+  const store = usePurchasesStore
   
   return useAutoFilters(store, { debounceMs: 600 })
 }

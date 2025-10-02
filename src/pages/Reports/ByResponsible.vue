@@ -156,7 +156,7 @@ import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createHorizontalBarChartConfig, getColor, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
-import { exportToCSV as utilsExportToCSV, exportToExcel as utilsExportToExcel, exportToPDF as utilsExportToPDF, downloadFile as utilsDownloadFile } from '@/utils/export'
+import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
@@ -253,32 +253,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   }
 }
 
-function exportToCSV(data: ResponsibleReportRow[], filename: string) {
-  const headers = ['Ответственный', 'Сумма', 'Кол-во закупок']
-  const rows = data.map(item => [
-    item.responsible_name,
-    item.total_amount,
-    item.purchases || 0
-  ])
-
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(field => `"${field}"`).join(','))
-    .join('\n')
-
-  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
-}
-
-function exportToExcel(data: ResponsibleReportRow[], filename: string) {
-  // For now, export as CSV with .xlsx extension
-  // In a real app, you'd use a library like xlsx
-  exportToCSV(data, filename.replace('.xlsx', ''))
-  // ui.toast({ type: 'info', text: 'Excel экспорт временно недоступен. Скачан CSV файл.' })
-}
-
-function exportToPDF(data: ResponsibleReportRow[], filename: string) {
-  // For now, show info message
-  // ui.toast({ type: 'info', text: 'PDF экспорт временно недоступен' })
-}
+// Export functions removed - using centralized useExport composable
 
 function downloadFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType })

@@ -186,8 +186,8 @@ watch(() => props.currentPage, () => {
   gap: 1rem;
   padding: 1.5rem;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 0 0 1rem 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 1rem 1rem;
 }
 
 .pagination-info {

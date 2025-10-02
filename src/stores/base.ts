@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import type { Ref } from 'vue'
-// import type { ComputedRef } from 'vue' // Не используется
+import api from '@/api/client'
+import { endpoints, buildQuery } from '@/api/endpoints'
+import { handleApiErrorAsync } from '@/utils/errorHandler'
 
 // Базовые типы для пагинации
 export interface PaginationState {
@@ -18,12 +20,21 @@ export interface BaseFilters {
   ordering: string
 }
 
-// Базовый store с оптимизированной реактивностью
-export function createBaseStore<T extends Record<string, any>, F extends BaseFilters>(
-  storeName: string,
-  defaultFilters: F
+// Конфигурация для базового store
+export interface BaseStoreConfig<T, C, U> {
+  endpoint: {
+    list: string
+    one: (id: number) => string
+  }
+  entityName: string
+  entityNamePlural: string
+}
+
+// Базовый store с CRUD операциями
+export function createBaseStore<T extends Record<string, any>, C, U>(
+  config: BaseStoreConfig<T, C, U>
 ) {
-  return defineStore(storeName, () => {
+  const store = defineStore(config.entityName, () => {
     // State
     const items = ref<T[]>([]) as Ref<T[]>
     const current = ref<T | null>(null) as Ref<T | null>
@@ -36,9 +47,12 @@ export function createBaseStore<T extends Record<string, any>, F extends BaseFil
       next: null,
       previous: null
     })
-    const filters = ref<F>({ ...defaultFilters })
+    const filters = ref<BaseFilters>({
+      search: '',
+      ordering: 'id'
+    })
 
-    // Computed getters с мемоизацией
+    // Computed getters
     const getById = computed(() => (id: number) => {
       return items.value.find(item => item.id === id)
     })
@@ -54,91 +68,152 @@ export function createBaseStore<T extends Record<string, any>, F extends BaseFil
       }))
     })
 
-    // Оптимизированные методы для работы с массивом
-    const updateItemInList = (updatedItem: T) => {
-      const index = items.value.findIndex(item => item.id === updatedItem.id)
-      if (index !== -1) {
-        // Используем Object.assign для реактивного обновления
-        Object.assign(items.value[index], updatedItem)
+    // CRUD Actions
+    const fetchList = async (params?: any) => {
+      loading.value = true
+      error.value = null
+
+      try {
+        const queryParams = {
+          page: params?.page || pagination.value.page,
+          page_size: pagination.value.pageSize,
+          search: params?.search ?? filters.value.search ?? undefined,
+          ordering: params?.ordering ?? filters.value.ordering
+        }
+
+        const query = buildQuery(queryParams)
+        const { data } = await api.get(config.endpoint.list + query)
+
+        items.value = data.results || data
+        pagination.value = {
+          count: data.count || data.length || 0,
+          page: queryParams.page,
+          pageSize: pagination.value.pageSize,
+          next: data.next || null,
+          previous: data.previous || null
+        }
+
+        // Update filters
+        if (params) {
+          Object.assign(filters.value, params)
+        }
+      } catch (err: any) {
+        await handleApiErrorAsync(err, { operation: 'dataLoading' })
+        throw err
+      } finally {
+        loading.value = false
       }
     }
 
-    const addItemToList = (newItem: T) => {
-      items.value.unshift(newItem)
-      pagination.value.count++
+    const fetchOne = async (id: number) => {
+      loading.value = true
+      error.value = null
+
+      try {
+        const { data } = await api.get<T>(config.endpoint.one(id))
+        current.value = data
+
+        // Update in list if exists
+        const index = items.value.findIndex(item => item.id === id)
+        if (index !== -1) {
+          items.value[index] = data
+        }
+
+        return data
+      } catch (err: any) {
+        await handleApiErrorAsync(err, { operation: 'dataLoading' })
+        throw err
+      } finally {
+        loading.value = false
+      }
     }
 
-    const removeItemFromList = (id: number) => {
-      const index = items.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        items.value.splice(index, 1)
+    const create = async (data: C) => {
+      loading.value = true
+      error.value = null
+
+      try {
+        const { data: newItem } = await api.post<T>(config.endpoint.list, data)
+        
+        // Add to list
+        items.value.unshift(newItem)
+        pagination.value.count++
+
+        return newItem
+      } catch (err: any) {
+        await handleApiErrorAsync(err, { operation: 'formValidation' })
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const update = async (id: number, data: U) => {
+      loading.value = true
+      error.value = null
+
+      try {
+        const { data: updatedItem } = await api.patch<T>(config.endpoint.one(id), data)
+        
+        // Update in list
+        const index = items.value.findIndex(item => item.id === id)
+        if (index !== -1) {
+          items.value[index] = updatedItem
+        }
+
+        // Update current if it's the same
+        if (current.value?.id === id) {
+          current.value = updatedItem
+        }
+
+        return updatedItem
+      } catch (err: any) {
+        await handleApiErrorAsync(err, { operation: 'formValidation' })
+        throw err
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const deleteItem = async (id: number) => {
+      loading.value = true
+      error.value = null
+
+      try {
+        await api.delete(config.endpoint.one(id))
+        
+        // Remove from list
+        items.value = items.value.filter(item => item.id !== id)
         pagination.value.count--
+
+        // Clear current if it's the same
+        if (current.value?.id === id) {
+          current.value = null
+        }
+
+        return true
+      } catch (err: any) {
+        await handleApiErrorAsync(err, { operation: 'delete' })
+        throw err
+      } finally {
+        loading.value = false
       }
     }
 
-    // Debounced search
-    let searchTimeout: NodeJS.Timeout | null = null
-    const debouncedSearch = (callback: () => void, delay = 500) => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout)
-      }
-      searchTimeout = setTimeout(callback, delay)
-    }
-
-    // Watchers для автоматического обновления
-    const setupAutoRefresh = (fetchFn: () => Promise<void>) => {
-      // Автоматическое обновление при изменении фильтров
-      watch(
-        () => filters.value,
-        () => {
-          debouncedSearch(() => {
-            pagination.value.page = 1
-            fetchFn()
-          })
-        },
-        { deep: true }
-      )
-    }
-
-    // Кэширование для предотвращения дублирования запросов
-    const cache = new Map<string, { data: any; timestamp: number }>()
-    const CACHE_DURATION = 5 * 60 * 1000 // 5 минут
-
-    const getCachedData = (key: string) => {
-      const cached = cache.get(key)
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        return cached.data
-      }
-      return null
-    }
-
-    const setCachedData = (key: string, data: any) => {
-      cache.set(key, { data, timestamp: Date.now() })
-    }
-
-    const clearCache = () => {
-      cache.clear()
-    }
-
-    // Базовые actions
-    const setLoading = (value: boolean) => {
-      loading.value = value
-    }
-
-    const setError = (errorMessage: string | null) => {
-      error.value = errorMessage
-    }
-
+    // Utility methods
     const setCurrent = (item: T | null) => {
       current.value = item
     }
 
-    const setFilters = (newFilters: Partial<F>) => {
+    const setFilters = (newFilters: Partial<BaseFilters>) => {
       Object.assign(filters.value, newFilters)
     }
 
     const resetFilters = () => {
-      Object.assign(filters.value, defaultFilters)
+      filters.value = {
+        search: '',
+        ordering: 'id'
+      }
     }
 
     const clearError = () => {
@@ -147,7 +222,11 @@ export function createBaseStore<T extends Record<string, any>, F extends BaseFil
 
     const setPageSize = (size: number) => {
       pagination.value.pageSize = size
-      pagination.value.page = 1 // Сбрасываем на первую страницу
+      pagination.value.page = 1
+    }
+
+    const setPage = (page: number) => {
+      pagination.value.page = page
     }
 
     return {
@@ -164,24 +243,24 @@ export function createBaseStore<T extends Record<string, any>, F extends BaseFil
       exists,
       selectOptions,
 
-      // Methods
-      updateItemInList,
-      addItemToList,
-      removeItemFromList,
-      debouncedSearch,
-      setupAutoRefresh,
-      getCachedData,
-      setCachedData,
-      clearCache,
-      setLoading,
-      setError,
+      // CRUD Actions
+      fetchList,
+      fetchOne,
+      create,
+      update,
+      delete: deleteItem,
+
+      // Utility methods
       setCurrent,
       setFilters,
       resetFilters,
       clearError,
-      setPageSize
+      setPageSize,
+      setPage
     }
   })
+  
+  return store()
 }
 
 // Утилиты для работы с реактивностью

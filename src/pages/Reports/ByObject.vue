@@ -164,6 +164,7 @@ import {formatDate, formatCurrency, formatNumber} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createBarChartConfig, getColor, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
+import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
@@ -295,13 +296,13 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 
     switch (format) {
       case 'csv':
-        exportToCSV(formattedData, filename, headers)
+        exportToCSV(formattedData, filename, { headers })
         break
       case 'excel':
-        exportToExcel(formattedData, filename, headers)
+        exportToExcel(formattedData, filename, { headers })
         break
       case 'pdf':
-        exportToPDF(formattedData, filename, headers)
+        exportToPDF(formattedData, filename, { headers })
         break
     }
   } catch (error) {
@@ -309,24 +310,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   }
 }
 
-function exportToCSV(data: any[], filename: string, headers: string[]) {
-  const rows = data.map(item => headers.map(header => item[header] || ''))
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(field => `"${field}"`).join(','))
-    .join('\n')
-
-  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
-}
-
-function exportToExcel(data: any[], filename: string, headers: string[]) {
-  // For now, export as CSV with .xlsx extension
-  exportToCSV(data, filename.replace('.xlsx', ''), headers)
-}
-
-function exportToPDF(data: any[], filename: string, headers: string[]) {
-  // For now, show info message
-  console.log('PDF export not implemented yet')
-}
+// Export functions removed - using centralized useExport composable
 
 function downloadFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType })

@@ -124,7 +124,10 @@ async function refreshAccessToken(): Promise<string | null> {
 // ---- Interceptors -----------------------------------------------------------
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     try {
-        uiStoreSafe()?.start?.()
+        const ui = uiStoreSafe()
+        if (ui && typeof ui.start === 'function') {
+            ui.start()
+        }
     } catch {
         // no-op
     }
@@ -139,7 +142,10 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
     (r) => {
         try {
-            uiStoreSafe()?.done?.()
+            const ui = uiStoreSafe()
+            if (ui && typeof ui.done === 'function') {
+                ui.done()
+            }
         } catch {
             // no-op
         }
@@ -149,7 +155,10 @@ api.interceptors.response.use(
         const {response, config} = error
         try {
             // завершить прогресс и при ошибке
-            uiStoreSafe()?.done?.()
+            const ui = uiStoreSafe()
+            if (ui && typeof ui.done === 'function') {
+                ui.done()
+            }
         } catch {
             // no-op
         }

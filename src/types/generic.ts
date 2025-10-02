@@ -1,0 +1,219 @@
+// Types for GenericList and GenericForm components
+
+export interface ColumnConfig<T = any> {
+  key: string
+  label: string
+  sortable?: boolean
+  component?: any
+  formatter?: (value: any, item: T) => string
+  path?: string // для вложенных свойств типа 'user.name'
+  width?: string
+  align?: 'left' | 'center' | 'right'
+}
+
+export type FilterType = 'text' | 'number' | 'select' | 'date' | 'multiselect' | 'checkbox'
+
+export interface FilterConfig {
+  key: string
+  type: FilterType
+  label: string
+  placeholder?: string
+  options?: Array<{ value: any; label: string }>
+  required?: boolean
+  multiple?: boolean
+  min?: number
+  max?: number
+  step?: number
+}
+
+export interface ActionConfig<T = any> {
+  key: string
+  label: string
+  class?: string
+  icon?: string
+  disabled?: (item: T) => boolean
+  visible?: (item: T) => boolean
+  confirm?: string | ((item: T) => string)
+}
+
+export interface GenericListConfig<T = any> {
+  title: string
+  subtitle?: string
+  icon?: string
+  showCreate?: boolean
+  createText?: string
+  canCreate?: boolean
+  showStats?: boolean
+  exportable?: boolean
+  exportFilename?: string
+  exportUrl?: string // URL для backend экспорта
+  loadingText?: string
+  emptyText?: string
+  emptyTitle?: string
+  emptySubtitle?: string
+  filterColumns?: number
+  columns: ColumnConfig<T>[]
+  filters?: FilterConfig[]
+  actions?: ActionConfig<T>[]
+  mobileCardComponent?: any
+  mobileCardProp?: string
+  defaultSort?: string
+  defaultSortOrder?: 'asc' | 'desc'
+}
+
+// GenericForm types
+export interface FieldConfig {
+  key: string
+  type: 'input' | 'textarea' | 'select' | 'date' | 'number' | 'checkbox' | 'file' | 'multiselect' | 'password' | 'email' | 'text' | 'switch' | 'search' | 'custom'
+  label: string
+  placeholder?: string
+  required?: boolean
+  disabled?: boolean
+  readonly?: boolean
+  multiple?: boolean // for file and multiselect fields
+  options?: Array<{ value: any; label: string }>
+  rows?: number // for textarea
+  step?: number // for number input
+  accept?: string // for file input
+  checkboxLabel?: string // for checkbox fields
+  switchLabel?: string // for switch fields
+  validation?: {
+    min?: number
+    max?: number
+    minLength?: number
+    maxLength?: number
+    pattern?: RegExp
+    step?: number
+    custom?: (value: any) => string | null
+  }
+  help?: string
+  group?: string
+  order?: number
+  width?: 'full' | 'half' | 'third' | 'quarter'
+  condition?: () => boolean // Условие для отображения поля
+}
+
+export interface FormSection {
+  title: string
+  description?: string
+  fields: string[] // field keys
+  order?: number
+}
+
+export interface GenericFormConfig<T = any> {
+  title: string
+  subtitle?: string
+  sections?: FormSection[]
+  fields: FieldConfig[]
+  submitText?: string
+  cancelText?: string
+  showCancel?: boolean
+  validateOnChange?: boolean
+  resetOnSubmit?: boolean
+  mode?: 'create' | 'edit'
+}
+
+export interface FormState<T = any> {
+  data: T
+  errors: Record<string, string>
+  isSubmitting: boolean
+  isDirty: boolean
+  isValid: boolean
+}
+
+// Store types
+export interface BaseStoreState<T = any> {
+  items: T[]
+  current: T | null
+  loading: boolean
+  error: string | null
+  pagination: {
+    count: number
+    page: number
+    pageSize: number
+    next: string | null
+    previous: string | null
+  }
+  filters: Record<string, any>
+}
+
+export interface BaseStoreActions<T = any> {
+  // State
+  items: T[]
+  loading: boolean
+  error: string | null
+  pagination: BaseStoreState<T>['pagination']
+  filters: Record<string, any>
+  
+  // Actions
+  fetchList: (params?: any) => Promise<void>
+  fetchOne: (id: number) => Promise<T | null>
+  create: (data: Partial<T>) => Promise<T>
+  update: (id: number, data: Partial<T>) => Promise<T>
+  delete: (id: number) => Promise<void>
+  setPage: (page: number) => void
+  setPageSize: (size: number) => void
+  setFilters: (filters: Partial<Record<string, any>>) => void
+  resetFilters: () => void
+  setCurrent: (item: T | null) => void
+  clearError: () => void
+}
+
+// Composable types
+export interface UseGenericListOptions<T = any> {
+  store: BaseStoreActions<T>
+  config: GenericListConfig<T>
+  autoFetch?: boolean
+  debounceMs?: number
+}
+
+export interface UseGenericFormOptions<T = any> {
+  initialData?: Partial<T>
+  config: GenericFormConfig<T>
+  onSubmit: (data: T) => Promise<void>
+  onCancel?: () => void
+  validateOnChange?: boolean
+  resetOnSubmit?: boolean
+}
+
+export interface UseGenericListReturn<T = any> {
+  // State
+  items: Ref<T[]>
+  loading: Ref<boolean>
+  error: Ref<string | null>
+  pagination: Ref<BaseStoreState<T>['pagination']>
+  filters: Ref<Record<string, any>>
+  
+  // Actions
+  fetchList: () => Promise<void>
+  handleSort: (key: string) => void
+  handlePageChange: (page: number) => void
+  handlePageSizeChange: (size: number) => void
+  handleResetFilters: () => void
+  handleAction: (action: string, item: T) => void
+  handleExport: (format: 'csv' | 'excel' | 'pdf') => Promise<void>
+}
+
+export interface UseGenericFormReturn<T = any> {
+  // State
+  form: Ref<T>
+  errors: Ref<Record<string, string>>
+  isSubmitting: Ref<boolean>
+  isDirty: Ref<boolean>
+  isValid: Ref<boolean>
+  
+  // Actions
+  submit: () => Promise<void>
+  reset: () => void
+  validate: () => boolean
+  setFieldValue: (key: string, value: any) => void
+  setFieldError: (key: string, error: string) => void
+  clearErrors: () => void
+  getFieldValue: (key: string) => any
+  getFieldError: (key: string) => string | null
+  isFieldTouched: (key: string) => boolean
+  setFormData: (data: Partial<T>) => void
+}
+
+// Import Vue types
+import type { Ref } from 'vue'

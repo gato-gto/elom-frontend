@@ -1,112 +1,24 @@
 <template>
-  <form class="grid gap-4" @submit.prevent="submit">
-
-    <!-- Основная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Основная информация</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Имя -->
-          <FormField
-            v-model="form.first_name"
-            label="Имя"
-            type="input"
-            placeholder="Введите имя"
-            :error="errors.first_name"
-          />
-
-          <!-- Фамилия -->
-          <FormField
-            v-model="form.last_name"
-            label="Фамилия"
-            type="input"
-            placeholder="Введите фамилию"
-            :error="errors.last_name"
-          />
-
-          <!-- Email -->
-          <FormField
-            v-model="form.email"
-            label="Email"
-            type="email"
-            placeholder="Введите email"
-            :error="errors.email"
-          />
-
-          <!-- Username -->
-          <FormField
-            v-model="form.username"
-            label="Имя пользователя"
-            type="input"
-            placeholder="Введите имя пользователя"
-            :error="errors.username"
-            required
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Роль и доступы -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Роль и доступы</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Роль -->
-          <FormField
-            v-model="form.role"
-            label="Роль"
-            type="select"
-            :error="errors.role"
-            placeholder="— выберите роль —"
-            :options="roleOptions"
-            required
-          />
-
-          <!-- Пароль (только для новых сотрудников) -->
-          <FormField
-            v-if="!props.initial"
-            v-model="form.password"
-            label="Пароль"
-            type="password"
-            placeholder="Введите пароль"
-            :error="errors.password"
-            required
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2">
-      <button 
-        type="button" 
-        class="btn btn-outline" 
-        @click="$emit('cancel')"
-        :disabled="loading"
-      >
-        Отмена
-      </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        :disabled="loading"
-      >
-        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
-      </button>
-    </div>
-  </form>
+  <div class="employee-form">
+    <!-- Generic Form -->
+    <GenericForm
+      :config="formConfig"
+      :initial-data="initialFormData"
+      :on-submit="handleSubmit"
+      :on-cancel="handleCancel"
+      :validate-on-change="true"
+      :reset-on-submit="false"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useEmployeesStore } from '@/stores/employees'
-import { useUiStore } from '@/stores/ui'
 import type { Employee, EmployeeRequest } from '@/api/types'
-import FormField from '@/components/FormField.vue'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import type { GenericFormConfig } from '@/types/generic'
+import GenericForm from '@/components/GenericForm.vue'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const props = defineProps<{
   initial?: Employee | null
@@ -117,21 +29,138 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const employeesStore = useEmployeesStore()
-const ui = useUiStore()
+const employeesStore = useEmployeesStore
+const { handleFormError } = useErrorHandler()
 
-const loading = ref(false)
-const errors = reactive<Record<string, string>>({})
+// Form configuration
+const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
+  title: props.initial ? 'Редактировать сотрудника' : 'Новый сотрудник',
+  subtitle: 'Заполните информацию о сотруднике',
+  sections: [
+    {
+      title: 'Основная информация',
+      description: 'Личные данные сотрудника',
+      fields: ['first_name', 'last_name', 'email', 'username'],
+      order: 1
+    },
+    {
+      title: 'Роль и доступы',
+      description: 'Роль и права доступа',
+      fields: ['role', 'password', 'is_active'],
+      order: 2
+    }
+  ],
+  fields: [
+    {
+      key: 'first_name',
+      type: 'input',
+      label: 'Имя',
+      placeholder: 'Введите имя',
+      order: 1,
+      width: 'half',
+      validation: {
+        maxLength: 50
+      }
+    },
+    {
+      key: 'last_name',
+      type: 'input',
+      label: 'Фамилия',
+      placeholder: 'Введите фамилию',
+      order: 2,
+      width: 'half',
+      validation: {
+        maxLength: 50
+      }
+    },
+    {
+      key: 'email',
+      type: 'input',
+      label: 'Email',
+      placeholder: 'Введите email',
+      order: 3,
+      width: 'half',
+      validation: {
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        maxLength: 100
+      }
+    },
+    {
+      key: 'username',
+      type: 'input',
+      label: 'Имя пользователя',
+      placeholder: 'Введите имя пользователя',
+      required: true,
+      order: 4,
+      width: 'half',
+      validation: {
+        minLength: 3,
+        maxLength: 50,
+        pattern: /^[a-zA-Z0-9_]+$/
+      }
+    },
+    {
+      key: 'role',
+      type: 'select',
+      label: 'Роль',
+      placeholder: '— выберите роль —',
+      options: roleOptions,
+      required: true,
+      order: 5,
+      width: 'half'
+    },
+    {
+      key: 'password',
+      type: 'password',
+      label: 'Пароль',
+      placeholder: 'Введите пароль',
+      required: !props.initial,
+      order: 6,
+      width: 'half',
+      validation: props.initial ? {} : {
+        minLength: 6,
+        maxLength: 128
+      }
+    },
+    {
+      key: 'is_active',
+      type: 'checkbox',
+      label: 'Активный сотрудник',
+      order: 7,
+      width: 'full'
+    }
+  ],
+  submitText: props.initial ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена',
+  showCancel: true
+}))
 
-const form = reactive<EmployeeRequest>({
-  first_name: '',
-  last_name: '',
-  email: '',
-  username: '',
-  role: 'buyer',
-  password: undefined
+// Initial form data
+const initialFormData = computed<EmployeeRequest>(() => {
+  if (props.initial) {
+    return {
+      first_name: props.initial.first_name || '',
+      last_name: props.initial.last_name || '',
+      email: props.initial.email || '',
+      username: props.initial.username,
+      role: props.initial.role,
+      password: undefined, // Не загружаем пароль
+      is_active: props.initial.is_active
+    }
+  }
+  
+  return {
+    first_name: '',
+    last_name: '',
+    email: '',
+    username: '',
+    role: 'buyer',
+    password: undefined,
+    is_active: true
+  }
 })
 
+// Role options
 const roleOptions = [
   { value: 'admin', label: 'Администратор' },
   { value: 'director', label: 'Директор' },
@@ -140,53 +169,23 @@ const roleOptions = [
   { value: 'buyer', label: 'Закупщик' }
 ]
 
-function resetForm() {
-    form.first_name = ''
-    form.last_name = ''
-    form.email = ''
-  form.username = ''
-  form.role = 'buyer'
-  form.password = undefined
-  Object.keys(errors).forEach(key => delete errors[key])
-}
-
-function loadInitial() {
-  if (props.initial) {
-    form.first_name = props.initial.first_name
-    form.last_name = props.initial.last_name
-    form.email = props.initial.email
-    form.username = props.initial.username
-    form.role = props.initial.role
-    form.password = undefined // Не загружаем пароль
-  } else {
-    resetForm()
-  }
-}
-
-async function submit() {
-  loading.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
-  
+// Methods
+async function handleSubmit(formData: EmployeeRequest) {
   try {
     if (props.initial) {
-      await employeesStore.update(props.initial.id, form)
+      await employeesStore.update(props.initial.id, formData)
     } else {
-      await employeesStore.create(form)
+      await employeesStore.create(formData)
     }
-    emit('saved')
-  } catch (error: any) {
-    const errorResult = ErrorHandlers.formValidation(error)
     
-    // Устанавливаем ошибки полей
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      errors[field] = errorResult.fieldErrors[field]
-    })
-  } finally {
-    loading.value = false
+    emit('saved')
+  } catch (error) {
+    await handleFormError(error, 'employee')
+    throw error
   }
 }
 
-onMounted(() => {
-  loadInitial()
-})
+function handleCancel() {
+  emit('cancel')
+}
 </script>

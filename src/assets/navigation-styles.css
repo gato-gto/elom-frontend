@@ -3,8 +3,6 @@
 
 /* Основные стили для сайдбара */
 .sidebar {
-  background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
-  /* Fallback for browsers that don't support backdrop-filter */
   background-color: #1e293b;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -13,39 +11,22 @@
 }
 
 :root.dark .sidebar {
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  background-color: #0f172a;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-header {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background-color: #3b82f6;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
 }
 
-.sidebar-header::before {
-  
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
+/* Shimmer animation removed - using solid colors instead of gradients */
 
 .sidebar-logo {
-  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -70,7 +51,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+  background-color: rgba(59, 130, 246, 0.1);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -100,7 +81,7 @@
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background-color: #3b82f6;
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transform: translateX(4px);
@@ -154,15 +135,12 @@
   right: 0;
   bottom: 0;
   height: 2px;
-  background: linear-gradient(90deg, rgba(59,130,246,0.3), rgba(147,51,234,0.3));
+  background-color: rgba(59,130,246,0.3);
   pointer-events: none;
 }
 
 .topbar-title {
-  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1e293b;
   font-weight: 600;
   letter-spacing: 0.005em;
   white-space: nowrap;
@@ -202,7 +180,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-color: rgba(255, 255, 255, 0.2);
   transition: left 0.5s;
 }
 
@@ -212,7 +190,7 @@
 
 /* Стили для аватара пользователя */
 .user-avatar {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background-color: #3b82f6;
   color: white;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
@@ -238,7 +216,7 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background-color: #ef4444;
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
@@ -345,14 +323,11 @@
   }
   
   .topbar::after {
-    background: linear-gradient(90deg, rgba(59,130,246,0.35), rgba(147,51,234,0.35));
+    background-color: rgba(59,130,246,0.35);
   }
   
   .topbar-title {
-    background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #f1f5f9;
   }
   
   .dropdown-menu {
@@ -455,7 +430,7 @@
 /* Стили для разделителей */
 .nav-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-color: rgba(255, 255, 255, 0.2);
   margin: 0.5rem 0;
 }
 
@@ -543,13 +518,10 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 1.5rem;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-:root.dark .list-container {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+:root.dark {
+  background: #121b2c;
 }
 
 .list-content {
@@ -686,4 +658,459 @@
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 1rem;
+}
+
+/* ========================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ SIDEBAR
+   ======================================== */
+
+/* Мобильные устройства - полная ширина sidebar */
+@media (max-width: 1023px) {
+  .sidebar {
+    width: 100vw;
+    max-width: 320px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* Показать sidebar когда drawer открыт */
+  .drawer-open .sidebar {
+    transform: translateX(0);
+  }
+  
+  /* Overlay для мобильных */
+  .drawer-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  
+  /* Адаптация заголовка для мобильных */
+  .sidebar-header {
+    height: 60px;
+    padding: 1rem;
+  }
+  
+  .sidebar-logo {
+    font-size: 1.25rem;
+  }
+  
+  .sidebar-subtitle {
+    font-size: 0.75rem;
+  }
+  
+  /* Адаптация навигации для мобильных */
+  .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 0.5rem;
+  }
+  
+  .nav-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  
+  /* Адаптация пользовательского меню для мобильных */
+  .sidebar .dropdown-content {
+    width: calc(100% - 2rem);
+    margin: 0 1rem 1rem 1rem;
+  }
+  
+  /* Улучшение touch-целей для мобильных */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .btn-square {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+  .sidebar {
+    max-width: 280px;
+  }
+  
+  .sidebar-header {
+    height: 56px;
+    padding: 0.75rem;
+  }
+  
+  .nav-link {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+  }
+  
+  .nav-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* Планшеты - промежуточная адаптация */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar {
+    max-width: 300px;
+  }
+  
+  .sidebar-header {
+    height: 64px;
+  }
+  
+  .nav-link {
+    padding: 0.875rem 1.125rem;
+  }
+}
+
+/* Анимации для мобильных */
+@media (max-width: 1023px) {
+  .sidebar {
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+  }
+  
+  .nav-item {
+    opacity: 0;
+    animation: slideInLeft 0.3s ease-out forwards;
+  }
+  
+  .nav-item:nth-child(1) { animation-delay: 0.1s; }
+  .nav-item:nth-child(2) { animation-delay: 0.15s; }
+  .nav-item:nth-child(3) { animation-delay: 0.2s; }
+  .nav-item:nth-child(4) { animation-delay: 0.25s; }
+  .nav-item:nth-child(5) { animation-delay: 0.3s; }
+  .nav-item:nth-child(6) { animation-delay: 0.35s; }
+  .nav-item:nth-child(7) { animation-delay: 0.4s; }
+  .nav-item:nth-child(8) { animation-delay: 0.45s; }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Улучшения для touch-устройств */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .nav-link:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.98);
+  }
+  
+  .btn:active {
+    transform: scale(0.95);
+  }
+  
+  .icon-btn:active {
+    transform: scale(0.9);
+  }
+}
+
+/* ========================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ ТАБЛИЦ
+   ======================================== */
+
+/* Контейнер для горизонтального скролла таблиц */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Мобильная адаптация таблиц */
+@media (max-width: 768px) {
+  .table-container {
+    margin: 0 -1rem;
+    border-radius: 0;
+  }
+  
+  .modern-table {
+    min-width: 600px; /* Минимальная ширина для горизонтального скролла */
+    font-size: 0.875rem;
+  }
+  
+  .modern-table th,
+  .modern-table td {
+    padding: 0.75rem 0.5rem;
+    white-space: nowrap;
+  }
+  
+  .modern-table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  /* Скрыть менее важные колонки на очень маленьких экранах */
+  .modern-table .hide-mobile {
+    display: none;
+  }
+  
+  /* Адаптация кнопок действий */
+  .modern-table .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: auto;
+  }
+  
+  .modern-table .btn-xs {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+  .modern-table {
+    min-width: 500px;
+    font-size: 0.8rem;
+  }
+  
+  .modern-table th,
+  .modern-table td {
+    padding: 0.5rem 0.375rem;
+  }
+  
+  .modern-table th {
+    font-size: 0.75rem;
+  }
+  
+  /* Скрыть еще больше колонок */
+  .modern-table .hide-small-mobile {
+    display: none;
+  }
+  
+  /* Компактные кнопки */
+  .modern-table .btn {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.7rem;
+  }
+  
+  .modern-table .btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.65rem;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .modern-table {
+    min-width: 700px;
+  }
+  
+  .modern-table th,
+  .modern-table td {
+    padding: 0.875rem 0.75rem;
+  }
+}
+
+/* Улучшения для touch-устройств */
+@media (hover: none) and (pointer: coarse) {
+  .modern-table tbody tr {
+    min-height: 60px; /* Увеличиваем высоту строк для touch */
+  }
+  
+  .modern-table .btn {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .modern-table .btn-xs {
+    min-height: 36px;
+    padding: 0.375rem 0.5rem;
+  }
+}
+
+/* Индикатор горизонтального скролла */
+.table-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.table-container.scrollable::after {
+  opacity: 1;
+}
+
+/* Стили для мобильных карточек (альтернатива таблицам) */
+@media (max-width: 640px) {
+  .mobile-cards {
+    display: block;
+  }
+  
+  .mobile-cards .modern-table {
+    display: none;
+  }
+  
+  .mobile-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+  }
+  
+  .mobile-card-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+  
+  .mobile-card-title {
+    font-weight: 600;
+    color: #374151;
+    flex: 1;
+  }
+  
+  .mobile-card-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .mobile-card-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .mobile-card-field {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobile-card-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+  
+  .mobile-card-value {
+    color: #374151;
+    font-weight: 500;
+  }
+}
+
+:root.dark .mobile-card {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(71, 85, 105, 0.3);
+}
+
+:root.dark .mobile-card-title {
+  color: #e2e8f0;
+}
+
+:root.dark .mobile-card-label {
+  color: #9ca3af;
+}
+
+:root.dark .mobile-card-value {
+  color: #e2e8f0;
+}
+
+/* ========================================
+   СТИЛИ ДЛЯ TOAST УВЕДОМЛЕНИЙ
+   ======================================== */
+
+/* Обеспечиваем максимальный z-index для toast */
+.toast {
+  z-index: 9999 !important;
+}
+
+/* Дополнительные стили для мобильных toast */
+@media (max-width: 768px) {
+  .toast {
+    position: fixed !important;
+    z-index: 9999 !important;
+    /* Увеличиваем размер для мобильных */
+    min-width: 90vw !important;
+    max-width: 90vw !important;
+    margin: 0 5vw !important;
+    font-size: 0.9rem !important;
+    padding: 1rem !important;
+    /* Делаем более заметным */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+    border: 2px solid !important;
+  }
+  
+  .toast .alert {
+    /* Убираем внутренние отступы, так как они уже есть у toast */
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .toast .alert-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+  }
+  
+  .toast .alert-success {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+    color: #059669 !important;
+  }
+  
+  .toast .alert-info {
+    border-color: #3b82f6 !important;
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 480px) {
+  .toast {
+    min-width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 0 2.5vw !important;
+    font-size: 0.85rem !important;
+    padding: 0.8rem !important;
+  }
+}
+
+/* Темная тема для toast */
+:root.dark .toast .alert-error {
+  background-color: #7f1d1d !important;
+  color: #fca5a5 !important;
+  border-color: #dc2626 !important;
+}
+
+:root.dark .toast .alert-success {
+  background-color: #14532d !important;
+  color: #86efac !important;
+  border-color: #10b981 !important;
+}
+
+:root.dark .toast .alert-info {
+  background-color: #1e3a8a !important;
+  color: #93c5fd !important;
+  border-color: #3b82f6 !important;
 }

@@ -1,17 +1,20 @@
-import '@testing-library/jest-dom'
-import { config } from '@vue/test-utils'
-import { createPinia } from 'pinia'
 import { vi } from 'vitest'
+import { config } from '@vue/test-utils'
+import { setActivePinia, createPinia } from 'pinia'
 
-// Mock window.matchMedia
+// Setup Pinia for tests
+const pinia = createPinia()
+setActivePinia(pinia)
+
+// Mock global objects
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -54,71 +57,80 @@ Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock
 })
 
-// Global Pinia instance for tests
-const pinia = createPinia()
-config.global.plugins = [pinia]
+// Mock URL.createObjectURL
+global.URL.createObjectURL = vi.fn(() => 'mock-url')
+global.URL.revokeObjectURL = vi.fn()
 
-// Mock router
+// Mock canvas for PDF generation
+Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+  value: vi.fn(() => 'data:image/png;base64,test')
+})
+
+// Mock window.open for export functions
+Object.defineProperty(window, 'open', {
+  value: vi.fn(() => ({
+    document: {
+      write: vi.fn(),
+      close: vi.fn()
+    },
+    close: vi.fn()
+  }))
+})
+
+// Mock File constructor
+global.File = vi.fn().mockImplementation((content, name, options) => ({
+  name,
+  size: content.length,
+  type: options?.type || 'text/plain',
+  lastModified: Date.now(),
+  content
+}))
+
+// Mock FormData
+global.FormData = vi.fn().mockImplementation(() => ({
+  append: vi.fn(),
+  delete: vi.fn(),
+  get: vi.fn(),
+  getAll: vi.fn(),
+  has: vi.fn(),
+  set: vi.fn(),
+  entries: vi.fn(),
+  keys: vi.fn(),
+  values: vi.fn(),
+}))
+
+// Mock fetch
+global.fetch = vi.fn()
+
+// Mock window.__piniaStores
+Object.defineProperty(window, '__piniaStores', {
+  value: {},
+  writable: true
+})
+
+// Global test configuration
 config.global.mocks = {
-  $router: {
-    push: vi.fn(),
-    replace: vi.fn(),
-    go: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-  },
-  $route: {
-    path: '/',
-    name: 'home',
-    params: {},
-    query: {},
-    hash: '',
-    fullPath: '/',
-    matched: [],
-    meta: {},
-  }
+  $t: (key: string) => key,
+  $tc: (key: string) => key,
+  $te: (key: string) => true,
+  $d: (value: any) => value,
+  $n: (value: any) => value,
 }
 
-// Mock API client
-vi.mock('@/api/client', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-    patch: vi.fn(),
-  }
-}))
+// Global plugins
+config.global.plugins = [pinia]
 
-// Mock endpoints
-vi.mock('@/api/endpoints', () => ({
-  API_PREFIX: '/api/v1',
-  endpoints: {
-    auth: {
-      login: '/api/v1/auth/token/',
-      refresh: '/api/v1/auth/token/refresh/',
-    },
-    users: {
-      me: '/api/v1/users/me/',
-    },
-    materials: {
-      list: '/api/v1/materials/',
-      one: (id: number) => `/api/v1/materials/${id}/`,
-      uploadPhoto: (id: number) => `/api/v1/materials/${id}/upload-photo/`,
-    },
-    purchases: {
-      list: '/api/v1/purchases/',
-      one: (id: number) => `/api/v1/purchases/${id}/`,
-      uploadPhoto: (id: number) => `/api/v1/purchases/${id}/photos/upload/`,
-    }
-  },
-  buildQuery: vi.fn((params) => {
-    const searchParams = new URLSearchParams()
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        searchParams.append(key, String(value))
-      }
-    })
-    return searchParams.toString()
-  })
-}))
+// Mock console methods in tests
+global.console = {
+  ...console,
+  log: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+}
+
+// Mock process.env
+process.env.VITE_API_URL = 'http://localhost:8000/api/v1'
+process.env.VITE_APP_TITLE = 'ELOM'
+process.env.VITE_APP_VERSION = '1.0.0'

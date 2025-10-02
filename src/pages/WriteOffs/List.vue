@@ -1,180 +1,67 @@
 <template>
   <div class="list-container">
-    <!-- Header -->
-    <ListHeader
-      title="Списания"
-      subtitle="Управление списаниями материалов"
-      icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-      :show-create="true"
-      :show-stats="true"
-      :total-count="count"
-      :filtered-count="rows.length"
-      @create="handleCreate"
-    />
-
-    <!-- Filters -->
-    <FilterPanel
-      :columns="4"
-      :loading="loading"
-      @reset="resetFilters"
+    <!-- GenericList Component -->
+    <GenericList
+      :store="writeOffsStore"
+      :config="listConfig"
+      @create="openCreate"
+      @action="handleAction"
+      @export="handleExport"
     >
-      <FilterField
-        v-model="filters.date_from"
-        type="date"
-        label="Дата с"
-      />
-      
-      <FilterField
-        v-model="filters.date_to"
-        type="date"
-        label="Дата по"
-      />
-      
-      <FilterField
-        v-model="filters.object"
-        type="select"
-        label="Объект"
-        :options="objectOptions"
-      />
-      
-      <FilterField
-        v-model="filters.material"
-        type="select"
-        label="Материал"
-        :options="materialOptions"
-      />
-      
-      <FilterField
-        v-model="filters.stage"
-        type="select"
-        label="Этап"
-        :options="stageOptions"
-      />
-      
-      <FilterField
-        v-model="filters.responsible"
-        type="select"
-        label="Ответственный"
-        :options="employeeOptions"
-      />
-    </FilterPanel>
+      <!-- Custom column for object name -->
+      <template #column-object="{ item, value }">
+        <span>{{ objectName(value) ?? value }}</span>
+      </template>
 
-    <!-- Table -->
-    <div class="list-content" :class="{ 'relative': loading }">
-      <!-- Loading Overlay -->
-      <LoadingSpinner 
-        v-if="loading && rows.length === 0"
-        size="lg"
-        variant="primary"
-        text="Загрузка списаний..."
-        :overlay="false"
-      />
-      
-      <!-- Loading Skeleton for existing data -->
-      <div v-if="loading && rows.length > 0" class="loading-overlay">
-        <LoadingSpinner 
-          size="md"
-          variant="primary"
-          text="Обновление данных..."
-          :overlay="true"
-        />
-      </div>
+      <!-- Custom column for material name -->
+      <template #column-material="{ item, value }">
+        <span>{{ materialName(value) ?? value }}</span>
+      </template>
 
-      <table class="modern-table">
-        <thead>
-        <tr>
-          <th @click="handleSort('id')" class="cursor-pointer hover:bg-gray-50">
-            ID
-            <span v-if="sortBy === 'id'" class="ml-1">
-              {{ sortOrder === 'asc' ? '↑' : '↓' }}
-            </span>
-          </th>
-          <th @click="handleSort('date')" class="cursor-pointer hover:bg-gray-50">
-            Дата
-            <span v-if="sortBy === 'date'" class="ml-1">
-              {{ sortOrder === 'asc' ? '↑' : '↓' }}
-            </span>
-          </th>
-          <th>Объект</th>
-          <th>Материал</th>
-          <th class="text-right">Количество</th>
-          <th>Этап</th>
-          <th class="text-right">Остаток</th>
-          <th>Ответственный</th>
-          <th class="text-right">Действия</th>
-        </tr>
-        </thead>
-        
-        <!-- Skeleton Loading -->
-        <TableSkeleton 
-          v-if="loading && rows.length === 0"
-          :rows="pageSize"
-          :columns="9"
-        />
-        
-        <!-- Actual Data -->
-        <tbody v-else>
-        <tr v-for="w in rows" :key="w.id" class="table-row">
-          <td>{{ w.id }}</td>
-          <td>{{ formatDate(w.date) }}</td>
-          <td>{{ objectName(w.object) ?? w.object }}</td>
-          <td>{{ materialName(w.material) ?? w.material }}</td>
-          <td class="text-right">
-            <SmartUnitValue 
-              v-if="w.smart_quantity" 
-              :smart-quantity="w.smart_quantity" 
-              :show-original="true"
-              class-name="font-mono text-sm text-red-600"
-            />
-            <span v-else class="font-mono text-sm text-red-600">
-              {{ w.quantity }} {{ w.unit_code }}
-            </span>
-          </td>
-          <td>
-            <span class="badge badge-outline badge-xs">
-              {{ getStageDisplayName(w.stage) }}
-            </span>
-          </td>
-          <td class="text-right">
-            <span class="font-mono text-sm text-gray-600">
-              {{ w.current_balance }} {{ w.unit_code }}
-            </span>
-          </td>
-          <td>{{ responsibleName(w.responsible) ?? '—' }}</td>
-          <td class="text-right">
-            <div class="flex gap-1 justify-end">
-              <span v-if="w.validation_warnings.length > 0" class="badge badge-warning badge-xs">
-                {{ w.validation_warnings.length }} предупреждений
-              </span>
-              <button class="btn btn-xs btn-outline" @click="openEditModal(w)">
-                Редактировать
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!loading && rows.length === 0">
-            <td colspan="9" class="text-center text-gray-500 py-8">
-              <div class="flex flex-col items-center gap-2">
-                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-sm">Нет списаний</span>
-              </div>
-            </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+      <!-- Custom column for quantity with SmartUnitValue -->
+      <template #column-quantity="{ item, value }">
+        <div class="text-right">
+          <SmartUnitValue 
+            v-if="item.smart_quantity" 
+            :smart-quantity="item.smart_quantity" 
+            :show-original="true"
+            class-name="font-mono text-sm text-red-600"
+          />
+          <span v-else class="font-mono text-sm text-red-600">
+            {{ value }} {{ item.unit_code }}
+          </span>
+        </div>
+      </template>
 
-    <!-- Pagination -->
-    <ModernPagination
-      :current-page="page"
-      :total-pages="Math.ceil(count / pageSize)"
-      :total-items="count"
-      :page-size="pageSize"
-      @page-change="handlePageChange"
-      @page-size-change="handlePageSizeChange"
-    />
+      <!-- Custom column for stage -->
+      <template #column-stage="{ item, value }">
+        <span class="badge badge-outline badge-xs">
+          {{ getStageDisplayName(value) }}
+        </span>
+      </template>
+
+      <!-- Custom column for current balance -->
+      <template #column-current_balance="{ item, value }">
+        <div class="text-right">
+          <span class="font-mono text-sm text-gray-600">
+            {{ value }} {{ item.unit_code }}
+          </span>
+        </div>
+      </template>
+
+      <!-- Custom column for responsible -->
+      <template #column-responsible="{ item, value }">
+        <span>{{ responsibleName(value) ?? '—' }}</span>
+      </template>
+
+      <!-- Custom column for validation warnings -->
+      <template #column-validation_warnings="{ item, value }">
+        <span v-if="value && value.length > 0" class="badge badge-warning badge-xs">
+          {{ value.length }} предупреждений
+        </span>
+        <span v-else class="text-gray-400">—</span>
+      </template>
+    </GenericList>
 
     <!-- Modal for creating/editing write-off -->
     <Modal v-model="modalOpen" :title="modalTitle" size="4xl" :closable="true">
@@ -188,40 +75,30 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import type { WriteOff, SiteObject, Material, Employee } from '@/api/types'
+import type { GenericListConfig } from '@/types/generic'
+import { formatDate } from '@/utils/formatters'
+import { useErrorHandler } from '@/composables/useErrorHandler'
+import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useWriteOffsStore } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
-import type {WriteOff, WriteOffFilterParams, SiteObject, Material, Employee} from '@/api/types'
-import {formatDate} from '@/utils/formatters'
-import {debounce} from '@/utils/debounce'
-import ListHeader from '@/components/ListHeader.vue'
-import FilterPanel from '@/components/FilterPanel.vue'
 import Modal from '@/components/Modal.vue'
 import WriteOffForm from './WriteOffForm.vue'
-import FilterField from '@/components/FilterField.vue'
-import ModernPagination from '@/components/ModernPagination.vue'
+import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import TableSkeleton from '@/components/TableSkeleton.vue'
-
-const router = useRouter()
+import WriteOffCard from '@/components/cards/WriteOffCard.vue'
 
 // Stores
-const writeOffsStore = useWriteOffsStore()
-const objectsStore = useObjectsStore()
+const writeOffsStore = useWriteOffsStore
+const objectsStore = useObjectsStore
 const materialsStore = useMaterialsStore()
-const employeesStore = useEmployeesStore()
+const employeesStore = useEmployeesStore
 
-// Computed из stores
-const rows = computed(() => writeOffsStore.rows)
-const count = computed(() => writeOffsStore.count)
-const page = computed(() => writeOffsStore.page)
-const pageSize = computed(() => writeOffsStore.pageSize)
-const loading = computed(() => writeOffsStore.loading)
-const filters = computed(() => writeOffsStore.filters)
+// Error handling
+const { handleLoadingError } = useErrorHandler()
 
 // Modal state
 const modalOpen = ref(false)
@@ -232,45 +109,24 @@ const modalTitle = computed(() => {
   return editingWriteOff.value ? 'Редактировать списание' : 'Новое списание'
 })
 
-// Debounced функция для поиска
-const debouncedSearch = debounce(() => {
-  writeOffsStore.fetchList()
-}, 500)
-
-// Sorting
-const sortBy = ref('')
-const sortOrder = ref<'asc' | 'desc'>('asc')
-
-function handleSort(key: string) {
-  if (sortBy.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortBy.value = key
-    sortOrder.value = 'asc'
-  }
-  
-  const ordering = sortOrder.value === 'desc' ? `-${key}` : key
-  writeOffsStore.setFilters({ ordering })
-}
-
 // Computed для справочников
 const objects = computed(() => objectsStore.items)
 const materials = computed(() => materialsStore.items)
 const employees = computed(() => employeesStore.items)
 
-// Computed options for filters
+// Filter options
 const objectOptions = computed(() => [
-  { value: undefined, label: 'Все' },
+  { value: '', label: 'Все объекты' },
   ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
 ])
 
 const materialOptions = computed(() => [
-  { value: undefined, label: 'Все' },
+  { value: '', label: 'Все материалы' },
   ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
 const employeeOptions = computed(() => [
-  { value: undefined, label: 'Все' },
+  { value: '', label: 'Все ответственные' },
   ...employees.value.map((e: Employee) => ({ 
     value: e.id, 
     label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
@@ -278,7 +134,7 @@ const employeeOptions = computed(() => [
 ])
 
 const stageOptions = computed(() => [
-  { value: undefined, label: 'Все' },
+  { value: '', label: 'Все этапы' },
   { value: 'acceptance', label: 'Приемка' },
   { value: 'request', label: 'Заявка' },
   { value: 'delivery_fixed', label: 'Доставка' },
@@ -286,10 +142,12 @@ const stageOptions = computed(() => [
   { value: 'handover', label: 'Сдача' }
 ])
 
+// Maps for name lookups
 const oMap = computed(() => new Map(objects.value.map((o: SiteObject) => [o.id, o.name])))
 const mMap = computed(() => new Map(materials.value.map((m: Material) => [m.id, m.name])))
 const eMap = computed(() => new Map(employees.value.map((e: Employee) => [e.id, `${e.first_name || e.username}${e.last_name ? ' ' + e.last_name : ''}`])))
 
+// Helper functions
 function objectName(id?: number) {
   return id ? oMap.value.get(id) : undefined
 }
@@ -313,28 +171,90 @@ function getStageDisplayName(stage: string) {
   return stageNames[stage] || stage
 }
 
-async function loadRefs() {
-  await Promise.all([
-    objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
-    materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
-    employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any)
-  ])
-}
+// GenericList configuration
+const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
+  title: 'Списания',
+  subtitle: 'Управление списаниями материалов',
+  icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  showCreate: true,
+  createText: 'Новое списание',
+  canCreate: true,
+  showStats: true,
+  exportable: true,
+  exportFilename: 'writeoffs',
+  exportUrl: '/api/v1/stock/writeoffs/',
+  loadingText: 'Загрузка списаний...',
+  emptyText: 'Нет списаний',
+  emptyTitle: 'Нет списаний',
+  emptySubtitle: 'Создайте первое списание для начала работы',
+  filterColumns: 4,
+  columns: [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
+    { key: 'object', label: 'Объект', sortable: true },
+    { key: 'material', label: 'Материал', sortable: true },
+    { key: 'quantity', label: 'Количество', sortable: true },
+    { key: 'stage', label: 'Этап', sortable: true },
+    { key: 'current_balance', label: 'Остаток', sortable: true },
+    { key: 'responsible', label: 'Ответственный', sortable: true },
+    { key: 'validation_warnings', label: 'Предупреждения', sortable: false }
+  ],
+  filters: [
+    {
+      key: 'date_from',
+      type: 'date',
+      label: 'Дата с'
+    },
+    {
+      key: 'date_to',
+      type: 'date',
+      label: 'Дата по'
+    },
+    {
+      key: 'object',
+      type: 'select',
+      label: 'Объект',
+      options: objectOptions.value
+    },
+    {
+      key: 'material',
+      type: 'select',
+      label: 'Материал',
+      options: materialOptions.value
+    },
+    {
+      key: 'stage',
+      type: 'select',
+      label: 'Этап',
+      options: stageOptions.value
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      options: employeeOptions.value
+    }
+  ],
+  actions: [
+    {
+      key: 'edit',
+      label: 'Редактировать',
+      class: 'btn-outline'
+    }
+  ],
+  mobileCardComponent: WriteOffCard,
+  mobileCardProp: 'writeOff',
+  defaultSort: 'date',
+  defaultSortOrder: 'desc'
+}))
 
-function reload(p = page.value) {
-  writeOffsStore.setPage(p)
-}
-
-function resetFilters() {
-  writeOffsStore.resetFilters()
-}
-
-function handleCreate() {
+// Methods
+function openCreate() {
   editingWriteOff.value = null
   modalOpen.value = true
 }
 
-function openEditModal(writeOff: WriteOff) {
+function openEdit(writeOff: WriteOff) {
   editingWriteOff.value = writeOff
   modalOpen.value = true
 }
@@ -342,30 +262,50 @@ function openEditModal(writeOff: WriteOff) {
 function onWriteOffSaved() {
   modalOpen.value = false
   editingWriteOff.value = null
-  // Reload the list to show the updated write-off
   writeOffsStore.fetchList()
 }
 
-// Watcher для автоматического поиска при изменении фильтров
-watch(
-  () => filters.value,
-  () => {
-    debouncedSearch()
-  },
-  { deep: true }
-)
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = writeOffsStore.items
+    const filename = `writeoffs_${new Date().toISOString().split('T')[0]}`
 
-function handlePageChange(newPage: number) {
-  writeOffsStore.setPage(newPage)
+    switch (format) {
+      case 'csv':
+        exportToCSV(data, filename)
+        break
+      case 'excel':
+        exportToExcel(data, filename)
+        break
+      case 'pdf':
+        exportToPDF(data, filename)
+        break
+    }
+  } catch (error) {
+    await handleLoadingError(error, 'writeoffs')
+  }
 }
 
-function handlePageSizeChange(newSize: number) {
-  writeOffsStore.setPageSize(newSize)
+async function handleAction(action: string, item: WriteOff) {
+  switch (action) {
+    case 'edit':
+      openEdit(item)
+      break
+  }
 }
 
+// Lifecycle
 onMounted(async () => {
-  await loadRefs()
-  await writeOffsStore.fetchList()
+  try {
+    await Promise.all([
+      writeOffsStore.fetchList(),
+      objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
+      materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
+      employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any)
+    ])
+  } catch (error) {
+    await handleLoadingError(error, 'writeoffs')
+  }
 })
 </script>
 

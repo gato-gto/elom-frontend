@@ -14,7 +14,7 @@
       <li>
         <button 
           class="flex items-center"
-          @click="exportToCSV"
+          @click="handleExportCSV"
           :disabled="loading"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +27,7 @@
       <li>
         <button 
           class="flex items-center"
-          @click="exportToExcel"
+          @click="handleExportExcel"
           :disabled="loading"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
       <li>
         <button 
           class="flex items-center"
-          @click="exportToPDF"
+          @click="handleExportPDF"
           :disabled="loading"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,15 +69,15 @@ const emit = defineEmits<{
   (e: 'export', format: 'csv' | 'excel' | 'pdf'): void
 }>()
 
-function exportToCSV() {
+function handleExportCSV() {
   emit('export', 'csv')
 }
 
-function exportToExcel() {
+function handleExportExcel() {
   emit('export', 'excel')
 }
 
-function exportToPDF() {
+function handleExportPDF() {
   emit('export', 'pdf')
 }
 </script>

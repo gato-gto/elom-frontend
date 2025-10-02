@@ -75,6 +75,12 @@ export const endpoints = {
         },
     },
 
+    // Suppliers endpoints
+    suppliers: {
+        list: join('/suppliers/'),
+        one: (id: number) => join(`/suppliers/${id}/`),
+    },
+
     // Stock Snapshots endpoints
     stockSnapshots: {
         list: join('/stock/snapshots/'),

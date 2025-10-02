@@ -142,11 +142,11 @@ if (!window.Promise) {
 
 // Полифилл для fetch API (IE не поддерживает)
 if (!window.fetch) {
-  window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+  window.fetch = function(input: any, init?: any) {
     const url = typeof input === 'string' ? input : input.toString();
     const options = init || {};
     return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+      const xhr = new (window as any).XMLHttpRequest();
       xhr.open(options.method || 'GET', url);
       
       // Устанавливаем заголовки
@@ -172,7 +172,7 @@ if (!window.fetch) {
         reject(new Error('Network error'));
       };
       
-      xhr.send(options.body as XMLHttpRequestBodyInit);
+      xhr.send(options.body as any);
     });
   };
 }

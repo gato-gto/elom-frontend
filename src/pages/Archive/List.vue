@@ -1,137 +1,46 @@
 <template>
   <div class="list-container">
-    <!-- Header -->
-    <ListHeader
-      title="Архив периодов"
-      subtitle="Управление закрытыми периодами по объектам"
-      icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      :show-create="true"
-      create-text="Закрыть период"
-      :can-create="true"
-      :loading="loading"
-      :show-stats="true"
-      :total-count="count"
-      :filtered-count="rows.length"
+    <!-- GenericList Component -->
+    <GenericList
+      :store="archiveStore"
+      :config="listConfig"
       @create="openCloseModal"
-    />
-
-    <!-- Filters -->
-    <FilterPanel
-      :columns="2"
-      :loading="loading"
-      @reset="resetFilters"
+      @action="handleAction"
+      @export="handleExport"
     >
-      <FilterField
-        v-model="month"
-        type="month"
-        label="Месяц"
-      />
-      
-      <FilterField
-        v-model="objectId"
-        type="select"
-        label="Объект"
-        :options="objectOptions"
-      />
-    </FilterPanel>
+      <!-- Custom column for object name -->
+      <template #column-object_name="{ item, value }">
+        <span>{{ value ?? item.object }}</span>
+      </template>
 
-    <!-- Table -->
-    <div class="list-content" :class="{ 'relative': loading }">
-      <!-- Loading Overlay -->
-      <LoadingSpinner 
-        v-if="loading && rows.length === 0"
-        size="lg"
-        variant="primary"
-        text="Загрузка архива..."
-        :overlay="false"
-      />
-      
-      <!-- Loading Skeleton for existing data -->
-      <div v-if="loading && rows.length > 0" class="loading-overlay">
-        <LoadingSpinner 
-          size="md"
-          variant="primary"
-          text="Обновление данных..."
-          :overlay="true"
-        />
-      </div>
+      <!-- Custom column for closed_at -->
+      <template #column-closed_at="{ item, value }">
+        <span>{{ formatDateTime(value) }}</span>
+      </template>
 
-      <table class="modern-table">
-        <thead>
-          <tr>
-            <th @click="handleSort('id')" class="cursor-pointer hover:bg-gray-50">
-              ID
-              <span v-if="sortBy === 'id'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th @click="handleSort('month')" class="cursor-pointer hover:bg-gray-50">
-              Месяц
-              <span v-if="sortBy === 'month'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th>Объект</th>
-            <th>Закрыто</th>
-            <th>Кем закрыто</th>
-            <th>Статус</th>
-            <th class="text-right">Действия</th>
-          </tr>
-        </thead>
-        
-        <!-- Skeleton Loading -->
-        <TableSkeleton 
-          v-if="loading && rows.length === 0"
-          :rows="pageSize"
-          :columns="7"
-        />
-        
-        <!-- Actual Data -->
-        <tbody v-else>
-          <tr v-for="p in rows" :key="p.id" class="table-row">
-            <td>{{ p.id }}</td>
-            <td>{{ p.month }}</td>
-            <td>{{ p.object_name ?? p.object }}</td>
-            <td>{{ formatDateTime(p.closed_at) }}</td>
-            <td>{{ p.closed_by_name ?? '—' }}</td>
-            <td>
-              <span class="badge" :class="getStatusClass(p.is_closed)">
-                {{ getStatusText(p.is_closed) }}
-              </span>
-            </td>
-            <td class="text-right">
-              <button
-                class="btn btn-xs btn-warning"
-                :disabled="busyId===p.id || !p.is_closed"
-                @click="reopen(p)"
-              >
-                Открыть
-              </button>
-            </td>
-          </tr>
-          <tr v-if="!loading && rows.length === 0">
-            <td colspan="7" class="text-center text-gray-500 py-8">
-              <div class="flex flex-col items-center gap-2">
-                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V8zM5 8a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V8z" />
-                </svg>
-                <span class="text-sm">Нет архивных записей</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <!-- Custom column for closed_by_name -->
+      <template #column-closed_by_name="{ item, value }">
+        <span>{{ value ?? '—' }}</span>
+      </template>
 
-    <!-- Pagination -->
-    <ModernPagination
-      :current-page="page"
-      :total-pages="Math.ceil(count / pageSize)"
-      :total-items="count"
-      :page-size="pageSize"
-      @page-change="handlePageChange"
-      @page-size-change="handlePageSizeChange"
-    />
+      <!-- Custom column for is_closed status -->
+      <template #column-is_closed="{ item, value }">
+        <span class="badge" :class="getStatusClass(value)">
+          {{ getStatusText(value) }}
+        </span>
+      </template>
+
+      <!-- Custom column for reopen action -->
+      <template #column-actions="{ item }">
+        <button
+          class="btn btn-xs btn-warning"
+          :disabled="busyId === item.id || !item.is_closed"
+          @click="reopen(item)"
+        >
+          Открыть
+        </button>
+      </template>
+    </GenericList>
 
     <!-- Модалка закрытия периода -->
     <dialog ref="dlg" class="modal">
@@ -195,9 +104,9 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, onMounted, watch} from 'vue'
+import { computed, ref, onMounted, reactive } from 'vue'
 import api from '@/api/client'
-import endpoints, {buildQuery} from '@/api/endpoints'
+import endpoints, { buildQuery } from '@/api/endpoints'
 import type {
   PageResponse,
   ArchivePeriod,
@@ -205,88 +114,141 @@ import type {
   ArchiveListQuery,
   SiteObject,
 } from '@/api/types'
-import {formatDateTime, getStatusClass, getStatusText} from '@/utils/formatters'
-import {debounce} from '@/utils/debounce'
-import ListHeader from '@/components/ListHeader.vue'
-import FilterPanel from '@/components/FilterPanel.vue'
-import FilterField from '@/components/FilterField.vue'
-import ModernPagination from '@/components/ModernPagination.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import TableSkeleton from '@/components/TableSkeleton.vue'
+import type { GenericListConfig } from '@/types/generic'
+import { formatDateTime, getStatusClass, getStatusText } from '@/utils/formatters'
+import { useErrorHandler } from '@/composables/useErrorHandler'
+import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
+import GenericList from '@/components/GenericList.vue'
 
 type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
 
+// Error handling
+const { handleLoadingError } = useErrorHandler()
+
+// State
 const rows = ref<ArchivePeriod[]>([])
 const count = ref(0)
 const page = ref(1)
 const pageSize = ref(20)
 const loading = ref(false)
-
-// Debounced функция для поиска
-const debouncedSearch = debounce(() => {
-  reload(1)
-}, 500)
-
-// Sorting
-const sortBy = ref('')
-const sortOrder = ref<'asc' | 'desc'>('asc')
-
-function handleSort(key: string) {
-  if (sortBy.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortBy.value = key
-    sortOrder.value = 'asc'
-  }
-  
-  const ordering = sortOrder.value === 'desc' ? `-${key}` : key
-  // Archive doesn't have ordering in current implementation, but we can add it to API call
-  reload(1)
-}
 const busyId = ref<number | null>(null)
 
-const month = ref<string | undefined>(new Date().toISOString().slice(0, 7)) // YYYY-MM
-const objectId = ref<number | undefined>()
+// Filters
+const filters = reactive({
+  month: new Date().toISOString().slice(0, 7), // YYYY-MM
+  object: undefined as number | undefined
+})
+
 const objects = ref<SiteObject[]>([])
 
-// Computed options for filters
+// Store-like interface for GenericList
+const archiveStore = {
+  items: rows,
+  loading,
+  error: ref<string | null>(null),
+  pagination: computed(() => ({
+    count: count.value,
+    page: page.value,
+    pageSize: pageSize.value,
+    next: null,
+    previous: null
+  })),
+  filters,
+  fetchList: async () => {
+    loading.value = true
+    try {
+      const q: ArchiveListQuery & { page: number; page_size: number } = {
+        page: page.value,
+        page_size: pageSize.value,
+        month: filters.month,
+        object: filters.object,
+      }
+      const { data } = await api.get<PageResponse<ArchivePeriod>>(endpoints.archive.periods.list + buildQuery(q as unknown as Query))
+      rows.value = data.results
+      count.value = data.count
+    } catch (error) {
+      await handleLoadingError(error, 'archive')
+    } finally {
+      loading.value = false
+    }
+  },
+  setPage: (newPage: number) => {
+    page.value = newPage
+  },
+  setPageSize: async (newSize: number) => {
+    pageSize.value = newSize
+    page.value = 1
+  },
+  setFilters: (newFilters: Partial<typeof filters>) => {
+    Object.assign(filters, newFilters)
+    page.value = 1
+  },
+  resetFilters: () => {
+    filters.month = new Date().toISOString().slice(0, 7)
+    filters.object = undefined
+    page.value = 1
+  },
+  clearError: () => {
+    // No error handling in this component
+  }
+}
+
+// Filter options
 const objectOptions = computed(() => [
-  { value: undefined, label: 'Все' },
+  { value: '', label: 'Все объекты' },
   ...objects.value.map(o => ({ value: o.id, label: o.name }))
 ])
 
-async function loadRefs() {
-  const {data} = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'}))
-  objects.value = data.results
-}
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const q: ArchiveListQuery & { page: number; page_size: number } = {
-      page: page.value,
-      page_size: pageSize.value,
-      month: month.value,
-      object: objectId.value,
+// GenericList configuration
+const listConfig = computed<GenericListConfig<ArchivePeriod>>(() => ({
+  title: 'Архив периодов',
+  subtitle: 'Управление закрытыми периодами по объектам',
+  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  showCreate: true,
+  createText: 'Закрыть период',
+  canCreate: true,
+  showStats: true,
+  exportable: true,
+  exportFilename: 'archive',
+  exportUrl: '/api/v1/stock/archive/periods/',
+  loadingText: 'Загрузка архива...',
+  emptyText: 'Нет архивных записей',
+  emptyTitle: 'Нет архивных записей',
+  emptySubtitle: 'Закройте первый период для начала работы',
+  filterColumns: 2,
+  columns: [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'month', label: 'Месяц', sortable: true },
+    { key: 'object_name', label: 'Объект', sortable: true },
+    { key: 'closed_at', label: 'Закрыто', sortable: true },
+    { key: 'closed_by_name', label: 'Кем закрыто', sortable: true },
+    { key: 'is_closed', label: 'Статус', sortable: true },
+    { key: 'actions', label: 'Действия', sortable: false }
+  ],
+  filters: [
+    {
+      key: 'month',
+      type: 'date',
+      label: 'Месяц'
+    },
+    {
+      key: 'object',
+      type: 'select',
+      label: 'Объект',
+      options: objectOptions.value
     }
-    const {data} = await api.get<PageResponse<ArchivePeriod>>(endpoints.archive.periods.list + buildQuery(q as unknown as Query))
-    rows.value = data.results
-    count.value = data.count
-  } finally {
-    loading.value = false
-  }
-}
-
-function reload(p = page.value) {
-  page.value = p;
-  fetchList()
-}
-
-function resetFilters() {
-  month.value = new Date().toISOString().slice(0, 7)
-  objectId.value = undefined
-  reload(1)
-}
+  ],
+  actions: [
+    {
+      key: 'reopen',
+      label: 'Открыть',
+      class: 'btn-warning',
+      disabled: (item: ArchivePeriod) => !item.is_closed
+    }
+  ],
+  defaultSort: 'month',
+  defaultSortOrder: 'desc'
+}))
 
 // --- Закрытие/открытие периодов ---
 const dlg = ref<HTMLDialogElement | null>(null)
@@ -296,8 +258,8 @@ const closing = ref(false)
 const canClose = computed(() => !!closeMonth.value && !!closeObjectId.value)
 
 function openCloseModal() {
-  closeMonth.value = month.value ?? new Date().toISOString().slice(0, 7)
-  closeObjectId.value = objectId.value
+  closeMonth.value = filters.month ?? new Date().toISOString().slice(0, 7)
+  closeObjectId.value = filters.object
   dlg.value?.showModal()
 }
 
@@ -309,10 +271,12 @@ async function closePeriod() {
   if (!canClose.value) { return }
   closing.value = true
   try {
-    const payload: ArchivePeriodRequest = {month: closeMonth.value!, object: closeObjectId.value!}
+    const payload: ArchivePeriodRequest = { month: closeMonth.value!, object: closeObjectId.value! }
     await api.post(endpoints.archive.close, payload)
     closeDialog()
-    await fetchList()
+    await archiveStore.fetchList()
+  } catch (error) {
+    await handleLoadingError(error, 'archive')
   } finally {
     closing.value = false
   }
@@ -323,38 +287,56 @@ async function reopen(p: ArchivePeriod) {
   if (!confirm(`Открыть период ${p.month} по объекту "${p.object_name ?? p.object}"?`)) { return }
   busyId.value = p.id
   try {
-    // По спецификации ReopenRequest = {month, object}
-    await api.post(endpoints.archive.reopen, {month: p.month, object: p.object})
-    await fetchList()
+    await api.post(endpoints.archive.reopen, { month: p.month, object: p.object })
+    await archiveStore.fetchList()
+  } catch (error) {
+    await handleLoadingError(error, 'archive')
   } finally {
     busyId.value = null
   }
 }
 
-// Watcher для автоматического поиска при изменении фильтров
-watch(
-  () => [month.value, objectId.value],
-  () => {
-    page.value = 1
-    debouncedSearch()
-  },
-  { deep: true }
-)
+async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+  try {
+    const data = rows.value
+    const filename = `archive_${new Date().toISOString().split('T')[0]}`
 
-function handlePageChange(newPage: number) {
-  page.value = newPage
-  fetchList()
+    switch (format) {
+      case 'csv':
+        exportToCSV(data, filename)
+        break
+      case 'excel':
+        exportToExcel(data, filename)
+        break
+      case 'pdf':
+        exportToPDF(data, filename)
+        break
+    }
+  } catch (error) {
+    await handleLoadingError(error, 'archive')
+  }
 }
 
-function handlePageSizeChange(newSize: number) {
-  pageSize.value = newSize
-  page.value = 1
-  fetchList()
+function handleAction(action: string, item: ArchivePeriod) {
+  switch (action) {
+    case 'reopen':
+      reopen(item)
+      break
+  }
+}
+
+async function loadRefs() {
+  try {
+    const { data } = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({ page_size: 1000, ordering: 'name' }))
+    objects.value = data.results
+  } catch (error) {
+    await handleLoadingError(error, 'objects')
+  }
 }
 
 onMounted(async () => {
   await loadRefs()
-  await fetchList()
+  await archiveStore.fetchList()
 })
 </script>
 

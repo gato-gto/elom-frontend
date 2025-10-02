@@ -25,11 +25,17 @@ import { useThemeStore } from '@/stores/theme'
 const themeStore = useThemeStore()
 themeStore.initTheme()
 
-// Важно: инициализируем auth до старта роутера
+// Важно: инициализируем stores до старта роутера
 import {useAuthStore} from '@/stores/auth'
+import {useUiStore} from '@/stores/ui'
 
 const auth = useAuthStore()
-auth.tryHydrate?.()
+const ui = useUiStore()
+
+// Регистрируем stores для доступа из API клиента
+if (!window.__piniaStores) window.__piniaStores = {}
+window.__piniaStores.auth = { useAuthStore }
+window.__piniaStores.ui = { useUiStore }
 
 app.use(router)
 app.mount('#app')

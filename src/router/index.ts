@@ -1,69 +1,71 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import type { UserRole } from '@/api/types/common'
+import type { RouteMeta } from '@/types/router'
 
-// Lazy load components
-const Login = () => import('@/pages/Login.vue')
-const Dashboard = () => import('@/pages/Dashboard.vue')
+// Lazy load components with webpack chunk names for better caching
+const Login = () => import(/* webpackChunkName: "auth" */ '@/pages/Login.vue')
 
 // Materials
-const MaterialsList = () => import('@/pages/Materials/List.vue')
-const MaterialForm = () => import('@/pages/Materials/MaterialForm.vue')
+const MaterialsList = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/List.vue')
+const MaterialForm = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/MaterialForm.vue')
 
 // Purchases
-const PurchasesList = () => import('@/pages/Purchases/List.vue')
-const PurchaseForm = () => import('@/pages/Purchases/PurchaseForm.vue')
+const PurchasesList = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/List.vue')
+const PurchaseForm = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/PurchaseForm.vue')
 
 // Objects
-const ObjectsList = () => import('@/pages/Objects/List.vue')
-const ObjectForm = () => import('@/pages/Objects/ObjectForm.vue')
+const ObjectsList = () => import(/* webpackChunkName: "objects" */ '@/pages/Objects/List.vue')
+const ObjectForm = () => import(/* webpackChunkName: "objects" */ '@/pages/Objects/ObjectForm.vue')
 
 // Units
-const UnitsList = () => import('@/pages/Units/List.vue')
-const UnitForm = () => import('@/pages/Units/UnitForm.vue')
+const UnitsList = () => import(/* webpackChunkName: "units" */ '@/pages/Units/List.vue')
+const UnitForm = () => import(/* webpackChunkName: "units" */ '@/pages/Units/UnitForm.vue')
 
 // Employees
-const EmployeesList = () => import('@/pages/Employees/List.vue')
-const EmployeeForm = () => import('@/pages/Employees/EmployeeForm.vue')
+const EmployeesList = () => import(/* webpackChunkName: "employees" */ '@/pages/Employees/List.vue')
+const EmployeeForm = () => import(/* webpackChunkName: "employees" */ '@/pages/Employees/EmployeeForm.vue')
 
 // Stocks
-const StocksList = () => import('@/pages/Stocks/List.vue')
-const StockSnapshotForm = () => import('@/pages/Stocks/StockSnapshotForm.vue')
+const StocksList = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/List.vue')
+const StockForm = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/StockForm.vue')
+const StockEdit = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/Edit.vue')
 
 // WriteOffs
-const WriteOffsList = () => import('@/pages/WriteOffs/List.vue')
-const WriteOffForm = () => import('@/pages/WriteOffs/WriteOffForm.vue')
+const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
+const WriteOffForm = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/WriteOffForm.vue')
 
 // Archive
-const ArchiveList = () => import('@/pages/Archive/List.vue')
+const ArchiveList = () => import(/* webpackChunkName: "archive" */ '@/pages/Archive/List.vue')
 
 // Reports
-const ReportByPeriod = () => import('@/pages/Reports/ByPeriod.vue')
-const ReportByObject = () => import('@/pages/Reports/ByObject.vue')
-const ReportByMaterial = () => import('@/pages/Reports/ByMaterial.vue')
-const ReportByResponsible = () => import('@/pages/Reports/ByResponsible.vue')
-
-// Import
-const ImportPurchases = () => import('@/pages/Import/ImportPurchases.vue')
+const ReportByPeriod = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByPeriod.vue')
+const ReportByObject = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByObject.vue')
+const ReportByMaterial = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByMaterial.vue')
+const ReportByResponsible = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByResponsible.vue')
 
 
+// Suppliers
+const SuppliersList = () => import(/* webpackChunkName: "suppliers" */ '@/pages/Suppliers/List.vue')
+const SupplierForm = () => import(/* webpackChunkName: "suppliers" */ '@/pages/Suppliers/SupplierForm.vue')
+
+// Route configuration with enhanced meta
 const routes = [
-    {
-        path: '/login',
+  {
+    path: '/login',
     name: 'Login',
     component: Login,
     meta: { 
       public: true,
-      title: 'Вход в систему'
+      auth: false,
+      title: 'Вход в систему',
+      description: 'Страница входа в систему ELOM',
+      category: 'auth'
     }
-    },
-    {
-        path: '/',
-    name: 'Dashboard',
-    component: Dashboard,
-    meta: { 
-      title: 'Панель управления',
-      icon: 'dashboard'
-    }
+  },
+  {
+    path: '/',
+    redirect: '/purchases'
   },
   
   // Materials routes
@@ -74,7 +76,11 @@ const routes = [
     meta: { 
       title: 'Материалы',
       icon: 'inventory',
-      breadcrumb: 'Материалы'
+      breadcrumb: 'Материалы',
+      description: 'Управление материалами и номенклатурой',
+      category: 'inventory',
+      order: 2,
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   {
@@ -83,7 +89,10 @@ const routes = [
     component: MaterialForm,
     meta: { 
       title: 'Новый материал',
-      breadcrumb: 'Материалы / Новый'
+      breadcrumb: 'Материалы / Новый',
+      description: 'Создание нового материала',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   {
@@ -92,7 +101,10 @@ const routes = [
     component: MaterialForm,
     meta: { 
       title: 'Редактировать материал',
-      breadcrumb: 'Материалы / Редактировать'
+      breadcrumb: 'Материалы / Редактировать',
+      description: 'Редактирование существующего материала',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   
@@ -104,7 +116,35 @@ const routes = [
     meta: { 
       title: 'Закупки',
       icon: 'shopping_cart',
-      breadcrumb: 'Закупки'
+      breadcrumb: 'Закупки',
+      description: 'Управление закупками и поставками',
+      category: 'purchases',
+      order: 3,
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+    }
+  },
+  {
+    path: '/purchases/create',
+    name: 'PurchaseCreate',
+    component: PurchaseForm,
+    meta: { 
+      title: 'Новая закупка',
+      breadcrumb: 'Закупки / Новая',
+      description: 'Создание новой закупки',
+      category: 'purchases',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+    }
+  },
+  {
+    path: '/purchases/:id/edit',
+    name: 'PurchaseEdit',
+    component: PurchaseForm,
+    meta: { 
+      title: 'Редактировать закупку',
+      breadcrumb: 'Закупки / Редактировать',
+      description: 'Редактирование существующей закупки',
+      category: 'purchases',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   
@@ -116,7 +156,11 @@ const routes = [
     meta: { 
       title: 'Объекты',
       icon: 'location_on',
-      breadcrumb: 'Объекты'
+      breadcrumb: 'Объекты',
+      description: 'Управление объектами строительства',
+      category: 'objects',
+      order: 4,
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   {
@@ -125,7 +169,10 @@ const routes = [
     component: ObjectForm,
     meta: { 
       title: 'Новый объект',
-      breadcrumb: 'Объекты / Новый'
+      breadcrumb: 'Объекты / Новый',
+      description: 'Создание нового объекта',
+      category: 'objects',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   {
@@ -134,7 +181,10 @@ const routes = [
     component: ObjectForm,
     meta: { 
       title: 'Редактировать объект',
-      breadcrumb: 'Объекты / Редактировать'
+      breadcrumb: 'Объекты / Редактировать',
+      description: 'Редактирование существующего объекта',
+      category: 'objects',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   
@@ -146,7 +196,11 @@ const routes = [
     meta: { 
       title: 'Единицы измерения',
       icon: 'straighten',
-      breadcrumb: 'Единицы измерения'
+      breadcrumb: 'Единицы измерения',
+      description: 'Управление единицами измерения',
+      category: 'settings',
+      order: 8,
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -155,7 +209,10 @@ const routes = [
     component: UnitForm,
     meta: { 
       title: 'Новая единица',
-      breadcrumb: 'Единицы / Новая'
+      breadcrumb: 'Единицы / Новая',
+      description: 'Создание новой единицы измерения',
+      category: 'settings',
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -164,7 +221,10 @@ const routes = [
     component: UnitForm,
     meta: { 
       title: 'Редактировать единицу',
-      breadcrumb: 'Единицы / Редактировать'
+      breadcrumb: 'Единицы / Редактировать',
+      description: 'Редактирование существующей единицы измерения',
+      category: 'settings',
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   
@@ -176,7 +236,11 @@ const routes = [
     meta: { 
       title: 'Сотрудники',
       icon: 'people',
-      breadcrumb: 'Сотрудники'
+      breadcrumb: 'Сотрудники',
+      description: 'Управление сотрудниками и пользователями',
+      category: 'users',
+      order: 7,
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -185,7 +249,10 @@ const routes = [
     component: EmployeeForm,
     meta: { 
       title: 'Новый сотрудник',
-      breadcrumb: 'Сотрудники / Новый'
+      breadcrumb: 'Сотрудники / Новый',
+      description: 'Создание нового сотрудника',
+      category: 'users',
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -194,7 +261,50 @@ const routes = [
     component: EmployeeForm,
     meta: { 
       title: 'Редактировать сотрудника',
-      breadcrumb: 'Сотрудники / Редактировать'
+      breadcrumb: 'Сотрудники / Редактировать',
+      description: 'Редактирование существующего сотрудника',
+      category: 'users',
+      roles: ['admin', 'director', 'coordinator']
+    }
+  },
+
+  // Suppliers routes
+  {
+    path: '/suppliers',
+    name: 'SuppliersList',
+    component: SuppliersList,
+    meta: { 
+      title: 'Поставщики',
+      icon: 'truck',
+      breadcrumb: 'Поставщики',
+      description: 'Управление поставщиками',
+      category: 'suppliers',
+      order: 5,
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+    }
+  },
+  {
+    path: '/suppliers/create',
+    name: 'SupplierCreate',
+    component: SupplierForm,
+    meta: { 
+      title: 'Новый поставщик',
+      breadcrumb: 'Поставщики / Новый',
+      description: 'Создание нового поставщика',
+      category: 'suppliers',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+    }
+  },
+  {
+    path: '/suppliers/:id/edit',
+    name: 'SupplierEdit',
+    component: SupplierForm,
+    meta: { 
+      title: 'Редактировать поставщика',
+      breadcrumb: 'Поставщики / Редактировать',
+      description: 'Редактирование существующего поставщика',
+      category: 'suppliers',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   
@@ -206,7 +316,35 @@ const routes = [
     meta: { 
       title: 'Остатки',
       icon: 'warehouse',
-      breadcrumb: 'Остатки'
+      breadcrumb: 'Остатки',
+      description: 'Управление остатками материалов',
+      category: 'inventory',
+      order: 6,
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+    }
+  },
+  {
+    path: '/stocks/create',
+    name: 'StockCreate',
+    component: StockForm,
+    meta: { 
+      title: 'Внести остатки',
+      breadcrumb: 'Остатки / Внести остатки',
+      description: 'Внесение остатков материалов',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+    }
+  },
+  {
+    path: '/stocks/:id/edit',
+    name: 'StockEdit',
+    component: StockForm,
+    meta: { 
+      title: 'Редактировать внесение остатков',
+      breadcrumb: 'Остатки / Редактировать',
+      description: 'Редактирование внесения остатков',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
     }
   },
 
@@ -218,7 +356,35 @@ const routes = [
     meta: { 
       title: 'Списания',
       icon: 'minus-circle',
-      breadcrumb: 'Списания'
+      breadcrumb: 'Списания',
+      description: 'Управление списаниями материалов',
+      category: 'inventory',
+      order: 9,
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+    }
+  },
+  {
+    path: '/writeoffs/create',
+    name: 'WriteOffCreate',
+    component: WriteOffForm,
+    meta: { 
+      title: 'Новое списание',
+      breadcrumb: 'Списания / Новое',
+      description: 'Создание нового списания',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+    }
+  },
+  {
+    path: '/writeoffs/:id/edit',
+    name: 'WriteOffEdit',
+    component: WriteOffForm,
+    meta: { 
+      title: 'Редактировать списание',
+      breadcrumb: 'Списания / Редактировать',
+      description: 'Редактирование существующего списания',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
     }
   },
   
@@ -230,7 +396,11 @@ const routes = [
     meta: { 
       title: 'Архив',
       icon: 'archive',
-      breadcrumb: 'Архив'
+      breadcrumb: 'Архив',
+      description: 'Архивные данные и отчеты',
+      category: 'archive',
+      order: 10,
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   
@@ -241,7 +411,11 @@ const routes = [
     component: ReportByPeriod,
     meta: { 
       title: 'Отчет по периодам',
-      breadcrumb: 'Отчеты / По периодам'
+      breadcrumb: 'Отчеты / По периодам',
+      description: 'Отчеты по периодам времени',
+      category: 'reports',
+      order: 11,
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   {
@@ -250,7 +424,11 @@ const routes = [
     component: ReportByObject,
     meta: { 
       title: 'Отчет по объектам',
-      breadcrumb: 'Отчеты / По объектам'
+      breadcrumb: 'Отчеты / По объектам',
+      description: 'Отчеты по объектам строительства',
+      category: 'reports',
+      order: 12,
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   {
@@ -259,7 +437,11 @@ const routes = [
     component: ReportByMaterial,
     meta: { 
       title: 'Отчет по материалам',
-      breadcrumb: 'Отчеты / По материалам'
+      breadcrumb: 'Отчеты / По материалам',
+      description: 'Отчеты по материалам и номенклатуре',
+      category: 'reports',
+      order: 13,
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   {
@@ -268,19 +450,11 @@ const routes = [
     component: ReportByResponsible,
     meta: { 
       title: 'Отчет по ответственным',
-      breadcrumb: 'Отчеты / По ответственным'
-    }
-  },
-  
-  // Import routes
-  {
-    path: '/import',
-    name: 'ImportPurchases',
-    component: ImportPurchases,
-    meta: { 
-      title: 'Импорт закупок',
-      icon: 'upload',
-      breadcrumb: 'Импорт'
+      breadcrumb: 'Отчеты / По ответственным',
+      description: 'Отчеты по ответственным лицам',
+      category: 'reports',
+      order: 14,
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
   },
   
@@ -289,13 +463,17 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    redirect: '/'
+    redirect: '/purchases',
+    meta: {
+      public: true,
+      title: 'Страница не найдена'
+    }
   }
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes,
+  history: createWebHistory(),
+  routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -305,15 +483,23 @@ const router = createRouter({
   }
 })
 
-// Auth guard
+// Simple auth guard
 router.beforeEach(async (to, from, next) => {
-    const auth = useAuthStore()
-    
-  // Public routes (no auth required)
+  const auth = useAuthStore()
+  
+  // Wait for auth store to be initialized
+  if (!auth.initialized) {
+    try {
+      await auth.tryHydrate()
+    } catch (error) {
+      console.warn('Auth hydration failed:', error)
+    }
+  }
+  
+  // Public routes (login page)
   if (to.meta.public) {
-    // If already authenticated, redirect to dashboard
     if (auth.isAuthenticated) {
-      next('/')
+      next('/purchases')
     } else {
       next()
     }
@@ -322,44 +508,48 @@ router.beforeEach(async (to, from, next) => {
   
   // Protected routes
   if (!auth.isAuthenticated) {
-    // Try to hydrate from localStorage
-    try {
-        await auth.tryHydrate()
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      if (typeof console !== 'undefined' && console.warn) { console.warn('Auth hydration failed:', error) }
-    }
-    
-    // If still not authenticated, redirect to login
-    if (!auth.isAuthenticated) {
-      const redirect = encodeURIComponent(to.fullPath)
-      next(`/login?redirect=${redirect}`)
-      return
-    }
+    const redirect = encodeURIComponent(to.fullPath)
+    next(`/login?redirect=${redirect}`)
+    return
   }
   
-  // Check role-based access if needed
-  if (to.meta.requiresRole && typeof to.meta.requiresRole === 'string' && !hasRequiredRole(auth.role, to.meta.requiresRole)) {
-    next('/')
-    return
+  // Check role-based access
+  if (to.meta.roles && Array.isArray(to.meta.roles) && to.meta.roles.length > 0) {
+    if (!auth.role || !to.meta.roles.includes(auth.role)) {
+      next('/purchases')
+      return
+    }
   }
   
   next()
 })
 
 // Helper function for role-based access
-function hasRequiredRole(userRole: string | null, requiredRole: string | string[] | undefined): boolean {
-  if (!userRole || !requiredRole) { return false }
+function hasRequiredRole(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
+  if (!userRole || !requiredRoles.length) return false
   
-  const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
-  return roles.includes(userRole)
+  return requiredRoles.includes(userRole)
 }
 
-// Set page title
+// Set page title and meta
 router.afterEach((to) => {
   const title = to.meta.title as string
   if (title) {
     document.title = `${title} - ELOM`
+  }
+  
+  // Set meta description if available
+  const description = to.meta.description as string
+  if (description) {
+    const metaDescription = document.querySelector('meta[name="description"]')
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = description
+      document.head.appendChild(meta)
+    }
   }
 })
 

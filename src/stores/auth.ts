@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', {
         me: null as Me | null,
         loading: false,
         error: '' as string | null,
+        initialized: false,
     }),
     getters: {
         isAuthenticated: (s) => Boolean(s.accessToken && s.refreshToken),
@@ -25,7 +26,13 @@ export const useAuthStore = defineStore('auth', {
     actions: {
         async tryHydrate() {
             this.error = null
-            if (!this.isAuthenticated) return
+            this.initialized = false
+            
+            if (!this.isAuthenticated) {
+                this.initialized = true
+                return
+            }
+            
             try {
                 await this.fetchMe()
             } catch (e: any) {
@@ -35,6 +42,7 @@ export const useAuthStore = defineStore('auth', {
                     if (newToken) {
                         try {
                             await this.fetchMe()
+                            this.initialized = true
                             return
                         } catch {
                             // Если и после обновления не удалось получить данные пользователя
@@ -42,6 +50,8 @@ export const useAuthStore = defineStore('auth', {
                     }
                 }
                 this.logout()
+            } finally {
+                this.initialized = true
             }
         },
 
@@ -90,6 +100,7 @@ export const useAuthStore = defineStore('auth', {
         logout(withRedirect = false) {
             this.me = null
             this.clearTokens()
+            this.initialized = true
             if (withRedirect) {
                 const current = encodeURIComponent(location.pathname + location.search)
                 location.replace(`/login?session=expired&redirect=${current}`)
@@ -116,6 +127,4 @@ export const useAuthStore = defineStore('auth', {
     },
 })
 
-// доступ из axios без циклического импорта
-if (!window.__piniaStores) window.__piniaStores = {}
-window.__piniaStores.auth = {useAuthStore}
+// Stores регистрируются в main.ts

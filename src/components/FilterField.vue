@@ -77,6 +77,39 @@
       class="filter-textarea"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
     />
+    
+    <!-- Checkbox -->
+    <div v-else-if="type === 'checkbox'" class="filter-checkbox">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          :checked="Boolean(modelValue)"
+          :disabled="disabled"
+          class="checkbox checkbox-sm"
+          @change="$emit('update:modelValue', ($event.target as HTMLInputElement).checked)"
+        />
+        <span class="text-sm">{{ label }}</span>
+      </label>
+    </div>
+    
+    <!-- Multiselect -->
+    <div v-else-if="type === 'multiselect'" class="filter-multiselect">
+      <select
+        :value="Array.isArray(modelValue) ? modelValue : []"
+        :disabled="disabled"
+        multiple
+        class="filter-select"
+        @change="handleMultiselectChange"
+      >
+        <option
+          v-for="option in options"
+          :key="String(option.value)"
+          :value="String(option.value)"
+        >
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
   </div>
 </template>
 
@@ -88,7 +121,7 @@ interface Option {
 
 interface Props {
   modelValue?: string | number | boolean | null | (string | number)[]
-  type?: 'text' | 'email' | 'password' | 'number' | 'date' | 'month' | 'select' | 'textarea'
+  type?: 'text' | 'email' | 'password' | 'number' | 'date' | 'month' | 'select' | 'textarea' | 'checkbox' | 'multiselect'
   label?: string
   placeholder?: string
   required?: boolean
@@ -121,6 +154,12 @@ function handleSelectChange(event: Event) {
   } else {
     emit('update:modelValue', value)
   }
+}
+
+function handleMultiselectChange(event: Event) {
+  const target = event.target as HTMLSelectElement
+  const selectedValues = Array.from(target.selectedOptions).map(option => option.value)
+  emit('update:modelValue', selectedValues)
 }
 </script>
 

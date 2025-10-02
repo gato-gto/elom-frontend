@@ -48,7 +48,7 @@
           </div>
 
           <!-- Form -->
-          <form @submit.prevent="submit" class="login-form space-y-6">
+          <form @submit.prevent="submit" class="login-form">
             <!-- Username field -->
             <div class="space-y-2">
               <label class="text-sm font-medium text-gray-700">Логин</label>
@@ -164,4 +164,12 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+</style>
 

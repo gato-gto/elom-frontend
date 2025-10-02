@@ -149,8 +149,16 @@ export const useMaterialsStore = defineStore('materials', {
         if (data.category) formData.append('category', data.category.toString())
         formData.append('default_unit', data.default_unit.toString())
         if (data.created_date) formData.append('created_date', data.created_date)
+        if (data.description) formData.append('description', data.description)
+        if (data.manufacturer) formData.append('manufacturer', data.manufacturer)
+        if (data.average_price) formData.append('average_price', data.average_price.toString())
+        formData.append('is_active', data.is_active.toString())
 
-        const { data: newMaterial } = await api.post<Material>(endpoints.materials.list, formData)
+        const { data: newMaterial } = await api.post<Material>(endpoints.materials.list, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
         
         // Add to list
         this.items.unshift(newMaterial)
@@ -178,8 +186,16 @@ export const useMaterialsStore = defineStore('materials', {
         if (data.category !== undefined) formData.append('category', data.category?.toString() || '')
         if (data.default_unit) formData.append('default_unit', data.default_unit.toString())
         if (data.created_date) formData.append('created_date', data.created_date)
+        if (data.description !== undefined) formData.append('description', data.description || '')
+        if (data.manufacturer !== undefined) formData.append('manufacturer', data.manufacturer || '')
+        if (data.average_price !== undefined) formData.append('average_price', data.average_price?.toString() || '')
+        if (data.is_active !== undefined) formData.append('is_active', data.is_active.toString())
 
-        const { data: updatedMaterial } = await api.patch<Material>(endpoints.materials.one(id), formData)
+        const { data: updatedMaterial } = await api.patch<Material>(endpoints.materials.one(id), formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
         
         // Update in list
         const index = this.items.findIndex(item => item.id === id)
@@ -267,7 +283,12 @@ export const useMaterialsStore = defineStore('materials', {
 
         const { data } = await api.post<{ photo_url: string }>(
           endpoints.materials.uploadPhoto(id), 
-          formData
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
         )
 
         // Update material in list with new photo_url
@@ -315,6 +336,25 @@ export const useMaterialsStore = defineStore('materials', {
         throw error
       } finally {
         this.loading = false
+      }
+    },
+
+    // Search materials
+    async searchMaterials(query: string): Promise<Material[]> {
+      try {
+        const queryParams = {
+          search: query,
+          page_size: 20, // Limit results for search
+          ordering: 'name'
+        }
+
+        const queryString = buildQuery(queryParams)
+        const { data } = await api.get<PaginatedMaterialList>(endpoints.materials.list + queryString)
+        
+        return data.results
+      } catch (error: any) {
+        console.error('Error searching materials:', error)
+        return []
       }
     },
 

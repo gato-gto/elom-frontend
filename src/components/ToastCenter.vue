@@ -1,6 +1,6 @@
 <!-- src/components/ToastCenter.vue -->
 <template>
-  <div class="toast toast-end toast-bottom z-50">
+  <div v-if="toasts.length > 0" class="toast toast-top toast-end z-[9999]">
     <div v-for="t in toasts" :key="t.id" :class="alertClass(t.type)">
       <span>{{ t.text }}</span>
     </div>
@@ -25,4 +25,58 @@ function alertClass(type?: 'success' | 'error' | 'info') {
   }
 }
 </script>
+
+<style scoped>
+/* Основные стили для toast */
+.toast {
+  top: 1rem;
+  right: 1rem;
+}
+
+/* Улучшенные стили для мобильных устройств */
+@media (max-width: 768px) {
+  .toast {
+    /* Увеличиваем размер для мобильных */
+    min-width: 90vw;
+    max-width: 90vw;
+    margin: 0 5vw;
+    font-size: 0.9rem;
+    padding: 1rem;
+    top: 0.5rem;
+    right: 5vw;
+  }
+  
+  .alert {
+    /* Делаем более заметным на мобильных */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 2px solid;
+  }
+  
+  .alert-error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+  }
+  
+  .alert-success {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+  }
+  
+  .alert-info {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+  }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 480px) {
+  .toast {
+    min-width: 95vw;
+    max-width: 95vw;
+    margin: 0 2.5vw;
+    font-size: 0.85rem;
+    padding: 0.8rem;
+  }
+}
+</style>
 

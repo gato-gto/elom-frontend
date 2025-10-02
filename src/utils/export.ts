@@ -14,16 +14,93 @@ export function downloadFile(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url)
 }
 
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  
+  URL.revokeObjectURL(url)
+}
+
+// Экспорт через backend API
+export async function exportFromBackend(
+  url: string, 
+  format: 'xlsx' | 'pdf', 
+  filename: string,
+  filters?: Record<string, any>
+) {
+  try {
+    // Добавляем параметр export к URL
+    const exportUrl = new URL(url)
+    exportUrl.searchParams.set('export', format)
+    
+    // Добавляем фильтры к URL
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          if (Array.isArray(value)) {
+            value.forEach(v => exportUrl.searchParams.append(key, v.toString()))
+          } else {
+            exportUrl.searchParams.set(key, value.toString())
+          }
+        }
+      })
+    }
+    
+    // Получаем токен авторизации
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      throw new Error('Токен авторизации не найден')
+    }
+    
+    // Выполняем запрос
+    const response = await fetch(exportUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': format === 'xlsx' 
+          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          : 'application/pdf'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`)
+    }
+    
+    // Получаем blob и скачиваем файл
+    const blob = await response.blob()
+    const extension = format === 'xlsx' ? 'xlsx' : 'pdf'
+    downloadBlob(blob, `${filename}.${extension}`)
+    
+    return true
+  } catch (error) {
+    console.error('Ошибка экспорта:', error)
+    throw error
+  }
+}
+
+export interface ExportOptions {
+  headers?: string[]
+  formatters?: Record<string, (value: any) => string>
+}
+
 export function exportToCSV<T extends Record<string, any>>(
   data: T[],
   filename: string,
-  headers?: string[]
+  options?: ExportOptions | string[]
 ) {
   if (data.length === 0) {
     throw new Error('Нет данных для экспорта')
   }
 
   // Определяем заголовки
+  const headers = Array.isArray(options) ? options : options?.headers
   const csvHeaders = headers || Object.keys(data[0])
   
   // Создаем CSV контент
@@ -47,11 +124,11 @@ export function exportToCSV<T extends Record<string, any>>(
 export function exportToExcel<T extends Record<string, any>>(
   data: T[],
   filename: string,
-  headers?: string[]
+  options?: ExportOptions | string[]
 ) {
   // Для простоты экспортируем как CSV с расширением .xlsx
   // В реальном приложении можно использовать библиотеку xlsx
-  exportToCSV(data, filename, headers)
+  exportToCSV(data, filename, options)
   
   // Переименовываем файл
   setTimeout(() => {
@@ -67,11 +144,15 @@ export function exportToExcel<T extends Record<string, any>>(
 export function exportToPDF<T extends Record<string, any>>(
   data: T[],
   filename: string,
-  headers?: string[]
+  options?: ExportOptions | string[]
 ) {
   if (data.length === 0) {
     throw new Error('Нет данных для экспорта')
   }
+
+  // Определяем заголовки
+  const headers = Array.isArray(options) ? options : options?.headers
+  const csvHeaders = headers || Object.keys(data[0])
 
   // Простая реализация PDF экспорта
   // В реальном приложении можно использовать библиотеку jsPDF
@@ -96,12 +177,12 @@ export function exportToPDF<T extends Record<string, any>>(
       <table>
         <thead>
           <tr>
-            ${(headers || Object.keys(data[0])).map(header => `<th>${header}</th>`).join('')}
+            ${csvHeaders.map(header => `<th>${header}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           ${data.map(row => 
-            `<tr>${(headers || Object.keys(row)).map(header => 
+            `<tr>${csvHeaders.map(header => 
               `<td>${row[header] || ''}</td>`
             ).join('')}</tr>`
           ).join('')}

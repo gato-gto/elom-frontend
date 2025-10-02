@@ -1,38 +1,17 @@
 <template>
-  <form class="grid gap-4" @submit.prevent="submit">
-
-    <!-- Основная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Основная информация</h2>
-        <div class="grid gap-4">
-          <!-- Название -->
-          <FormField
-            v-model="form.name"
-            label="Название единицы"
-            type="input"
-            placeholder="Введите название единицы измерения"
-            :error="errors.name"
-            required
-          />
-
-          <!-- Код -->
-          <FormField
-            v-model="form.code"
-            label="Код единицы"
-            type="input"
-            placeholder="Введите код единицы (например: кг, м, шт)"
-            :error="errors.code"
-            :help="getCodeHelpText()"
-            required
-            class="font-mono"
-          />
-        </div>
-      </div>
-    </div>
+  <div class="unit-form">
+    <!-- Generic Form -->
+    <GenericForm
+      :config="formConfig"
+      :initial-data="initialFormData"
+      :on-submit="handleSubmit"
+      :on-cancel="handleCancel"
+      :validate-on-change="true"
+      :reset-on-submit="false"
+    />
 
     <!-- Информация о конвертации -->
-    <div v-if="form.code" class="card bg-base-100 border">
+    <div v-if="currentCode" class="card bg-base-100 border">
       <div class="card-body">
         <h2 class="card-title text-lg mb-4">Умная конвертация</h2>
         <div class="alert" :class="getSmartConversionAlertClass()">
@@ -46,38 +25,16 @@
         </div>
       </div>
     </div>
-
-    <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2">
-      <button 
-        type="button" 
-        class="btn btn-outline" 
-        @click="$emit('cancel')"
-        :disabled="loading"
-      >
-        Отмена
-      </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        :disabled="loading"
-      >
-        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
-      </button>
-    </div>
-  </form>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useUnitsStore } from '@/stores/units'
-import { useUiStore } from '@/stores/ui'
 import type { Unit, UnitRequest } from '@/api/types'
-import FormField from '@/components/FormField.vue'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import type { GenericFormConfig } from '@/types/generic'
+import GenericForm from '@/components/GenericForm.vue'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const props = defineProps<{
   initial?: Unit | null
@@ -88,53 +45,101 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const unitsStore = useUnitsStore()
-const ui = useUiStore()
+const unitsStore = useUnitsStore
+const { handleFormError } = useErrorHandler()
 
-const loading = ref(false)
-const errors = reactive<Record<string, string>>({})
+// Track current code for smart conversion display
+const currentCode = ref('')
 
-const form = reactive<UnitRequest>({
-  name: '',
-  code: ''
+// Form configuration
+const formConfig = computed<GenericFormConfig<UnitRequest>>(() => ({
+  title: props.initial ? 'Редактировать единицу' : 'Новая единица',
+  subtitle: 'Заполните информацию о единице измерения',
+  sections: [
+    {
+      title: 'Основная информация',
+      description: 'Название и код единицы измерения',
+      fields: ['name', 'code'],
+      order: 1
+    }
+  ],
+  fields: [
+    {
+      key: 'name',
+      type: 'input',
+      label: 'Название единицы',
+      placeholder: 'Введите название единицы измерения',
+      required: true,
+      order: 1,
+      width: 'full',
+      validation: {
+        minLength: 2,
+        maxLength: 100
+      }
+    },
+    {
+      key: 'code',
+      type: 'input',
+      label: 'Код единицы',
+      placeholder: 'Введите код единицы (например: кг, м, шт)',
+      required: true,
+      order: 2,
+      width: 'full',
+      help: getCodeHelpText(),
+      validation: {
+        minLength: 1,
+        maxLength: 10,
+        pattern: /^[а-яёА-ЯЁa-zA-Z0-9²³]+$/
+      }
+    }
+  ],
+  submitText: props.initial ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена',
+  showCancel: true
+}))
+
+// Initial form data
+const initialFormData = computed<UnitRequest>(() => {
+  if (props.initial) {
+    currentCode.value = props.initial.code
+    return {
+      name: props.initial.name,
+      code: props.initial.code
+    }
+  }
+  
+  currentCode.value = ''
+  return {
+    name: '',
+    code: ''
+  }
 })
 
-function resetForm() {
-  form.name = ''
-  form.code = ''
-  Object.keys(errors).forEach(key => delete errors[key])
-}
+// Watch for code changes to update currentCode
+watch(() => initialFormData.value.code, (newCode) => {
+  currentCode.value = newCode || ''
+}, { immediate: true })
 
-function loadInitial() {
-  if (props.initial) {
-    form.name = props.initial.name
-    form.code = props.initial.code
-  } else {
-    resetForm()
-  }
-}
-
-async function submit() {
-  loading.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
-  
+// Methods
+async function handleSubmit(formData: UnitRequest) {
   try {
-    if (props.initial) {
-      await unitsStore.update(props.initial.id, form)
-    } else {
-      await unitsStore.create(form)
-    }
-    emit('saved')
-  } catch (error: any) {
-    const errorResult = ErrorHandlers.formValidation(error)
+    currentCode.value = formData.code
     
-    // Устанавливаем ошибки полей
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      errors[field] = errorResult.fieldErrors[field]
-    })
-  } finally {
-    loading.value = false
+    if (props.initial) {
+      await unitsStore.update(props.initial.id, formData)
+    } else {
+      await unitsStore.create(formData)
+    }
+    
+    emit('saved')
+  } catch (error) {
+    await handleFormError(error, 'unit')
+    throw error
   }
+}
+
+function handleCancel() {
+  emit('cancel')
 }
 
 // Функции для подсказок по умной конвертации
@@ -154,11 +159,11 @@ function isUsedInSmartConversion(unitCode: string): boolean {
 }
 
 function getCodeHelpText(): string {
-  if (!form.code) {
+  if (!currentCode.value) {
     return 'Короткий код для использования в системе (например: кг, м, шт)'
   }
   
-  const isSmart = isUsedInSmartConversion(form.code)
+  const isSmart = isUsedInSmartConversion(currentCode.value)
   if (isSmart) {
     return '✅ Этот код поддерживает умную конвертацию'
   }
@@ -167,32 +172,28 @@ function getCodeHelpText(): string {
 }
 
 function getSmartConversionAlertClass(): string {
-  if (!form.code) return 'alert-info'
+  if (!currentCode.value) return 'alert-info'
   
-  const isSmart = isUsedInSmartConversion(form.code)
+  const isSmart = isUsedInSmartConversion(currentCode.value)
   return isSmart ? 'alert-success' : 'alert-warning'
 }
 
 function getSmartConversionTitle(): string {
-  if (!form.code) return 'Введите код единицы'
+  if (!currentCode.value) return 'Введите код единицы'
   
-  const isSmart = isUsedInSmartConversion(form.code)
+  const isSmart = isUsedInSmartConversion(currentCode.value)
   return isSmart ? 'Умная конвертация поддерживается' : 'Умная конвертация не поддерживается'
 }
 
 function getSmartConversionDescription(): string {
-  if (!form.code) return 'После ввода кода здесь появится информация о поддержке умной конвертации'
+  if (!currentCode.value) return 'После ввода кода здесь появится информация о поддержке умной конвертации'
   
-  const isSmart = isUsedInSmartConversion(form.code)
+  const isSmart = isUsedInSmartConversion(currentCode.value)
   
   if (isSmart) {
-    return `Единица "${form.code}" будет автоматически конвертироваться (например, 1000г → 1кг). Пользователи увидят удобные значения.`
+    return `Единица "${currentCode.value}" будет автоматически конвертироваться (например, 1000г → 1кг). Пользователи увидят удобные значения.`
   }
   
-  return `Единица "${form.code}" будет отображаться как есть, без автоматической конвертации. Рекомендуется использовать стандартные коды: г, кг, т, мм, см, м, км, см², м², га, мл, л, м³.`
+  return `Единица "${currentCode.value}" будет отображаться как есть, без автоматической конвертации. Рекомендуется использовать стандартные коды: г, кг, т, мм, см, м, км, см², м², га, мл, л, м³.`
 }
-
-onMounted(() => {
-  loadInitial()
-})
 </script>

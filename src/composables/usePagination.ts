@@ -202,8 +202,8 @@ export function usePagination(
   }
 }
 
-// Хук для работы с пагинацией в компонентах
-export function usePaginationComponent(
+// Хук для работы с пагинацией в компонентах (переименован для избежания конфликтов)
+export function usePaginationWithHandlers(
   pagination: PaginationState,
   onPageChange?: (page: number) => void,
   onPageSizeChange?: (size: number) => void

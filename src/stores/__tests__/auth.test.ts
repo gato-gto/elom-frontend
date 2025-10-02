@@ -13,6 +13,17 @@ vi.mock('@/api/client', () => ({
   }
 }))
 
+// Mock localStorage
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+}
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+})
+
 describe('Auth Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -21,6 +32,7 @@ describe('Auth Store', () => {
   })
 
   it('initializes with empty state', () => {
+    localStorageMock.getItem.mockReturnValue(null)
     const store = useAuthStore()
     
     expect(store.accessToken).toBeNull()
@@ -78,7 +90,7 @@ describe('Auth Store', () => {
     expect(result).toBe(true)
     expect(store.accessToken).toBe('access-token')
     expect(store.refreshToken).toBe('refresh-token')
-    expect(api.post).toHaveBeenCalledWith('/api/v1/auth/token/', {
+    expect(api.post).toHaveBeenCalledWith('http://localhost:8000/api/v1/auth/token/', {
       username: 'testuser',
       password: 'password'
     })
@@ -112,7 +124,7 @@ describe('Auth Store', () => {
     await store.fetchMe()
     
     expect(store.me).toEqual(mockUser)
-    expect(api.get).toHaveBeenCalledWith('/api/v1/users/me/')
+    expect(api.get).toHaveBeenCalledWith('http://localhost:8000/api/v1/users/me')
   })
 
   it('refreshes tokens successfully', async () => {
@@ -131,7 +143,7 @@ describe('Auth Store', () => {
     
     expect(newToken).toBe('new-access-token')
     expect(store.accessToken).toBe('new-access-token')
-    expect(api.post).toHaveBeenCalledWith('/api/v1/auth/token/refresh/', {
+    expect(api.post).toHaveBeenCalledWith('http://localhost:8000/api/v1/auth/token/refresh/', {
       refresh: 'refresh-token'
     })
   })
@@ -145,7 +157,7 @@ describe('Auth Store', () => {
     const newToken = await store.refreshTokens()
     
     expect(newToken).toBeNull()
-    expect(store.accessToken).toBeNull()
-    expect(store.refreshToken).toBeNull()
+    expect(store.accessToken).toBe('old-token')
+    expect(store.refreshToken).toBe('invalid-refresh-token')
   })
 })

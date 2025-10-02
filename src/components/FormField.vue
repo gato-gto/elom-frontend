@@ -1,9 +1,9 @@
 <template>
-  <div class="form-control">
+  <div class="form-control w-full">
     <!-- Label -->
     <label v-if="label" class="label">
-      <span class="label-text font-medium">{{ label }}</span>
-      <span v-if="required" class="label-text-alt text-error">*</span>
+      <span class="label-text font-medium text-base-content">{{ label }}</span>
+      <span v-if="required" class="label-text-alt text-primary font-semibold">*</span>
     </label>
     
     <!-- Input -->
@@ -11,13 +11,15 @@
       v-if="type === 'input' || type === 'text' || type === 'email' || type === 'password' || type === 'number' || type === 'date'"
       :value="modelValue"
       :type="getInputType()"
-      class="input input-bordered w-full"
+      class="input input-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0"
       :class="[
-        { 'input-error': hasError || error || errorMessage },
+        { 'input-error hover:border-error focus:border-error': hasError || error || errorMessage },
         { 'input-xs': size === 'xs' },
         { 'input-sm': size === 'sm' },
-        { 'input-md': size === 'md' },
+        { 'input-md': size === 'md' || !size },
         { 'input-lg': size === 'lg' },
+        { 'bg-base-100': !disabled },
+        { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
       :placeholder="placeholder"
@@ -36,19 +38,21 @@
     <textarea
       v-else-if="type === 'textarea'"
       :value="modelValue"
-      class="textarea textarea-bordered w-full"
+      class="textarea textarea-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0 resize-y min-h-[100px]"
       :class="[
-        { 'textarea-error': hasError || error || errorMessage },
+        { 'textarea-error hover:border-error focus:border-error': hasError || error || errorMessage },
         { 'textarea-xs': size === 'xs' },
         { 'textarea-sm': size === 'sm' },
-        { 'textarea-md': size === 'md' },
+        { 'textarea-md': size === 'md' || !size },
         { 'textarea-lg': size === 'lg' },
+        { 'bg-base-100': !disabled },
+        { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
       :placeholder="placeholder"
       :disabled="disabled"
       :readonly="readonly"
-      :rows="rows"
+      :rows="rows || 4"
       :maxlength="maxlength"
       @input="handleInput"
       @blur="handleBlur"
@@ -59,13 +63,15 @@
     <select
       v-else-if="type === 'select'"
       :value="modelValue"
-      class="select select-bordered w-full"
+      class="select select-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0"
       :class="[
-        { 'select-error': hasError || error || errorMessage },
+        { 'select-error hover:border-error focus:border-error': hasError || error || errorMessage },
         { 'select-xs': size === 'xs' },
         { 'select-sm': size === 'sm' },
-        { 'select-md': size === 'md' },
+        { 'select-md': size === 'md' || !size },
         { 'select-lg': size === 'lg' },
+        { 'bg-base-100': !disabled },
+        { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
       :disabled="disabled"
@@ -73,12 +79,13 @@
       @blur="handleBlur"
       @focus="handleFocus"
     >
-      <option v-if="placeholder" :value="undefined" disabled selected>{{ placeholder }}</option>
+      <option v-if="placeholder" :value="undefined" disabled selected class="text-base-content/50">{{ placeholder }}</option>
       <slot name="options">
         <option
           v-for="option in options"
           :key="String(option.value)"
           :value="option.value"
+          class="text-base-content"
         >
           {{ option.label }}
         </option>
@@ -89,13 +96,15 @@
     <input
       v-else-if="type === 'file'"
       type="file"
-      class="file-input file-input-bordered w-full"
+      class="file-input file-input-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0"
       :class="[
-        { 'file-input-error': hasError || error || errorMessage },
+        { 'file-input-error hover:border-error focus:border-error': hasError || error || errorMessage },
         { 'file-input-xs': size === 'xs' },
         { 'file-input-sm': size === 'sm' },
-        { 'file-input-md': size === 'md' },
+        { 'file-input-md': size === 'md' || !size },
         { 'file-input-lg': size === 'lg' },
+        { 'bg-base-100': !disabled },
+        { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
       :accept="accept"
@@ -104,25 +113,58 @@
       @change="handleFileChange"
     />
     
+    <!-- Search Input -->
+    <div v-else-if="type === 'search'" class="form-control">
+      <div class="relative">
+        <input
+          :value="modelValue"
+          type="text"
+          class="input input-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0 pr-10"
+          :class="[
+            { 'input-error hover:border-error focus:border-error': hasError || error || errorMessage },
+            { 'input-xs': size === 'xs' },
+            { 'input-sm': size === 'sm' },
+            { 'input-md': size === 'md' || !size },
+            { 'input-lg': size === 'lg' },
+            { 'bg-base-100': !disabled },
+            { 'bg-base-200 cursor-not-allowed': disabled },
+            customClass
+          ]"
+          :placeholder="placeholder"
+          :disabled="disabled"
+          :readonly="readonly"
+          @input="handleInput"
+          @blur="handleBlur"
+          @focus="handleFocus"
+        />
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg class="w-4 h-4 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+    
     <!-- Checkbox -->
     <div v-else-if="type === 'checkbox'" class="form-control">
-      <label class="label cursor-pointer">
+      <label class="label cursor-pointer justify-start gap-3 hover:bg-base-200/50 p-3 rounded-lg transition-colors duration-200">
         <input
           :checked="modelValue"
           type="checkbox"
-          class="checkbox"
+          class="checkbox checkbox-primary transition-all duration-200"
           :class="[
             { 'checkbox-error': hasError || error || errorMessage },
             { 'checkbox-xs': size === 'xs' },
             { 'checkbox-sm': size === 'sm' },
-            { 'checkbox-md': size === 'md' },
+            { 'checkbox-md': size === 'md' || !size },
             { 'checkbox-lg': size === 'lg' },
+            { 'cursor-not-allowed opacity-50': disabled },
             customClass
           ]"
           :disabled="disabled"
           @change="handleInput"
         />
-        <span class="label-text ml-2">{{ checkboxLabel || label }}</span>
+        <span class="label-text font-medium text-base-content">{{ checkboxLabel || label }}</span>
       </label>
     </div>
     
@@ -201,13 +243,18 @@
     />
     
     <!-- Help text -->
-    <label v-if="helpText" class="label">
-      <span class="label-text-alt text-base-content-70">{{ helpText }}</span>
+    <label v-if="helpText && !(error || errorMessage)" class="label">
+      <span class="label-text-alt text-base-content/70 text-sm leading-relaxed">{{ helpText }}</span>
     </label>
     
     <!-- Error message -->
     <label v-if="error || errorMessage" class="label">
-      <span class="label-text-alt text-error">{{ error || errorMessage }}</span>
+      <span class="label-text-alt text-error font-medium text-sm flex items-center gap-1">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.304 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        {{ error || errorMessage }}
+      </span>
     </label>
     
     <!-- Character count for textarea -->
@@ -229,7 +276,7 @@ interface Option {
 
 interface Props {
   modelValue?: any
-  type?: 'input' | 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'file' | 'checkbox' | 'radio' | 'switch' | 'range'
+  type?: 'input' | 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'file' | 'checkbox' | 'radio' | 'switch' | 'range' | 'multiselect' | 'search'
   inputType?: string
   label?: string
   placeholder?: string
@@ -307,6 +354,24 @@ const handleBlur = () => {
 
 const handleFocus = () => {
   emit('focus')
+}
+
+const handleMultiselectChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const selectedValues = Array.from(target.selectedOptions).map(option => option.value)
+  emit('update:modelValue', selectedValues)
+}
+
+const removeMultiselectValue = (value: any) => {
+  if (Array.isArray(props.modelValue)) {
+    const newValue = props.modelValue.filter(v => v !== value)
+    emit('update:modelValue', newValue)
+  }
+}
+
+const getOptionLabel = (value: any): string => {
+  const option = props.options?.find(opt => opt.value === value)
+  return option?.label || String(value)
 }
 
 const handleFileChange = (event: Event) => {

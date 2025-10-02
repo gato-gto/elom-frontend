@@ -1,87 +1,32 @@
 <template>
-  <form class="grid gap-4" @submit.prevent="onSubmit">
-    <!-- Основная информация -->
-    <div class="card bg-base-100 border">
+  <div class="writeoff-form-container">
+    <!-- Unit Display -->
+    <div v-if="selectedMaterialUnit" class="card bg-base-100 border mb-6">
       <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Основная информация</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Дата списания -->
-          <FormField
-            v-model="model.date"
-            label="Дата списания"
-            type="date"
-            :error="errors.date"
-            required
-          />
-          
-          <!-- Объект -->
-          <FormField
-            v-model="model.object"
-            label="Объект"
-            type="select"
-            :options="objectOptions"
-            :error="errors.object"
-            placeholder="— выберите объект —"
-            required
-          />
-
-          <!-- Материал -->
-          <FormField
-            v-model="model.material"
-            label="Материал"
-            type="select"
-            :options="materialOptions"
-            :error="errors.material"
-            placeholder="— выберите материал —"
-            required
-          />
-          
-          <!-- Единица измерения -->
-          <FormField
-            v-model="model.unit"
-            label="Единица измерения"
-            type="select"
-            :options="unitOptions"
-            :error="errors.unit"
-            placeholder="— выберите единицу —"
-            required
-          />
-
-          <!-- Количество -->
-          <FormField
-            v-model="model.quantity"
-            label="Количество"
-            type="number"
-            step="0.000001"
-            :error="errors.quantity"
-            placeholder="Введите количество"
-            required
-          />
-          
-          <!-- Этап работ -->
-          <FormField
-            v-model="model.stage"
-            label="Этап работ"
-            type="select"
-            :options="stageOptions"
-            :error="errors.stage"
-            placeholder="— выберите этап —"
-            required
-          />
-
-          <!-- Ответственный -->
-          <FormField
-            v-model="model.responsible"
-            label="Ответственный"
-            type="select"
-            :options="employeeOptions"
-            :error="errors.responsible"
-            placeholder="— выберите ответственного —"
-            required
-          />
+        <div class="alert alert-info">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="font-bold">Единица измерения</h3>
+            <div class="text-sm">
+              Для выбранного материала единица измерения: <span class="font-mono font-bold">{{ selectedMaterialUnit }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- GenericForm -->
+    <GenericForm
+      :config="formConfig"
+      :initial-data="initialData"
+      :on-submit="onSaved"
+      :on-cancel="handleCancel"
+      :validate-on-change="true"
+      :reset-on-submit="false"
+      @field-change="onFieldChange"
+    />
 
     <!-- Информация об остатке -->
     <div v-if="currentBalance !== null" class="card bg-base-100 border">
@@ -94,7 +39,7 @@
           <div>
             <h3 class="font-bold">Текущий остаток</h3>
             <div class="text-sm">
-              На объекте "{{ objectName(model.object) }}" материала "{{ materialName(model.material) }}" 
+              На объекте "{{ objectName(formData.object) }}" материала "{{ materialName(formData.material) }}" 
               остаток составляет: <span class="font-mono font-bold">{{ currentBalance }} {{ unitCode }}</span>
             </div>
           </div>
@@ -122,47 +67,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Дополнительная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Дополнительная информация</h2>
-        <div class="grid gap-4">
-          <!-- Комментарий -->
-          <FormField
-            v-model="model.comment"
-            label="Комментарий"
-            type="textarea"
-            :error="errors.comment"
-            placeholder="Дополнительная информация о списании..."
-            :rows="3"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2">
-      <button 
-        type="button" 
-        class="btn btn-outline" 
-        @click="$emit('cancel')"
-        :disabled="loading"
-      >
-        Отмена
-      </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        :disabled="loading || validationWarnings.length > 0"
-      >
-        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ loading ? 'Сохранение...' : (isEdit ? 'Обновить' : 'Создать') }}
-      </button>
-    </div>
-  </form>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -173,6 +78,8 @@ import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
+import { useUiStore } from '@/stores/ui'
+import GenericForm from '@/components/GenericForm.vue'
 import type { 
   WriteOff, 
   WriteOffCreateRequest, 
@@ -182,38 +89,56 @@ import type {
   Employee,
   Unit
 } from '@/api/types'
-import FormField from '@/components/FormField.vue'
+import type { GenericFormConfig } from '@/types/generic'
 import { ErrorHandlers } from '@/utils/errorHandler'
 
 const route = useRoute()
 const router = useRouter()
 
 // Stores
-const writeOffsStore = useWriteOffsStore()
-const objectsStore = useObjectsStore()
+const writeOffsStore = useWriteOffsStore
+const objectsStore = useObjectsStore
 const materialsStore = useMaterialsStore()
-const employeesStore = useEmployeesStore()
-const unitsStore = useUnitsStore()
+const employeesStore = useEmployeesStore
+const unitsStore = useUnitsStore
+const ui = useUiStore()
+
+// Props
+const props = defineProps<{
+  initial?: WriteOff | null
+}>()
+
+// Emits
+const emit = defineEmits<{
+  saved: []
+  cancel: []
+}>()
 
 // Состояние
 const loading = ref(false)
-const errors = ref<Record<string, string>>({})
+const errors = reactive<Record<string, string>>({})
 const currentBalance = ref<number | null>(null)
 const validationWarnings = ref<string[]>([])
-
-// Определяем режим редактирования
-const isEdit = computed(() => !!route.params.id)
-
-// Модель формы
-const model = reactive<WriteOffCreateRequest>({
+const selectedMaterialId = ref<number>(0)
+const formData = reactive<WriteOffCreateRequest>({
   date: new Date().toISOString().split('T')[0],
   object: 0,
-  material: 0,
+  material: null, // nullable according to API
   unit: 0,
   quantity: '0',
   stage: 'post_rough',
   responsible: 0,
   comment: ''
+})
+
+// Определяем режим редактирования
+const isEdit = computed(() => !!props.initial || !!route.params.id)
+
+// Computed property for selected material unit
+const selectedMaterialUnit = computed(() => {
+  if (selectedMaterialId.value === 0) return null
+  const material = materialsStore.items.find(m => m.id === selectedMaterialId.value)
+  return material?.default_unit_code || null
 })
 
 // Computed для справочников
@@ -224,17 +149,17 @@ const units = computed(() => unitsStore.items)
 
 // Опции для селектов
 const objectOptions = computed(() => [
-  { value: 0, label: 'Выберите объект' },
+  { value: 0, label: '— выберите объект —' },
   ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
 ])
 
 const materialOptions = computed(() => [
-  { value: 0, label: 'Выберите материал' },
+  { value: null, label: '— выберите материал —' },
   ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
 const employeeOptions = computed(() => [
-  { value: 0, label: 'Выберите ответственного' },
+  { value: 0, label: '— выберите ответственного —' },
   ...employees.value.map((e: Employee) => ({ 
     value: e.id, 
     label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
@@ -242,7 +167,7 @@ const employeeOptions = computed(() => [
 ])
 
 const unitOptions = computed(() => [
-  { value: 0, label: 'Выберите единицу' },
+  { value: 0, label: '— выберите единицу —' },
   ...units.value.map((u: Unit) => ({ value: u.id, label: `${u.name} (${u.code})` }))
 ])
 
@@ -258,159 +183,268 @@ const stageOptions = [
 const objectName = (id: number) => objects.value.find((o: SiteObject) => o.id === id)?.name
 const materialName = (id: number) => materials.value.find((m: Material) => m.id === id)?.name
 const unitCode = computed(() => {
-  const unit = units.value.find((u: Unit) => u.id === model.unit)
+  const unit = units.value.find((u: Unit) => u.id === formData.unit)
   return unit?.code || ''
 })
 
-// Загрузка данных
-async function loadData() {
-  if (isEdit.value) {
-    const id = parseInt(route.params.id as string)
-    try {
-      const writeOff = await writeOffsStore.fetchOne(id)
-      if (writeOff) {
-        model.date = writeOff.date
-        model.object = writeOff.object
-        model.material = writeOff.material
-        model.unit = writeOff.unit
-        model.quantity = writeOff.quantity
-        model.stage = writeOff.stage
-        model.responsible = writeOff.responsible
-        model.comment = writeOff.comment || ''
-        currentBalance.value = parseFloat(writeOff.current_balance)
-        validationWarnings.value = writeOff.validation_warnings
-      }
-    } catch (error) {
-      console.error('Error loading write-off:', error)
-      router.push('/writeoffs')
+// GenericForm configuration
+const formConfig = computed<GenericFormConfig<WriteOffCreateRequest>>(() => ({
+  title: isEdit.value ? 'Редактировать списание' : 'Новое списание',
+  subtitle: 'Управление списанием материалов с объектов',
+  sections: [
+    {
+      title: 'Основная информация',
+      description: 'Основные данные о списании',
+      fields: ['date', 'object', 'material', 'unit', 'quantity'],
+      order: 1
+    },
+    {
+      title: 'Детали списания',
+      description: 'Параметры списания',
+      fields: ['stage', 'responsible'],
+      order: 2
+    },
+    {
+      title: 'Дополнительная информация',
+      description: 'Дополнительные сведения о списании',
+      fields: ['comment'],
+      order: 3
+    }
+  ],
+  fields: [
+    {
+      key: 'date',
+      type: 'date',
+      label: 'Дата списания',
+      required: true,
+      order: 1,
+      width: 'half'
+    },
+    {
+      key: 'object',
+      type: 'select',
+      label: 'Объект',
+      placeholder: '— выберите объект —',
+      required: true,
+      options: objectOptions.value,
+      order: 2,
+      width: 'half'
+    },
+    {
+      key: 'material',
+      type: 'select',
+      label: 'Материал',
+      placeholder: '— выберите материал —',
+      required: true,
+      options: materialOptions.value,
+      order: 3,
+      width: 'half'
+    },
+    {
+      key: 'unit',
+      type: 'select',
+      label: 'Единица измерения',
+      placeholder: '— выберите единицу —',
+      required: true,
+      options: unitOptions.value,
+      order: 4,
+      width: 'half',
+      disabled: true
+    },
+    {
+      key: 'quantity',
+      type: 'number',
+      label: 'Количество',
+      placeholder: 'Введите количество',
+      required: true,
+      validation: {
+        min: 0.000001,
+        step: 0.000001
+      },
+      order: 5,
+      width: 'full'
+    },
+    {
+      key: 'stage',
+      type: 'select',
+      label: 'Этап работ',
+      placeholder: '— выберите этап —',
+      required: true,
+      options: stageOptions,
+      order: 6,
+      width: 'half'
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      placeholder: '— выберите ответственного —',
+      required: true,
+      options: employeeOptions.value,
+      order: 7,
+      width: 'half'
+    },
+    {
+      key: 'comment',
+      type: 'textarea',
+      label: 'Комментарий',
+      placeholder: 'Дополнительная информация о списании...',
+      order: 8,
+      width: 'full'
+    }
+  ],
+  submitText: isEdit.value ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена',
+  showCancel: true,
+  validateOnChange: true,
+  resetOnSubmit: false,
+  mode: isEdit.value ? 'edit' : 'create'
+}))
+
+// Initial data for form
+const initialData = computed(() => {
+  if (props.initial) {
+    return {
+      date: props.initial.date,
+      object: props.initial.object,
+      material: props.initial.material,
+      unit: props.initial.unit,
+      quantity: props.initial.quantity,
+      stage: props.initial.stage,
+      responsible: props.initial.responsible,
+      comment: props.initial.comment || ''
     }
   }
-}
+  return {
+    date: new Date().toISOString().split('T')[0],
+    object: 0,
+    material: 0,
+    unit: 0,
+    quantity: '0',
+    stage: 'post_rough',
+    responsible: 0,
+    comment: ''
+  }
+})
 
-async function loadRefs() {
-  await Promise.all([
-    objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
-    materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
-    employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any),
-    unitsStore.fetchList({ page_size: 1000, ordering: 'name' } as any)
-  ])
-}
-
-// Валидация
-function validateForm() {
-  errors.value = {}
-  
-  if (!model.date) {
-    errors.value.date = 'Дата обязательна'
-  }
-  
-  if (!model.object) {
-    errors.value.object = 'Объект обязателен'
-  }
-  
-  if (!model.material) {
-    errors.value.material = 'Материал обязателен'
-  }
-  
-  if (!model.unit) {
-    errors.value.unit = 'Единица измерения обязательна'
-  }
-  
-  if (!model.quantity || parseFloat(model.quantity) <= 0) {
-    errors.value.quantity = 'Количество должно быть больше 0'
-  }
-  
-  if (!model.stage) {
-    errors.value.stage = 'Этап работ обязателен'
-  }
-  
-  if (!model.responsible) {
-    errors.value.responsible = 'Ответственный обязателен'
-  }
-  
-  // Проверка остатка
-  if (currentBalance.value !== null && parseFloat(model.quantity) > currentBalance.value) {
-    errors.value.quantity = `Количество не может превышать остаток (${currentBalance.value})`
-  }
-  
-  return Object.keys(errors.value).length === 0
-}
-
-// Отправка формы
-async function onSubmit() {
-  if (!validateForm()) {
-    return
-  }
-  
+// Form submission handler
+async function onSaved(data: WriteOffCreateRequest) {
   loading.value = true
-  errors.value = {}
+  Object.keys(errors).forEach(key => delete errors[key])
+  
+  // Update formData for display purposes
+  Object.assign(formData, data)
   
   try {
     if (isEdit.value) {
-      const id = parseInt(route.params.id as string)
-      const updateData: WriteOffUpdateRequest = {
-        date: model.date,
-        object: model.object,
-        material: model.material,
-        unit: model.unit,
-        quantity: model.quantity,
-        stage: model.stage,
-        responsible: model.responsible,
-        comment: model.comment
+      if (props.initial) {
+        const updateData: WriteOffUpdateRequest = { ...data }
+        await writeOffsStore.update(props.initial.id, updateData)
+      } else {
+        const id = parseInt(route.params.id as string)
+        const updateData: WriteOffUpdateRequest = { ...data }
+        await writeOffsStore.update(id, updateData)
       }
-      await writeOffsStore.update(id, updateData)
     } else {
-      await writeOffsStore.create(model)
+      await writeOffsStore.create(data)
     }
     
-    router.push('/writeoffs')
-  } catch (error: any) {
-    const errorResult = ErrorHandlers.formValidation(error)
+    emit('saved')
+  } catch (error: unknown) {
+    const errorResult = await ErrorHandlers.formValidation(error)
     
     // Устанавливаем ошибки полей
     Object.keys(errorResult.fieldErrors).forEach(field => {
-      errors.value[field] = errorResult.fieldErrors[field]
+      const fieldError = errorResult.fieldErrors[field]
+      errors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
     })
+    
+    // Если есть общая ошибка (например, 403), показываем её отдельно
+    if (errorResult.detail && Object.keys(errorResult.fieldErrors).length === 0) {
+      ui.toast({ type: 'error', text: errorResult.detail })
+    }
   } finally {
     loading.value = false
   }
 }
 
+function handleCancel() {
+  emit('cancel')
+}
+
 // Watcher для автоматического выбора единицы измерения при выборе материала
-watch(() => model.material, (materialId) => {
+watch(() => formData.material, (materialId) => {
   if (materialId) {
     const material = materials.value.find((m: Material) => m.id === materialId)
     if (material) {
-      model.unit = material.default_unit
+      formData.unit = material.default_unit
     }
   }
 })
 
+// Load data on mount
 onMounted(async () => {
-  await loadRefs()
-  await loadData()
+  // Load reference data if not already loaded
+  const promises = []
+  if (objectsStore.items.length === 0) {
+    promises.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  }
+  if (materialsStore.items.length === 0) {
+    promises.push(materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  }
+  if (employeesStore.items.length === 0) {
+    promises.push(employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any))
+  }
+  if (unitsStore.items.length === 0) {
+    promises.push(unitsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  }
+  
+  if (promises.length > 0) {
+    try {
+      await Promise.all(promises)
+    } catch (error) {
+      ui.toast({ type: 'error', text: 'Ошибка загрузки справочников' })
+    }
+  }
+  
+  // Load initial data if editing
+  if (isEdit.value && props.initial) {
+    Object.assign(formData, {
+      date: props.initial.date,
+      object: props.initial.object,
+      material: props.initial.material,
+      unit: props.initial.unit,
+      quantity: props.initial.quantity,
+      stage: props.initial.stage,
+      responsible: props.initial.responsible,
+      comment: props.initial.comment || ''
+    })
+    currentBalance.value = parseFloat(props.initial.current_balance)
+    validationWarnings.value = props.initial.validation_warnings
+  }
 })
+
+// Handle field changes
+function onFieldChange(key: string, value: any) {
+  // Auto-fill unit when material is selected
+  if (key === 'material' && value) {
+    selectedMaterialId.value = value
+    const material = materialsStore.items.find(m => m.id === value)
+    if (material && material.default_unit) {
+      formData.unit = material.default_unit
+    }
+  } else if (key === 'material' && (value === null || value === 0)) {
+    selectedMaterialId.value = 0
+    formData.unit = 0
+  }
+}
 </script>
 
 <style scoped>
-.form-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.form-header {
-  margin-bottom: 2rem;
-}
-
-.form-content {
-  background: white;
-  border-radius: 0.5rem;
-  padding: 2rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-:root.dark .form-content {
-  background: #1f2937;
+/* Все стили теперь используют DaisyUI классы */
+.writeoff-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 </style>

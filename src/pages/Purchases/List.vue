@@ -1,163 +1,26 @@
 <template>
   <div class="list-container">
-    <!-- Header -->
-    <ListHeader
-      title="Закупки"
-      subtitle="Управление закупками материалов и поставщиками"
-      icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      :show-create="true"
-      create-text="Новая закупка"
-      :can-create="true"
-      :loading="loading"
-      :show-stats="true"
-      :total-count="count"
-      :filtered-count="rows.length"
+    <!-- GenericList Component -->
+    <GenericList
+      :store="purchasesStore"
+      :config="listConfig"
       @create="openCreateModal"
+      @action="handleAction"
+      @export="handleExport"
     >
-      <template #actions>
-        <ExportButton 
-          :data="rows"
-          filename="purchases"
-          :loading="loading"
-          @export="handleExport"
-        />
+      <!-- Custom column for purchase number with status -->
+      <template #column-purchase_no="{ item, value }">
+        <div class="flex items-center gap-2">
+          <span class="font-medium">{{ value || '#' + item.id }}</span>
+          <span v-if="item.is_archived" class="badge badge-warning badge-xs">Архив</span>
+        </div>
       </template>
-    </ListHeader>
 
-    <!-- Filters -->
-    <FilterPanel
-      :columns="4"
-      :loading="loading"
-      @reset="resetFilters"
-    >
-      <FilterField
-        v-model="filters.date_from"
-        type="date"
-        label="Дата с"
-      />
-      
-      <FilterField
-        v-model="filters.date_to"
-        type="date"
-        label="Дата по"
-      />
-      
-      <FilterField
-        v-model="filters.object"
-        type="select"
-        label="Объект"
-        :options="objectOptions"
-      />
-      
-      
-      <FilterField
-        v-model="filters.responsible"
-        type="select"
-        label="Ответственный"
-        :options="employeeOptions"
-      />
-      
-      <FilterField
-        v-model="filters.is_archived"
-        type="select"
-        label="Статус"
-        :options="statusOptions"
-      />
-      
-    </FilterPanel>
-
-    <!-- Table -->
-    <div class="list-content" :class="{ 'relative': loading }">
-      <!-- Loading Overlay -->
-      <LoadingSpinner 
-        v-if="loading && rows.length === 0"
-        size="lg"
-        variant="primary"
-        text="Загрузка закупок..."
-        :overlay="false"
-      />
-      
-      <!-- Loading Skeleton for existing data -->
-      <div v-if="loading && rows.length > 0" class="loading-overlay">
-        <LoadingSpinner 
-          size="md"
-          variant="primary"
-          text="Обновление данных..."
-          :overlay="true"
-        />
-      </div>
-
-      <table class="modern-table">
-        <thead>
-          <tr>
-            <th @click="handleSort('id')" class="cursor-pointer hover:bg-gray-50">
-              ID
-              <span v-if="sortBy === 'id'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th @click="handleSort('date')" class="cursor-pointer hover:bg-gray-50">
-              Дата
-              <span v-if="sortBy === 'date'" class="ml-1">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th>№ закупки</th>
-            <th>Объект</th>
-            <th>Поставщик</th>
-            <th>Ответственный</th>
-            <th class="text-right">Позиций</th>
-            <th class="text-right">Действия</th>
-          </tr>
-        </thead>
-        
-        <!-- Skeleton Loading -->
-        <TableSkeleton 
-          v-if="loading && rows.length === 0"
-          :rows="pageSize"
-          :columns="8"
-        />
-        
-        <!-- Actual Data -->
-        <tbody v-else>
-          <tr v-for="p in rows" :key="p.id" class="table-row">
-            <td>{{ p.id }}</td>
-            <td>{{ formatDate(p.date) }}</td>
-            <td>{{ p.purchase_no || '—' }}</td>
-            <td>{{ p.object_name || '—' }}</td>
-            <td>{{ p.supplier || '—' }}</td>
-            <td>{{ responsibleName(p.responsible) || '—' }}</td>
-            <td class="text-right">{{ p.items?.length ?? 0 }}</td>
-            <td class="text-right">
-              <div class="flex gap-1 justify-end">
-                <span v-if="p.is_archived" class="badge badge-warning badge-xs">Архив</span>
-                <button class="btn btn-xs btn-outline" @click="openEditModal(p)">Открыть</button>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="!loading && rows.length===0">
-            <td colspan="7" class="text-center text-gray-500 py-8">
-              <div class="flex flex-col items-center gap-2 empty-state">
-                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span class="text-sm">Нет закупок</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <ModernPagination
-      :current-page="page"
-      :total-pages="Math.ceil(count / pageSize)"
-      :total-items="count"
-      :page-size="pageSize"
-      @page-change="handlePageChange"
-      @page-size-change="handlePageSizeChange"
-    />
+      <!-- Custom column for responsible with name lookup -->
+      <template #column-responsible="{ item, value }">
+        <span>{{ responsibleName(value) || '—' }}</span>
+      </template>
+    </GenericList>
 
     <!-- Modal for creating/editing purchase -->
     <Modal v-model="modalOpen" :title="modalTitle" size="6xl" :closable="true">
@@ -167,127 +30,146 @@
         @cancel="modalOpen = false" 
       />
     </Modal>
+
+    <!-- Modal for viewing purchase -->
+    <Modal v-model="viewModalOpen" title="Просмотр закупки" size="6xl" :closable="true">
+      <PurchaseInfo 
+        :purchase="viewingPurchase" 
+        @close="viewModalOpen = false" 
+      />
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue'
-import api from '@/api/client'
-import endpoints, {buildQuery} from '@/api/endpoints'
-import type {PageResponse, Purchase, PurchaseListFilters, PurchaseExportQuery, SiteObject, Employee} from '@/api/types'
-import {formatDate, formatCurrency, getStatusClass, getStatusText} from '@/utils/formatters'
-import {debounce} from '@/utils/debounce'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import { computed, onMounted, ref } from 'vue'
+import type { Purchase, SiteObject, Employee } from '@/api/types'
+import type { GenericListConfig } from '@/types/generic'
+import { formatDate } from '@/utils/formatters'
+import { useErrorHandler } from '@/composables/useErrorHandler'
+import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import Modal from '@/components/Modal.vue'
 import PurchaseForm from './PurchaseForm.vue'
-import ListHeader from '@/components/ListHeader.vue'
-import FilterPanel from '@/components/FilterPanel.vue'
-import FilterField from '@/components/FilterField.vue'
-import ModernPagination from '@/components/ModernPagination.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import TableSkeleton from '@/components/TableSkeleton.vue'
-import ExportButton from '@/components/ExportButton.vue'
+import PurchaseInfo from './PurchaseInfo.vue'
+import GenericList from '@/components/GenericList.vue'
+import PurchaseCard from '@/components/cards/PurchaseCard.vue'
+import { usePurchasesStore } from '@/stores/purchases'
+import { useObjectsStore } from '@/stores/objects'
+import { useEmployeesStore } from '@/stores/employees'
 
-type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
+// Stores
+const purchasesStore = usePurchasesStore
+const objectsStore = useObjectsStore
+const employeesStore = useEmployeesStore
 
-const rows = ref<Purchase[]>([])
-const count = ref(0)
-const page = ref(1)
-const pageSize = ref(20)
-const loading = ref(false)
+// Error handling
+const { handleLoadingError, handleDeleteError } = useErrorHandler()
+
+// Modal state
 const modalOpen = ref(false)
 const editingPurchase = ref<Purchase | null>(null)
+const viewModalOpen = ref(false)
+const viewingPurchase = ref<Purchase | null>(null)
 
 // Computed properties
 const modalTitle = computed(() => {
   return editingPurchase.value ? 'Редактировать закупку' : 'Новая закупка'
 })
 
-// Sorting
-const sortBy = ref('')
-const sortOrder = ref<'asc' | 'desc'>('asc')
-
-function handleSort(key: string) {
-  if (sortBy.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortBy.value = key
-    sortOrder.value = 'asc'
-  }
-  
-  const ordering = sortOrder.value === 'desc' ? `-${key}` : key
-  filters.value.ordering = ordering
-  reload(1)
-}
-
-const filters = ref<PurchaseListFilters>({
-  date_from: undefined, 
-  date_to: undefined, 
-  object: undefined, 
-  responsible: undefined, 
-  is_archived: undefined,
-  ordering: '-date',
-} as any)
-
-const objects = ref<SiteObject[]>([])
-const employees = ref<Employee[]>([])
-
-// Computed options for filters
+// Filter options
 const objectOptions = computed(() => [
-  { value: undefined, label: 'Все' },
-  ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
+  { value: '', label: 'Все объекты' },
+  ...objectsStore.selectOptions
 ])
 
 const employeeOptions = computed(() => [
-  { value: undefined, label: 'Все' },
-  ...employees.value.map((e: Employee) => ({ 
-    value: e.id, 
-    label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
-  }))
+  { value: '', label: 'Все ответственные' },
+  ...employeesStore.selectOptions
 ])
 
 const statusOptions = computed(() => [
-  { value: undefined, label: 'Все' },
+  { value: '', label: 'Все статусы' },
   { value: 'false', label: 'Активные' },
   { value: 'true', label: 'Архивные' }
 ])
 
-async function loadRefs() {
-  const [{data: od}, {data: ed}] = await Promise.all([
-    api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
-  ])
-  objects.value = od.results
-  employees.value = ed.results
-}
-
-async function fetchList() {
-  loading.value = true
-  try {
-    // Очищаем undefined значения для корректной работы фильтров
-    const cleanFilters = Object.fromEntries(
-      Object.entries(filters.value).filter(([_, v]) => v !== undefined && v !== null)
-    )
-    
-    const q: PurchaseListFilters & { page: number; page_size: number } = {
-      ...cleanFilters, 
-      page: page.value, 
-      page_size: pageSize.value
+// GenericList configuration
+const listConfig = computed<GenericListConfig<Purchase>>(() => ({
+  title: 'Закупки',
+  subtitle: 'Управление закупками материалов и поставщиками',
+  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  showCreate: true,
+  createText: 'Новая закупка',
+  canCreate: true,
+  showStats: true,
+  exportable: true,
+  exportFilename: 'purchases',
+  exportUrl: '/api/v1/purchases/',
+  loadingText: 'Загрузка закупок...',
+  emptyText: 'Нет закупок',
+  emptyTitle: 'Нет закупок',
+  emptySubtitle: 'Создайте первую закупку для начала работы',
+  filterColumns: 4,
+  columns: [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
+    { key: 'purchase_no', label: '№ закупки', sortable: true },
+    { key: 'object_name', label: 'Объект', sortable: true },
+    { key: 'supplier', label: 'Поставщик', sortable: true },
+    { key: 'responsible', label: 'Ответственный', sortable: true },
+    { key: 'items', label: 'Позиций', sortable: false, formatter: (value) => value?.length ?? 0 }
+  ],
+  filters: [
+    {
+      key: 'date_after',
+      type: 'date',
+      label: 'Дата с'
+    },
+    {
+      key: 'date_before',
+      type: 'date',
+      label: 'Дата по'
+    },
+    {
+      key: 'object',
+      type: 'select',
+      label: 'Объект',
+      options: objectOptions.value
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      options: employeeOptions.value
+    },
+    {
+      key: 'is_archived',
+      type: 'select',
+      label: 'Статус',
+      options: statusOptions.value
     }
-    
-    const {data} = await api.get<PageResponse<Purchase>>(endpoints.purchases.list + buildQuery(q as unknown as Query))
-    rows.value = data.results
-    count.value = data.count
-  } finally {
-    loading.value = false
-  }
-}
+  ],
+  actions: [
+    {
+      key: 'view',
+      label: 'Просмотр',
+      class: 'btn-outline btn-sm',
+      shortLabel: '👁️'
+    },
+    {
+      key: 'edit',
+      label: 'Редактировать',
+      class: 'btn-primary btn-sm',
+      shortLabel: '✏️'
+    }
+  ],
+  mobileCardComponent: PurchaseCard,
+  mobileCardProp: 'purchase',
+  defaultSort: 'date',
+  defaultSortOrder: 'desc'
+}))
 
-function reload(p = page.value) {
-  page.value = p;
-  fetchList()
-}
-
+// Methods
 function openCreateModal() {
   editingPurchase.value = null
   modalOpen.value = true
@@ -298,39 +180,25 @@ function openEditModal(purchase: Purchase) {
   modalOpen.value = true
 }
 
+function openViewModal(purchase: Purchase) {
+  viewingPurchase.value = purchase
+  viewModalOpen.value = true
+}
+
 function onPurchaseSaved() {
   modalOpen.value = false
   editingPurchase.value = null
-  // Reload the list to show the updated purchase
-  fetchList()
+  purchasesStore.fetchList()
 }
-
-function resetFilters() {
-  filters.value = {
-    date_after: undefined,
-    date_before: undefined,
-    object: undefined,
-    material: undefined,
-    responsible: undefined, 
-    is_archived: undefined,
-    ordering: '-date',
-  } as any
-  reload(1)
-}
-
-// Debounced функция для поиска
-const debouncedSearch = debounce(() => {
-  reload(1)
-}, 500)
 
 function responsibleName(id: number): string {
-  const employee = employees.value.find((e: Employee) => e.id === id)
+  const employee = employeesStore.items.find((e: Employee) => e.id === id)
   return employee ? `${employee.first_name || employee.username} ${employee.last_name || ''}`.trim() : '—'
 }
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
-    const data = rows.value
+    const data = purchasesStore.items
     const filename = `purchases_${new Date().toISOString().split('T')[0]}`
 
     switch (format) {
@@ -344,80 +212,46 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
         exportToPDF(data, filename)
         break
     }
-
-    // ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
   } catch (error) {
-    ErrorHandlers.dataLoading(error)
+    await handleLoadingError(error, 'purchases')
   }
 }
 
-function exportToCSV(data: Purchase[], filename: string) {
-  const headers = ['ID', 'Дата', '№ закупки', 'Объект', 'Поставщик', 'Ответственный', 'Позиций']
-  const rows = data.map(item => [
-    item.id,
-    formatDate(item.date),
-    item.purchase_no || '',
-    item.object_name || '',
-    item.supplier || '',
-    responsibleName(item.responsible) || '',
-    item.items?.length ?? 0
-  ])
-
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(field => `"${field}"`).join(','))
-    .join('\n')
-
-  downloadFile(csvContent, `${filename}.csv`, 'text/csv')
+async function handleAction(action: string, item: Purchase) {
+  switch (action) {
+    case 'view':
+      openViewModal(item)
+      break
+    case 'edit':
+      openEditModal(item)
+      break
+    case 'delete':
+      await handleDelete(item)
+      break
+  }
 }
 
-function exportToExcel(data: Purchase[], filename: string) {
-  // For now, export as CSV with .xlsx extension
-  // In a real app, you'd use a library like xlsx
-  exportToCSV(data, filename.replace('.xlsx', ''))
-  // ui.toast({ type: 'info', text: 'Excel экспорт временно недоступен. Скачан CSV файл.' })
+async function handleDelete(purchase: Purchase) {
+  if (!confirm(`Удалить закупку "${purchase.purchase_no || '#' + purchase.id}"?`)) return
+  
+  try {
+    await purchasesStore.delete(purchase.id)
+  } catch (error) {
+    await handleDeleteError(error, 'purchase', purchase.id)
+  }
 }
 
-function exportToPDF(data: Purchase[], filename: string) {
-  // For now, show info message
-  // ui.toast({ type: 'info', text: 'PDF экспорт временно недоступен' })
-}
-
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-// Watcher для автоматического поиска при изменении фильтров
-watch(
-  () => filters.value,
-  () => {
-    page.value = 1
-    debouncedSearch()
-  },
-  { deep: true }
-)
-
-function handlePageChange(newPage: number) {
-  page.value = newPage
-  fetchList()
-}
-
-function handlePageSizeChange(newSize: number) {
-  pageSize.value = newSize
-  page.value = 1
-  fetchList()
-}
-
+// Lifecycle
 onMounted(async () => {
-  await loadRefs();
-  await fetchList()
+  try {
+    await Promise.all([
+      purchasesStore.fetchList(),
+      objectsStore.fetchList(),
+      employeesStore.fetchList()
+    ])
+  } catch (error) {
+    await handleLoadingError(error, 'purchases')
+  }
 })
 </script>
 

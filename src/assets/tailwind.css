@@ -95,4 +95,66 @@ html, body, #app {
         overflow-wrap: anywhere;
         word-break: break-word;
     }
+
+    /* Мобильные карточки */
+    .mobile-cards-container {
+        @apply p-4 space-y-4;
+    }
+    
+    .mobile-cards-container .card {
+        @apply transition-all duration-200;
+    }
+    
+    .mobile-cards-container .card:hover {
+        @apply scale-[1.01] shadow-lg;
+    }
+    
+    .mobile-cards-container .card:active {
+        @apply scale-[0.99];
+    }
+    
+    /* Скрытие компонентов в зависимости от размера экрана */
+    @media (max-width: 767px) {
+        .desktop-only {
+            @apply hidden;
+        }
+    }
+    
+    @media (min-width: 768px) {
+        .mobile-only {
+            @apply hidden;
+        }
+    }
+    
+    /* Улучшенная анимация загрузки для карточек */
+    .mobile-cards-container .animate-pulse .card-body > * {
+        @apply animate-pulse;
+        animation-delay: calc(var(--index) * 0.1s);
+    }
+
+    /* Мобильная навигация - улучшения */
+    .mobile-nav {
+        /* Безопасная зона для iPhone */
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Улучшенные тени для мобильной навигации */
+    .mobile-nav {
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Анимация появления дополнительного меню */
+    .mobile-more-menu {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    /* Улучшенные hover эффекты */
+    .mobile-nav-item:hover {
+        transform: translateY(-1px);
+    }
+    
+    .mobile-nav-item:active {
+        transform: translateY(0);
+    }
 }

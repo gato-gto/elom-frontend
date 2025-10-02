@@ -1,193 +1,58 @@
 <!-- src/pages/Materials/MaterialForm.vue -->
 <template>
-  <form class="grid gap-4" @submit.prevent="submit">
-    <!-- Основная информация -->
-    <div class="card bg-base-100 border">
+  <div class="material-form">
+    <!-- Current photo preview -->
+    <div v-if="currentPhotoUrl" class="card bg-base-100 border mb-6">
       <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Основная информация</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Название -->
-          <FormField
-            v-model="form.name"
-            label="Название материала"
-            type="input"
-            placeholder="Введите название материала"
-            :error="errors.name"
-            required
-          />
-
-          <!-- SKU -->
-          <FormField
-            v-model="form.sku"
-            label="SKU (Артикул)"
-            type="input"
-            placeholder="Введите артикул или код материала"
-            :error="errors.sku"
-          />
-
-          <!-- Категория -->
-          <FormField
-            v-model="form.category"
-            label="Категория"
-            type="select"
-            :error="errors.category"
-            placeholder="— выберите категорию —"
-            :options="categoryOptions"
-          />
-
-          <!-- Дата создания -->
-          <FormField
-            v-model="form.created_date"
-            label="Дата создания"
-            type="date"
-            :error="errors.created_date"
-            required
-          />
-
-          <!-- Производитель -->
-          <FormField
-            v-model="form.manufacturer"
-            label="Производитель/Бренд"
-            type="input"
-            placeholder="Введите название производителя"
-            :error="errors.manufacturer"
-          />
-
-          <!-- Активность -->
-          <FormField
-            v-model="form.is_active"
-            label="Активен"
-            type="checkbox"
-            :error="errors.is_active"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Дополнительная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Дополнительная информация</h2>
-        <div class="grid gap-4">
-          <!-- Описание -->
-          <FormField
-            v-model="form.description"
-            label="Описание"
-            type="textarea"
-            placeholder="Введите описание материала"
-            :error="errors.description"
-            :rows="3"
-          />
-
-
-          <!-- Средняя цена -->
-          <FormField
-            v-model="form.average_price"
-            label="Средняя цена (UZS)"
-            type="number"
-            placeholder="Введите среднюю цену за единицу"
-            :error="errors.average_price"
-            step="0.01"
-            min="0"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Фото и документы -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Фото и документы</h2>
-        
-        <!-- Current photo preview -->
-        <div v-if="currentPhotoUrl" class="mb-4">
-          <div class="relative inline-block">
-            <img 
-              :src="currentPhotoUrl" 
-              alt="Текущее фото" 
-              class="h-24 w-24 object-cover rounded-lg border"
+        <h3 class="card-title text-lg mb-4">Текущее фото</h3>
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <img
+                :src="currentPhotoUrl"
+                alt="Текущее фото"
+                class="h-24 w-24 object-cover rounded-lg border"
             />
-            <button 
-              type="button" 
-              class="absolute -top-2 -right-2 btn btn-error btn-xs btn-circle"
-              :disabled="deletingPhoto" 
-              @click="onDeletePhoto"
-              title="Удалить фото"
+            <button
+                type="button"
+                class="absolute -top-2 -right-2 btn btn-error btn-xs btn-circle"
+                :disabled="deletingPhoto"
+                @click="onDeletePhoto"
+                title="Удалить фото"
             >
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
-          <p class="text-xs text-base-content-60 mt-1">Текущее фото</p>
+          <div>
+            <p class="text-sm text-base-content/70">Текущее фото материала</p>
+            <p class="text-xs text-base-content/50">Нажмите на крестик для удаления</p>
+          </div>
         </div>
-        
-        <!-- File input -->
-        <FileInput 
-          v-model="photoFile" 
-          accept="image/*" 
-          :maxSizeMb="8" 
-          :preview="true"
-          :disabled="deletingPhoto"
-        />
       </div>
     </div>
 
-    <!-- Техническая информация -->
-    <div class="mt-6 p-4 bg-base-200 rounded-lg">
-      <h3 class="text-sm font-medium text-base-content/70 mb-3">Техническая информация</h3>
-      
-      <!-- Единица измерения -->
-      <FormField
-        v-model="form.default_unit"
-        label="Базовая единица измерения"
-        type="select"
-        :error="errors.default_unit"
-        placeholder="— выберите единицу —"
-        :options="unitOptions"
-        required
-        class="text-sm"
-      />
-      
-      <p class="text-xs text-base-content/60 mt-2">
-        Базовая единица будет использоваться для автоматического округления значений (например, 1000г → 1кг).
-      </p>
-    </div>
-
-    <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2">
-      <button 
-        type="button" 
-        class="btn btn-outline" 
-        @click="$emit('cancel')"
-        :disabled="loading || deletingPhoto"
-      >
-        Отмена
-      </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        :disabled="loading || deletingPhoto"
-      >
-        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
-      </button>
-    </div>
-  </form>
+    <!-- Generic Form -->
+    <GenericForm
+        :config="formConfig"
+        :initial-data="initialFormData"
+        :on-submit="handleSubmit"
+        :on-cancel="handleCancel"
+        :validate-on-change="true"
+        :reset-on-submit="false"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useMaterialsStore } from '@/stores/materials'
-import { useUnitsStore } from '@/stores/units'
-import { useMaterialCategoriesStore } from '@/stores/materialCategories'
-import { useUiStore } from '@/stores/ui'
-import type { Material, MaterialRequest } from '@/api/types'
-import FormField from '@/components/FormField.vue'
-import FileInput from '@/components/FileInput.vue'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import {ref, computed, onMounted} from 'vue'
+import {useMaterialsStore} from '@/stores/materials'
+import {useUnitsStore} from '@/stores/units'
+import {useMaterialCategoriesStore} from '@/stores/materialCategories'
+import type {Material, MaterialRequest} from '@/api/types'
+import type {GenericFormConfig} from '@/types/generic'
+import GenericForm from '@/components/GenericForm.vue'
+import {useErrorHandler} from '@/composables/useErrorHandler'
 
 const props = defineProps<{
   initial?: Material | null
@@ -199,124 +64,211 @@ const emit = defineEmits<{
 }>()
 
 const materialsStore = useMaterialsStore()
-const unitsStore = useUnitsStore()
+const unitsStore = useUnitsStore
 const materialCategoriesStore = useMaterialCategoriesStore()
-const ui = useUiStore()
+const {handleFormError} = useErrorHandler()
 
-const loading = ref(false)
 const deletingPhoto = ref(false)
-const errors = reactive<Record<string, string>>({})
-
-const form = reactive<MaterialRequest>({
-  name: '',
-  sku: '',
-  category: undefined,
-  default_unit: 1, // Default to first unit
-  created_date: new Date().toISOString().split('T')[0],
-  description: '',
-  manufacturer: '',
-  average_price: undefined,
-  is_active: true
-})
-
-const photoFile = ref<File | null>(null)
 const currentPhotoUrl = ref<string | null>(null)
 
-const categoryOptions = computed(() => materialCategoriesStore.selectOptions)
+// Form configuration
+const formConfig = computed<GenericFormConfig<MaterialRequest & { photo?: File }>>(() => ({
+  title: props.initial ? 'Редактировать материал' : 'Новый материал',
+  subtitle: 'Заполните информацию о материале',
 
-const unitOptions = computed(() => {
-  return unitsStore.selectOptions
+  fields: [
+    {
+      key: 'name',
+      type: 'input',
+      label: 'Название материала',
+      placeholder: 'Введите название материала',
+      required: true,
+      order: 1,
+      width: 'half',
+      validation: {
+        minLength: 2,
+        maxLength: 200
+      }
+    },
+    {
+      key: 'sku',
+      type: 'input',
+      label: 'SKU (Артикул)',
+      placeholder: 'Введите артикул или код материала',
+      order: 2,
+      width: 'half'
+    },
+    {
+      key: 'category',
+      type: 'select',
+      label: 'Категория',
+      placeholder: '— выберите категорию —',
+      options: categoryOptions.value,
+      order: 3,
+      width: 'half'
+    },
+    {
+      key: 'created_date',
+      type: 'date',
+      label: 'Дата создания',
+      required: true,
+      order: 4,
+      width: 'half'
+    },
+    {
+      key: 'manufacturer',
+      type: 'input',
+      label: 'Производитель/Бренд',
+      placeholder: 'Введите название производителя',
+      order: 5,
+      width: 'half'
+    },
+    {
+      key: 'is_active',
+      type: 'checkbox',
+      label: 'Статус',
+      order: 6,
+      width: 'half',
+      checkboxLabel: 'Активен'
+    },
+    {
+      key: 'description',
+      type: 'textarea',
+      label: 'Описание',
+      placeholder: 'Введите описание материала',
+      order: 7,
+      width: 'full',
+      validation: {
+        maxLength: 1000
+      }
+    },
+    {
+      key: 'average_price',
+      type: 'number',
+      label: 'Средняя цена (UZS)',
+      placeholder: 'Введите среднюю цену за единицу',
+      order: 8,
+      width: 'half',
+      validation: {
+        min: 0
+      }
+    },
+    {
+      key: 'default_unit',
+      type: 'select',
+      label: 'Базовая единица измерения',
+      placeholder: '— выберите единицу —',
+      options: unitOptions.value,
+      required: true,
+      order: 9,
+      width: 'full',
+      help: 'Базовая единица будет использоваться для автоматического округления значений (например, 1000г → 1кг).'
+    },
+    {
+      key: 'photo',
+      type: 'file',
+      label: 'Фото материала',
+      accept: 'image/*',
+      order: 10,
+      width: 'full',
+      help: 'Загрузите изображение материала (максимум 8 МБ)'
+    }
+  ],
+  submitText: props.initial ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена',
+  showCancel: true
+}))
+
+// Initial form data
+const initialFormData = computed<MaterialRequest & { photo?: File }>(() => {
+  if (props.initial) {
+    return {
+      name: props.initial.name,
+      sku: props.initial.sku || '',
+      category: props.initial.category,
+      default_unit: props.initial.default_unit,
+      created_date: props.initial.created_date || new Date().toISOString().split('T')[0],
+      description: props.initial.description || '',
+      manufacturer: props.initial.manufacturer || '',
+      average_price: props.initial.average_price,
+      is_active: props.initial.is_active ?? true,
+      photo: undefined // Photo will be handled separately
+    }
+  }
+
+  return {
+    name: '',
+    sku: '',
+    category: undefined,
+    default_unit: 1,
+    created_date: new Date().toISOString().split('T')[0],
+    description: '',
+    manufacturer: '',
+    average_price: undefined,
+    is_active: true,
+    photo: undefined // Photo will be handled separately
+  }
 })
 
-function resetForm() {
-  form.name = ''
-  form.sku = ''
-  form.category = undefined
-  form.default_unit = 1
-  form.created_date = new Date().toISOString().split('T')[0]
-  form.description = ''
-  form.manufacturer = ''
-  form.average_price = undefined
-  form.is_active = true
-  photoFile.value = null
-  currentPhotoUrl.value = null
-  Object.keys(errors).forEach(key => delete errors[key])
-}
+// Computed options
+const categoryOptions = computed(() => materialCategoriesStore.selectOptions)
+const unitOptions = computed(() => unitsStore.selectOptions)
 
-function loadInitial() {
-  if (props.initial) {
-    form.name = props.initial.name
-    form.sku = props.initial.sku || ''
-    form.category = props.initial.category
-    form.default_unit = props.initial.default_unit
-    form.created_date = props.initial.created_date || new Date().toISOString().split('T')[0]
-    form.description = props.initial.description || ''
-    form.manufacturer = props.initial.manufacturer || ''
-    form.average_price = props.initial.average_price
-    form.is_active = props.initial.is_active ?? true
-    
-    if (props.initial.photo_url) {
-      currentPhotoUrl.value = props.initial.photo_url
-    }
-  } else {
-    resetForm()
-  }
-}
-
+// Methods
 async function onDeletePhoto() {
   if (!props.initial?.id) return
-  
+
   deletingPhoto.value = true
   try {
     await materialsStore.deletePhoto(props.initial.id)
     currentPhotoUrl.value = null
-    ui.toast({ type: 'success', text: 'Фото удалено' })
   } catch (error) {
-    ui.toast({ type: 'error', text: 'Ошибка удаления фото' })
-    console.error('Error deleting photo:', error)
+    await handleFormError(error, 'material')
   } finally {
     deletingPhoto.value = false
   }
 }
 
-async function submit() {
-  loading.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
-  
+async function handleSubmit(formData: MaterialRequest & { photo?: File }) {
   try {
     let materialId: number
-    
+
+    // Extract photo file from form data
+    const photoFile = formData.photo
+    delete formData.photo // Remove photo from form data before saving
+
     // First, save the material data (without photo)
     if (props.initial) {
-      await materialsStore.update(props.initial.id, form)
+      await materialsStore.update(props.initial.id, formData)
       materialId = props.initial.id
     } else {
-      const newMaterial = await materialsStore.create(form)
+      const newMaterial = await materialsStore.create(formData)
       materialId = newMaterial.id
     }
-    
+
     // Then, upload photo if exists
-    if (photoFile.value) {
-      await materialsStore.uploadPhoto(materialId, photoFile.value)
+    if (photoFile) {
+      await materialsStore.uploadPhoto(materialId, photoFile)
     }
-    
+
     emit('saved')
-  } catch (error: any) {
-    const errorResult = ErrorHandlers.formValidation(error)
-    
-    // Устанавливаем ошибки полей
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      errors[field] = errorResult.fieldErrors[field]
-    })
-  } finally {
-    loading.value = false
+  } catch (error) {
+    await handleFormError(error, 'material')
+    throw error
   }
+}
+
+function handleCancel() {
+  emit('cancel')
 }
 
 // Load data on mount
 onMounted(async () => {
-  loadInitial()
-  
+  // Load initial photo URL
+  if (props.initial?.photo_url) {
+    currentPhotoUrl.value = props.initial.photo_url
+  }
+
   // Load units and categories if not already loaded
   const promises = []
   if (unitsStore.items.length === 0) {
@@ -325,7 +277,7 @@ onMounted(async () => {
   if (materialCategoriesStore.items.length === 0) {
     promises.push(materialCategoriesStore.fetchList())
   }
-  
+
   if (promises.length > 0) {
     await Promise.all(promises)
   }

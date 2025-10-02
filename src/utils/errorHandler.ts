@@ -1,211 +1,201 @@
-/**
- * Универсальная обработка ошибок API
- * Согласно схеме API: {"detail": "...", "errors": {...}}
- */
-
-export interface ApiErrorResponse {
-  detail: string
-  errors: Record<string, string[]>
-}
-
-export interface ErrorHandlerOptions {
-  showToast?: boolean
-  logError?: boolean
-  fallbackMessage?: string
-}
+import type { ParsedApiError, ErrorType, ErrorDisplayConfig, ErrorContext } from '@/api/types/errors'
 
 /**
- * Обрабатывает ошибку API и возвращает структурированные данные
+ * Парсит вложенные ошибки валидации
+ * Обрабатывает структуры типа items[0].material, items[1].quantity и т.д.
  */
-export function handleApiError(
-  error: any,
-  options: ErrorHandlerOptions = {}
-): {
-  detail: string
-  fieldErrors: Record<string, string>
-  hasErrors: boolean
-} {
-  const {
-    showToast = true,
-    logError = true,
-    fallbackMessage = 'Произошла ошибка'
-  } = options
-
-  if (logError) {
-    // eslint-disable-next-line no-console
-    if (typeof console !== 'undefined' && console.error) { console.error('API Error:', error) }
-  }
-
-  // Инициализация результата
-  const result = {
-    detail: fallbackMessage,
-    fieldErrors: {} as Record<string, string>,
-    hasErrors: false
-  }
-
-  // Проверяем наличие response с данными об ошибке
-  if (error?.response?.data) {
-    const data = error.response.data
-
-    // Обрабатываем структуру {"detail": "...", "errors": {...}}
-    if (typeof data === 'object' && data.detail !== undefined) {
-      result.detail = data.detail || fallbackMessage
-      
-      // Обрабатываем ошибки полей
-      if (data.errors && typeof data.errors === 'object') {
-        Object.keys(data.errors).forEach(field => {
-          const fieldError = data.errors[field]
-          if (Array.isArray(fieldError) && fieldError.length > 0) {
-            result.fieldErrors[field] = fieldError[0] // Берем первую ошибку
-          } else if (typeof fieldError === 'string') {
-            result.fieldErrors[field] = fieldError
+function parseNestedErrors(errors: any): Record<string, string[]> {
+  const result: Record<string, string[]> = {}
+  
+  for (const [key, value] of Object.entries(errors)) {
+    if (Array.isArray(value)) {
+      // Обрабатываем массивы (например, items)
+      value.forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          // Обрабатываем объекты в массиве
+          for (const [fieldKey, fieldErrors] of Object.entries(item)) {
+            if (Array.isArray(fieldErrors)) {
+              const nestedKey = `${key}[${index}].${fieldKey}`
+              result[nestedKey] = fieldErrors as string[]
+            }
           }
-        })
-      }
-      
-      result.hasErrors = true
-    }
-    // Обрабатываем старую структуру DRF (прямые ошибки полей)
-    else if (typeof data === 'object') {
-      Object.keys(data).forEach(field => {
-        const fieldError = data[field]
-        if (Array.isArray(fieldError) && fieldError.length > 0) {
-          result.fieldErrors[field] = fieldError[0]
-        } else if (typeof fieldError === 'string') {
-          result.fieldErrors[field] = fieldError
+        } else if (typeof item === 'string') {
+          // Простые строки в массиве
+          result[`${key}[${index}]`] = [item]
         }
       })
-      
-      if (Object.keys(result.fieldErrors).length > 0) {
-        result.detail = 'Ошибка валидации'
-        result.hasErrors = true
+    } else if (typeof value === 'object' && value !== null) {
+      // Обрабатываем объекты
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        if (Array.isArray(nestedValue)) {
+          result[`${key}.${nestedKey}`] = nestedValue as string[]
+        }
       }
+    } else if (Array.isArray(value)) {
+      // Простые массивы строк
+      result[key] = value as string[]
+    } else if (typeof value === 'string') {
+      // Простые строки
+      result[key] = [value]
     }
   }
-  // Обрабатываем ошибки без response (сетевые ошибки и т.д.)
-  else if (error?.message) {
-    result.detail = error.message
-    result.hasErrors = true
-  }
-
-  // Показываем toast уведомление если нужно
-  if (showToast && result.hasErrors) {
-    // Импортируем ui store динамически чтобы избежать циклических зависимостей
-    import('@/stores/ui').then(({ useUiStore }) => {
-      const ui = useUiStore()
-      ui.toast({ type: 'error', text: result.detail })
-    })
-  }
-
+  
   return result
 }
 
 /**
- * Специальные обработчики для конкретных типов ошибок
+ * Парсит ошибку API и возвращает структурированную информацию
  */
-export const ErrorHandlers = {
-  /**
-   * Обработка ошибок валидации форм
-   */
-  formValidation: (error: any) => {
-    const result = handleApiError(error, { 
-      showToast: false, // Не показываем общий toast, показываем ошибки полей
-      fallbackMessage: 'Ошибка валидации формы'
-    })
-    
-    // Показываем toast для каждой ошибки поля
-    if (result.hasErrors) {
-      import('@/stores/ui').then(({ useUiStore }) => {
-        const ui = useUiStore()
-        Object.values(result.fieldErrors).forEach(fieldError => {
-          ui.toast({ type: 'error', text: fieldError })
-        })
-      })
-    }
-    
-    return result
-  },
+export function parseApiError(error: any, context?: ErrorContext): ParsedApiError {
+  // Определяем статус код
+  const status = error?.response?.status || 0
+  
+  // Определяем тип ошибки
+  const errorType: ErrorType = getErrorType(status, error)
+  
+  // Получаем данные ответа
+  const data = error?.response?.data || {}
+  
+  // Парсим детали ошибки
+  const detail = data?.detail || error?.message || 'Произошла неизвестная ошибка'
+  const fieldErrors = parseNestedErrors(data?.errors || {})
+  const nonFieldErrors = data?.non_field_errors || []
 
-  /**
-   * Обработка ошибок загрузки данных
-   */
-  dataLoading: (error: any) => {
-    return handleApiError(error, {
-      fallbackMessage: 'Ошибка загрузки данных'
-    })
-  },
+  // Создаем конфигурацию отображения
+  const displayConfig: ErrorDisplayConfig = {
+    showToast: true,
+    logToConsole: true,
+    fallbackMessage: detail,
+    toastType: 'error'
+  }
 
-  /**
-   * Обработка ошибок сохранения
-   */
-  save: (error: any) => {
-    return handleApiError(error, {
-      fallbackMessage: 'Ошибка сохранения'
-    })
-  },
-
-  /**
-   * Обработка ошибок удаления
-   */
-  delete: (error: any) => {
-    return handleApiError(error, {
-      fallbackMessage: 'Ошибка удаления'
-    })
-  },
-
-  /**
-   * Обработка ошибок авторизации
-   */
-  auth: (error: any) => {
-    return handleApiError(error, {
-      fallbackMessage: 'Ошибка авторизации'
-    })
-  },
-
-  /**
-   * Обработка ошибок архивирования
-   */
-  archive: (error: any) => {
-    return handleApiError(error, {
-      fallbackMessage: 'Ошибка архивирования'
-    })
+  return {
+    detail,
+    fieldErrors,
+    hasErrors: Object.keys(fieldErrors).length > 0 || nonFieldErrors.length > 0,
+    statusCode: status,
+    errorType,
+    displayConfig,
+    originalError: error
   }
 }
 
 /**
- * Проверяет, является ли ошибка конкретным типом
+ * Обрабатывает ошибку API с отображением пользователю
  */
-export function isErrorType(error: any, type: string): boolean {
-  if (!error?.response?.data?.detail) { return false }
+export async function handleApiErrorAsync(
+  error: any, 
+  context?: ErrorContext
+): Promise<ParsedApiError> {
+  const parsedError = parseApiError(error, context)
   
-  const detail = error.response.data.detail.toLowerCase()
-  return detail.includes(type.toLowerCase())
+  // Логируем в консоль если нужно
+  if (parsedError.displayConfig?.logToConsole) {
+    console.error('API Error:', parsedError)
+  }
+
+  // Показываем уведомление если нужно
+  if (parsedError.displayConfig?.showToast) {
+    const ui = await getUiStore()
+    ui.toast({
+      type: 'error',
+      text: parsedError.detail
+    })
+  }
+
+  return parsedError
 }
 
 /**
- * Проверяет, является ли ошибка связанной с архивированными данными
+ * Определяет тип ошибки по статус коду
  */
-export function isArchivedError(error: any): boolean {
-  return isErrorType(error, 'archived') || isErrorType(error, 'read-only')
+function getErrorType(status: number, error: any): ErrorType {
+  if (status === 0 || !error?.response) {
+    return 'network'
+  }
+  
+  switch (status) {
+    case 400:
+      return 'validation'
+    case 403:
+      return 'permission'
+    case 404:
+      return 'not_found'
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return 'server_error'
+    default:
+      return 'unknown'
+  }
 }
 
 /**
- * Проверяет, является ли ошибка связанной с валидацией
+ * Получает UI store для показа уведомлений
  */
-export function isValidationError(error: any): boolean {
-  return error?.response?.status === 400
+async function getUiStore() {
+  const { useUiStore } = await import('@/stores/ui')
+  return useUiStore()
 }
 
 /**
- * Проверяет, является ли ошибка связанной с правами доступа
+ * Обработчики ошибок для разных операций
  */
-export function isPermissionError(error: any): boolean {
-  return error?.response?.status === 403
+export const ErrorHandlers = {
+  // Обработка ошибок валидации форм
+  formValidation: async (error: any, entity?: string): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'formValidation',
+      entity: entity || 'форма'
+    })
+  },
+
+  // Обработка ошибок загрузки данных
+  dataLoading: async (error: any, entity?: string): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'dataLoading',
+      entity: entity || 'данные'
+    })
+  },
+
+  // Обработка ошибок сохранения
+  save: async (error: any, entity?: string): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'save',
+      entity: entity || 'данные'
+    })
+  },
+
+  // Обработка ошибок удаления
+  delete: async (error: any, entity?: string): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'delete',
+      entity: entity || 'элемент'
+    })
+  },
+
+  // Обработка ошибок аутентификации
+  auth: async (error: any): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'auth'
+    })
+  },
+
+  // Обработка ошибок прав доступа
+  permission: async (error: any): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'permission'
+    })
+  },
+
+  // Обработка ошибок экспорта
+  export: async (error: any): Promise<ParsedApiError> => {
+    return handleApiErrorAsync(error, { 
+      operation: 'export'
+    })
+  }
 }
 
-/**
- * Проверяет, является ли ошибка связанной с отсутствием ресурса
- */
-export function isNotFoundError(error: any): boolean {
-  return error?.response?.status === 404
-}
+// Обратная совместимость
+export const handleApiError = parseApiError

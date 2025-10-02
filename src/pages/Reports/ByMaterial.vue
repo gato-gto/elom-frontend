@@ -92,9 +92,9 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('unit_code')" class="cursor-pointer hover:bg-gray-50">
+            <th @click="handleSort('unit')" class="cursor-pointer hover:bg-gray-50">
               Ед.
-              <span v-if="sortBy === 'unit_code'" class="ml-1">
+              <span v-if="sortBy === 'unit'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
@@ -182,17 +182,10 @@ import TableSkeleton from '@/components/TableSkeleton.vue'
 import ExportButton from '@/components/ExportButton.vue'
 import ChartContainer from '@/components/ChartContainer.vue'
 
-type ReportRow = {
-  material_id: number
-  material_name: string
-  unit: string
-  qty_total: number | null
-  amount_total: number
-  rows: number
-}
+
 
 type ReportResponse = { 
-  rows: ReportRow[]
+  rows: MaterialReportRow[]
   total_amount?: number 
 }
 

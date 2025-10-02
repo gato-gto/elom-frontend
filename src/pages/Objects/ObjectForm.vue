@@ -1,103 +1,26 @@
 <!-- src/pages/Objects/ObjectForm.vue -->
 <template>
-  <form class="grid gap-4" @submit.prevent="submit">
-    <!-- Основная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Основная информация</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Название -->
-          <FormField
-            v-model="form.name"
-            label="Название объекта"
-            type="input"
-            placeholder="Введите название объекта"
-            :error="errors.name"
-            required
-          />
-
-          <!-- Адрес -->
-          <FormField
-            v-model="form.address"
-            label="Адрес"
-            type="textarea"
-            placeholder="Введите адрес объекта"
-            :error="errors.address"
-            :rows="3"
-          />
-
-          <!-- Координаты -->
-          <FormField
-            v-model="form.lat"
-            label="Широта"
-            type="input"
-            placeholder="41.3111"
-            :error="errors.lat"
-          />
-          <FormField
-            v-model="form.lng"
-            label="Долгота"
-            type="input"
-            placeholder="69.2797"
-            :error="errors.lng"
-          />
-
-          <!-- Даты работ -->
-          <FormField
-            v-model="form.date_start"
-            label="Дата начала работ"
-            type="date"
-            :error="errors.date_start"
-          />
-          <FormField
-            v-model="form.date_end"
-            label="Дата окончания работ"
-            type="date"
-            :error="errors.date_end"
-          />
-
-          <!-- Статус активности -->
-          <FormField
-            v-model="form.is_active"
-            label="Активный объект"
-            type="checkbox"
-            :error="errors.is_active"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2">
-      <button 
-        type="button" 
-        class="btn btn-outline" 
-        @click="$emit('cancel')"
-        :disabled="loading"
-      >
-        Отмена
-      </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        :disabled="loading"
-      >
-        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ loading ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
-      </button>
-    </div>
-  </form>
+  <div class="object-form">
+    <!-- Generic Form -->
+    <GenericForm
+      :config="formConfig"
+      :initial-data="initialFormData"
+      :on-submit="handleSubmit"
+      :on-cancel="handleCancel"
+      :validate-on-change="true"
+      :reset-on-submit="false"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
-import { useUiStore } from '@/stores/ui'
+import { useEmployeesStore, brigadierOptions } from '@/stores/employees'
 import type { Object, ObjectRequest } from '@/api/types'
-import FormField from '@/components/FormField.vue'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import type { GenericFormConfig } from '@/types/generic'
+import GenericForm from '@/components/GenericForm.vue'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const props = defineProps<{
   initial?: Object | null
@@ -108,71 +31,178 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const objectsStore = useObjectsStore()
-const ui = useUiStore()
+const objectsStore = useObjectsStore
+const employeesStore = useEmployeesStore
+const { handleFormError } = useErrorHandler()
 
-const loading = ref(false)
-const errors = reactive<Record<string, string>>({})
+// Form configuration
+const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
+  title: props.initial ? 'Редактировать объект' : 'Новый объект',
+  subtitle: 'Заполните информацию об объекте',
+  sections: [
+    {
+      title: 'Основная информация',
+      description: 'Основные данные объекта',
+      fields: ['name', 'responsible', 'address', 'location_url'],
+      order: 1
+    },
+    {
+      title: 'Временные рамки',
+      description: 'Даты начала и окончания работ',
+      fields: ['date_start', 'date_end', 'is_active'],
+      order: 2
+    }
+  ],
+  fields: [
+    {
+      key: 'name',
+      type: 'input',
+      label: 'Название объекта',
+      placeholder: 'Введите название объекта',
+      required: true,
+      order: 1,
+      width: 'half',
+      validation: {
+        minLength: 2,
+        maxLength: 200
+      }
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      placeholder: '— выберите ответственного —',
+      options: employeeOptions.value,
+      order: 2,
+      width: 'half'
+    },
+    {
+      key: 'address',
+      type: 'textarea',
+      label: 'Адрес',
+      placeholder: 'Введите адрес объекта',
+      order: 3,
+      width: 'full',
+      validation: {
+        maxLength: 500
+      }
+    },
+    {
+      key: 'location_url',
+      type: 'input',
+      label: 'Ссылка на карту',
+      placeholder: 'https://yandex.ru/maps/... или https://maps.google.com/...',
+      order: 4,
+      width: 'full',
+      help: 'Укажите ссылку на Яндекс.Карты или Google Maps для точного местоположения объекта',
+      validation: {
+        pattern: /^https?:\/\/.+/,
+        maxLength: 500
+      }
+    },
+    {
+      key: 'date_start',
+      type: 'date',
+      label: 'Дата начала работ',
+      order: 5,
+      width: 'half'
+    },
+    {
+      key: 'date_end',
+      type: 'date',
+      label: 'Дата окончания работ',
+      order: 6,
+      width: 'half'
+    },
+    {
+      key: 'is_active',
+      type: 'checkbox',
+      label: 'Активный объект',
+      order: 7,
+      width: 'full'
+    }
+  ],
+  submitText: props.initial ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена',
+  showCancel: true
+}))
 
-const form = reactive<ObjectRequest>({
-  name: '',
-  address: '',
-  is_active: true,
-  lat: undefined,
-  lng: undefined,
-  date_start: undefined,
-  date_end: undefined
+// Initial form data
+const initialFormData = computed<ObjectRequest>(() => {
+  if (props.initial) {
+    return {
+      name: props.initial.name,
+      address: props.initial.address || '',
+      is_active: props.initial.is_active,
+      location_url: props.initial.location_url,
+      responsible: props.initial.responsible,
+      date_start: props.initial.date_start,
+      date_end: props.initial.date_end
+    }
+  }
+  
+  return {
+    name: '',
+    address: '',
+    is_active: true,
+    location_url: undefined,
+    responsible: undefined,
+    date_start: undefined,
+    date_end: undefined
+  }
 })
 
-function resetForm() {
-  form.name = ''
-  form.address = ''
-  form.is_active = true
-  form.lat = undefined
-  form.lng = undefined
-  form.date_start = undefined
-  form.date_end = undefined
-  Object.keys(errors).forEach(key => delete errors[key])
-}
-
-function loadInitial() {
-  if (props.initial) {
-    form.name = props.initial.name
-    form.address = props.initial.address || ''
-    form.is_active = props.initial.is_active
-    form.lat = props.initial.lat
-    form.lng = props.initial.lng
-    form.date_start = props.initial.date_start
-    form.date_end = props.initial.date_end
-  } else {
-    resetForm()
-  }
-}
-
-async function submit() {
-  loading.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
+// Computed options
+const employeeOptions = computed(() => {
+  const brigadiers = brigadierOptions.value
+  const allEmployees = employeesStore.items
+  const options = [...brigadiers]
   
+  // Добавляем пользователя, указанного в значении "Ответственный", если он есть
+  if (props.initial?.responsible) {
+    const responsibleEmployee = allEmployees.find(emp => emp.id === props.initial?.responsible)
+    if (responsibleEmployee) {
+      const responsibleOption = {
+        value: responsibleEmployee.id,
+        label: `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`.trim() || responsibleEmployee.username
+      }
+      
+      // Проверяем, что ответственный еще не в списке
+      const isAlreadyInList = options.some(option => option.value === responsibleEmployee.id)
+      if (!isAlreadyInList) {
+        options.push(responsibleOption)
+      }
+    }
+  }
+  
+  return options
+})
+
+// Methods
+async function handleSubmit(formData: ObjectRequest) {
   try {
     if (props.initial) {
-      await objectsStore.update(props.initial.id, form)
+      await objectsStore.update(props.initial.id, formData)
     } else {
-      await objectsStore.create(form)
+      await objectsStore.create(formData)
     }
-    emit('saved')
-  } catch (error: any) {
-    const errorResult = ErrorHandlers.formValidation(error)
     
-    // Устанавливаем ошибки полей
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      errors[field] = errorResult.fieldErrors[field]
-    })
-  } finally {
-    loading.value = false
+    emit('saved')
+  } catch (error) {
+    await handleFormError(error, 'object')
+    throw error
   }
 }
 
-onMounted(() => {
-  loadInitial()
+function handleCancel() {
+  emit('cancel')
+}
+
+// Load data on mount
+onMounted(async () => {
+  // Load all employees if not already loaded
+  if (employeesStore.items.length === 0) {
+    await employeesStore.fetchList({ ordering: 'username' })
+  }
 })
 </script>

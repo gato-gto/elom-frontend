@@ -44,7 +44,7 @@ export interface RefreshTokenResponse {
 }
 
 export interface VerifyTokenRequest {
-  token: string;
+    token: string;
 }
 
 // ===== USER TYPES =====
@@ -56,16 +56,19 @@ export interface User {
   last_name: string;
   email: string;
     role: UserRole;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface EmployeeCreateRequest {
-  username: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  role: UserRole;
-  assigned_object_ids?: number[];
-  password?: string;
+    username: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    role: UserRole;
+    assigned_object_ids?: number[];
+    password?: string;
 }
 
 export interface EmployeeUpdateRequest {
@@ -87,6 +90,8 @@ export interface Unit {
   id: number;
     code: string;
     name: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface MaterialCategory {
@@ -125,12 +130,16 @@ export interface Material {
 
 export interface SiteObject {
   id: number;
-  name: string;
+    name: string;
   address: string;
   is_active: boolean;
   lat?: string; // decimal as string
   lng?: string; // decimal as string
+  location_url?: string;
   responsible?: number;
+  responsible_name?: string;
+  key_person_name?: string;
+  key_person_contacts?: string;
   date_start?: string;
   date_end?: string;
   created_at: string;
@@ -184,16 +193,18 @@ export interface Purchase {
     date: string;
   object: number;
     object_name: string;
-    supplier: string;
+    supplier: number; // ID поставщика
+    supplier_name?: string; // Название поставщика для отображения
     invoice_number?: string;
-    vat_included: boolean;
   currency: Currency;
     comment?: string;
   responsible: number;
+  responsible_name?: string;
   total_amount: string; // decimal as string
     is_archived: boolean;
     cover_photo_url?: string;
   purchase_no: string;
+    status: 'new' | 'completed' | 'cancelled';
     items: PurchaseItem[];
     photos: PurchasePhoto[];
     created_at: string;
@@ -205,10 +216,10 @@ export interface PurchaseCreateRequest {
   object: number;
     supplier: string;
     invoice_number?: string;
-  vat_included: boolean;
   currency: Currency;
     comment?: string;
   responsible: number;
+    status?: 'new' | 'completed' | 'cancelled';
   items: PurchaseItemCreateRequest[];
 }
 
@@ -217,10 +228,10 @@ export interface PurchaseUpdateRequest {
   object?: number;
     supplier?: string;
     invoice_number?: string;
-    vat_included?: boolean;
   currency?: Currency;
     comment?: string;
   responsible?: number;
+    status?: 'new' | 'completed' | 'cancelled';
 }
 
 export interface PurchaseItemCreateRequest {
@@ -282,6 +293,9 @@ export interface SmartQuantity {
     unit: string;
     original_value: number;
     original_unit: string;
+    display_value?: number;
+    display_unit?: string;
+    conversion_applied?: boolean;
 }
 
 export interface StockSnapshot {
@@ -298,6 +312,7 @@ export interface StockSnapshot {
   source_type: SourceType;
   source_id: number;
   responsible: number;
+  responsible_name?: string;
     comment?: string;
     is_archived: boolean;
   smart_quantity: SmartQuantity;
@@ -318,6 +333,7 @@ export interface WriteOff {
   quantity: string; // decimal as string
   stage: Stage;
   responsible: number;
+  responsible_name?: string;
     comment?: string;
   is_archived: boolean;
   current_balance: string; // decimal as string
@@ -437,12 +453,25 @@ export interface MaterialReportItem {
   material_sku?: string;
   material_category: string;
   unit: string;
-  qty_total: number;
+  // Дополнительные поля материала
+  material_description: string;
+  material_manufacturer: string;
+  material_is_active: boolean;
+  material_created_date: string | null;
+  material_average_price: number | null;
+  material_min_stock_level: null;
+  // Основные поля отчета
+  qty_total: number | null;  // может быть null если нет конвертации единиц
   amount_total: number;
   avg_price: number;
-  min_price: number;
-  max_price: number;
+  min_price: number | null;  // может быть null
+  max_price: number | null;  // может быть null
   rows: number;
+  // Дополнительные поля
+  unique_objects: number;
+  unique_responsibles: number;
+  first_purchase_date: string | null;
+  last_purchase_date: string | null;
 }
 
 // ===== IMPORT TYPES =====
@@ -584,7 +613,6 @@ export interface PurchaseFormData {
   object: number;
   supplier: string;
   invoice_number?: string;
-  vat_included: boolean;
   currency: Currency;
   comment?: string;
   responsible: number;
@@ -708,8 +736,7 @@ export interface ObjectRequest {
   name: string;
   address: string;
   is_active: boolean;
-  lat?: string;
-  lng?: string;
+  location_url?: string;
   responsible?: number;
   date_start?: string;
   date_end?: string;
@@ -719,8 +746,7 @@ export interface PatchedObjectRequest {
   name?: string;
   address?: string;
   is_active?: boolean;
-  lat?: string;
-  lng?: string;
+  location_url?: string;
   responsible?: number;
   date_start?: string;
   date_end?: string;
@@ -741,26 +767,26 @@ export interface PatchedUnitRequest {
 export interface PurchaseRequest {
   date: string;
   object: number;
-  supplier: string;
+  supplier: number; // ID поставщика
   invoice_number?: string;
   purchase_no?: string;
-  vat_included?: boolean;
   currency: Currency;
   comment?: string;
   responsible: number;
+  status?: 'new' | 'completed' | 'cancelled';
   items: PurchaseItemCreateRequest[];
 }
 
 export interface PatchedPurchaseRequest {
   date?: string;
   object?: number;
-  supplier?: string;
+  supplier?: number; // ID поставщика
   invoice_number?: string;
   purchase_no?: string;
-  vat_included?: boolean;
   currency?: Currency;
   comment?: string;
   responsible?: number;
+  status?: 'new' | 'completed' | 'cancelled';
 }
 
 export interface PurchaseItemRequest {
@@ -791,7 +817,6 @@ export interface PageResponse<T> {
   previous?: string;
   results: T[];
 }
-
 export interface PaginationState {
   count: number;
   page: number;
@@ -942,8 +967,8 @@ export interface PeriodReportResponse {
 export interface ReportByPeriodQuery {
   object?: number;
   responsible?: number;
-  date_from?: string;
-  date_to?: string;
+    date_from?: string;
+    date_to?: string;
   export?: 'xlsx' | 'pdf';
   ordering?: string;
   period?: string;
@@ -971,8 +996,8 @@ export interface ResponsibleReportResponse {
 export interface ReportByResponsibleQuery {
   object?: number;
   responsible?: number;
-  date_from?: string;
-  date_to?: string;
+    date_from?: string;
+    date_to?: string;
   export?: 'xlsx' | 'pdf';
   ordering?: string;
   page?: number;
@@ -996,6 +1021,7 @@ export interface Me {
 export interface PurchasePhotoUploadRequest {
   photo: File;
   is_cover?: boolean;
+  photo_type?: 'instructions' | 'report';
 }
 
 // ID type
@@ -1015,3 +1041,61 @@ export interface Notification {
   related_id?: number;
   action_url?: string;
 }
+
+// ===== SUPPLIERS =====
+
+export interface PurchaseSupplier {
+  id: number;
+  name: string;
+  contact_person?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  comment?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseSupplierCreateRequest {
+  name: string;
+  contact_person?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  comment?: string;
+  is_active?: boolean;
+}
+
+export interface PurchaseSupplierUpdateRequest {
+  name?: string;
+  contact_person?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  comment?: string;
+  is_active?: boolean;
+}
+
+export interface PaginatedPurchaseSupplierList {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PurchaseSupplier[];
+}
+
+export interface PurchaseSupplierListFilters {
+  search?: string;
+  is_active?: boolean;
+  ordering?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// Алиасы для совместимости
+export type Supplier = PurchaseSupplier;
+export type SupplierCreateRequest = PurchaseSupplierCreateRequest;
+export type SupplierUpdateRequest = PurchaseSupplierUpdateRequest;
+export type SupplierFilterParams = PurchaseSupplierListFilters;
+export type PaginatedSupplierList = PaginatedPurchaseSupplierList;
+

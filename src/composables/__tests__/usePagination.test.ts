@@ -17,40 +17,45 @@ describe('usePagination', () => {
   })
 
   it('calculates hasNext correctly', () => {
-    const { hasNext } = usePagination(mockPagination)
-    expect(hasNext.value).toBe(true)
+    const { hasNextPage } = usePagination(mockPagination)
+    expect(hasNextPage.value).toBe(true)
   })
 
   it('calculates hasPrevious correctly', () => {
-    const { hasPrevious } = usePagination(mockPagination)
-    expect(hasPrevious.value).toBe(false)
+    const { hasPreviousPage } = usePagination(mockPagination)
+    expect(hasPreviousPage.value).toBe(false)
   })
 
   it('calculates hasPrevious when on page 2', () => {
     const pagination = { ...mockPagination, page: 2 }
-    const { hasPrevious } = usePagination(pagination)
-    expect(hasPrevious.value).toBe(true)
+    const { hasPreviousPage } = usePagination(pagination)
+    expect(hasPreviousPage.value).toBe(true)
   })
 
   it('calculates page range correctly', () => {
-    const { pageRange } = usePagination(mockPagination)
-    expect(pageRange.value).toEqual([1, 2, 3, 4, 5])
+    const { visiblePages } = usePagination(mockPagination)
+    expect(visiblePages.value).toEqual([1, 2, 3, 4, 5])
   })
 
   it('calculates page range with maxVisiblePages', () => {
-    const { pageRange } = usePagination(mockPagination, { maxVisiblePages: 3 })
-    expect(pageRange.value).toEqual([1, 2, 3])
+    const { visiblePages } = usePagination(mockPagination, { maxVisiblePages: 3 })
+    expect(visiblePages.value).toEqual([1, 2, 3])
   })
 
   it('calculates page info correctly', () => {
-    const { pageInfo } = usePagination(mockPagination)
-    expect(pageInfo.value).toBe('Показано 1-20 из 100')
+    const { getPageInfo } = usePagination(mockPagination)
+    const pageInfo = getPageInfo()
+    expect(pageInfo.start).toBe(1)
+    expect(pageInfo.end).toBe(20)
+    expect(pageInfo.count).toBe(100)
   })
 
   it('calculates page info for last page', () => {
     const pagination = { ...mockPagination, page: 5 }
-    const { pageInfo } = usePagination(pagination)
-    expect(pageInfo.value).toBe('Показано 81-100 из 100')
+    const { getPageInfo } = usePagination(pagination)
+    const pageInfo = getPageInfo()
+    expect(pageInfo.start).toBe(81)
+    expect(pageInfo.end).toBe(100)
   })
 
   it('validates page numbers correctly', () => {
@@ -63,8 +68,8 @@ describe('usePagination', () => {
 
   it('gets adjacent pages correctly', () => {
     const { getAdjacentPages } = usePagination(mockPagination)
-    expect(getAdjacentPages(2)).toEqual([1, 2, 3])
-    expect(getAdjacentPages(1)).toEqual([1, 2])
+    expect(getAdjacentPages(2)).toEqual([2, 3])
+    expect(getAdjacentPages(1)).toEqual([2])
     expect(getAdjacentPages(5)).toEqual([4, 5])
   })
 })

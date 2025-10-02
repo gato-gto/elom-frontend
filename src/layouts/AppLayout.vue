@@ -4,77 +4,10 @@
     
     <!-- Main content -->
     <div class="drawer-content flex flex-col">
-      <!-- Top navigation bar -->
-      <div class="navbar bg-gradient-to-r from-base-100 to-base-200 shadow-xl border-b border-base-300/50 h-20 sticky top-0 z-50 backdrop-blur-sm">
-        <!-- Mobile menu button -->
-        <div class="navbar-start">
-          <label for="drawer-toggle" class="btn btn-ghost btn-square lg:hidden hover:bg-primary/10 transition-all duration-200">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </label>
-        </div>
-        
-        <!-- Page title with enhanced styling -->
-        <div class="navbar-center">
-          <h1 class="text-xl font-bold">
-            {{ pageTitle }}
-          </h1>
-        </div>
-        
-        <!-- Right side actions -->
-        <div class="navbar-end">
-          <div class="flex items-center gap-2">
-            <!-- Theme toggle with enhanced styling -->
-            <button @click="toggleTheme" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-all duration-200 group" title="Переключить тему">
-              <svg v-if="isDark" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <svg v-else class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            </button>
-            
-            <!-- User menu with enhanced styling -->
-            <div class="dropdown dropdown-end">
-              <div tabindex="0" role="button" class="btn btn-ghost hover:bg-primary/10 transition-all duration-200 group">
-                <div class="avatar">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200">
-                    <span class="text-xl font-bold">{{ userInitials }}</span>
-                  </div>
-                </div>
-                <div class="hidden sm:block ml-3 text-left">
-                  <div class="text-sm font-semibold text-base-content">{{ auth.me?.username }}</div>
-                  <div class="text-xs text-base-content/60">{{ roleDisplayName }}</div>
-                </div>
-                <svg class="w-4 h-4 ml-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-              <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-2xl bg-base-100 rounded-xl w-52 border border-base-300/50">
-                <li>
-                  <div class="text-sm px-3 py-2 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg">
-                    <div class="font-semibold text-base-content">{{ auth.me?.username }}</div>
-                    <div class="text-xs text-base-content/60">{{ roleDisplayName }}</div>
-                  </div>
-                </li>
-                <li><div class="divider my-2"></div></li>
-                <li>
-                  <a @click="logout" class="text-error hover:bg-error/10 hover:text-error transition-all duration-200 rounded-lg">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Выйти
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+      
       
       <!-- Page content -->
-      <main class="flex-1 p-4 bg-gray-50">
+      <main class="flex-1 p-1 sm:p-4 bg-gray-50 pb-20 lg:pb-4">
         <router-view />
       </main>
     </div>
@@ -84,189 +17,76 @@
       <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
       <aside class="sidebar min-h-full w-64">
         <!-- Logo/Brand -->
-        <div class="sidebar-header h-20 flex items-center p-4">
+        <div class="sidebar-header h-16 flex items-center justify-between p-4">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-sm">E</span>
-            </div>
             <div>
               <h2 class="sidebar-logo text-lg font-bold">ELOM</h2>
               <p class="sidebar-subtitle text-xs">Energy Life</p>
             </div>
           </div>
+          
         </div>
         
-        <!-- Navigation menu -->
-        <nav class="p-3 w-full animate-slide-in-left">
-          <ul class="space-y-1">
-            <!-- Dashboard -->
-            <li class="nav-item" :class="{ 'active': $route.name === 'Dashboard' }">
-              <router-link to="/" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
-                  </svg>
+        <!-- Auto-generated navigation menu -->
+        <AutoNavigation />
+        
+        <!-- User menu and theme toggle at bottom -->
+        <div class="mt-auto p-3 border-t border-white/10">
+          <!-- Theme toggle -->
+          <div class="mb-2">
+            <button @click="toggleTheme" class="nav-link w-full justify-start" title="Переключить тему">
+              <div class="nav-icon-wrapper">
+                <svg v-if="isDark" class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg v-else class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              </div>
+              {{ isDark ? 'Светлая тема' : 'Темная тема' }}
+            </button>
+          </div>
+          
+          <!-- User menu -->
+          <div class="dropdown dropdown-top w-full">
+            <div tabindex="0" role="button" class="nav-link w-full justify-start">
+              <div class="nav-icon-wrapper">
+                <div class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold">
+                  {{ userInitials }}
                 </div>
-                Дашборд
-              </router-link>
-            </li>
-            
-            <!-- Materials -->
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/materials') }">
-              <router-link to="/materials" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
+              </div>
+              <div class="flex-1 text-left">
+                <div class="text-sm font-semibold">{{ auth.me?.username }}</div>
+                <div class="text-xs opacity-60">{{ roleDisplayName }}</div>
+              </div>
+              <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mb-2 z-[1] p-2 shadow-2xl bg-base-100 rounded-xl w-full border border-base-300/50">
+              <li>
+                <div class="text-sm px-3 py-2 bg-primary/5 rounded-lg">
+                  <div class="font-semibold text-base-content">{{ auth.me?.username }}</div>
+                  <div class="text-xs text-base-content/60">{{ roleDisplayName }}</div>
                 </div>
-                Материалы
-              </router-link>
-            </li>
-            
-            <!-- Purchases -->
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/purchases') }">
-              <router-link to="/purchases" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-                  </svg>
-                </div>
-                Закупки
-              </router-link>
-            </li>
-            
-            <!-- Objects -->
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/objects') }">
-              <router-link to="/objects" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                Объекты
-              </router-link>
-            </li>
-            
-            <!-- Stocks -->
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/stocks') }">
-              <router-link to="/stocks" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                Остатки
-              </router-link>
-            </li>
-            
-            <!-- WriteOffs -->
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/writeoffs') }">
-              <router-link to="/writeoffs" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                Списания
-              </router-link>
-            </li>
-            
-            <!-- Archive -->
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/archive') }">
-              <router-link to="/archive" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h1.586a1 1 0 01.707.293l1.414 1.414a1 1 0 00.707.293h11.172a1 1 0 00.707-.293l1.414-1.414a1 1 0 01.707-.293H19a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                  </svg>
-                </div>
-                Архив
-              </router-link>
-            </li>
-            
-            <!-- Reports -->
-            <li>
-              <details :open="$route.path.startsWith('/reports')">
-                <summary class="nav-link">
-                  <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  Отчеты
-                </summary>
-                <ul class="ml-4">
-                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-period' }">
-                    <router-link to="/reports/by-period" class="nav-link text-sm">По периодам</router-link>
-                  </li>
-                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-object' }">
-                    <router-link to="/reports/by-object" class="nav-link text-sm">По объектам</router-link>
-                  </li>
-                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-material' }">
-                    <router-link to="/reports/by-material" class="nav-link text-sm">По материалам</router-link>
-                  </li>
-                  <li class="nav-item" :class="{ 'active': $route.path === '/reports/by-responsible' }">
-                    <router-link to="/reports/by-responsible" class="nav-link text-sm">По ответственным</router-link>
-                   </li>
-                </ul>
-              </details>
-            </li>
-            
-            <!-- Import
-            <li class="nav-item" :class="{ 'active': $route.path.startsWith('/import') }">
-              <router-link to="/import" class="nav-link">
-                <div class="nav-icon-wrapper">
-                  <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                  </svg>
-                </div>
-                Импорт
-              </router-link>
-            </li>
-             -->
-            <!-- Admin section (only for admin/director) -->
-            <template v-if="canManageUsers">
-              <li><hr class="admin-divider" /></li>
-              <li class="admin-title">
-                <span>Администрирование</span>
               </li>
-              
-              <!-- Units -->
-              <li class="nav-item" :class="{ 'active': $route.path.startsWith('/units') }">
-                <router-link to="/units" class="nav-link">
-                  <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2" />
-                    </svg>
-                  </div>
-                  Единицы измерения
-                </router-link>
+              <li><div class="divider my-2"></div></li>
+              <li>
+                <a @click="logout" class="text-error hover:bg-error/10 hover:text-error transition-all duration-200 rounded-lg">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Выйти
+                </a>
               </li>
-              
-              
-              <!-- Employees -->
-              <li class="nav-item" :class="{ 'active': $route.path.startsWith('/employees') }">
-                <router-link to="/employees" class="nav-link">
-                  <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" fill="#FFFFFF" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 80.13 80.13" xml:space="preserve">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                          <g>
-                            <path d="M48.355,17.922c3.705,2.323,6.303,6.254,6.776,10.817c1.511,0.706,3.188,1.112,4.966,1.112 c6.491,0,11.752-5.261,11.752-11.751c0-6.491-5.261-11.752-11.752-11.752C53.668,6.35,48.453,11.517,48.355,17.922z M40.656,41.984 c6.491,0,11.752-5.262,11.752-11.752s-5.262-11.751-11.752-11.751c-6.49,0-11.754,5.262-11.754,11.752S34.166,41.984,40.656,41.984 z M45.641,42.785h-9.972c-8.297,0-15.047,6.751-15.047,15.048v12.195l0.031,0.191l0.84,0.263 c7.918,2.474,14.797,3.299,20.459,3.299c11.059,0,17.469-3.153,17.864-3.354l0.785-0.397h0.084V57.833 C60.688,49.536,53.938,42.785,45.641,42.785z M65.084,30.653h-9.895c-0.107,3.959-1.797,7.524-4.47,10.088 c7.375,2.193,12.771,9.032,12.771,17.11v3.758c9.77-0.358,15.4-3.127,15.771-3.313l0.785-0.398h0.084V45.699 C80.13,37.403,73.38,30.653,65.084,30.653z M20.035,29.853c2.299,0,4.438-0.671,6.25-1.814c0.576-3.757,2.59-7.04,5.467-9.276 c0.012-0.22,0.033-0.438,0.033-0.66c0-6.491-5.262-11.752-11.75-11.752c-6.492,0-11.752,5.261-11.752,11.752 C8.283,24.591,13.543,29.853,20.035,29.853z M30.589,40.741c-2.66-2.551-4.344-6.097-4.467-10.032 c-0.367-0.027-0.73-0.056-1.104-0.056h-9.971C6.75,30.653,0,37.403,0,45.699v12.197l0.031,0.188l0.84,0.265 c6.352,1.983,12.021,2.897,16.945,3.185v-3.683C17.818,49.773,23.212,42.936,30.589,40.741z"></path>
-                          </g>
-                        </g>
-                      </svg>
-                  </div>
-                  Сотрудники
-                </router-link>
-              </li>
-            </template>
-          </ul>
-        </nav>
+            </ul>
+          </div>
+        </div>
       </aside>
     </div>
+    
+    <!-- Мобильная навигация -->
+    <AutoMobileNavigation />
   </div>
 </template>
 
@@ -277,6 +97,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
 import type { UserRole } from '@/api/types'
+import AutoNavigation from '@/components/AutoNavigation.vue'
+import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
 
 const route = useRoute()
 const router = useRouter()
