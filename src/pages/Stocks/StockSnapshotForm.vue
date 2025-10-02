@@ -84,17 +84,14 @@ const selectedMaterialUnit = computed(() => {
 
 // Computed options
 const objectOptions = computed(() => [
-  { value: 0, label: '— выберите объект —' },
   ...objectsStore.items.map((o: SiteObject) => ({ value: o.id, label: o.name }))
 ])
 
 const materialOptions = computed(() => [
-  { value: 0, label: '— выберите материал —' },
   ...materialsStore.items.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
 const employeeOptions = computed(() => [
-  { value: 0, label: '— выберите ответственного —' },
   ...employeesStore.items.map((e: Employee) => ({ 
     value: e.id, 
     label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()

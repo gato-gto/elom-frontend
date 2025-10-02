@@ -149,17 +149,14 @@ const units = computed(() => unitsStore.items)
 
 // Опции для селектов
 const objectOptions = computed(() => [
-  { value: 0, label: '— выберите объект —' },
   ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
 ])
 
 const materialOptions = computed(() => [
-  { value: null, label: '— выберите материал —' },
   ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
 const employeeOptions = computed(() => [
-  { value: 0, label: '— выберите ответственного —' },
   ...employees.value.map((e: Employee) => ({ 
     value: e.id, 
     label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()

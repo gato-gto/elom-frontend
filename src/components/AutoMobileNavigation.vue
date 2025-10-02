@@ -1,14 +1,6 @@
 <template>
   <!-- Мобильная навигация - всегда видимая внизу экрана -->
   <div class="mobile-nav lg:hidden">
-    <!-- DEBUG INFO -->
-    <div v-if="allNavigationItems.length === 0" class="p-2 text-xs text-red-500">
-      DEBUG: Нет элементов навигации! allNavigationItems.length = {{ allNavigationItems.length }}
-    </div>
-    <div v-else class="p-1 text-xs text-green-500">
-      DEBUG: Найдено {{ allNavigationItems.length }} элементов навигации
-      <br>DEBUG: auth.role = {{ auth.role }}, auth.isAuthenticated = {{ auth.isAuthenticated }}
-    </div>
     <!-- Основная навигация -->
     <div class="mobile-nav-container">
       <nav class="mobile-nav-items">
@@ -51,7 +43,7 @@
     </div>
 
     <!-- Расширенное меню -->
-    <div v-if="showMoreContent" class="mobile-more-content">
+    <div v-if="showMoreContent" class="mobile-more-content open">
       <div class="mobile-more-grid">
         <!-- Все элементы навигации включая невидимые в основной панели -->
         <router-link 
@@ -108,6 +100,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Overlay для закрытия меню -->
+    <div 
+      v-if="showMoreContent" 
+      class="mobile-nav-overlay" 
+      @click="closeMore"
+    ></div>
   </div>
 </template>
 
@@ -197,7 +196,6 @@ const allNavigationItems = computed((): NavigationItem[] => {
 
 // Show only top 4 items in bottom navigation
 const topNavigationItems = computed(() => {
-  console.log('DEBUG: allNavigationItems.value:', allNavigationItems.value)
   return allNavigationItems.value.slice(0, 4)
 })
 
@@ -253,7 +251,7 @@ async function logout() {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 100;
   background: hsl(var(--b1));
   border-top: 1px solid hsl(var(--b3));
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -324,6 +322,7 @@ async function logout() {
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
+  z-index: 10;
 }
 
 .mobile-more-content.open {
@@ -457,6 +456,17 @@ async function logout() {
 
 .mobile-action-logout:hover {
   background: hsl(var(--er) / 0.1);
+}
+
+/* Overlay */
+.mobile-nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 5;
 }
 
 /* Анимации */
