@@ -64,7 +64,7 @@ export interface StockSnapshotCreateRequest {
 export interface StockSnapshotUpdateRequest {
   date?: string;
   object?: number;
-  material?: number;
+  material?: number | null; // nullable according to API
   unit?: number;
   quantity_signed?: string; // decimal as string
   stage?: Stage;
@@ -88,7 +88,7 @@ export interface WriteOffCreateRequest {
 export interface WriteOffUpdateRequest {
   date?: string;
   object?: number;
-  material?: number;
+  material?: number | null; // nullable according to API
   unit?: number;
   quantity?: string; // decimal as string
   stage?: Stage;

@@ -185,6 +185,7 @@ export interface PurchasePhoto {
     is_cover: boolean;
   mime: string;
   size_bytes: number;
+  type: 'instructions' | 'report';
     created_at: string;
 }
 
@@ -346,7 +347,7 @@ export interface WriteOff {
 export interface WriteOffCreateRequest {
   date: string;
   object: number;
-  material: number;
+  material: number | null;
   unit: number;
   quantity: string; // decimal as string
   stage: Stage;
@@ -368,7 +369,7 @@ export interface WriteOffUpdateRequest {
 export interface StockSnapshotCreateRequest {
   date: string;
   object: number;
-  material: number;
+  material: number | null;
   unit: number;
   quantity_signed: string; // decimal as string
   stage: Stage;

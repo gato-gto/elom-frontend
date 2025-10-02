@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useSuppliersStore, searchSuppliers } from '@/stores/suppliers'
+import { useSuppliersStore } from '@/stores/suppliers'
 import { debounce } from '@/utils/debounce'
 import type { PurchaseSupplier } from '@/api/types'
 
@@ -109,7 +109,7 @@ const emit = defineEmits<{
   'change': [supplier: PurchaseSupplier | null]
 }>()
 
-const suppliersStore = useSuppliersStore
+const suppliersStore = useSuppliersStore()
 
 // Reactive state
 const searchQuery = ref('')
@@ -148,7 +148,7 @@ const debouncedSearch = debounce(async (query: string) => {
 
   loading.value = true
   try {
-    const results = await searchSuppliers(query)
+    const results = await suppliersStore.searchSuppliers(query)
     searchResults.value = results
     showDropdown.value = true
   } catch (error) {

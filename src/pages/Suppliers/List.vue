@@ -80,7 +80,7 @@ import GenericList from '@/components/GenericList.vue'
 import SupplierCard from '@/components/cards/SupplierCard.vue'
 
 // Stores
-const suppliersStore = useSuppliersStore
+const suppliersStore = useSuppliersStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 

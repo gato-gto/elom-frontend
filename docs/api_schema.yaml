@@ -1,0 +1,6692 @@
+openapi: 3.0.3
+info:
+  title: ELOM API
+  version: 1.0.0
+  description: Energy Life — учёт закупок, остатки, архив, отчёты (v1)
+paths:
+  /api/v1/archive/:
+    get:
+      operationId: archive_list
+      description: Архивные периоды (месяц×объект), отсортированы по убыванию месяца.
+      summary: Список закрытых периодов
+      parameters:
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: Фильтр по объекту (если предусмотрен в фильтре)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: month|closed_at (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Archive
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArchivePeriodList'
+              examples:
+                ПримерОтвета(страница):
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 3
+                        month: '2025-09-01'
+                        object: 1
+                        object_name: Объект А
+                        closed_at: '2025-09-30T18:05:00Z'
+                        closed_by: 2
+                        closed_by_name: Director
+                  summary: Пример ответа (страница)
+          description: ''
+  /api/v1/archive/{id}/:
+    get:
+      operationId: archive_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
+  /api/v1/archive/close/:
+    post:
+      operationId: archive_close_create
+      description: Помечает закупки и снимки за месяц как read-only (`is_archived=true`).
+      summary: Закрыть период (месяц×объект)
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: string
+        description: YYYY-MM
+        required: true
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: ID объекта
+        required: true
+      tags:
+      - Archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+            examples:
+              ПримерУспешногоОтвета:
+                value:
+                  id: 4
+                  month: '2025-09-01'
+                  object: 1
+                  object_name: Объект А
+                  closed_at: '2025-09-30T18:05:00Z'
+                  closed_by: 2
+                  closed_by_name: Director
+                summary: Пример успешного ответа
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+              examples:
+                ПримерУспешногоОтвета:
+                  value:
+                    id: 4
+                    month: '2025-09-01'
+                    object: 1
+                    object_name: Объект А
+                    closed_at: '2025-09-30T18:05:00Z'
+                    closed_by: 2
+                    closed_by_name: Director
+                  summary: Пример успешного ответа
+          description: ''
+        '400':
+          description: invalid params / already closed
+        '403':
+          description: forbidden
+  /api/v1/archive/periods/:
+    get:
+      operationId: archive_periods_list
+      description: Архивные периоды (месяц×объект), отсортированы по убыванию месяца.
+      summary: Список закрытых периодов
+      parameters:
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: Фильтр по объекту (если предусмотрен в фильтре)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: month|closed_at (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Archive
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArchivePeriodList'
+              examples:
+                ПримерОтвета(страница):
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 3
+                        month: '2025-09-01'
+                        object: 1
+                        object_name: Объект А
+                        closed_at: '2025-09-30T18:05:00Z'
+                        closed_by: 2
+                        closed_by_name: Director
+                  summary: Пример ответа (страница)
+          description: ''
+  /api/v1/archive/periods/{id}/:
+    get:
+      operationId: archive_periods_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
+  /api/v1/archive/periods/close/:
+    post:
+      operationId: archive_periods_close_create
+      description: Помечает закупки и снимки за месяц как read-only (`is_archived=true`).
+      summary: Закрыть период (месяц×объект)
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: string
+        description: YYYY-MM
+        required: true
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: ID объекта
+        required: true
+      tags:
+      - Archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+            examples:
+              ПримерУспешногоОтвета:
+                value:
+                  id: 4
+                  month: '2025-09-01'
+                  object: 1
+                  object_name: Объект А
+                  closed_at: '2025-09-30T18:05:00Z'
+                  closed_by: 2
+                  closed_by_name: Director
+                summary: Пример успешного ответа
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+              examples:
+                ПримерУспешногоОтвета:
+                  value:
+                    id: 4
+                    month: '2025-09-01'
+                    object: 1
+                    object_name: Объект А
+                    closed_at: '2025-09-30T18:05:00Z'
+                    closed_by: 2
+                    closed_by_name: Director
+                  summary: Пример успешного ответа
+          description: ''
+        '400':
+          description: invalid params / already closed
+        '403':
+          description: forbidden
+  /api/v1/archive/periods/reopen/:
+    post:
+      operationId: archive_periods_reopen_create
+      description: Снимает архив с закупок и снапшотов за указанный месяц и объект.
+      summary: Открыть ранее закрытый период
+      tags:
+      - Archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_ReopenInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/_ReopenInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/_ReopenInputRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '403':
+          description: forbidden
+        '404':
+          description: not found
+  /api/v1/archive/reopen/:
+    post:
+      operationId: archive_reopen_create
+      description: Снимает архив с закупок и снапшотов за указанный месяц и объект.
+      summary: Открыть ранее закрытый период
+      tags:
+      - Archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_ReopenInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/_ReopenInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/_ReopenInputRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '403':
+          description: forbidden
+        '404':
+          description: not found
+  /api/v1/audit-logs/:
+    get:
+      operationId: audit_logs_list
+      description: Просмотр журнала аудита системы. Доступно только администраторам
+        и директорам.
+      summary: Журнал аудита
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+        description: 'Фильтр: действие (create, update, delete, etc.)'
+      - in: query
+        name: detail
+        schema:
+          type: string
+        description: 'Фильтр: детали'
+      - in: query
+        name: ip
+        schema:
+          type: string
+        description: 'Фильтр: IP адрес'
+      - in: query
+        name: model
+        schema:
+          type: string
+        description: 'Фильтр: модель (Unit, Material, Purchase, etc.)'
+      - in: query
+        name: object_id
+        schema:
+          type: string
+        description: 'Фильтр: ID объекта'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: ts (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по деталям
+      - in: query
+        name: ts_from
+        schema:
+          type: string
+        description: 'Фильтр: с даты (формат: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ts_to
+        schema:
+          type: string
+        description: 'Фильтр: по дату (формат: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: user
+        schema:
+          type: integer
+        description: 'Фильтр: ID пользователя'
+      - in: query
+        name: user_name
+        schema:
+          type: string
+        description: 'Фильтр: имя пользователя'
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/v1/audit-logs/{id}/:
+    get:
+      operationId: audit_logs_retrieve
+      summary: Получить запись аудита
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this audit log.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+          description: ''
+  /api/v1/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/v1/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/auth/token/verify/:
+    post:
+      operationId: auth_token_verify_create
+      description: |-
+        Takes a token and indicates if it is valid.  This view provides no
+        information about a token's fitness for a particular use.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenVerifyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenVerifyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/employees/:
+    get:
+      operationId: employees_list
+      description: Поиск по username/first_name/last_name/email; фильтры по роли,
+        активности и объекту.
+      summary: Список сотрудников
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: 'Фильтр: активность'
+      - in: query
+        name: is_staff
+        schema:
+          type: boolean
+      - in: query
+        name: is_superuser
+        schema:
+          type: boolean
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: 'Фильтр: ID объекта (ответственный)'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: username|first_name|last_name|id'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+        description: 'Фильтр: роль (admin|buyer|site_manager|director|coordinator|brigadier)'
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: username|first_name|last_name|email'
+      - in: query
+        name: username
+        schema:
+          type: string
+      tags:
+      - Employees
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmployeeList'
+          description: ''
+    post:
+      operationId: employees_create
+      summary: Создать сотрудника
+      tags:
+      - Employees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+  /api/v1/employees/{id}/:
+    get:
+      operationId: employees_retrieve
+      summary: Получить сотрудника
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this пользователь.
+        required: true
+      tags:
+      - Employees
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    put:
+      operationId: employees_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this пользователь.
+        required: true
+      tags:
+      - employees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    patch:
+      operationId: employees_partial_update
+      summary: Обновить сотрудника
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this пользователь.
+        required: true
+      tags:
+      - Employees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    delete:
+      operationId: employees_destroy
+      summary: Удалить сотрудника
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this пользователь.
+        required: true
+      tags:
+      - Employees
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/employees/{id}/set_password/:
+    post:
+      operationId: employees_set_password
+      summary: Сменить пароль сотруднику
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this пользователь.
+        required: true
+      tags:
+      - Employees
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          description: invalid payload / forbidden
+  /api/v1/material-categories/:
+    get:
+      operationId: material_categories_list
+      description: Пагинация, поиск и сортировка. Поиск по `name`. Поддержка иерархии.
+      summary: Список категорий материалов
+      parameters:
+      - in: query
+        name: has_children
+        schema:
+          type: boolean
+        description: 'Фильтр: только категории с дочерними (true) или без (false)'
+      - in: query
+        name: has_materials
+        schema:
+          type: boolean
+        description: 'Фильтр: только категории с материалами (true) или без (false)'
+      - in: query
+        name: has_parent
+        schema:
+          type: boolean
+        description: 'Фильтр: только корневые категории (false) или только дочерние
+          (true)'
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: name (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: integer
+        description: 'Фильтр: ID родительской категории'
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: name'
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaterialCategoryList'
+          description: ''
+    post:
+      operationId: material_categories_create
+      summary: Создать категорию
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategory'
+          description: ''
+  /api/v1/material-categories/{id}/:
+    get:
+      operationId: material_categories_retrieve
+      summary: Получить категорию
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material category.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategory'
+          description: ''
+    put:
+      operationId: material_categories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material category.
+        required: true
+      tags:
+      - material-categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategory'
+          description: ''
+    patch:
+      operationId: material_categories_partial_update
+      summary: Обновить категорию
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material category.
+        required: true
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialCategoryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategory'
+          description: ''
+    delete:
+      operationId: material_categories_destroy
+      summary: Удалить категорию
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material category.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/material-categories/children/:
+    get:
+      operationId: material_categories_children
+      description: Возвращает все дочерние категории для указанной родительской категории
+        с пагинацией
+      summary: Получить дочерние категории
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 'Номер страницы (по умолчанию: 1)'
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Размер страницы (по умолчанию: 50, максимум: 200)'
+      - in: query
+        name: parent_id
+        schema:
+          type: integer
+        description: ID родительской категории (0 для корневых)
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategoryLite'
+          description: ''
+  /api/v1/material-categories/tree/:
+    get:
+      operationId: material_categories_tree
+      description: Возвращает иерархическое дерево всех категорий материалов с ограничением
+        глубины
+      summary: Получить дерево категорий
+      parameters:
+      - in: query
+        name: max_depth
+        schema:
+          type: integer
+        description: 'Максимальная глубина дерева (по умолчанию: 3)'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 'Номер страницы (по умолчанию: 1)'
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Размер страницы (по умолчанию: 50, максимум: 200)'
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Дерево категорий
+  /api/v1/materials/:
+    get:
+      operationId: materials_list
+      description: Пагинация, поиск и сортировка. Поиск по `name`, `sku`, `category__name`.
+      summary: Список материалов
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: 'Фильтр: ID категории'
+      - in: query
+        name: created_date_from
+        schema:
+          type: string
+        description: 'Фильтр: дата создания с (YYYY-MM-DD)'
+      - in: query
+        name: created_date_to
+        schema:
+          type: string
+        description: 'Фильтр: дата создания по (YYYY-MM-DD)'
+      - in: query
+        name: default_unit
+        schema:
+          type: integer
+        description: 'Фильтр: ID базовой единицы'
+      - in: query
+        name: has_description
+        schema:
+          type: boolean
+        description: 'Фильтр: только с описанием (true/false)'
+      - in: query
+        name: has_photo
+        schema:
+          type: boolean
+        description: 'Фильтр: только с фото (true/false)'
+      - in: query
+        name: has_purchases
+        schema:
+          type: boolean
+        description: 'Фильтр: только с закупками (true/false)'
+      - in: query
+        name: has_stock
+        schema:
+          type: boolean
+        description: 'Фильтр: только с остатками (true/false)'
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: 'Фильтр: только активные (true/false)'
+      - in: query
+        name: manufacturer
+        schema:
+          type: string
+        description: 'Фильтр: производитель'
+      - in: query
+        name: min_purchases_count
+        schema:
+          type: integer
+        description: 'Фильтр: минимальное количество закупок'
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: 'Фильтр: точное имя'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: name|sku|id (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: name|sku|category__name'
+      - in: query
+        name: sku
+        schema:
+          type: string
+        description: 'Фильтр: артикул/код'
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaterialList'
+          description: ''
+    post:
+      operationId: materials_create
+      summary: Создать материал
+      tags:
+      - Common
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+          description: ''
+  /api/v1/materials/{id}/:
+    get:
+      operationId: materials_retrieve
+      summary: Получить материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+          description: ''
+    put:
+      operationId: materials_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material.
+        required: true
+      tags:
+      - materials
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+          description: ''
+    patch:
+      operationId: materials_partial_update
+      summary: Обновить материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material.
+        required: true
+      tags:
+      - Common
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+          description: ''
+    delete:
+      operationId: materials_destroy
+      summary: Удалить материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/materials/{id}/photo/:
+    delete:
+      operationId: materials_photo_delete
+      description: Удалить текущее фото материала
+      summary: Удалить фото материала
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Фото не установлено
+  /api/v1/materials/{id}/upload-photo/:
+    post:
+      operationId: materials_photo_upload
+      description: Загрузить фото материала (`multipart/form-data`, поле `photo`)
+      summary: Загрузить фото материала
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material.
+        required: true
+      tags:
+      - Common
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialPhotoUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialPhotoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Uploaded
+        '400':
+          description: Ошибка валидации файла / нет поля photo у модели
+  /api/v1/materials/bulk-update/:
+    post:
+      operationId: materials_bulk_update
+      description: Обновить несколько материалов одновременно
+      summary: Массовое обновление материалов
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                updates:
+                  type: object
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Количество обновленных материалов
+          description: ''
+  /api/v1/materials/lite/:
+    get:
+      operationId: materials_lite
+      description: Быстрый список материалов для выпадающих списков
+      summary: Упрощенный список материалов
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Фильтр по категории
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Только активные
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по названию
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialLite'
+          description: ''
+  /api/v1/materials/search/:
+    get:
+      operationId: materials_search
+      description: Поиск материалов по названию и SKU для автодополнения
+      summary: Быстрый поиск материалов
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Фильтр по категории
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+        description: Лимит результатов
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Поисковый запрос
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialLite'
+          description: ''
+  /api/v1/materials/stats/:
+    get:
+      operationId: materials_stats
+      description: 'Получить статистику по материалам: количество закупок, общая сумма,
+        остатки'
+      summary: Статистика по материалам
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Фильтр по категории
+      - in: query
+        name: has_purchases
+        schema:
+          type: boolean
+        description: Только с закупками
+      - in: query
+        name: has_stock
+        schema:
+          type: boolean
+        description: Только с остатками
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Фильтр по активности
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialStats'
+          description: ''
+  /api/v1/objects/:
+    get:
+      operationId: objects_list
+      description: Пагинация, поиск и сортировка. Поиск по `name`, `address`.
+      summary: Список объектов
+      parameters:
+      - in: query
+        name: address
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: 'Фильтр: только активные (true/false)'
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: 'Фильтр: точное имя'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: name|id (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: name|address'
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedObjectList'
+          description: ''
+    post:
+      operationId: objects_create
+      summary: Создать объект
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObjectRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Object'
+          description: ''
+  /api/v1/objects/{id}/:
+    get:
+      operationId: objects_retrieve
+      summary: Получить объект
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Object'
+          description: ''
+    put:
+      operationId: objects_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      tags:
+      - objects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObjectRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Object'
+          description: ''
+    patch:
+      operationId: objects_partial_update
+      summary: Обновить объект
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedObjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedObjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedObjectRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Object'
+          description: ''
+    delete:
+      operationId: objects_destroy
+      summary: Удалить объект
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/purchase-items/:
+    get:
+      operationId: purchase_items_list
+      description: Пагинированный список позиций с фильтрами и поиском.
+      summary: Список позиций закупок
+      parameters:
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: Архивная закупка (true/false)
+      - in: query
+        name: material
+        schema:
+          type: integer
+        description: ID материала
+      - in: query
+        name: max_amount
+        schema:
+          type: number
+      - in: query
+        name: max_quantity
+        schema:
+          type: number
+          format: double
+        description: Максимальное количество
+      - in: query
+        name: min_amount
+        schema:
+          type: number
+      - in: query
+        name: min_quantity
+        schema:
+          type: number
+          format: double
+        description: Минимальное количество
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: ID объекта
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: purchase
+        schema:
+          type: integer
+        description: ID закупки
+      - in: query
+        name: purchase_date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: purchase_date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: supplier
+        schema:
+          type: string
+        description: Поставщик
+      - in: query
+        name: unit
+        schema:
+          type: integer
+        description: ID единицы измерения
+      tags:
+      - Purchase Items
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseItemList'
+          description: ''
+    post:
+      operationId: purchase_items_create
+      description: ViewSet для управления позициями закупок
+      summary: Создать позицию закупки
+      tags:
+      - Purchase Items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItem'
+          description: ''
+  /api/v1/purchase-items/{id}/:
+    get:
+      operationId: purchase_items_retrieve
+      description: ViewSet для управления позициями закупок
+      summary: Получить позицию закупки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase item.
+        required: true
+      tags:
+      - Purchase Items
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItem'
+          description: ''
+    put:
+      operationId: purchase_items_update
+      description: ViewSet для управления позициями закупок
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase item.
+        required: true
+      tags:
+      - purchase-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItemUpdate'
+          description: ''
+    patch:
+      operationId: purchase_items_partial_update
+      description: ViewSet для управления позициями закупок
+      summary: Изменить позицию закупки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase item.
+        required: true
+      tags:
+      - Purchase Items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseItemUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseItemUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseItemUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseItem'
+          description: ''
+    delete:
+      operationId: purchase_items_destroy
+      description: ViewSet для управления позициями закупок
+      summary: Удалить позицию закупки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase item.
+        required: true
+      tags:
+      - Purchase Items
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/purchase-items/bulk-create/:
+    post:
+      operationId: purchase_items_bulk_create_create
+      description: Создать несколько позиций закупки за один запрос
+      summary: Массовое создание позиций
+      parameters:
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+      - in: query
+        name: material
+        schema:
+          type: number
+      - in: query
+        name: max_amount
+        schema:
+          type: number
+      - in: query
+        name: max_quantity
+        schema:
+          type: number
+      - in: query
+        name: min_amount
+        schema:
+          type: number
+      - in: query
+        name: min_quantity
+        schema:
+          type: number
+      - in: query
+        name: object
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: purchase
+        schema:
+          type: number
+      - in: query
+        name: purchase_date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: purchase_date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: supplier
+        schema:
+          type: string
+      - in: query
+        name: unit
+        schema:
+          type: number
+      tags:
+      - Purchase Items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemBulkCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemBulkCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseItemBulkCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseItemList'
+          description: ''
+  /api/v1/purchase-items/bulk-update/:
+    patch:
+      operationId: purchase_items_bulk_update_partial_update
+      description: Обновить несколько позиций закупки за один запрос
+      summary: Массовое обновление позиций
+      parameters:
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+      - in: query
+        name: material
+        schema:
+          type: number
+      - in: query
+        name: max_amount
+        schema:
+          type: number
+      - in: query
+        name: max_quantity
+        schema:
+          type: number
+      - in: query
+        name: min_amount
+        schema:
+          type: number
+      - in: query
+        name: min_quantity
+        schema:
+          type: number
+      - in: query
+        name: object
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: purchase
+        schema:
+          type: number
+      - in: query
+        name: purchase_date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: purchase_date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: supplier
+        schema:
+          type: string
+      - in: query
+        name: unit
+        schema:
+          type: number
+      tags:
+      - Purchase Items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseItemBulkUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseItemBulkUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseItemBulkUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseItemList'
+          description: ''
+  /api/v1/purchase-items/stats/:
+    get:
+      operationId: purchase_items_stats_retrieve
+      description: Получить статистику по позициям закупок
+      summary: Статистика по позициям
+      tags:
+      - Purchase Items
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Статистика
+  /api/v1/purchase-photos/:
+    get:
+      operationId: purchase_photos_list
+      description: ViewSet для управления фото закупок
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - purchase-photos
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchasePhotoList'
+          description: ''
+    post:
+      operationId: purchase_photos_create
+      description: Загрузить фото для закупки (инструкции или отчет)
+      summary: Загрузка фото закупки
+      tags:
+      - Purchase Photos
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoUploadRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Фото успешно загружено
+  /api/v1/purchase-photos/{id}/:
+    get:
+      operationId: purchase_photos_retrieve
+      description: ViewSet для управления фото закупок
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase photo.
+        required: true
+      tags:
+      - purchase-photos
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoto'
+          description: ''
+    put:
+      operationId: purchase_photos_update
+      description: ViewSet для управления фото закупок
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase photo.
+        required: true
+      tags:
+      - purchase-photos
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoto'
+          description: ''
+    patch:
+      operationId: purchase_photos_partial_update
+      description: ViewSet для управления фото закупок
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase photo.
+        required: true
+      tags:
+      - purchase-photos
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchasePhotoRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchasePhotoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchasePhotoRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoto'
+          description: ''
+    delete:
+      operationId: purchase_photos_destroy
+      description: ViewSet для управления фото закупок
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase photo.
+        required: true
+      tags:
+      - purchase-photos
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/purchases/:
+    get:
+      operationId: purchases_list
+      description: Пагинированный список с фильтрами/поиском/сортировкой.
+      summary: Список закупок
+      parameters:
+      - in: query
+        name: comment
+        schema:
+          type: string
+      - in: query
+        name: currency
+        schema:
+          type: string
+      - in: query
+        name: date_after
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_before
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: Фильтр по дате (>=)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: Фильтр по дате (<=)
+      - in: query
+        name: invoice_number
+        schema:
+          type: string
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: Только архив/неархив (true/false)
+      - in: query
+        name: material
+        schema:
+          type: integer
+        description: Фильтр по материалу через позиции закупки
+      - in: query
+        name: max_total
+        schema:
+          type: number
+      - in: query
+        name: min_total
+        schema:
+          type: number
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: ID объекта
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: date|total_amount|created_at (с - для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+        description: ID ответственного
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по supplier, invoice_number, comment
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: supplier
+        schema:
+          type: string
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseList'
+              examples:
+                ПримерОтвета(страница):
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 10
+                        date: '2025-09-10'
+                        object: 1
+                        object_name: Объект А
+                        supplier: Ali-Termiz
+                        invoice_number: INV-001
+                        currency: UZS
+                        comment: ''
+                        responsible: 3
+                        total_amount: '125000.00'
+                        is_archived: false
+                        status: new
+                        purchase_no: P0001
+                        cover_photo_url: null
+                        items:
+                        - id: 101
+                          material: 5
+                          material_name: Кабель ВВГ
+                          unit: 2
+                          unit_code: м
+                          quantity: '50.000'
+                          amount: '125000.00'
+                          created_at: '2025-09-10T08:00:00Z'
+                          updated_at: '2025-09-10T08:00:00Z'
+                        photos: []
+                        created_at: '2025-09-10T08:00:00Z'
+                        updated_at: '2025-09-10T08:05:00Z'
+                  summary: Пример ответа (страница)
+          description: ''
+    post:
+      operationId: purchases_create
+      summary: Создать закупку (с позициями)
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseCreateRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  date: '2025-09-10'
+                  object: 1
+                  supplier: Ali-Termiz
+                  invoice_number: INV-001
+                  currency: UZS
+                  comment: ''
+                  responsible: 3
+                  status: new
+                  items:
+                  - material: 5
+                    unit: 2
+                    quantity: '50.000'
+                    amount: '125000.00'
+                summary: Пример запроса
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+        '400':
+          description: 'Ошибка валидации: {"detail":"...", "errors":{...}}'
+  /api/v1/purchases/{id}/:
+    get:
+      operationId: purchases_retrieve
+      summary: Получить закупку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+    put:
+      operationId: purchases_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseUpdate'
+          description: ''
+    patch:
+      operationId: purchases_partial_update
+      summary: Изменить закупку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+        '400':
+          description: Archived purchase is read-only
+    delete:
+      operationId: purchases_destroy
+      summary: Удалить закупку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          description: Archived purchase is read-only
+  /api/v1/purchases/{id}/duplicate/:
+    post:
+      operationId: purchases_duplicate_create
+      description: Создать копию закупки с новыми параметрами
+      summary: Дублировать закупку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseDuplicateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseDuplicateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseDuplicateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+  /api/v1/purchases/{id}/photos/:
+    get:
+      operationId: purchases_photos_retrieve
+      description: Получить список фото закупки с ограничениями и пагинацией
+      summary: Список фото закупки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: 'Ограничить количество фото (максимум: 50)'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Номер страницы для пагинации
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoto'
+          description: ''
+  /api/v1/purchases/{id}/photos/{photo_id}/:
+    patch:
+      operationId: purchases_photos_partial_update
+      description: Обновить метаданные фото закупки
+      summary: Обновить фото
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      - in: path
+        name: photo_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchasePhotoUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchasePhotoUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchasePhotoUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoto'
+          description: ''
+        '400':
+          description: Archived purchase is read-only
+    delete:
+      operationId: purchases_photos_destroy
+      description: Удалить фото закупки
+      summary: Удалить фото
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      - in: path
+        name: photo_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          description: Archived purchase is read-only
+  /api/v1/purchases/{id}/photos/{photo_id}/set-cover/:
+    post:
+      operationId: purchases_photos_set_cover_create
+      description: Установить фото как обложку закупки
+      summary: Установить обложку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      - in: path
+        name: photo_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Cover updated
+        '400':
+          description: Archived purchase is read-only
+  /api/v1/purchases/{id}/photos/bulk-upload/:
+    post:
+      operationId: purchases_photos_bulk_upload_create
+      description: Загрузить несколько фото закупки за один запрос
+      summary: Массовая загрузка фото
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoBulkUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoBulkUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Photos uploaded
+        '400':
+          description: Archived purchase is read-only
+  /api/v1/purchases/{id}/photos/reorder/:
+    post:
+      operationId: purchases_photos_reorder_create
+      description: Изменить порядок отображения фото закупки
+      summary: Изменить порядок фото
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Order updated
+        '400':
+          description: Archived purchase is read-only
+  /api/v1/purchases/{id}/photos/upload/:
+    post:
+      operationId: purchases_photos_upload_create
+      description: Загрузить фото чека/товара. Если `is_cover=true`, фото становится
+        обложкой.
+      summary: Загрузка фото
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchasePhotoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Uploaded
+        '400':
+          description: Archived purchase is read-only
+  /api/v1/purchases/{id}/validate/:
+    get:
+      operationId: purchases_validate_retrieve
+      description: Проверить валидность закупки (фотоинструкции, фотоотчеты и т.д.)
+      summary: Валидация закупки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Результат валидации
+  /api/v1/purchases/bulk-archive/:
+    post:
+      operationId: purchases_bulk_archive_create
+      description: Архивировать или разархивировать несколько закупок
+      summary: Массовое архивирование
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseBulkArchiveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseBulkArchiveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseBulkArchiveRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Bulk archive completed
+  /api/v1/purchases/bulk-delete/:
+    post:
+      operationId: purchases_bulk_delete_create
+      description: Удалить несколько закупок
+      summary: Массовое удаление
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseBulkDeleteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseBulkDeleteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseBulkDeleteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Bulk delete completed
+  /api/v1/purchases/import/commit/:
+    post:
+      operationId: purchases_import_commit_create
+      description: Создаёт закупки и позиции построчно, группируя по (date, object,
+        supplier, invoice_number). Идемпотентность по content_hash.
+      summary: 'IMPORT: commit'
+      tags:
+      - Purchases • Import
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Created
+  /api/v1/purchases/import/dry_run/:
+    post:
+      operationId: purchases_import_dry_run_create
+      description: Проверяет строки согласно маппингу. Возвращает массив ошибок.
+      summary: 'IMPORT: dry-run'
+      tags:
+      - Purchases • Import
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: OK
+  /api/v1/purchases/import/prepare/:
+    post:
+      operationId: purchases_import_prepare_create
+      description: Читает заголовок первого листа и предлагает авто-маппинг колонок.
+      summary: 'IMPORT: анализ шапки'
+      tags:
+      - Purchases • Import
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: OK
+  /api/v1/purchases/stats/:
+    get:
+      operationId: purchases_stats_retrieve
+      description: Получить общую статистику по закупкам
+      summary: Статистика по закупкам
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Статистика
+  /api/v1/purchases/supplier-analysis/:
+    get:
+      operationId: purchases_supplier_analysis_retrieve
+      description: Детальный анализ по поставщикам
+      summary: Анализ поставщиков
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Анализ поставщиков
+  /api/v1/reports/purchases/by-material/:
+    get:
+      operationId: reports_purchases_by_material_retrieve
+      description: Агрегация по материалам с конвертацией количества к базовой единице
+        (`material.default_unit`). Если для части строк нет конвертации, `qty_total`
+        будет `null`. При `export=xlsx` — Excel.
+      summary: Отчёт по материалам
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: true|false
+      - in: query
+        name: material
+        schema:
+          type: integer
+      - in: query
+        name: object
+        schema:
+          type: array
+          items:
+            type: integer
+        description: 'Множественный: ?object=1&object=2'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: material_id, material_name, unit, qty_total, amount_total,
+          rows. Префикс - для обратной сортировки: ?ordering=-amount_total'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 'Номер страницы (по умолчанию: 1)'
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Размер страницы (по умолчанию: 100, максимум: 1000)'
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ПримерJSONСПагинацией:
+                  value:
+                    count: 150
+                    next: http://localhost:8000/api/v1/reports/purchases/by-material/?page=2
+                    previous: null
+                    results:
+                    - material_id: 5
+                      material_name: Кабель ВВГ
+                      unit: м
+                      qty_total: 150.0
+                      amount_total: 3750000.0
+                      rows: 12
+                    - material_id: 9
+                      material_name: Автомат 16A
+                      unit: шт
+                      qty_total: null
+                      amount_total: 820000.0
+                      rows: 7
+                  summary: Пример JSON с пагинацией
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '501':
+          description: PDF export is not enabled in MVP
+  /api/v1/reports/purchases/by-object/:
+    get:
+      operationId: reports_purchases_by_object_retrieve
+      description: Агрегация по объектам. При `export=xlsx` — возвращается Excel-файл.
+      summary: Отчёт по объектам
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: true|false
+      - in: query
+        name: object
+        schema:
+          type: array
+          items:
+            type: integer
+        description: 'Множественный: ?object=1&object=2'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: object_id, object_name, purchases, total_amount.
+          Префикс - для обратной сортировки: ?ordering=-total_amount'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 'Номер страницы (по умолчанию: 1)'
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Размер страницы (по умолчанию: 100, максимум: 1000)'
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ПримерJSONСПагинацией:
+                  value:
+                    count: 50
+                    next: http://localhost:8000/api/v1/reports/purchases/by-object/?page=2
+                    previous: null
+                    results:
+                    - object_id: 1
+                      object_name: Объект А
+                      purchases: 7
+                      total_amount: 980000.0
+                    - object_id: 2
+                      object_name: Объект Б
+                      purchases: 3
+                      total_amount: 270000.0
+                  summary: Пример JSON с пагинацией
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '501':
+          description: PDF export is not enabled in MVP
+  /api/v1/reports/purchases/by-period/:
+    get:
+      operationId: reports_purchases_by_period_retrieve
+      description: Группировка сумм и количества закупок по дню или месяцу с использованием
+        нативных агрегатов PostgreSQL. Если `export=xlsx`, вернётся Excel-файл.
+      summary: Отчёт по периодам (PostgreSQL оптимизированный)
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: true|false
+      - in: query
+        name: object
+        schema:
+          type: array
+          items:
+            type: integer
+        description: 'Множественный: ?object=1&object=2'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: period, purchases, total_amount. Префикс - для обратной
+          сортировки: ?ordering=-total_amount'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 'Номер страницы (по умолчанию: 1)'
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Размер страницы (по умолчанию: 100, максимум: 1000)'
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - day
+          - month
+        description: day|month (default=month)
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ПримерJSONСПагинацией:
+                  value:
+                    count: 25
+                    next: http://localhost:8000/api/v1/reports/purchases/by-period/?page=2
+                    previous: null
+                    results:
+                    - period: 2025-09
+                      purchases: 12
+                      total_amount: 3450000.0
+                      avg_amount: 287500.0
+                      min_amount: 100000.0
+                      max_amount: 500000.0
+                      unique_objects: 3
+                      unique_responsibles: 2
+                    - period: 2025-10
+                      purchases: 8
+                      total_amount: 1250000.0
+                      avg_amount: 156250.0
+                      min_amount: 50000.0
+                      max_amount: 300000.0
+                      unique_objects: 2
+                      unique_responsibles: 1
+                  summary: Пример JSON с пагинацией
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: 'JSON: таблица строк отчёта'
+        '501':
+          description: PDF export is not enabled in MVP
+  /api/v1/reports/purchases/by-responsible/:
+    get:
+      operationId: reports_purchases_by_responsible_retrieve
+      description: Агрегация по пользователям-ответственным. При `export=xlsx` — Excel.
+      summary: Отчёт по ответственным
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: YYYY-MM-DD
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: true|false
+      - in: query
+        name: object
+        schema:
+          type: array
+          items:
+            type: integer
+        description: 'Множественный: ?object=1&object=2'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: responsible_id, responsible_name, purchases, total_amount.
+          Префикс - для обратной сортировки: ?ordering=-total_amount'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: 'Номер страницы (по умолчанию: 1)'
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: 'Размер страницы (по умолчанию: 100, максимум: 1000)'
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ПримерJSONСПагинацией:
+                  value:
+                    count: 21
+                    next: http://localhost:8000/api/v1/reports/purchases/by-responsible/?page=2
+                    previous: null
+                    results:
+                    - responsible_id: 3
+                      responsible_name: Aziz I.
+                      purchases: 6
+                      total_amount: 750000.0
+                    - responsible_id: 7
+                      responsible_name: Javlon R.
+                      purchases: 4
+                      total_amount: 520000.0
+                  summary: Пример JSON с пагинацией
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '501':
+          description: PDF export is not enabled in MVP
+  /api/v1/stock/snapshots/:
+    get:
+      operationId: stock_snapshots_list
+      description: Пагинация, поиск и сортировка. Фильтрация по дате/объекту/материалу/этапу/архиву.
+      summary: Список снапшотов остатков
+      parameters:
+      - in: query
+        name: comment
+        schema:
+          type: string
+      - in: query
+        name: date_after
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_before
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: Дата ≥ (YYYY-MM-DD)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: Дата ≤ (YYYY-MM-DD)
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: 'Флаг архива: true|false'
+      - in: query
+        name: material
+        schema:
+          type: integer
+        description: ID материала
+      - in: query
+        name: max_quantity
+        schema:
+          type: number
+      - in: query
+        name: min_quantity
+        schema:
+          type: number
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: ID объекта
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: date|created_at|updated_at (используйте ''-'' для
+          desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: responsible
+        schema:
+          type: number
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: comment|material__name|object__name'
+      - in: query
+        name: source_id
+        schema:
+          type: integer
+      - in: query
+        name: source_type
+        schema:
+          type: string
+      - in: query
+        name: stage
+        schema:
+          type: string
+        description: acceptance|request|delivery_fixed|post_rough|handover
+      - in: query
+        name: unit
+        schema:
+          type: number
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockSnapshotList'
+              examples:
+                ПримерОтвета(страница):
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 11
+                        date: '2025-09-11'
+                        object: 1
+                        object_name: Объект А
+                        material: 5
+                        material_name: Кабель ВВГ
+                        unit: 2
+                        unit_code: м
+                        quantity_signed: '12.500'
+                        stage: post_rough
+                        responsible: 3
+                        comment: ''
+                        is_archived: false
+                        current_balance: '15.000'
+                        created_at: '2025-09-11T08:10:00Z'
+                        updated_at: '2025-09-11T08:10:00Z'
+                  summary: Пример ответа (страница)
+          description: ''
+    post:
+      operationId: stock_snapshots_create
+      summary: Создать снапшот
+      tags:
+      - Stock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockSnapshotRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  date: '2025-09-11'
+                  object: 1
+                  material: 5
+                  unit: 2
+                  quantity: '12.500'
+                  stage: post_rough
+                  responsible: 3
+                  comment: ''
+                summary: Пример запроса
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StockSnapshotRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockSnapshotRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockSnapshot'
+          description: ''
+        '400':
+          description: Ошибка валидации
+  /api/v1/stock/snapshots/{id}/:
+    get:
+      operationId: stock_snapshots_retrieve
+      summary: Получить снапшот
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock snapshot.
+        required: true
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockSnapshot'
+          description: ''
+    put:
+      operationId: stock_snapshots_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock snapshot.
+        required: true
+      tags:
+      - stock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockSnapshotRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StockSnapshotRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockSnapshotRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockSnapshot'
+          description: ''
+    patch:
+      operationId: stock_snapshots_partial_update
+      summary: Изменить снапшот
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock snapshot.
+        required: true
+      tags:
+      - Stock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStockSnapshotRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStockSnapshotRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStockSnapshotRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockSnapshot'
+          description: ''
+    delete:
+      operationId: stock_snapshots_destroy
+      description: Удаление запрещено для архивных записей (`is_archived=true`).
+      summary: Удалить снапшот
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock snapshot.
+        required: true
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          description: Archived data is read-only
+  /api/v1/stock/snapshots/balance/:
+    get:
+      operationId: stock_snapshots_balance_retrieve
+      description: Расчет текущего остатка материала на объекте на указанную дату
+      summary: Получить текущий остаток материала
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+        description: Дата (YYYY-MM-DD), по умолчанию сегодня
+      - in: query
+        name: material_id
+        schema:
+          type: integer
+        description: ID материала
+        required: true
+      - in: query
+        name: object_id
+        schema:
+          type: integer
+        description: ID объекта
+        required: true
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ПримерОтвета:
+                  value:
+                    object_id: 1
+                    material_id: 5
+                    date: '2025-09-20'
+                    current_balance: '25.500'
+                    total_purchased: '50.000'
+                    total_written_off: '24.500'
+                  summary: Пример ответа
+          description: ''
+  /api/v1/stock/snapshots/history/:
+    get:
+      operationId: stock_snapshots_history_retrieve
+      description: История остатков материала за период
+      summary: Получить историю остатков
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+        description: Конечная дата (YYYY-MM-DD)
+        required: true
+      - in: query
+        name: material_id
+        schema:
+          type: integer
+        description: ID материала
+        required: true
+      - in: query
+        name: object_id
+        schema:
+          type: integer
+        description: ID объекта
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+        description: Начальная дата (YYYY-MM-DD)
+        required: true
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                ПримерОтвета:
+                  value:
+                    object_id: 1
+                    material_id: 5
+                    start_date: '2025-09-01'
+                    end_date: '2025-09-20'
+                    history:
+                    - date: '2025-09-01'
+                      purchased: '10.000'
+                      balance: '10.000'
+                      snapshots: []
+                    - date: '2025-09-15'
+                      purchased: '0.000'
+                      balance: '8.500'
+                      snapshots:
+                      - id: 1
+                        quantity: '8.500'
+                        stage: after_rough
+                  summary: Пример ответа
+          description: ''
+  /api/v1/suppliers/:
+    get:
+      operationId: suppliers_list
+      description: Получить список всех поставщиков с возможностью фильтрации
+      summary: Список поставщиков
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Фильтр по активности
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по названию, контактному лицу, телефону
+      tags:
+      - Suppliers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseSupplierList'
+          description: ''
+    post:
+      operationId: suppliers_create
+      description: Создать нового поставщика
+      summary: Создать поставщика
+      tags:
+      - Suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseSupplierCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseSupplierCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseSupplierCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseSupplierCreate'
+          description: ''
+  /api/v1/suppliers/{id}/:
+    get:
+      operationId: suppliers_retrieve
+      description: Получить детальную информацию о поставщике
+      summary: Детали поставщика
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Поставщик.
+        required: true
+      tags:
+      - Suppliers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseSupplier'
+          description: ''
+    put:
+      operationId: suppliers_update
+      description: Обновить информацию о поставщике
+      summary: Обновить поставщика
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Поставщик.
+        required: true
+      tags:
+      - Suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseSupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseSupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseSupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseSupplier'
+          description: ''
+    patch:
+      operationId: suppliers_partial_update
+      description: ViewSet для управления поставщиками
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Поставщик.
+        required: true
+      tags:
+      - suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseSupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseSupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseSupplierRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseSupplier'
+          description: ''
+    delete:
+      operationId: suppliers_destroy
+      description: Удалить поставщика (только если нет связанных закупок)
+      summary: Удалить поставщика
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Поставщик.
+        required: true
+      tags:
+      - Suppliers
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/units/:
+    get:
+      operationId: units_list
+      description: Пагинация, поиск и сортировка. Поиск по `code`, `name`.
+      summary: Список единиц измерения
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: 'Фильтр: точное совпадение кода'
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: 'Фильтр: точное совпадение имени'
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: code|name (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: code|name'
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUnitList'
+          description: ''
+    post:
+      operationId: units_create
+      summary: Создать единицу
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/units/{id}/:
+    get:
+      operationId: units_retrieve
+      summary: Получить единицу
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+    put:
+      operationId: units_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - units
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+    patch:
+      operationId: units_partial_update
+      summary: Обновить единицу
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - Common
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+    delete:
+      operationId: units_destroy
+      summary: Удалить единицу
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/me:
+    get:
+      operationId: users_me_retrieve
+      description: Возвращает профиль авторизованного пользователя, включая роль (RBAC).
+      summary: Текущий пользователь
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+              examples:
+                ПримерОтвета:
+                  value:
+                    id: 1
+                    username: admin
+                    email: admin@example.com
+                    first_name: Admin
+                    last_name: ''
+                    role: director
+                  summary: Пример ответа
+          description: ''
+        '401':
+          description: Unauthorized
+  /api/v1/writeoffs/:
+    get:
+      operationId: writeoffs_list
+      description: Пагинация, поиск и сортировка. Фильтрация по дате/объекту/материалу/этапу/архиву.
+      summary: Список списаний материалов
+      parameters:
+      - in: query
+        name: comment
+        schema:
+          type: string
+      - in: query
+        name: date_after
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_before
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: Дата ≥ (YYYY-MM-DD)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: Дата ≤ (YYYY-MM-DD)
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: 'Флаг архива: true|false'
+      - in: query
+        name: material
+        schema:
+          type: integer
+        description: ID материала
+      - in: query
+        name: max_quantity
+        schema:
+          type: number
+      - in: query
+        name: min_quantity
+        schema:
+          type: number
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: ID объекта
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: date|created_at|updated_at (используйте ''-'' для
+          desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: responsible
+        schema:
+          type: number
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Поиск: comment|material__name|object__name'
+      - in: query
+        name: stage
+        schema:
+          type: string
+        description: acceptance|request|delivery_fixed|post_rough|handover
+      - in: query
+        name: unit
+        schema:
+          type: number
+      tags:
+      - WriteOff
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWriteOffList'
+              examples:
+                ПримерОтвета(страница):
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - count: 1
+                      next: null
+                      previous: null
+                      results:
+                      - id: 1
+                        date: '2025-09-21'
+                        object: 1
+                        object_name: Объект А
+                        material: 5
+                        material_name: Кабель ВВГ
+                        unit: 2
+                        unit_code: м
+                        quantity: '30.000'
+                        stage: post_rough
+                        responsible: 3
+                        comment: Списание на работы
+                        is_archived: false
+                        current_balance: '100.000'
+                        smart_quantity:
+                          value: 30.0
+                          unit: м
+                          original_value: 30.0
+                          original_unit: м
+                        created_at: '2025-09-21T08:10:00Z'
+                        updated_at: '2025-09-21T08:10:00Z'
+                  summary: Пример ответа (страница)
+          description: ''
+    post:
+      operationId: writeoffs_create
+      summary: Создать списание
+      tags:
+      - WriteOff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  date: '2025-09-21'
+                  object: 1
+                  material: 5
+                  unit: 2
+                  quantity: '30.000'
+                  stage: post_rough
+                  responsible: 3
+                  comment: Списание на работы
+                summary: Пример запроса
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOff'
+          description: ''
+        '400':
+          description: Ошибка валидации
+  /api/v1/writeoffs/{id}/:
+    get:
+      operationId: writeoffs_retrieve
+      summary: Получить списание
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off.
+        required: true
+      tags:
+      - WriteOff
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOff'
+          description: ''
+    put:
+      operationId: writeoffs_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off.
+        required: true
+      tags:
+      - writeoffs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOff'
+          description: ''
+    patch:
+      operationId: writeoffs_partial_update
+      summary: Изменить списание
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off.
+        required: true
+      tags:
+      - WriteOff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWriteOffRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWriteOffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWriteOffRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOff'
+          description: ''
+    delete:
+      operationId: writeoffs_destroy
+      description: Удаление запрещено для архивных записей (`is_archived=true`).
+      summary: Удалить списание
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off.
+        required: true
+      tags:
+      - WriteOff
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          description: Archived data is read-only
+components:
+  schemas:
+    ArchivePeriod:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        month:
+          type: string
+          format: date
+        object:
+          type: integer
+        object_name:
+          type: string
+          readOnly: true
+        closed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        closed_by:
+          type: integer
+          readOnly: true
+        closed_by_name:
+          type: string
+          readOnly: true
+        is_closed:
+          type: boolean
+          readOnly: true
+      required:
+      - closed_at
+      - closed_by
+      - closed_by_name
+      - id
+      - is_closed
+      - month
+      - object
+      - object_name
+    ArchivePeriodRequest:
+      type: object
+      properties:
+        month:
+          type: string
+          format: date
+        object:
+          type: integer
+      required:
+      - month
+      - object
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ts:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+          nullable: true
+        user_name:
+          type: string
+          readOnly: true
+        user_role:
+          type: string
+          readOnly: true
+        action:
+          type: string
+          readOnly: true
+        action_display:
+          type: string
+          readOnly: true
+        model:
+          type: string
+          readOnly: true
+        model_display:
+          type: string
+          readOnly: true
+        object_id:
+          type: string
+          readOnly: true
+        detail:
+          type: string
+          readOnly: true
+        ip:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - action
+      - action_display
+      - detail
+      - id
+      - ip
+      - model
+      - model_display
+      - object_id
+      - ts
+      - user
+      - user_name
+      - user_role
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Адрес электронной почты
+          maxLength: 254
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+        role:
+          type: string
+        assigned_object_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+      required:
+      - id
+      - role
+      - username
+    EmployeeRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Адрес электронной почты
+          maxLength: 254
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+        role:
+          type: string
+          minLength: 1
+        assigned_object_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - role
+      - username
+    Material:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        sku:
+          type: string
+          nullable: true
+          maxLength: 64
+        category:
+          type: integer
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+        default_unit:
+          type: integer
+        default_unit_code:
+          type: string
+          readOnly: true
+        photo_url:
+          type: string
+          format: uri
+          readOnly: true
+        is_active:
+          type: boolean
+          default: true
+        created_date:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+        manufacturer:
+          type: string
+        average_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        purchases_count:
+          type: integer
+          readOnly: true
+        total_purchased_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        last_purchase_date:
+          type: string
+          format: date
+          readOnly: true
+        current_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category_name
+      - created_at
+      - current_stock
+      - default_unit
+      - default_unit_code
+      - id
+      - last_purchase_date
+      - name
+      - photo_url
+      - purchases_count
+      - total_purchased_amount
+      - updated_at
+    MaterialCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+        parent_name:
+          type: string
+          readOnly: true
+        children_count:
+          type: integer
+          readOnly: true
+        materials_count:
+          type: integer
+          readOnly: true
+        full_path:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - children_count
+      - created_at
+      - full_path
+      - id
+      - materials_count
+      - name
+      - parent_name
+      - updated_at
+    MaterialCategoryLite:
+      type: object
+      description: Упрощенный сериализатор для выпадающих списков
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - name
+    MaterialCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+      required:
+      - name
+    MaterialLite:
+      type: object
+      description: Упрощенный сериализатор для выпадающих списков и быстрых операций
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        sku:
+          type: string
+          nullable: true
+          maxLength: 64
+        category:
+          type: integer
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+        default_unit:
+          type: integer
+        default_unit_code:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          description: Активен ли материал
+      required:
+      - category_name
+      - default_unit
+      - default_unit_code
+      - id
+      - name
+    MaterialPhotoUploadRequest:
+      type: object
+      properties:
+        photo:
+          type: string
+          format: binary
+      required:
+      - photo
+    MaterialRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        sku:
+          type: string
+          nullable: true
+          maxLength: 64
+        category:
+          type: integer
+          nullable: true
+        default_unit:
+          type: integer
+        is_active:
+          type: boolean
+          default: true
+        created_date:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+        manufacturer:
+          type: string
+        average_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - default_unit
+      - name
+    MaterialStats:
+      type: object
+      description: Сериализатор для статистики материалов
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        sku:
+          type: string
+          nullable: true
+          maxLength: 64
+        category_name:
+          type: string
+          readOnly: true
+        purchases_count:
+          type: integer
+          readOnly: true
+        total_purchased_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        last_purchase_date:
+          type: string
+          format: date
+          readOnly: true
+        current_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          readOnly: true
+      required:
+      - category_name
+      - current_stock
+      - id
+      - last_purchase_date
+      - name
+      - purchases_count
+      - total_purchased_amount
+    Me:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Адрес электронной почты
+          maxLength: 254
+        role:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - role
+      - username
+    Object:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Название объекта
+          maxLength: 128
+        address:
+          type: string
+          maxLength: 256
+        is_active:
+          type: boolean
+        lat:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Широта
+        lng:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Долгота
+        location_url:
+          type: string
+          description: Ссылка на карту
+          maxLength: 256
+        responsible:
+          type: integer
+          nullable: true
+          description: Ответственный (только бригадир)
+        date_start:
+          type: string
+          format: date
+          readOnly: true
+          description: Дата начала работ
+        date_end:
+          type: string
+          format: date
+          nullable: true
+          description: Дата окончания работ
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - date_start
+      - id
+      - name
+      - updated_at
+    ObjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Название объекта
+          maxLength: 128
+        address:
+          type: string
+          maxLength: 256
+        is_active:
+          type: boolean
+        lat:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Широта
+        lng:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Долгота
+        location_url:
+          type: string
+          description: Ссылка на карту
+          maxLength: 256
+        responsible:
+          type: integer
+          nullable: true
+          description: Ответственный (только бригадир)
+        date_end:
+          type: string
+          format: date
+          nullable: true
+          description: Дата окончания работ
+      required:
+      - name
+    PaginatedArchivePeriodList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchivePeriod'
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedEmployeeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+    PaginatedMaterialCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialCategory'
+    PaginatedMaterialList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Material'
+    PaginatedObjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Object'
+    PaginatedPurchaseItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItem'
+    PaginatedPurchaseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purchase'
+    PaginatedPurchasePhotoList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchasePhoto'
+    PaginatedPurchaseSupplierList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseSupplier'
+    PaginatedStockSnapshotList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockSnapshot'
+    PaginatedUnitList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Unit'
+    PaginatedWriteOffList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WriteOff'
+    PatchedEmployeeRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Адрес электронной почты
+          maxLength: 254
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+        role:
+          type: string
+          minLength: 1
+        assigned_object_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedMaterialCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+    PatchedMaterialRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        sku:
+          type: string
+          nullable: true
+          maxLength: 64
+        category:
+          type: integer
+          nullable: true
+        default_unit:
+          type: integer
+        is_active:
+          type: boolean
+          default: true
+        created_date:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+        manufacturer:
+          type: string
+        average_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+    PatchedObjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Название объекта
+          maxLength: 128
+        address:
+          type: string
+          maxLength: 256
+        is_active:
+          type: boolean
+        lat:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Широта
+        lng:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Долгота
+        location_url:
+          type: string
+          description: Ссылка на карту
+          maxLength: 256
+        responsible:
+          type: integer
+          nullable: true
+          description: Ответственный (только бригадир)
+        date_end:
+          type: string
+          format: date
+          nullable: true
+          description: Дата окончания работ
+    PatchedPurchaseItemBulkUpdateRequest:
+      type: object
+      description: Сериализатор для массового обновления позиций закупки
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          maxItems: 100
+          minItems: 1
+    PatchedPurchaseItemUpdateRequest:
+      type: object
+      description: Сериализатор для обновления позиции закупки
+      properties:
+        material:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+    PatchedPurchasePhotoRequest:
+      type: object
+      properties:
+        is_cover:
+          type: boolean
+        mime:
+          type: string
+          maxLength: 64
+        size_bytes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            тип
+
+            * `instructions` - Инструкции
+            * `report` - Отчёт
+    PatchedPurchasePhotoUpdateRequest:
+      type: object
+      description: Сериализатор для обновления фото закупки
+      properties:
+        is_cover:
+          type: boolean
+    PatchedPurchaseRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        object:
+          type: integer
+        supplier:
+          type: integer
+          description: Поставщик
+        invoice_number:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        comment:
+          type: string
+        responsible:
+          type: integer
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        is_archived:
+          type: boolean
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            Статус закупки
+
+            * `new` - Новая
+            * `completed` - Выполнено
+            * `cancelled` - Отмена
+        purchase_no:
+          type: string
+          default: ''
+          description: Номер закупки (уникальный в пределах ответственного)
+          maxLength: 64
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemRequest'
+    PatchedPurchaseSupplierRequest:
+      type: object
+      description: Сериализатор для поставщиков с дополнительной статистикой
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Название поставщика
+          maxLength: 256
+        contact_person:
+          type: string
+          description: Контактное лицо
+          maxLength: 128
+        phone:
+          type: string
+          description: Номер телефона
+          maxLength: 32
+        email:
+          type: string
+          format: email
+          description: Email
+          maxLength: 254
+        address:
+          type: string
+          description: Адрес поставщика
+        is_active:
+          type: boolean
+          description: Активен ли поставщик
+    PatchedStockSnapshotRequest:
+      type: object
+      description: Сериализатор для журнала движений материалов (Unified Ledger Model)
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата движения
+        object:
+          type: integer
+          description: Объект
+        material:
+          type: integer
+          nullable: true
+          description: Материал
+        unit:
+          type: integer
+          description: Единица измерения (всегда Material.default_unit)
+        quantity_signed:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: 'Количество с знаком: приход > 0, расход < 0'
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          description: |-
+            Этап работ
+
+            * `acceptance` - Acceptance
+            * `request` - Request
+            * `delivery_fixed` - Delivery Fixed
+            * `post_rough` - Post Rough
+            * `handover` - Handover
+        source_type:
+          allOf:
+          - $ref: '#/components/schemas/SourceTypeEnum'
+          default: purchase_item
+          description: |-
+            Тип источника движения
+
+            * `purchase_item` - Purchase Item
+            * `writeoff` - Write Off
+        source_id:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          default: 0
+          description: ID первоисточника (PurchaseItem.id или WriteOff.id)
+        responsible:
+          type: integer
+          description: Ответственный
+        comment:
+          type: string
+          description: Комментарий
+        is_archived:
+          type: boolean
+          description: Архивировано
+    PatchedUnitRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 16
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+    PatchedWriteOffRequest:
+      type: object
+      description: Сериализатор для списаний материалов
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата списания
+        object:
+          type: integer
+          description: Объект
+        material:
+          type: integer
+          nullable: true
+          description: Материал
+        unit:
+          type: integer
+          description: Единица измерения
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество к списанию
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          description: |-
+            Этап работ
+
+            * `acceptance` - Acceptance
+            * `request` - Request
+            * `delivery_fixed` - Delivery Fixed
+            * `post_rough` - Post Rough
+            * `handover` - Handover
+        responsible:
+          type: integer
+          description: Ответственный
+        comment:
+          type: string
+          description: Комментарий
+        is_archived:
+          type: boolean
+          description: Архивировано
+    Purchase:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        object:
+          type: integer
+        object_name:
+          type: string
+          readOnly: true
+        supplier:
+          type: integer
+          description: Поставщик
+        supplier_name:
+          type: string
+          readOnly: true
+        invoice_number:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          maxLength: 3
+        comment:
+          type: string
+        responsible:
+          type: integer
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        is_archived:
+          type: boolean
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            Статус закупки
+
+            * `new` - Новая
+            * `completed` - Выполнено
+            * `cancelled` - Отмена
+        cover_photo_url:
+          type: string
+          format: uri
+          readOnly: true
+        purchase_no:
+          type: string
+          default: ''
+          description: Номер закупки (уникальный в пределах ответственного)
+          maxLength: 64
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItem'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchasePhoto'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cover_photo_url
+      - created_at
+      - date
+      - id
+      - items
+      - object
+      - object_name
+      - photos
+      - responsible
+      - supplier
+      - supplier_name
+      - updated_at
+    PurchaseBulkArchiveRequest:
+      type: object
+      description: Сериализатор для массового архивирования закупок
+      properties:
+        purchase_ids:
+          type: array
+          items:
+            type: integer
+          maxItems: 100
+          minItems: 1
+        archive:
+          type: boolean
+      required:
+      - archive
+      - purchase_ids
+    PurchaseBulkDeleteRequest:
+      type: object
+      description: Сериализатор для массового удаления закупок
+      properties:
+        purchase_ids:
+          type: array
+          items:
+            type: integer
+          maxItems: 50
+          minItems: 1
+        force:
+          type: boolean
+          default: false
+          description: Принудительное удаление архивированных закупок
+      required:
+      - purchase_ids
+    PurchaseCreateRequest:
+      type: object
+      description: Улучшенный сериализатор для создания закупки с валидацией
+      properties:
+        date:
+          type: string
+          format: date
+        object:
+          type: integer
+        supplier:
+          type: integer
+          description: Поставщик
+        invoice_number:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        comment:
+          type: string
+        responsible:
+          type: integer
+        purchase_no:
+          type: string
+          default: ''
+          description: Номер закупки (уникальный в пределах ответственного)
+          maxLength: 64
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            Статус закупки
+
+            * `new` - Новая
+            * `completed` - Выполнено
+            * `cancelled` - Отмена
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemCreateRequest'
+          writeOnly: true
+      required:
+      - date
+      - items
+      - object
+      - responsible
+      - supplier
+    PurchaseDuplicateRequest:
+      type: object
+      description: Сериализатор для дублирования закупки
+      properties:
+        new_date:
+          type: string
+          format: date
+          description: Новая дата для дублированной закупки
+        new_supplier:
+          type: string
+          minLength: 1
+          description: Новый поставщик
+          maxLength: 128
+        copy_photos:
+          type: boolean
+          default: false
+          description: Копировать ли фото
+        copy_items:
+          type: boolean
+          default: true
+          description: Копировать ли позиции
+      required:
+      - new_date
+    PurchaseItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        material:
+          type: integer
+          nullable: true
+        material_name:
+          type: string
+          readOnly: true
+        unit:
+          type: integer
+        unit_code:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Общая сумма (quantity * price)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - material_name
+      - quantity
+      - unit
+      - unit_code
+      - updated_at
+    PurchaseItemBulkCreateRequest:
+      type: object
+      description: Сериализатор для массового создания позиций закупки
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemCreateRequest'
+      required:
+      - items
+    PurchaseItemCreate:
+      type: object
+      description: Сериализатор для создания позиции закупки
+      properties:
+        material:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - amount
+      - quantity
+      - unit
+    PurchaseItemCreateRequest:
+      type: object
+      description: Сериализатор для создания позиции закупки
+      properties:
+        material:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+      required:
+      - quantity
+      - unit
+    PurchaseItemRequest:
+      type: object
+      properties:
+        material:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Общая сумма (quantity * price)
+      required:
+      - quantity
+      - unit
+    PurchaseItemUpdate:
+      type: object
+      description: Сериализатор для обновления позиции закупки
+      properties:
+        material:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - amount
+      - quantity
+      - unit
+    PurchaseItemUpdateRequest:
+      type: object
+      description: Сериализатор для обновления позиции закупки
+      properties:
+        material:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          description: Цена за единицу
+      required:
+      - quantity
+      - unit
+    PurchasePhoto:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        is_cover:
+          type: boolean
+        mime:
+          type: string
+          maxLength: 64
+        size_bytes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            тип
+
+            * `instructions` - Инструкции
+            * `report` - Отчёт
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - url
+    PurchasePhotoBulkUploadRequest:
+      type: object
+      description: Сериализатор для массовой загрузки фото
+      properties:
+        photos:
+          type: array
+          items:
+            type: string
+            format: binary
+          maxItems: 10
+          minItems: 1
+        set_first_as_cover:
+          type: boolean
+          default: false
+      required:
+      - photos
+    PurchasePhotoReorderRequest:
+      type: object
+      description: Сериализатор для изменения порядка фото
+      properties:
+        photo_ids:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+      required:
+      - photo_ids
+    PurchasePhotoRequest:
+      type: object
+      properties:
+        is_cover:
+          type: boolean
+        mime:
+          type: string
+          maxLength: 64
+        size_bytes:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            тип
+
+            * `instructions` - Инструкции
+            * `report` - Отчёт
+    PurchasePhotoUploadRequest:
+      type: object
+      description: Сериализатор для загрузки фото закупки
+      properties:
+        file:
+          type: string
+          format: binary
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            тип
+
+            * `instructions` - Инструкции
+            * `report` - Отчёт
+        purchase:
+          type: integer
+      required:
+      - file
+      - purchase
+    PurchaseRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        object:
+          type: integer
+        supplier:
+          type: integer
+          description: Поставщик
+        invoice_number:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        comment:
+          type: string
+        responsible:
+          type: integer
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        is_archived:
+          type: boolean
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            Статус закупки
+
+            * `new` - Новая
+            * `completed` - Выполнено
+            * `cancelled` - Отмена
+        purchase_no:
+          type: string
+          default: ''
+          description: Номер закупки (уникальный в пределах ответственного)
+          maxLength: 64
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemRequest'
+      required:
+      - date
+      - items
+      - object
+      - responsible
+      - supplier
+    PurchaseSupplier:
+      type: object
+      description: Сериализатор для поставщиков с дополнительной статистикой
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Название поставщика
+          maxLength: 256
+        contact_person:
+          type: string
+          description: Контактное лицо
+          maxLength: 128
+        phone:
+          type: string
+          description: Номер телефона
+          maxLength: 32
+        email:
+          type: string
+          format: email
+          description: Email
+          maxLength: 254
+        address:
+          type: string
+          description: Адрес поставщика
+        is_active:
+          type: boolean
+          description: Активен ли поставщик
+        purchases_count:
+          type: integer
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        avg_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+        last_purchase_date:
+          type: string
+          format: date
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - avg_amount
+      - created_at
+      - id
+      - last_purchase_date
+      - name
+      - purchases_count
+      - total_amount
+      - updated_at
+    PurchaseSupplierCreate:
+      type: object
+      description: Сериализатор для создания поставщика с валидацией
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Название поставщика
+          maxLength: 256
+        contact_person:
+          type: string
+          description: Контактное лицо
+          maxLength: 128
+        phone:
+          type: string
+          description: Номер телефона
+          maxLength: 32
+        email:
+          type: string
+          format: email
+          description: Email
+          maxLength: 254
+        address:
+          type: string
+          description: Адрес поставщика
+        is_active:
+          type: boolean
+          description: Активен ли поставщик
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    PurchaseSupplierCreateRequest:
+      type: object
+      description: Сериализатор для создания поставщика с валидацией
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Название поставщика
+          maxLength: 256
+        contact_person:
+          type: string
+          description: Контактное лицо
+          maxLength: 128
+        phone:
+          type: string
+          description: Номер телефона
+          maxLength: 32
+        email:
+          type: string
+          format: email
+          description: Email
+          maxLength: 254
+        address:
+          type: string
+          description: Адрес поставщика
+        is_active:
+          type: boolean
+          description: Активен ли поставщик
+      required:
+      - name
+    PurchaseSupplierRequest:
+      type: object
+      description: Сериализатор для поставщиков с дополнительной статистикой
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Название поставщика
+          maxLength: 256
+        contact_person:
+          type: string
+          description: Контактное лицо
+          maxLength: 128
+        phone:
+          type: string
+          description: Номер телефона
+          maxLength: 32
+        email:
+          type: string
+          format: email
+          description: Email
+          maxLength: 254
+        address:
+          type: string
+          description: Адрес поставщика
+        is_active:
+          type: boolean
+          description: Активен ли поставщик
+      required:
+      - name
+    PurchaseUpdate:
+      type: object
+      description: Улучшенный сериализатор для обновления закупки с валидацией
+      properties:
+        date:
+          type: string
+          format: date
+        object:
+          type: integer
+        supplier:
+          type: integer
+          description: Поставщик
+        invoice_number:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          maxLength: 3
+        comment:
+          type: string
+        responsible:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            Статус закупки
+
+            * `new` - Новая
+            * `completed` - Выполнено
+            * `cancelled` - Отмена
+        is_archived:
+          type: boolean
+      required:
+      - date
+      - object
+      - responsible
+      - supplier
+    PurchaseUpdateRequest:
+      type: object
+      description: Улучшенный сериализатор для обновления закупки с валидацией
+      properties:
+        date:
+          type: string
+          format: date
+        object:
+          type: integer
+        supplier:
+          type: integer
+          description: Поставщик
+        invoice_number:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        comment:
+          type: string
+        responsible:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          description: |-
+            Статус закупки
+
+            * `new` - Новая
+            * `completed` - Выполнено
+            * `cancelled` - Отмена
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemCreateRequest'
+          writeOnly: true
+        is_archived:
+          type: boolean
+      required:
+      - date
+      - object
+      - responsible
+      - supplier
+    SourceTypeEnum:
+      enum:
+      - purchase_item
+      - writeoff
+      type: string
+      description: |-
+        * `purchase_item` - Purchase Item
+        * `writeoff` - Write Off
+    StageEnum:
+      enum:
+      - acceptance
+      - request
+      - delivery_fixed
+      - post_rough
+      - handover
+      type: string
+      description: |-
+        * `acceptance` - Acceptance
+        * `request` - Request
+        * `delivery_fixed` - Delivery Fixed
+        * `post_rough` - Post Rough
+        * `handover` - Handover
+    StatusEnum:
+      enum:
+      - new
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `new` - Новая
+        * `completed` - Выполнено
+        * `cancelled` - Отмена
+    StockSnapshot:
+      type: object
+      description: Сериализатор для журнала движений материалов (Unified Ledger Model)
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+          description: Дата движения
+        object:
+          type: integer
+          description: Объект
+        object_name:
+          type: string
+          readOnly: true
+        material:
+          type: integer
+          nullable: true
+          description: Материал
+        material_name:
+          type: string
+          readOnly: true
+        unit:
+          type: integer
+          description: Единица измерения (всегда Material.default_unit)
+        unit_code:
+          type: string
+          readOnly: true
+        quantity_signed:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: 'Количество с знаком: приход > 0, расход < 0'
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          description: |-
+            Этап работ
+
+            * `acceptance` - Acceptance
+            * `request` - Request
+            * `delivery_fixed` - Delivery Fixed
+            * `post_rough` - Post Rough
+            * `handover` - Handover
+        source_type:
+          allOf:
+          - $ref: '#/components/schemas/SourceTypeEnum'
+          default: purchase_item
+          description: |-
+            Тип источника движения
+
+            * `purchase_item` - Purchase Item
+            * `writeoff` - Write Off
+        source_id:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          default: 0
+          description: ID первоисточника (PurchaseItem.id или WriteOff.id)
+        responsible:
+          type: integer
+          description: Ответственный
+        comment:
+          type: string
+          description: Комментарий
+        is_archived:
+          type: boolean
+          description: Архивировано
+        smart_quantity:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        source_description:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - date
+      - id
+      - material_name
+      - object
+      - object_name
+      - responsible
+      - smart_quantity
+      - source_description
+      - stage
+      - unit
+      - unit_code
+      - updated_at
+    StockSnapshotRequest:
+      type: object
+      description: Сериализатор для журнала движений материалов (Unified Ledger Model)
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата движения
+        object:
+          type: integer
+          description: Объект
+        material:
+          type: integer
+          nullable: true
+          description: Материал
+        unit:
+          type: integer
+          description: Единица измерения (всегда Material.default_unit)
+        quantity_signed:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: 'Количество с знаком: приход > 0, расход < 0'
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          description: |-
+            Этап работ
+
+            * `acceptance` - Acceptance
+            * `request` - Request
+            * `delivery_fixed` - Delivery Fixed
+            * `post_rough` - Post Rough
+            * `handover` - Handover
+        source_type:
+          allOf:
+          - $ref: '#/components/schemas/SourceTypeEnum'
+          default: purchase_item
+          description: |-
+            Тип источника движения
+
+            * `purchase_item` - Purchase Item
+            * `writeoff` - Write Off
+        source_id:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          default: 0
+          description: ID первоисточника (PurchaseItem.id или WriteOff.id)
+        responsible:
+          type: integer
+          description: Ответственный
+        comment:
+          type: string
+          description: Комментарий
+        is_archived:
+          type: boolean
+          description: Архивировано
+      required:
+      - date
+      - object
+      - responsible
+      - stage
+      - unit
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    TokenVerifyRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - token
+    TypeEnum:
+      enum:
+      - instructions
+      - report
+      type: string
+      description: |-
+        * `instructions` - Инструкции
+        * `report` - Отчёт
+    Unit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 16
+        name:
+          type: string
+          maxLength: 64
+      required:
+      - code
+      - id
+      - name
+    UnitRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 16
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+      - code
+      - name
+    WriteOff:
+      type: object
+      description: Сериализатор для списаний материалов
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+          description: Дата списания
+        object:
+          type: integer
+          description: Объект
+        object_name:
+          type: string
+          readOnly: true
+        material:
+          type: integer
+          nullable: true
+          description: Материал
+        material_name:
+          type: string
+          readOnly: true
+        unit:
+          type: integer
+          description: Единица измерения
+        unit_code:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество к списанию
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          description: |-
+            Этап работ
+
+            * `acceptance` - Acceptance
+            * `request` - Request
+            * `delivery_fixed` - Delivery Fixed
+            * `post_rough` - Post Rough
+            * `handover` - Handover
+        responsible:
+          type: integer
+          description: Ответственный
+        comment:
+          type: string
+          description: Комментарий
+        is_archived:
+          type: boolean
+          description: Архивировано
+        current_balance:
+          type: number
+          format: double
+          readOnly: true
+        smart_quantity:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        validation_warnings:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - current_balance
+      - date
+      - id
+      - material_name
+      - object
+      - object_name
+      - quantity
+      - responsible
+      - smart_quantity
+      - stage
+      - unit
+      - unit_code
+      - updated_at
+      - validation_warnings
+    WriteOffRequest:
+      type: object
+      description: Сериализатор для списаний материалов
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата списания
+        object:
+          type: integer
+          description: Объект
+        material:
+          type: integer
+          nullable: true
+          description: Материал
+        unit:
+          type: integer
+          description: Единица измерения
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество к списанию
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          description: |-
+            Этап работ
+
+            * `acceptance` - Acceptance
+            * `request` - Request
+            * `delivery_fixed` - Delivery Fixed
+            * `post_rough` - Post Rough
+            * `handover` - Handover
+        responsible:
+          type: integer
+          description: Ответственный
+        comment:
+          type: string
+          description: Комментарий
+        is_archived:
+          type: boolean
+          description: Архивировано
+      required:
+      - date
+      - object
+      - quantity
+      - responsible
+      - stage
+      - unit
+    _ReopenInputRequest:
+      type: object
+      properties:
+        object:
+          type: integer
+        month:
+          type: string
+          minLength: 1
+      required:
+      - month
+      - object
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

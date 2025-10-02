@@ -181,7 +181,7 @@ const stageOptions = [
 
 // Computed для отображения
 const objectName = (id: number) => objects.value.find((o: SiteObject) => o.id === id)?.name
-const materialName = (id: number) => materials.value.find((m: Material) => m.id === id)?.name
+const materialName = (id: number | null) => id ? materials.value.find((m: Material) => m.id === id)?.name : 'Не выбран'
 const unitCode = computed(() => {
   const unit = units.value.find((u: Unit) => u.id === formData.unit)
   return unit?.code || ''

@@ -270,7 +270,7 @@
 // import { computed } from 'vue' // Не используется
 
 interface Option {
-  value: string | number | boolean
+  value: string | number | boolean | null
   label: string
 }
 
