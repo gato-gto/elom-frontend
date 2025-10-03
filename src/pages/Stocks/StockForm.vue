@@ -1,164 +1,19 @@
 <template>
-  <form class="grid gap-4" @submit.prevent="onSubmit">
-
-    <!-- Основная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Основная информация</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Дата -->
-          <FormField
-            v-model="model.date"
-            label="Дата внесения"
-            type="date"
-            :error="errors.date"
-            required
-          />
-
-          <!-- Объект -->
-          <FormField
-            v-model="model.object"
-            label="Объект"
-            type="select"
-            :options="objectOptions"
-            :error="errors.object"
-            placeholder="— выберите объект —"
-            required
-          />
-
-          <!-- Материал -->
-          <FormField
-            v-model="model.material"
-            label="Материал"
-            type="select"
-            :options="materialOptions"
-            :error="errors.material"
-            placeholder="— выберите материал —"
-            required
-            @update:model-value="onMaterialChange"
-          />
-
-          <!-- Единица измерения -->
-          <FormField
-            v-model="model.unit"
-            label="Единица измерения"
-            type="select"
-            :options="unitOptions"
-            :error="errors.unit"
-            placeholder="— выберите единицу —"
-            required
-            :disabled="true"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Детали движения -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Детали движения</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- Количество -->
-          <FormField
-            v-model="model.quantity_signed"
-            label="Количество"
-            type="number"
-            step="0.000001"
-            :error="errors.quantity_signed"
-            placeholder="Положительное для прихода, отрицательное для расхода"
-            required
-          />
-
-          <!-- Этап работ -->
-          <FormField
-            v-model="model.stage"
-            label="Этап работ"
-            type="select"
-            :options="stageOptions"
-            :error="errors.stage"
-            placeholder="— выберите этап —"
-            required
-          />
-
-          <!-- Тип источника -->
-          <FormField
-            v-model="model.source_type"
-            label="Тип источника"
-            type="select"
-            :options="sourceTypeOptions"
-            :error="errors.source_type"
-            placeholder="— выберите тип —"
-            required
-          />
-
-          <!-- Ответственный -->
-          <FormField
-            v-model="model.responsible"
-            label="Ответственный"
-            type="select"
-            :options="employeeOptions"
-            :error="errors.responsible"
-            placeholder="— выберите ответственного —"
-            required
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Дополнительная информация -->
-    <div class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Дополнительная информация</h2>
-        <div class="grid gap-4">
-          <!-- ID источника -->
-          <FormField
-            v-model="model.source_id"
-            label="ID источника"
-            type="number"
-            :error="errors.source_id"
-            placeholder="ID закупки или списания"
-          />
-
-          <!-- Комментарий -->
-          <FormField
-            v-model="model.comment"
-            label="Комментарий"
-            type="textarea"
-            :error="errors.comment"
-            placeholder="Дополнительная информация о движении..."
-            :rows="3"
-          />
-        </div>
-      </div>
-    </div>
-
-
-    <!-- Кнопки действий -->
-    <div class="flex justify-end gap-2">
-      <button 
-        type="button" 
-        class="btn btn-outline" 
-        @click="$emit('cancel')"
-        :disabled="loading"
-      >
-        Отмена
-      </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        :disabled="loading"
-      >
-        <svg v-if="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ loading ? 'Сохранение...' : (isEdit ? 'Обновить' : 'Создать') }}
-      </button>
-    </div>
-  </form>
+  <div class="stock-form">
+    <!-- Generic Form -->
+    <GenericForm
+      :config="formConfig"
+      :initial-data="initialFormData"
+      :on-submit="handleSubmit"
+      :on-cancel="handleCancel"
+      :validate-on-change="true"
+      :reset-on-submit="false"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStockSnapshotsStore } from '@/stores/stockSnapshots'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
@@ -172,12 +27,11 @@ import type {
   SiteObject,
   Material,
   Employee,
-  Unit,
-  Stage,
-  SourceType
+  Unit
 } from '@/api/types'
-import FormField from '@/components/FormField.vue'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import type { GenericFormConfig } from '@/types/generic'
+import GenericForm from '@/components/GenericForm.vue'
+import { useFormErrorHandler } from '@/composables/useErrorHandler'
 
 const stockSnapshotsStore = useStockSnapshotsStore
 const objectsStore = useObjectsStore
@@ -195,23 +49,10 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const loading = ref(false)
-const errors = reactive<Record<string, string>>({})
-
 const isEdit = computed(() => !!props.initial)
 
-const model = reactive<StockSnapshotCreateRequest>({
-  date: new Date().toISOString().split('T')[0],
-  object: 0,
-  material: null, // nullable according to API
-  unit: 0,
-  quantity_signed: '0',
-  stage: 'acceptance',
-  source_type: 'purchase_item',
-  source_id: 0,
-  responsible: 0,
-  comment: '',
-})
+// Form error handler
+const { submitForm, loading } = useFormErrorHandler()
 
 // Computed options
 const objectOptions = computed(() => [
@@ -248,86 +89,178 @@ const sourceTypeOptions = computed(() => [
   { value: 'writeoff', label: 'Списание' }
 ])
 
-function resetForm() {
-  model.date = new Date().toISOString().split('T')[0]
-  model.object = 0
-  model.material = 0
-  model.unit = 0
-  model.quantity_signed = '0'
-  model.stage = 'acceptance'
-  model.source_type = 'purchase_item'
-  model.source_id = 0
-  model.responsible = 0
-  model.comment = ''
-  Object.keys(errors).forEach(key => delete errors[key])
-}
+// Form configuration
+const formConfig = computed(() => ({
+  title: isEdit.value ? 'Редактировать внесение остатков' : 'Внести остатки',
+  subtitle: isEdit.value ? 'Изменение данных о движении остатков' : 'Добавление нового движения остатков',
+  fields: [
+    {
+      key: 'date',
+      label: 'Дата внесения',
+      type: 'date' as const,
+      required: true,
+      validation: {
+        custom: (value: any) => !value ? 'Дата обязательна для заполнения' : null
+      }
+    },
+    {
+      key: 'object',
+      label: 'Объект',
+      type: 'select' as const,
+      required: true,
+      options: objectOptions.value,
+      placeholder: '— выберите объект —',
+      validation: {
+        custom: (value: any) => !value || value === 0 ? 'Объект обязателен для заполнения' : null
+      }
+    },
+    {
+      key: 'material',
+      label: 'Материал',
+      type: 'select' as const,
+      required: true,
+      options: materialOptions.value,
+      placeholder: '— выберите материал —',
+      validation: {
+        custom: (value: any) => !value || value === 0 ? 'Материал обязателен для заполнения' : null
+      },
+      onChange: (value: number | null) => {
+        if (value === null || value === 0) {
+          return { unit: 0 }
+        }
+        
+        const material = materialsStore.items.find(m => m.id === value)
+        if (material && material.default_unit) {
+          return { unit: material.default_unit }
+        }
+        return {}
+      }
+    },
+    {
+      key: 'unit',
+      label: 'Единица измерения',
+      type: 'select' as const,
+      required: true,
+      options: unitOptions.value,
+      placeholder: '— выберите единицу —',
+      disabled: true,
+      validation: {
+        custom: (value: any) => !value || value === 0 ? 'Единица измерения обязательна для заполнения' : null
+      }
+    },
+    {
+      key: 'quantity_signed',
+      label: 'Количество',
+      type: 'number' as const,
+      required: true,
+      step: 0.000001,
+      placeholder: 'Положительное для прихода, отрицательное для расхода',
+      validation: {
+        custom: (value: any) => !value || value === '' ? 'Количество обязательно для заполнения' : null
+      }
+    },
+    {
+      key: 'stage',
+      label: 'Этап работ',
+      type: 'select' as const,
+      required: true,
+      options: stageOptions.value,
+      placeholder: '— выберите этап —',
+      validation: {
+        custom: (value: any) => !value ? 'Этап работ обязателен для заполнения' : null
+      }
+    },
+    {
+      key: 'source_type',
+      label: 'Тип источника',
+      type: 'select' as const,
+      required: true,
+      options: sourceTypeOptions.value,
+      placeholder: '— выберите тип —',
+      validation: {
+        custom: (value: any) => !value ? 'Тип источника обязателен для заполнения' : null
+      }
+    },
+    {
+      key: 'responsible',
+      label: 'Ответственный',
+      type: 'select' as const,
+      required: true,
+      options: employeeOptions.value,
+      placeholder: '— выберите ответственного —',
+      validation: {
+        custom: (value: any) => !value || value === 0 ? 'Ответственный обязателен для заполнения' : null
+      }
+    },
+    {
+      key: 'source_id',
+      label: 'ID источника',
+      type: 'number' as const,
+      placeholder: 'ID закупки или списания'
+    },
+    {
+      key: 'comment',
+      label: 'Комментарий',
+      type: 'textarea' as const,
+      rows: 3,
+      placeholder: 'Дополнительная информация о движении...'
+    }
+  ],
+  submitText: isEdit.value ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена'
+}))
 
-function loadInitial() {
+// Initial form data
+const initialFormData = computed<StockSnapshotCreateRequest>(() => {
   if (props.initial) {
-    model.date = props.initial.date
-    model.object = props.initial.object
-    model.material = props.initial.material
-    model.unit = props.initial.unit
-    model.quantity_signed = props.initial.quantity_signed
-    model.stage = props.initial.stage
-    model.source_type = props.initial.source_type
-    model.source_id = props.initial.source_id
-    model.responsible = props.initial.responsible
-    model.comment = props.initial.comment || ''
+    return {
+      date: props.initial.date,
+      object: props.initial.object,
+      material: props.initial.material,
+      unit: props.initial.unit,
+      quantity_signed: props.initial.quantity_signed,
+      stage: props.initial.stage,
+      source_type: props.initial.source_type,
+      source_id: props.initial.source_id,
+      responsible: props.initial.responsible,
+      comment: props.initial.comment || ''
+    }
   } else {
-    resetForm()
+    return {
+      date: new Date().toISOString().split('T')[0],
+      object: 0,
+      material: null,
+      unit: 0,
+      quantity_signed: '0',
+      stage: 'acceptance',
+      source_type: 'purchase_item',
+      source_id: 0,
+      responsible: 0,
+      comment: ''
+    }
   }
-}
+})
 
-
-async function onSubmit() {
-  loading.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
-  
-  try {
+// Form handlers
+async function handleSubmit(formData: StockSnapshotCreateRequest) {
+  await submitForm(async () => {
     if (isEdit.value && props.initial) {
-      const updateData: StockSnapshotUpdateRequest = { ...model }
+      const updateData: StockSnapshotUpdateRequest = { ...formData }
       await stockSnapshotsStore.update(props.initial.id, updateData)
     } else {
-      await stockSnapshotsStore.create(model)
+      await stockSnapshotsStore.create(formData)
     }
     
     emit('saved')
-  } catch (error: unknown) {
-    const errorResult = await ErrorHandlers.formValidation(error)
-    
-    // Устанавливаем ошибки полей
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      const fieldError = errorResult.fieldErrors[field]
-      errors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
-    })
-    
-    // Если есть общая ошибка (например, 403), показываем её отдельно
-    if (errorResult.detail && Object.keys(errorResult.fieldErrors).length === 0) {
-      ui.toast({ type: 'error', text: errorResult.detail })
-    }
-  } finally {
-    loading.value = false
-  }
+  }, { entity: 'stock-snapshot' })
 }
 
-// Handle material change to auto-fill unit
-function onMaterialChange(materialId: number | null) {
-  if (materialId === null || materialId === 0) {
-    model.unit = 0
-    return
-  }
-  
-  const material = materialsStore.items.find(m => m.id === materialId)
-  if (material && material.default_unit) {
-    model.unit = material.default_unit
-  }
+function handleCancel() {
+  emit('cancel')
 }
 
 // Load data on mount
 onMounted(async () => {
-  loadInitial()
-  
   // Load reference data if not already loaded
   const promises = []
   if (objectsStore.items.length === 0) {

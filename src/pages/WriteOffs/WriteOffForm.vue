@@ -1,5 +1,5 @@
 <template>
-  <div class="writeoff-form-container">
+  <div class="writeoff-form">
     <!-- Unit Display -->
     <div v-if="selectedMaterialUnit" class="card bg-base-100 border mb-6">
       <div class="card-body">
@@ -21,7 +21,7 @@
     <GenericForm
       :config="formConfig"
       :initial-data="initialData"
-      :on-submit="onSaved"
+      :on-submit="handleSubmit"
       :on-cancel="handleCancel"
       :validate-on-change="true"
       :reset-on-submit="false"
@@ -29,7 +29,7 @@
     />
 
     <!-- Информация об остатке -->
-    <div v-if="currentBalance !== null" class="card bg-base-100 border">
+    <div v-if="currentBalance !== null" class="card bg-base-100 border mt-6">
       <div class="card-body">
         <h2 class="card-title text-lg mb-4">Информация об остатке</h2>
         <div class="alert alert-info">
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Предупреждения валидации -->
-    <div v-if="validationWarnings.length > 0" class="card bg-base-100 border">
+    <div v-if="validationWarnings.length > 0" class="card bg-base-100 border mt-6">
       <div class="card-body">
         <h2 class="card-title text-lg mb-4">Предупреждения валидации</h2>
         <div class="alert alert-warning">
@@ -78,7 +78,6 @@ import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
-import { useUiStore } from '@/stores/ui'
 import GenericForm from '@/components/GenericForm.vue'
 import type { 
   WriteOff, 
@@ -90,7 +89,7 @@ import type {
   Unit
 } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const route = useRoute()
 const router = useRouter()
@@ -101,7 +100,7 @@ const objectsStore = useObjectsStore
 const materialsStore = useMaterialsStore()
 const employeesStore = useEmployeesStore
 const unitsStore = useUnitsStore
-const ui = useUiStore()
+const { handleFormError } = useErrorHandler()
 
 // Props
 const props = defineProps<{
@@ -190,22 +189,10 @@ const formConfig = computed<GenericFormConfig<WriteOffCreateRequest>>(() => ({
   subtitle: 'Управление списанием материалов с объектов',
   sections: [
     {
-      title: 'Основная информация',
-      description: 'Основные данные о списании',
-      fields: ['date', 'object', 'material', 'unit', 'quantity'],
+      title: 'Информация о списании',
+      description: 'Все данные о списании материалов',
+      fields: ['date', 'object', 'material', 'unit', 'quantity', 'stage', 'responsible', 'comment'],
       order: 1
-    },
-    {
-      title: 'Детали списания',
-      description: 'Параметры списания',
-      fields: ['stage', 'responsible'],
-      order: 2
-    },
-    {
-      title: 'Дополнительная информация',
-      description: 'Дополнительные сведения о списании',
-      fields: ['comment'],
-      order: 3
     }
   ],
   fields: [
@@ -245,8 +232,7 @@ const formConfig = computed<GenericFormConfig<WriteOffCreateRequest>>(() => ({
       required: true,
       options: unitOptions.value,
       order: 4,
-      width: 'half',
-      disabled: true
+      width: 'half'
     },
     {
       key: 'quantity',
@@ -255,7 +241,7 @@ const formConfig = computed<GenericFormConfig<WriteOffCreateRequest>>(() => ({
       placeholder: 'Введите количество',
       required: true,
       validation: {
-        min: 0.000001,
+        min: 0,
         step: 0.000001
       },
       order: 5,
@@ -325,10 +311,7 @@ const initialData = computed(() => {
 })
 
 // Form submission handler
-async function onSaved(data: WriteOffCreateRequest) {
-  loading.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
-  
+async function handleSubmit(data: WriteOffCreateRequest) {
   // Update formData for display purposes
   Object.assign(formData, data)
   
@@ -348,20 +331,7 @@ async function onSaved(data: WriteOffCreateRequest) {
     
     emit('saved')
   } catch (error: unknown) {
-    const errorResult = await ErrorHandlers.formValidation(error)
-    
-    // Устанавливаем ошибки полей
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      const fieldError = errorResult.fieldErrors[field]
-      errors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
-    })
-    
-    // Если есть общая ошибка (например, 403), показываем её отдельно
-    if (errorResult.detail && Object.keys(errorResult.fieldErrors).length === 0) {
-      ui.toast({ type: 'error', text: errorResult.detail })
-    }
-  } finally {
-    loading.value = false
+    await handleFormError(error)
   }
 }
 
@@ -373,11 +343,15 @@ function handleCancel() {
 watch(() => formData.material, (materialId) => {
   if (materialId) {
     const material = materials.value.find((m: Material) => m.id === materialId)
-    if (material) {
+    if (material && material.default_unit) {
       formData.unit = material.default_unit
+      selectedMaterialId.value = materialId
     }
+  } else {
+    selectedMaterialId.value = 0
+    formData.unit = 0
   }
-})
+}, { immediate: true })
 
 // Load data on mount
 onMounted(async () => {
@@ -400,7 +374,7 @@ onMounted(async () => {
     try {
       await Promise.all(promises)
     } catch (error) {
-      ui.toast({ type: 'error', text: 'Ошибка загрузки справочников' })
+      await handleFormError(error)
     }
   }
   
@@ -428,7 +402,10 @@ function onFieldChange(key: string, value: any) {
     selectedMaterialId.value = value
     const material = materialsStore.items.find(m => m.id === value)
     if (material && material.default_unit) {
+      // Обновляем formData напрямую
       formData.unit = material.default_unit
+      // Также обновляем selectedMaterialId для отображения
+      selectedMaterialId.value = value
     }
   } else if (key === 'material' && (value === null || value === 0)) {
     selectedMaterialId.value = 0
@@ -439,7 +416,7 @@ function onFieldChange(key: string, value: any) {
 
 <style scoped>
 /* Все стили теперь используют DaisyUI классы */
-.writeoff-form-container {
+.writeoff-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

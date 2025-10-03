@@ -11,7 +11,6 @@ import '@/utils/polyfills'
 import '@/utils/browserSupport'
 
 import '@/assets/tailwind.css'
-import '@/assets/daisyui-reference.css'
 import '@/assets/login-animations.css'
 import '@/assets/navigation-styles.css'
 import '@/styles/animations.css' 

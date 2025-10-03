@@ -18,3 +18,4 @@ export const useUnitsStore = createBaseStore<Unit, UnitRequest, PatchedUnitReque
 export const getByCode = (code: string) => {
   return useUnitsStore.items.find((item: Unit) => item.code === code)
 }
+

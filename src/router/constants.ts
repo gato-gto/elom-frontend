@@ -108,8 +108,6 @@ export const ROUTE_PATHS = {
   
   // Stocks
   STOCKS_LIST: '/stocks',
-  STOCK_CREATE: '/stocks/create',
-  STOCK_EDIT: '/stocks/:id/edit',
   
   // WriteOffs
   WRITEOFFS_LIST: '/writeoffs',

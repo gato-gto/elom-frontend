@@ -10,6 +10,11 @@ const Login = () => import(/* webpackChunkName: "auth" */ '@/pages/Login.vue')
 const MaterialsList = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/List.vue')
 const MaterialForm = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/MaterialForm.vue')
 
+// Material Categories
+const MaterialCategoriesList = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/Categories/List.vue')
+const MaterialCategoryForm = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/Categories/CategoryForm.vue')
+const MaterialCategoryInfo = () => import(/* webpackChunkName: "materials" */ '@/pages/Materials/Categories/CategoryInfo.vue')
+
 // Purchases
 const PurchasesList = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/List.vue')
 const PurchaseForm = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/PurchaseForm.vue')
@@ -28,8 +33,6 @@ const EmployeeForm = () => import(/* webpackChunkName: "employees" */ '@/pages/E
 
 // Stocks
 const StocksList = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/List.vue')
-const StockForm = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/StockForm.vue')
-const StockEdit = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/Edit.vue')
 
 // WriteOffs
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
@@ -103,6 +106,56 @@ const routes = [
       title: 'Редактировать материал',
       breadcrumb: 'Материалы / Редактировать',
       description: 'Редактирование существующего материала',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
+    }
+  },
+  
+  // Material Categories routes
+  {
+    path: '/materials/categories',
+    name: 'MaterialCategoriesList',
+    component: MaterialCategoriesList,
+    meta: { 
+      title: 'Категории материалов',
+      breadcrumb: 'Материалы / Категории',
+      description: 'Управление категориями материалов',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
+    }
+  },
+  {
+    path: '/materials/categories/create',
+    name: 'MaterialCategoryCreate',
+    component: MaterialCategoryForm,
+    meta: { 
+      title: 'Новая категория',
+      breadcrumb: 'Материалы / Категории / Новая',
+      description: 'Создание новой категории материалов',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
+    }
+  },
+  {
+    path: '/materials/categories/:id',
+    name: 'MaterialCategoryInfo',
+    component: MaterialCategoryInfo,
+    meta: { 
+      title: 'Информация о категории',
+      breadcrumb: 'Материалы / Категории / Просмотр',
+      description: 'Просмотр информации о категории материалов',
+      category: 'inventory',
+      roles: ['admin', 'director', 'coordinator', 'site_manager']
+    }
+  },
+  {
+    path: '/materials/categories/:id/edit',
+    name: 'MaterialCategoryEdit',
+    component: MaterialCategoryForm,
+    meta: { 
+      title: 'Редактировать категорию',
+      breadcrumb: 'Материалы / Категории / Редактировать',
+      description: 'Редактирование категории материалов',
       category: 'inventory',
       roles: ['admin', 'director', 'coordinator', 'site_manager']
     }
@@ -320,30 +373,6 @@ const routes = [
       description: 'Управление остатками материалов',
       category: 'inventory',
       order: 6,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
-    }
-  },
-  {
-    path: '/stocks/create',
-    name: 'StockCreate',
-    component: StockForm,
-    meta: { 
-      title: 'Внести остатки',
-      breadcrumb: 'Остатки / Внести остатки',
-      description: 'Внесение остатков материалов',
-      category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
-    }
-  },
-  {
-    path: '/stocks/:id/edit',
-    name: 'StockEdit',
-    component: StockForm,
-    meta: { 
-      title: 'Редактировать внесение остатков',
-      breadcrumb: 'Остатки / Редактировать',
-      description: 'Редактирование внесения остатков',
-      category: 'inventory',
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
     }
   },

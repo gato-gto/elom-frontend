@@ -11,8 +11,8 @@ Frontend ELOM построен на Vue 3 с использованием Compos
 - **TypeScript 5.3+**: Строгая типизация
 - **Pinia 2.1+**: Управление состоянием
 - **Vue Router 4.2+**: Роутинг и навигация с middleware
-- **Tailwind CSS 3.4+**: Утилитарные стили
-- **DaisyUI 4.4+**: UI компоненты
+- **Tailwind CSS v4**: Утилитарные стили
+- **DaisyUI v5**: UI компоненты
 - **Vite 5.0+**: Сборщик и dev сервер
 
 ### Дополнительные библиотеки
@@ -2733,8 +2733,8 @@ export function useNetworkMonitoring() {
 - **Vue 3.4+** с Composition API для реактивности
 - **TypeScript 5.3+** для строгой типизации
 - **Pinia 2.1+** для управления состоянием
-- **Tailwind CSS 3.4+** для стилизации
-- **DaisyUI 4.4+** для UI компонентов
+- **Tailwind CSS v4** для стилизации
+- **DaisyUI v5** для UI компонентов
 - **Vite 5.0+** для быстрой разработки
 - **Vitest** для unit тестирования
 - **Playwright** для e2e тестирования

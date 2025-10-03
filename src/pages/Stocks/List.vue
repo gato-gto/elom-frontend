@@ -276,7 +276,8 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 async function handleAction(action: string, item: StockSnapshot) {
   switch (action) {
     case 'edit':
-      router.push(`/stocks/${item.id}/edit`)
+      editingStockSnapshot.value = item
+      modalOpen.value = true
       break
   }
 }

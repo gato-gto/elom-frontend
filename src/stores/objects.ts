@@ -18,3 +18,4 @@ export const useObjectsStore = createBaseStore<Object, ObjectRequest, PatchedObj
 export const activeObjects = computed(() => {
   return useObjectsStore.items.filter((item: Object) => item.is_active)
 })
+

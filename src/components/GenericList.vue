@@ -10,7 +10,7 @@
       :can-create="config.canCreate"
       :loading="store.loading"
       :show-stats="config.showStats"
-      :total-count="store.pagination.count"
+      :total-count="store.pagination?.count || 0"
       :filtered-count="store.items?.length || 0"
       @create="$emit('create')"
     >
@@ -36,12 +36,13 @@
       <FilterField
         v-for="filter in config.filters"
         :key="filter.key"
-        v-model="store.filters[filter.key]"
+        :model-value="store.filters?.[filter.key] || ''"
         :type="filter.type"
         :label="filter.label"
         :placeholder="filter.placeholder"
         :options="filter.options"
         :required="filter.required"
+        @update:model-value="(value) => updateFilter(filter.key, value)"
       />
     </FilterPanel>
 
@@ -282,10 +283,6 @@ async function handlePageSizeChange(size: number) {
   await props.store.setPageSize(size)
 }
 
-function handleResetFilters() {
-  props.store.resetFilters()
-}
-
 function handleAction(action: string, item: any) {
   emit('action', action, item)
 }
@@ -350,6 +347,23 @@ const debouncedSearch = debounce(async () => {
     await handleLoadingError(error, props.config.title.toLowerCase())
   }
 }, 500)
+
+// Update filter value
+function updateFilter(key: string, value: any) {
+  if (props.store.filters) {
+    props.store.filters[key] = value
+  }
+}
+
+// Reset filters
+function handleResetFilters() {
+  if (props.store.filters) {
+    Object.keys(props.store.filters).forEach(key => {
+      props.store.filters[key] = ''
+    })
+  }
+  debouncedSearch()
+}
 
 // Watch for filter changes
 watch(

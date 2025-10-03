@@ -1,8 +1,8 @@
 # ELOM Project Status Report
 ## Electronic Logistics and Operations Management
 
-**Дата**: 20 января 2025  
-**Версия**: 2.0  
+**Дата**: 2 октября 2025  
+**Версия**: 2.1  
 **Статус**: ✅ ГОТОВ К ПРОДАКШЕНУ
 
 ---
@@ -37,7 +37,7 @@
 
 ### Frontend (Vue.js)
 - **Framework**: Vue.js 3 с Composition API
-- **UI**: Tailwind CSS + DaisyUI
+- **UI**: Tailwind CSS v4 + DaisyUI v5
 - **State**: Pinia для управления состоянием
 - **TypeScript**: Полная типизация
 - **Build**: Vite для сборки
