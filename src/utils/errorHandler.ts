@@ -60,6 +60,11 @@ export function parseApiError(error: any, context?: ErrorContext): ParsedApiErro
   const detail = data?.detail || error?.message || 'Произошла неизвестная ошибка'
   const fieldErrors = parseNestedErrors(data?.errors || {})
   const nonFieldErrors = data?.non_field_errors || []
+  
+  // Добавляем non_field_errors к fieldErrors для отображения
+  if (nonFieldErrors.length > 0) {
+    fieldErrors['non_field_errors'] = nonFieldErrors
+  }
 
   // Создаем конфигурацию отображения
   const displayConfig: ErrorDisplayConfig = {

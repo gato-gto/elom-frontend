@@ -406,8 +406,9 @@ import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import GenericForm from '@/components/GenericForm.vue'
 import type { Purchase, PurchaseRequest, PurchaseItemRequest, Employee, Material, PurchasePhoto } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
-import { ErrorHandlers } from '@/utils/errorHandler'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 import api from '@/api/client'
+import { calculateItemAmount, calculatePurchaseTotal, formatCurrency } from '@/utils/calculations'
 
 // Props
 const props = defineProps<{
@@ -424,14 +425,15 @@ const router = useRouter()
 const route = useRoute()
 
 const purchasesStore = usePurchasesStore
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 const unitsStore = useUnitsStore
 const objectsStore = useObjectsStore
 const employeesStore = useEmployeesStore
-const suppliersStore = useSuppliersStore()
+const suppliersStore = useSuppliersStore
 const ui = useUiStore()
 const notifications = useNotificationsStore()
 const auth = useAuthStore()
+const { handleFormError, errors: formErrors, clearErrors } = useErrorHandler()
 
 const saving = ref(false)
 const errors = reactive<Record<string, string>>({})
@@ -834,7 +836,7 @@ async function onSaved(data: PurchaseRequest) {
     ui.toast({ type: 'success', text: 'Закупка сохранена' })
     emit('saved')
   } catch (error: any) {
-    const errorResult = await ErrorHandlers.formValidation(error)
+    const errorResult = await handleFormError(error, 'закупка')
     
     // Устанавливаем ошибки полей (включая вложенные)
     Object.keys(errorResult.fieldErrors).forEach(field => {
@@ -900,9 +902,7 @@ function getUnitName(unitId: number) {
 
 // Calculate total for an item
 function recalc(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number }) {
-  const quantity = parseFloat(item.quantity) || 0
-  const price = parseFloat(item.price || '0') || 0
-  const total = quantity * price
+  const total = calculateItemAmount(item.quantity, item.price || '0')
   
   item.total = total
   item.amount = total.toFixed(2)
@@ -920,11 +920,10 @@ function formatMoney(amount: number | string | undefined): string {
 
 // Calculate total for all items
 const total = computed(() => {
-  return items.value.reduce((sum, item) => {
-    const quantity = parseFloat(item.quantity) || 0
-    const price = parseFloat(item.price || '0') || 0
-    return sum + (quantity * price)
-  }, 0)
+  return calculatePurchaseTotal(items.value.map(item => ({
+    quantity: item.quantity,
+    price: item.price || '0'
+  })))
 })
 
 function handleCancel() {

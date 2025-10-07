@@ -55,7 +55,7 @@ import { ErrorHandlers } from '@/utils/errorHandler'
 
 const stockSnapshotsStore = useStockSnapshotsStore
 const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 const employeesStore = useEmployeesStore
 const unitsStore = useUnitsStore
 const ui = useUiStore()

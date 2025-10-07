@@ -284,6 +284,88 @@ def create_ledger_entry_for_writeoff(sender, instance, created, **kwargs):
         )
 ```
 
+### Фильтрация материалов по объектам в списаниях
+
+#### Бизнес-логика фильтрации
+Система реализует интеллектуальную фильтрацию материалов в форме списаний на основе выбранного объекта. Это обеспечивает:
+
+1. **Контроль доступности материалов**: Пользователь может списать только те материалы, которые были закуплены для выбранного объекта
+2. **Предотвращение ошибок**: Исключается возможность списания материалов, которых нет на объекте
+3. **Улучшение UX**: Список материалов автоматически обновляется при смене объекта
+
+#### API Endpoint для фильтрации
+```python
+# Backend: common/views.py
+@action(detail=False, methods=["get"], url_path="by-object")
+def by_object(self, request):
+    """Получить материалы по объекту"""
+    object_id = request.query_params.get('object_id')
+    is_active = request.query_params.get('is_active', 'true').lower() == 'true'
+    
+    if not object_id:
+        return Response({"detail": "object_id is required"}, status=400)
+    
+    # Получаем материалы, которые были закуплены для данного объекта
+    from purchases.models import PurchaseItem
+    
+    material_ids = PurchaseItem.objects.filter(
+        purchase__object_id=object_id,
+        material__isnull=False
+    ).values_list('material_id', flat=True).distinct()
+    
+    # Получаем материалы
+    queryset = Material.objects.filter(
+        id__in=material_ids,
+        is_active=is_active
+    ).select_related("category", "default_unit").order_by('name')
+    
+    serializer = MaterialLiteSerializer(queryset, many=True)
+    return Response(serializer.data)
+```
+
+#### Frontend реализация
+```typescript
+// Materials Store
+async getMaterialsByObject(objectId: number): Promise<Material[]> {
+  try {
+    const queryParams = {
+      object_id: objectId,
+      is_active: true
+    }
+    const queryString = buildQuery(queryParams)
+    const { data } = await api.get<Material[]>(endpoints.materials.byObject + queryString)
+    return data
+  } catch (error: any) {
+    console.error('Error getting materials by object:', error)
+    return []
+  }
+}
+
+// WriteOffForm - реактивная фильтрация
+watch(() => formData.object, async (objectId) => {
+  if (objectId) {
+    await loadMaterialsByObject(objectId)
+    // Сбрасываем выбранный материал при смене объекта
+    formData.material = null
+    formData.unit = 0
+    selectedMaterialId.value = 0
+  } else {
+    filteredMaterials.value = []
+    formData.material = null
+    formData.unit = 0
+    selectedMaterialId.value = 0
+  }
+}, { immediate: true })
+```
+
+#### Бизнес-правила фильтрации
+1. **Источник данных**: Материалы фильтруются на основе записей в таблице `PurchaseItem`, где закупка связана с выбранным объектом
+2. **Активность**: По умолчанию показываются только активные материалы (`is_active=true`)
+3. **Сортировка**: Материалы сортируются по названию для удобства поиска
+4. **Реактивность**: При смене объекта список материалов обновляется автоматически
+5. **Сброс выбора**: При смене объекта сбрасываются выбранный материал и единица измерения
+6. **Режим редактирования**: При редактировании существующего списания материалы загружаются для объекта из записи
+
 ### Этапы работ (Stages)
 ```python
 STAGE_CHOICES = [
@@ -550,11 +632,31 @@ class ArchivePeriod(models.Model):
 - Возможность повторного открытия периода (только для admin)
 
 ### Процесс архивирования
-1. Выбор объекта и месяца
-2. Проверка на наличие незакрытых операций
-3. Создание архивированной копии данных
-4. Закрытие периода
-5. Уведомление ответственных
+1. **Выбор объекта и месяца** - пользователь выбирает объект и месяц для архивирования
+2. **Проверка прав доступа** - только director, admin, coordinator могут закрывать периоды
+3. **Валидация параметров** - проверка корректности месяца (YYYY-MM) и существования объекта
+4. **Проверка на дублирование** - период не должен быть уже закрыт
+5. **Массовое архивирование данных**:
+   - Все закупки за период: `Purchase.is_archived = True`
+   - Все складские операции за период: `StockSnapshot.is_archived = True`
+6. **Создание записи архива** - создание `ArchivePeriod` с метаданными
+7. **Логирование в аудит** - запись операции в `AuditLog`
+
+### Процесс открытия периода
+1. **Проверка прав доступа** - только director, admin могут открывать периоды
+2. **Поиск архивного периода** - проверка существования записи в архиве
+3. **Массовое снятие архива**:
+   - Все закупки за период: `Purchase.is_archived = False`
+   - Все складские операции за период: `StockSnapshot.is_archived = False`
+4. **Удаление записи архива** - удаление `ArchivePeriod`
+5. **Логирование в аудит** - запись операции открытия
+
+### Валидация и ограничения
+- **Формат месяца**: YYYY-MM (например, "2024-01")
+- **Проверка дублирования**: один объект не может иметь два закрытых периода за один месяц
+- **Права доступа**: строгое разделение по ролям
+- **Атомарность**: все операции выполняются в транзакции
+- **Аудит**: все операции логируются с деталями
 
 ## Система аудита
 
@@ -702,4 +804,205 @@ ELOM интегрирован с Telegram Bot API для автоматичес�
 - Логирование производительности
 - Метрики использования
 - Алерты при превышении лимитов
+
+## Система пагинации и управления данными
+
+### Архитектура пагинации
+
+ELOM использует единообразную систему пагинации через базовый store `createBaseStore`, который обеспечивает консистентное поведение во всех списках данных.
+
+#### Базовый store (createBaseStore)
+
+```typescript
+export function createBaseStore<T extends Record<string, any>, C, U>(
+  config: BaseStoreConfig<T, C, U>
+) {
+  const store = defineStore(config.entityName, () => {
+    // State
+    const items = ref<T[]>([])
+    const current = ref<T | null>(null)
+    const loading = ref(false)
+    const error = ref<string | null>(null)
+    const pagination = ref<PaginationState>({
+      count: 0,
+      page: 1,
+      pageSize: 20,
+      next: null,
+      previous: null
+    })
+    const filters = ref<BaseFilters>({
+      search: '',
+      ordering: 'id'
+    })
+
+    // CRUD Actions
+    const fetchList = async (params?: any) => {
+      // ... реализация с пагинацией
+    }
+
+    // Utility methods
+    const setPageSize = async (size: number) => {
+      pagination.value.pageSize = size
+      pagination.value.page = 1
+      await fetchList()
+    }
+
+    const setPage = async (page: number) => {
+      pagination.value.page = page
+      await fetchList()
+    }
+
+    const setFilters = async (newFilters: Partial<BaseFilters>) => {
+      Object.assign(filters.value, newFilters)
+      pagination.value.page = 1 // Сбрасываем на первую страницу при изменении фильтров
+      await fetchList()
+    }
+
+    const resetFilters = async () => {
+      filters.value = {
+        search: '',
+        ordering: 'id'
+      }
+      pagination.value.page = 1 // Сбрасываем на первую страницу при сбросе фильтров
+      await fetchList()
+    }
+
+    return {
+      // State
+      items, current, loading, error, pagination, filters,
+      // CRUD Actions
+      fetchList, fetchOne, create, update, delete: deleteItem,
+      // Utility methods
+      setCurrent, setFilters, resetFilters, clearError, setPageSize, setPage
+    }
+  })
+  
+  return store()
+}
+```
+
+#### Stores с единообразной пагинацией
+
+Все основные stores используют `createBaseStore`:
+
+1. **Закупки** (`usePurchasesStore`)
+2. **Материалы** (`useMaterialsStore`) 
+3. **Поставщики** (`useSuppliersStore`)
+4. **Сотрудники** (`useEmployeesStore`)
+5. **Объекты** (`useObjectsStore`)
+6. **Списания** (`useWriteOffsStore`)
+7. **Единицы измерения** (`useUnitsStore`)
+8. **Движения остатков** (`useStockSnapshotsStore`)
+9. **Категории материалов** (`useMaterialCategoriesStore`)
+10. **Остатки по объектам** (`useBalancesStore`)
+
+#### Расширенные stores
+
+Некоторые stores расширяют базовый функционал:
+
+**Materials Store** - добавляет фильтры по категориям, SKU, названию:
+```typescript
+const extendedFilters = {
+  search: '',
+  name: '',
+  sku: '',
+  category: '',
+  ordering: 'name'
+}
+```
+
+**Balances Store** - обрабатывает специфичную структуру API остатков:
+```typescript
+// Flattening данных для табличного отображения
+const flattenedData: MaterialBalance[] = []
+if (response.data.objects) {
+  response.data.objects.forEach((obj: any) => {
+    obj.materials.forEach((material: any) => {
+      flattenedData.push({
+        material_id: material.material_id,
+        material_name: material.material_name,
+        // ... другие поля
+      } as MaterialBalance)
+    })
+  })
+}
+```
+
+### Преимущества единообразной пагинации
+
+1. **Консистентность**: Все списки ведут себя одинаково
+2. **Простота поддержки**: Один код для всех stores
+3. **Типобезопасность**: Строгая типизация TypeScript
+4. **Производительность**: Оптимизированные запросы к API
+5. **UX**: Единообразный пользовательский опыт
+
+### Компонент ModernPagination
+
+```vue
+<template>
+  <div v-if="totalPages > 1" class="modern-pagination-container">
+    <!-- Информация о пагинации -->
+    <div class="pagination-info">
+      <span class="pagination-stats">
+        Показано {{ startItem }}-{{ endItem }} из {{ totalItems }} записей
+      </span>
+    </div>
+
+    <!-- Навигация по страницам -->
+    <div class="pagination-nav">
+      <!-- Кнопки навигации -->
+      <button @click="goToPage(1)" :disabled="currentPage === 1">Первая</button>
+      <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1">Предыдущая</button>
+      
+      <!-- Номера страниц -->
+      <div class="pagination-pages">
+        <button v-for="page in visiblePages" :key="page" 
+                @click="goToPage(page)" 
+                :class="{ 'pagination-btn-active': page === currentPage }">
+          {{ page }}
+        </button>
+      </div>
+      
+      <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages">Следующая</button>
+      <button @click="goToPage(totalPages)" :disabled="currentPage === totalPages">Последняя</button>
+    </div>
+  </div>
+</template>
+```
+
+### Интеграция с GenericList
+
+```vue
+<template>
+  <div class="list-container">
+    <!-- GenericList Component -->
+    <GenericList
+      :store="store"
+      :config="listConfig"
+      @create="openCreateModal"
+      @action="handleAction"
+      @export="handleExport"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+// Store автоматически предоставляет методы пагинации
+const store = useMaterialsStore
+
+// GenericList автоматически использует:
+// - store.setPage() для переключения страниц
+// - store.setPageSize() для изменения размера страницы
+// - store.setFilters() для фильтрации
+// - store.resetFilters() для сброса фильтров
+</script>
+```
+
+### Бизнес-правила пагинации
+
+1. **Размер страницы по умолчанию**: 20 записей
+2. **Сброс страницы**: При изменении фильтров страница сбрасывается на 1
+3. **Обработка ошибок**: При ошибке 404 (неправильная страница) автоматический переход на страницу 1
+4. **Кэширование**: Данные кэшируются в store для быстрого доступа
+5. **Загрузка**: Показывается индикатор загрузки во время запросов
 

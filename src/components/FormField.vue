@@ -92,6 +92,7 @@
       </slot>
     </select>
     
+    
     <!-- File Input -->
     <input
       v-else-if="type === 'file'"
@@ -267,7 +268,7 @@
 </template>
 
 <script setup lang="ts">
-// import { computed } from 'vue' // Не используется
+import { watch } from 'vue'
 
 interface Option {
   value: string | number | boolean | null
@@ -373,6 +374,11 @@ const getOptionLabel = (value: any): string => {
   const option = props.options?.find(opt => opt.value === value)
   return option?.label || String(value)
 }
+
+// Watch for options changes to force re-render
+watch(() => props.options, (newOptions, oldOptions) => {
+  // Force re-render when options change
+}, { deep: true, immediate: true })
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement

@@ -866,3 +866,131 @@ SAP_USERNAME=sap_user
 SAP_PASSWORD=sap_password
 ```
 
+## Интеграция с системой пагинации
+
+### Архитектура интеграции
+
+ELOM использует единообразную систему пагинации через `createBaseStore`, которая интегрируется с различными компонентами системы:
+
+#### Интеграция с API
+
+```typescript
+// Базовый store автоматически интегрируется с API
+const fetchList = async (params?: any) => {
+  const queryParams = {
+    page: pagination.value.page,
+    page_size: pagination.value.pageSize,
+    search: filters.value.search,
+    ordering: filters.value.ordering,
+    ...params
+  }
+
+  const query = buildQuery(queryParams)
+  const { data } = await api.get<PaginatedResponse<T>>(endpoint.list + query)
+  
+  // Обновление состояния
+  items.value = data.results
+  pagination.value = {
+    count: data.count,
+    page: queryParams.page,
+    pageSize: pagination.value.pageSize,
+    next: data.next || null,
+    previous: data.previous || null
+  }
+}
+```
+
+#### Интеграция с компонентами
+
+```vue
+<!-- GenericList автоматически интегрируется с stores -->
+<template>
+  <GenericList
+    :store="materialsStore"
+    :config="listConfig"
+    @export="handleExport"
+  />
+</template>
+
+<script setup lang="ts">
+// Store предоставляет все необходимые методы
+const materialsStore = useMaterialsStore
+
+// GenericList использует:
+// - materialsStore.setPage() для пагинации
+// - materialsStore.setFilters() для фильтрации
+// - materialsStore.fetchList() для загрузки данных
+</script>
+```
+
+#### Интеграция с ModernPagination
+
+```vue
+<!-- ModernPagination интегрируется с store через props -->
+<template>
+  <ModernPagination
+    :current-page="store.pagination.page"
+    :total-pages="totalPages"
+    :total-items="store.pagination.count"
+    :page-size="store.pagination.pageSize"
+    @page-change="store.setPage"
+    @page-size-change="store.setPageSize"
+  />
+</template>
+```
+
+### Преимущества интеграции
+
+1. **Единообразность**: Все списки используют одинаковую логику пагинации
+2. **Переиспользование**: Один код для всех stores
+3. **Типобезопасность**: Строгая типизация TypeScript
+4. **Производительность**: Оптимизированные запросы к API
+5. **Поддерживаемость**: Легко добавлять новые stores
+
+### Расширение функциональности
+
+#### Кастомные фильтры
+
+```typescript
+// Materials store с расширенными фильтрами
+const extendedFilters = {
+  search: '',
+  name: '',
+  sku: '',
+  category: '',
+  ordering: 'name'
+}
+
+const setFilters = async (newFilters: Partial<typeof extendedFilters>) => {
+  Object.assign(extendedFilters, newFilters)
+  pagination.value.page = 1
+  await fetchList()
+}
+```
+
+#### Специализированная обработка данных
+
+```typescript
+// Balances store с flattening данных
+const fetchList = async (params?: any) => {
+  const response = await api.get(`${endpoints.stockSnapshots.byObjects}?${apiParams}`)
+  
+  // Flattening для табличного отображения
+  const flattenedData: MaterialBalance[] = []
+  if (response.data.objects) {
+    response.data.objects.forEach((obj: any) => {
+      obj.materials.forEach((material: any) => {
+        flattenedData.push({
+          material_id: material.material_id,
+          material_name: material.material_name,
+          object_name: obj.object_name,
+          // ... другие поля
+        } as MaterialBalance)
+      })
+    })
+  }
+  
+  items.value = flattenedData
+}
+```
+

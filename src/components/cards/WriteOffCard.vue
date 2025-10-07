@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { WriteOff } from '@/api/types'
+import { WriteOff } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'

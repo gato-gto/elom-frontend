@@ -96,7 +96,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
-import type { UserRole } from '@/api/types'
+import type { UserRole } from '@/api/types/common'
 import AutoNavigation from '@/components/AutoNavigation.vue'
 import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
 

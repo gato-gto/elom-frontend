@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { smartConvert, formatValueWithUnit } from '@/utils/unitRounding'
-import type { SmartQuantity } from '@/api/types'
+import type { SmartQuantity } from '@/api/types/common'
 
 interface Props {
   // Вариант 1: Использование API smart_* полей

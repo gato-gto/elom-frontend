@@ -187,7 +187,7 @@ Authorization: Bearer <access_token>
 - `responsible`: Фильтр по ответственному
 - `date_start`: Фильтр по дате начала
 - `date_end`: Фильтр по дате окончания
-- `ordering`: Сортировка
+- `ordering`: Сортировка (name, id, responsible)
 
 **Ответ:**
 ```json
@@ -312,6 +312,78 @@ Content-Type: multipart/form-data
 
 photo: <file>
 ```
+
+### 4. Материалы по объекту
+```http
+GET /materials/by-object/
+Authorization: Bearer <access_token>
+```
+
+**Параметры запроса:**
+- `object_id` (обязательный): ID объекта для фильтрации материалов
+- `is_active` (опциональный): Фильтр по активности материалов (по умолчанию: true)
+
+**Пример запроса:**
+```http
+GET /materials/by-object/?object_id=1&is_active=true
+Authorization: Bearer <access_token>
+```
+
+**Ответ:**
+```json
+[
+    {
+        "id": 1,
+        "name": "Цемент М400",
+        "sku": "CEM-400-50",
+        "category": 1,
+        "category_name": "Строительные материалы",
+        "default_unit": 1,
+        "default_unit_code": "кг",
+        "description": "Портландцемент марки М400",
+        "manufacturer": "Узбекцемент",
+        "average_price": "2500.00",
+        "photo_url": "http://localhost:8000/media/materials/2024/01/cement.jpg",
+        "is_active": true,
+        "created_date": "2024-01-01",
+        "purchases_count": 5,
+        "total_purchased_amount": "125000.00",
+        "last_purchase_date": "2024-01-15",
+        "current_stock": "2500.00",
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+        "id": 2,
+        "name": "Песок речной",
+        "sku": "SAND-001",
+        "category": 1,
+        "category_name": "Строительные материалы",
+        "default_unit": 2,
+        "default_unit_code": "м³",
+        "description": "Песок речной для строительства",
+        "manufacturer": "Карьер №1",
+        "average_price": "1500.00",
+        "photo_url": null,
+        "is_active": true,
+        "created_date": "2024-01-01",
+        "purchases_count": 3,
+        "total_purchased_amount": "45000.00",
+        "last_purchase_date": "2024-01-10",
+        "current_stock": "15.00",
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    }
+]
+```
+
+**Описание:**
+Этот endpoint возвращает список материалов, которые были закуплены для указанного объекта. Материалы фильтруются на основе записей в таблице закупок (`PurchaseItem`), где закупка связана с указанным объектом.
+
+**Использование:**
+- В форме списаний для фильтрации доступных материалов по выбранному объекту
+- Для получения списка материалов, которые можно списать с конкретного объекта
+- Для валидации доступности материалов на объекте
 
 ## Закупки
 
@@ -916,6 +988,203 @@ Authorization: Bearer <access_token>
     ]
 }
 ```
+
+## Архивные периоды
+
+### 1. Список архивных периодов
+```http
+GET /archive/periods/
+Authorization: Bearer <access_token>
+```
+
+**Параметры запроса:**
+- `page`, `page_size`: Пагинация
+- `month`: Фильтр по месяцу (YYYY-MM)
+- `month_from`: Фильтр по месяцу от
+- `month_to`: Фильтр по месяцу до
+- `object`: Фильтр по объекту
+- `object_name`: Поиск по названию объекта
+- `closed_by`: Фильтр по пользователю, закрывшему период
+- `closed_by_name`: Поиск по имени пользователя
+- `closed_at_from`: Фильтр по дате закрытия от
+- `closed_at_to`: Фильтр по дате закрытия до
+- `year`: Фильтр по году
+- `month_number`: Фильтр по номеру месяца (1-12)
+- `ordering`: Сортировка (month, closed_at)
+
+**Ответ:**
+```json
+{
+    "count": 5,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 1,
+            "month": "2024-01-01",
+            "object": 1,
+            "object_name": "ЖК Солнечный",
+            "closed_at": "2024-02-01T10:30:00Z",
+            "closed_by": 2,
+            "closed_by_name": "Иван Иванов",
+            "is_closed": true
+        }
+    ]
+}
+```
+
+### 2. Закрытие периода
+```http
+POST /archive/periods/close/
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+    "object": 1,
+    "month": "2024-01"
+}
+```
+
+**Параметры:**
+- `object` (integer, required): ID объекта
+- `month` (string, required): Месяц в формате YYYY-MM
+
+**Ответы:**
+- `201 Created`: Период успешно закрыт
+- `400 Bad Request`: Некорректные параметры или период уже закрыт
+- `403 Forbidden`: Недостаточно прав
+
+**Пример успешного ответа:**
+```json
+{
+    "id": 4,
+    "month": "2024-01-01",
+    "object": 1,
+    "object_name": "ЖК Солнечный",
+    "closed_at": "2024-02-01T10:30:00Z",
+    "closed_by": 2,
+    "closed_by_name": "Иван Иванов",
+    "is_closed": true
+}
+```
+
+**Пример ошибки:**
+```json
+{
+    "detail": "already closed",
+    "errors": {}
+}
+```
+
+### 3. Открытие периода
+```http
+POST /archive/periods/reopen/
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+    "object": 1,
+    "month": "2024-01"
+}
+```
+
+**Параметры:**
+- `object` (integer, required): ID объекта
+- `month` (string, required): Месяц в формате YYYY-MM
+
+**Ответы:**
+- `204 No Content`: Период успешно открыт
+- `403 Forbidden`: Недостаточно прав (только admin, director)
+- `404 Not Found`: Период не найден
+
+### 4. Права доступа
+
+**Закрытие периодов:**
+- `director` - полный доступ
+- `admin` - полный доступ  
+- `coordinator` - полный доступ
+- Остальные роли - запрещено
+
+**Открытие периодов:**
+- `director` - полный доступ
+- `admin` - полный доступ
+- Остальные роли - запрещено
+
+**Просмотр периодов:**
+- `director`, `admin`, `coordinator` - все периоды
+- Остальные роли - только периоды по назначенным объектам
+
+### 5. Бизнес-логика архивирования
+
+**При закрытии периода:**
+1. Проверка прав доступа
+2. Валидация параметров (объект, месяц)
+3. Проверка на дублирование (период уже закрыт)
+4. Массовое обновление записей:
+   - `Purchase.is_archived = True` для всех закупок за период
+   - `StockSnapshot.is_archived = True` для всех складских операций за период
+5. Создание записи `ArchivePeriod`
+6. Логирование в аудит
+
+**При открытии периода:**
+1. Проверка прав доступа (только admin/director)
+2. Поиск архивного периода
+3. Массовое обновление записей:
+   - `Purchase.is_archived = False` для всех закупок за период
+   - `StockSnapshot.is_archived = False` для всех складских операций за период
+4. Удаление записи `ArchivePeriod`
+5. Логирование в аудит
+
+### 6. Новые возможности архива (Backend доработка)
+
+#### Management команды:
+```bash
+# Архивирование периода
+python manage.py archive_period --object-id 1 --month 2024-01 --user-id 1
+
+# Просмотр архивов
+python manage.py list_archives --year 2024 --format json
+
+# Dry-run (проверка без выполнения)
+python manage.py archive_period --object-id 1 --month 2024-01 --user-id 1 --dry-run
+```
+
+#### Celery задачи:
+```python
+# Автоматическое архивирование
+auto_archive_old_periods_task.delay()
+
+# Проверка целостности
+check_archive_integrity_task.delay()
+
+# Очистка старых архивов
+cleanup_old_archives_task.delay()
+```
+
+#### Расширенные API фильтры:
+```http
+# Фильтрация по диапазону месяцев
+GET /api/v1/archive/periods/?month_from=2024-01-01&month_to=2024-12-01
+
+# Поиск по названию объекта
+GET /api/v1/archive/periods/?object_name=Склад
+
+# Фильтрация по году
+GET /api/v1/archive/periods/?year=2024
+```
+
+#### Валидация и безопасность:
+- ✅ Месяц должен быть первым числом
+- ✅ Нельзя архивировать будущие месяцы
+- ✅ Проверка уникальности периодов
+- ✅ Запрет редактирования и удаления архивных периодов
+- ✅ Автоматическая установка `closed_by` при создании
+
+#### Автоматизация:
+- ✅ Сигналы для автоматического архивирования данных
+- ✅ Проверка целостности архива
+- ✅ Автоматическое архивирование старых периодов
+- ✅ Логирование всех операций
 
 ## Импорт данных
 

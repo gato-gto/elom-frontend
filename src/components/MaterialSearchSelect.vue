@@ -96,7 +96,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useMaterialsStore } from '@/stores/materials'
-import type { Material } from '@/api/types'
+import type { Material } from '@/api/types/materials'
 
 const props = defineProps<{
   modelValue?: number | null
@@ -113,7 +113,7 @@ const emit = defineEmits<{
   'change': [material: Material | null]
 }>()
 
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 
 const searchInput = ref<HTMLInputElement>()
 const inputContainer = ref<HTMLElement>()

@@ -152,7 +152,13 @@ function handleSelectChange(event: Event) {
   if (value === '' || value === 'undefined') {
     emit('update:modelValue', undefined)
   } else {
-    emit('update:modelValue', value)
+    // Проверяем, является ли значение числом
+    const numValue = Number(value)
+    if (!isNaN(numValue) && value !== '') {
+      emit('update:modelValue', numValue)
+    } else {
+      emit('update:modelValue', value)
+    }
   }
 }
 

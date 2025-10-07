@@ -81,3 +81,27 @@ export interface PaginatedEmployeeList {
   previous?: string;
   results: Employee[];
 }
+
+// User types for authentication
+export interface User {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Me {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+  assigned_object_ids: number[];
+}

@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { Material } from '@/api/types'
+import { Material } from '@/api/types/materials'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'

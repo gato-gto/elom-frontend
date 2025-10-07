@@ -90,5 +90,11 @@ export default {
     prefix: "",
     logs: true,
     themeRoot: ":root",
+    // Отключаем неиспользуемые компоненты для устранения предупреждений
+    components: {
+      // Отключаем компоненты, которые используют @property
+      "progress": false,
+      "radial-progress": false,
+    }
   },
 }

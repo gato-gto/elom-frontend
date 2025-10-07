@@ -63,14 +63,13 @@
       </template>
     </GenericList>
 
-    <!-- Modal for creating/editing write-off -->
-    <Modal v-model="modalOpen" :title="modalTitle" size="4xl" :closable="true">
-      <WriteOffForm 
-        :initial="editingWriteOff" 
-        @saved="onWriteOffSaved" 
-        @cancel="modalOpen = false" 
-      />
-    </Modal>
+    <!-- WriteOffForm Modal -->
+    <WriteOffForm 
+      :is-open="modalOpen"
+      :initial="editingWriteOff" 
+      @close="modalOpen = false"
+      @success="onWriteOffSaved"
+    />
   </div>
 </template>
 
@@ -85,7 +84,6 @@ import { useWriteOffsStore } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
-import Modal from '@/components/Modal.vue'
 import WriteOffForm from './WriteOffForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
@@ -94,7 +92,7 @@ import WriteOffCard from '@/components/cards/WriteOffCard.vue'
 // Stores
 const writeOffsStore = useWriteOffsStore
 const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 const employeesStore = useEmployeesStore
 
 // Error handling

@@ -82,7 +82,7 @@ export function useAutoFilters<T extends Record<string, any>>(
 // Специализированные composables для разных типов данных
 export function useMaterialsFilters() {
   const { useMaterialsStore } = require('@/stores/materials')
-  const store = useMaterialsStore()
+  const store = useMaterialsStore
   
   return useAutoFilters(store, { debounceMs: 400 })
 }

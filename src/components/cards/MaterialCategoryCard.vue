@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MaterialCategory } from '@/api/types'
+import type { MaterialCategory } from '@/api/types/common'
 
 interface Props {
   category: MaterialCategory

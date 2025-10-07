@@ -51,19 +51,34 @@
           <span class="mobile-nav-label">Объекты</span>
         </router-link>
 
-        <!-- Suppliers -->
+        <!-- WriteOffs -->
         <router-link 
-          to="/suppliers" 
+          to="/writeoffs" 
           class="mobile-nav-item"
-          :class="{ 'active': $route.path.startsWith('/suppliers') }"
+          :class="{ 'active': $route.path.startsWith('/writeoffs') }"
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <div v-if="$route.path.startsWith('/suppliers')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
+            <div v-if="$route.path.startsWith('/writeoffs')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
-          <span class="mobile-nav-label">Поставщики</span>
+          <span class="mobile-nav-label">Списания</span>
+        </router-link>
+
+        <!-- Stocks Balances -->
+        <router-link 
+          to="/stocks/balances" 
+          class="mobile-nav-item"
+          :class="{ 'active': $route.path.startsWith('/stocks/balances') }"
+        >
+          <div class="relative">
+            <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <div v-if="$route.path.startsWith('/stocks/balances')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
+          </div>
+          <span>Остатки</span>
         </router-link>
 
         <!-- More menu -->
@@ -83,31 +98,20 @@
     <!-- Дополнительное меню (выдвигается вверх) -->
     <div class="mobile-more-menu" :class="{ 'open': showMoreMenu }">
       <div class="mobile-more-content">
-        <!-- Stocks -->
+
+        <!-- Stock Movements -->
         <router-link 
           to="/stocks" 
           class="mobile-more-item"
-          :class="{ 'active': $route.path.startsWith('/stocks') }"
+          :class="{ 'active': $route.path.startsWith('/stocks') && !$route.path.startsWith('/stocks/balances') }"
           @click="closeMoreMenu"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
           </svg>
-          <span>Остатки</span>
+          <span>Движения</span>
         </router-link>
 
-        <!-- WriteOffs -->
-        <router-link 
-          to="/writeoffs" 
-          class="mobile-more-item"
-          :class="{ 'active': $route.path.startsWith('/writeoffs') }"
-          @click="closeMoreMenu"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>Списания</span>
-        </router-link>
 
         <!-- Archive -->
         <router-link 
@@ -121,6 +125,31 @@
           </svg>
           <span>Архив</span>
         </router-link>
+
+        <!-- Reference Data Section -->
+        <div class="mobile-more-divider"></div>
+        <div class="mobile-more-item mobile-more-submenu" @click="toggleReferenceDataMenu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.206 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.794 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.794 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.206 18 16.5 18s-3.332.477-4.5 1.253" />
+          </svg>
+          <span>Справочники</span>
+          <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': showReferenceDataMenu }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        <!-- Reference Data submenu -->
+        <div v-if="showReferenceDataMenu" class="mobile-reports-submenu">
+          <router-link to="/suppliers" class="mobile-submenu-item" @click="closeMoreMenu">
+            Поставщики
+          </router-link>
+          <router-link to="/employees" class="mobile-submenu-item" @click="closeMoreMenu">
+            Сотрудники
+          </router-link>
+          <router-link to="/units" class="mobile-submenu-item" @click="closeMoreMenu">
+            Единицы измерения
+          </router-link>
+        </div>
 
         <!-- Reports -->
         <div class="mobile-more-item mobile-more-submenu" @click="toggleReportsMenu">
@@ -149,36 +178,6 @@
           </router-link>
         </div>
 
-        <!-- Admin section -->
-        <template v-if="canManageUsers">
-          <div class="mobile-more-divider"></div>
-          
-          <!-- Units -->
-          <router-link 
-            to="/units" 
-            class="mobile-more-item"
-            :class="{ 'active': $route.path.startsWith('/units') }"
-            @click="closeMoreMenu"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2" />
-            </svg>
-            <span>Единицы</span>
-          </router-link>
-
-          <!-- Employees -->
-          <router-link 
-            to="/employees" 
-            class="mobile-more-item"
-            :class="{ 'active': $route.path.startsWith('/employees') }"
-            @click="closeMoreMenu"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-            </svg>
-            <span>Сотрудники</span>
-          </router-link>
-        </template>
       </div>
     </div>
 
@@ -200,6 +199,7 @@ const auth = useAuthStore()
 // Состояние меню
 const showMoreMenu = ref(false)
 const showReportsMenu = ref(false)
+const showReferenceDataMenu = ref(false)
 
 // Проверка прав администратора
 const canManageUsers = computed(() => {
@@ -212,16 +212,28 @@ const toggleMoreMenu = () => {
   showMoreMenu.value = !showMoreMenu.value
   if (!showMoreMenu.value) {
     showReportsMenu.value = false
+    showReferenceDataMenu.value = false
   }
 }
 
 const closeMoreMenu = () => {
   showMoreMenu.value = false
   showReportsMenu.value = false
+  showReferenceDataMenu.value = false
 }
 
 const toggleReportsMenu = () => {
   showReportsMenu.value = !showReportsMenu.value
+  if (showReportsMenu.value) {
+    showReferenceDataMenu.value = false
+  }
+}
+
+const toggleReferenceDataMenu = () => {
+  showReferenceDataMenu.value = !showReferenceDataMenu.value
+  if (showReferenceDataMenu.value) {
+    showReportsMenu.value = false
+  }
 }
 </script>
 

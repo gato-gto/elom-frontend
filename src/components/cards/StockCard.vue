@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { StockSnapshot } from '@/api/types'
+import { StockSnapshot } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'

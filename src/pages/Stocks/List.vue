@@ -100,7 +100,7 @@ import StockCard from '@/components/cards/StockCard.vue'
 const router = useRouter()
 const stockSnapshotsStore = useStockSnapshotsStore
 const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 const employeesStore = useEmployeesStore
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -136,6 +136,29 @@ const objectOptions = computed(() => [
 const materialOptions = computed(() => [
   { value: '', label: 'Все материалы' },
   ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
+])
+
+const stageOptions = computed(() => [
+  { value: '', label: 'Все этапы' },
+  { value: 'acceptance', label: 'Приемка' },
+  { value: 'request', label: 'Заявка' },
+  { value: 'delivery_fixed', label: 'Доставка' },
+  { value: 'post_rough', label: 'После черновых' },
+  { value: 'handover', label: 'Сдача' }
+])
+
+const sourceTypeOptions = computed(() => [
+  { value: '', label: 'Все источники' },
+  { value: 'purchase_item', label: 'Закупка' },
+  { value: 'writeoff', label: 'Списание' }
+])
+
+const responsibleOptions = computed(() => [
+  { value: '', label: 'Все ответственные' },
+  ...employees.value.map((e: Employee) => ({ 
+    value: e.id, 
+    label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
+  }))
 ])
 
 // Maps for name lookups
@@ -191,7 +214,7 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
   emptyText: 'Нет внесений остатков',
   emptyTitle: 'Нет внесений остатков',
   emptySubtitle: 'Внесите первые остатки для начала работы',
-  filterColumns: 3,
+  filterColumns: 4,
   columns: [
     { key: 'id', label: 'ID', sortable: true },
     { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
@@ -221,6 +244,44 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
       type: 'select',
       label: 'Материал',
       options: materialOptions.value
+    },
+    {
+      key: 'stage',
+      type: 'select',
+      label: 'Этап работ',
+      options: stageOptions.value
+    },
+    {
+      key: 'source_type',
+      type: 'select',
+      label: 'Тип источника',
+      options: sourceTypeOptions.value
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      options: responsibleOptions.value
+    },
+    {
+      key: 'date_from',
+      type: 'date',
+      label: 'Дата от'
+    },
+    {
+      key: 'date_to',
+      type: 'date',
+      label: 'Дата до'
+    },
+    {
+      key: 'is_archived',
+      type: 'select',
+      label: 'Архив',
+      options: [
+        { value: '', label: 'Все' },
+        { value: 'false', label: 'Активные' },
+        { value: 'true', label: 'Архивные' }
+      ]
     }
   ],
   actions: [

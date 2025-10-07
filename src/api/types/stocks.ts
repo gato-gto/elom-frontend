@@ -126,3 +126,38 @@ export interface WriteOffFilterParams extends PaginationParams, SearchParams, Or
   responsible?: number;
   is_archived?: boolean;
 }
+
+// Balance types
+export interface MaterialBalance {
+  material_id: number;
+  material_name: string;
+  unit_code: string;
+  current_balance: string;
+  total_purchased: string;
+  total_written_off: string;
+}
+
+export interface ObjectBalance {
+  object_id: number;
+  object_name: string;
+  object_address: string;
+  materials: MaterialBalance[];
+  total_materials: number;
+}
+
+export interface BalancesByObjectsResponse {
+  date: string;
+  objects: ObjectBalance[];
+  total_objects: number;
+}
+
+export interface MaterialBalanceResponse {
+  object_id: number;
+  material_id: number;
+  date: string;
+  current_balance: string;
+  total_purchased: string;
+  total_written_off: string;
+  last_snapshot_date?: string;
+  last_snapshot_quantity: string;
+}

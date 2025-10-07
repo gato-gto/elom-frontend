@@ -26,6 +26,13 @@
         <span v-else class="text-gray-400">—</span>
       </template>
 
+      <!-- Custom column for responsible -->
+      <template #column-responsible="{ item, value }">
+        <span v-if="value && item.responsible_name">{{ item.responsible_name }}</span>
+        <span v-else-if="value">{{ getResponsibleName(value) || `ID: ${value}` }}</span>
+        <span v-else class="text-gray-400">—</span>
+      </template>
+
       <!-- Custom column for is_active -->
       <template #column-is_active="{ item, value }">
         <div class="badge" :class="value ? 'badge-success' : 'badge-error'">
@@ -42,13 +49,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import type { Object, Me } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
-import { useObjectsStore } from '@/stores/objects'
+import { useObjectsStore, fetchResponsibles } from '@/stores/objects'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
@@ -85,6 +92,17 @@ const statusOptions = computed(() => [
   { value: 'false', label: 'Неактивные' }
 ])
 
+// State for responsibles
+const responsibles = ref<Array<{id: number, name: string, objects_count: number}>>([])
+
+const responsibleOptions = computed(() => [
+  { value: '', label: 'Все ответственные' },
+  ...responsibles.value.map(resp => ({
+    value: resp.id,
+    label: `${resp.name} (${resp.objects_count})`
+  }))
+])
+
 // GenericList configuration
 const listConfig = computed<GenericListConfig<Object>>(() => ({
   title: 'Объекты',
@@ -106,6 +124,7 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
     { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'address', label: 'Адрес', sortable: true },
+    { key: 'responsible', label: 'Ответственный', sortable: true },
     { key: 'date_start', label: 'Дата начала', sortable: true },
     { key: 'date_end', label: 'Дата окончания', sortable: true },
     { key: 'is_active', label: 'Активность', sortable: true }
@@ -116,6 +135,12 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
       type: 'text',
       label: 'Название',
       placeholder: 'Название объекта'
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      options: responsibleOptions.value
     },
     {
       key: 'is_active',
@@ -146,6 +171,11 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
 }))
 
 // Methods
+function getResponsibleName(responsibleId: number): string | null {
+  const responsible = responsibles.value.find(resp => resp.id === responsibleId)
+  return responsible ? responsible.name : null
+}
+
 function openCreate() {
   current.value = null
   modalOpen.value = true
@@ -208,11 +238,15 @@ async function onSaved() {
 // Lifecycle
 onMounted(async () => {
   try {
+    // Загружаем ответственных за объекты
+    responsibles.value = await fetchResponsibles()
+    // Загружаем объекты
     await objectsStore.fetchList()
   } catch (error) {
     await handleLoadingError(error, 'objects')
   }
 })
+
 </script>
 
 <style scoped>

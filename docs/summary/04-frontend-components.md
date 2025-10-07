@@ -94,7 +94,8 @@ src/
 │   ├── Employees/        # Сотрудники (List.vue, EmployeeForm.vue)
 │   ├── Units/            # Единицы измерения (List.vue, UnitForm.vue)
 │   ├── Reports/          # Отчеты (4 типа отчетов)
-│   ├── Archive/          # Архив (List.vue)
+│   ├── Archive/          # Архив (List.vue - управление архивными периодами)
+│   │   └── List.vue      # Список архивных периодов с фильтрацией и действиями
 │   └── Login.vue         # Страница входа
 ├── router/               # Конфигурация роутинга
 │   ├── index.ts          # Маршруты (15+ маршрутов)
@@ -103,15 +104,16 @@ src/
 ├── stores/               # Pinia stores (13 stores)
 │   ├── base.ts           # Базовый store с CRUD операциями
 │   ├── auth.ts           # Аутентификация (defineStore)
-│   ├── materials.ts      # Материалы (defineStore)
+│   ├── materials.ts      # Материалы (createBaseStore)
 │   ├── purchases.ts      # Закупки (createBaseStore)
 │   ├── stockSnapshots.ts # Движения остатков (createBaseStore)
 │   ├── writeOffs.ts      # Списания (createBaseStore)
-│   ├── suppliers.ts      # Поставщики (defineStore)
+│   ├── suppliers.ts      # Поставщики (createBaseStore)
 │   ├── employees.ts      # Сотрудники (createBaseStore)
 │   ├── objects.ts        # Объекты (createBaseStore)
 │   ├── units.ts          # Единицы измерения (createBaseStore)
-│   ├── materialCategories.ts # Категории материалов (defineStore)
+│   ├── materialCategories.ts # Категории материалов (createBaseStore)
+│   ├── balances.ts       # Остатки по объектам (createBaseStore)
 │   ├── ui.ts             # UI состояние (defineStore)
 │   ├── theme.ts          # Темы (defineStore)
 │   └── notifications.ts  # Уведомления (defineStore)
@@ -193,7 +195,7 @@ const routes = [
   { path: '/units/create', component: UnitForm },
   { path: '/units/:id/edit', component: UnitForm },
   
-  // Архив
+  // Архив - управление архивными периодами
   { path: '/archive', component: ArchiveList },
   
   // Отчеты (4 типа)
@@ -238,33 +240,35 @@ ELOM использует два подхода к созданию stores:
 const purchasesStore = usePurchasesStore    // ✅ Правильно
 const unitsStore = useUnitsStore           // ✅ Правильно
 const objectsStore = useObjectsStore       // ✅ Правильно
+const materialsStore = useMaterialsStore   // ✅ Правильно
+const suppliersStore = useSuppliersStore   // ✅ Правильно
 ```
 
-**Stores:**
+**Stores с единообразной пагинацией:**
 - `usePurchasesStore` - Управление закупками
 - `useUnitsStore` - Управление единицами измерения
 - `useObjectsStore` - Управление объектами
 - `useEmployeesStore` - Управление сотрудниками
 - `useWriteOffsStore` - Управление списаниями
 - `useStockSnapshotsStore` - Управление движениями остатков
+- `useMaterialsStore` - Управление материалами
+- `useSuppliersStore` - Управление поставщиками
+- `useMaterialCategoriesStore` - Управление категориями материалов
+- `useBalancesStore` - Управление остатками по объектам
 
 #### 2. Stores через defineStore (вызывать с `()`)
 ```typescript
-const materialsStore = useMaterialsStore()  // ✅ Правильно
 const authStore = useAuthStore()           // ✅ Правильно
 const uiStore = useUiStore()               // ✅ Правильно
 ```
 
-**Stores:**
+**Специализированные stores:**
 - `useAuthStore` - Аутентификация и профиль пользователя
-- `useMaterialsStore` - Управление материалами
-- `useSuppliersStore` - Управление поставщиками
-- `useMaterialCategoriesStore` - Управление категориями материалов
 - `useThemeStore` - Управление темами
 - `useNotificationsStore` - Уведомления
 - `useUiStore` - UI состояние
 
-### Структура stores (13 stores)
+### Структура stores (14 stores)
 ```typescript
 // Базовый store с CRUD операциями
 export function createBaseStore<T extends Record<string, any>, C, U>(
@@ -346,18 +350,49 @@ export const useAuthStore = defineStore('auth', () => {
 
 #### Materials Store
 ```typescript
-export const useMaterialsStore = createBaseStore<Material, MaterialRequest, PatchedMaterialRequest>({
-  endpoint: {
-    list: endpoints.materials.list,
-    one: (id: number) => endpoints.materials.one(id)
-  },
-  entityName: 'materials',
-  entityNamePlural: 'materials'
-})
+export const useMaterialsStore = defineStore('materials', {
+  state: () => ({
+    items: [] as Material[],
+    current: null as Material | null,
+    loading: false,
+    error: null as string | null,
+    pagination: { /* ... */ },
+    filters: { /* ... */ }
+  }),
 
-// Дополнительные методы для материалов
-const materialsStore = useMaterialsStore()
-materialsStore.uploadPhoto = async (id: number, photo: File) => { /* ... */ }
+  getters: {
+    getById: (state) => (id: number) => state.items.find(item => item.id === id),
+    getByCategory: (state) => (categoryId: number) => state.items.filter(item => item.category === categoryId),
+    exists: (state) => (id: number) => state.items.some(item => item.id === id),
+    selectOptions: (state) => state.items.map(item => ({ value: item.id, label: item.name }))
+  },
+
+  actions: {
+    async fetchList(params?: { /* ... */ }) { /* ... */ },
+    async fetchOne(id: number) { /* ... */ },
+    async create(data: MaterialRequest) { /* ... */ },
+    async update(id: number, data: PatchedMaterialRequest) { /* ... */ },
+    async delete(id: number) { /* ... */ },
+    async uploadPhoto(id: number, photo: File) { /* ... */ },
+    async searchMaterials(query: string): Promise<Material[]> { /* ... */ },
+    
+    // Новый метод для получения материалов по объекту
+    async getMaterialsByObject(objectId: number): Promise<Material[]> {
+      try {
+        const queryParams = {
+          object_id: objectId,
+          is_active: true
+        }
+        const queryString = buildQuery(queryParams)
+        const { data } = await api.get<Material[]>(endpoints.materials.byObject + queryString)
+        return data
+      } catch (error: any) {
+        console.error('Error getting materials by object:', error)
+        return []
+      }
+    }
+  }
+})
 ```
 
 #### Purchases Store
@@ -393,6 +428,122 @@ export const useWriteOffsStore = createBaseStore<WriteOff, WriteOffCreateRequest
   },
   entityName: 'writeOffs',
   entityNamePlural: 'writeOffs'
+})
+```
+
+#### Materials Store
+```typescript
+export const useMaterialsStore = defineStore('materials', () => {
+  // Используем базовый store
+  const baseStore = createBaseStore<Material, MaterialRequest, PatchedMaterialRequest>({
+    endpoint: endpoints.materials,
+    entityName: 'materials',
+    entityNamePlural: 'материалы'
+  })
+  
+  // Расширяем фильтры для материалов
+  const extendedFilters = {
+    search: '',
+    name: '',
+    sku: '',
+    category: '',
+    ordering: 'name'
+  }
+  
+  // Переопределяем fetchList для поддержки дополнительных фильтров
+  const fetchList = async (params?: {
+    page?: number
+    search?: string
+    name?: string
+    sku?: string
+    category?: string
+    ordering?: string
+  }) => {
+    // ... реализация с расширенными фильтрами
+  }
+  
+  return {
+    // Базовые свойства
+    items: baseStore.items,
+    current: baseStore.current,
+    loading: baseStore.loading,
+    error: baseStore.error,
+    pagination: baseStore.pagination,
+    filters: extendedFilters,
+    
+    // Базовые методы
+    fetchList,
+    fetchOne: baseStore.fetchOne,
+    create,
+    update,
+    delete: baseStore.delete,
+    setCurrent: baseStore.setCurrent,
+    clearError: baseStore.clearError,
+    setPage: baseStore.setPage,
+    setPageSize: baseStore.setPageSize,
+    setFilters,
+    resetFilters,
+    
+    // Дополнительные методы
+    uploadPhoto,
+    searchMaterials,
+    getMaterialsByObject
+  }
+})
+```
+
+#### Balances Store
+```typescript
+export const useBalancesStore = defineStore('balances', () => {
+  // Используем базовый store
+  const baseStore = createBaseStore<MaterialBalance, any, any>({
+    endpoint: {
+      list: endpoints.stockSnapshots.byObjects,
+      one: (id: number) => `${endpoints.stockSnapshots.byObjects}${id}/`
+    },
+    entityName: 'balances',
+    entityNamePlural: 'остатки'
+  })
+  
+  // Переопределяем fetchList для обработки специфичной структуры API остатков
+  const fetchList = async (params?: {
+    page?: number
+    search?: string
+    object?: string
+    date?: string
+  }) => {
+    // ... реализация с flattening данных
+  }
+  
+  return {
+    // Базовые свойства и методы
+    items: baseStore.items,
+    current: baseStore.current,
+    loading: baseStore.loading,
+    error: baseStore.error,
+    pagination: baseStore.pagination,
+    filters: extendedFilters,
+    
+    // CRUD операции
+    fetchList,
+    fetchOne: baseStore.fetchOne,
+    create: baseStore.create,
+    update: baseStore.update,
+    delete: baseStore.delete,
+    
+    // Пагинация и фильтры
+    setCurrent: baseStore.setCurrent,
+    clearError: baseStore.clearError,
+    setPage: baseStore.setPage,
+    setPageSize: baseStore.setPageSize,
+    setFilters,
+    resetFilters,
+    
+    // Геттеры
+    getById: baseStore.getById,
+    exists: baseStore.exists,
+    selectOptions: baseStore.selectOptions
+  }
 })
 ```
 
@@ -621,6 +772,453 @@ const spinnerClass = computed(() => ({
 ```
 
 ### Специализированные компоненты
+
+#### WriteOffForm - Форма списаний с фильтрацией материалов
+```vue
+<template>
+  <div class="writeoff-form">
+    <!-- Unit Display -->
+    <div v-if="selectedMaterialUnit" class="card bg-base-100 border mb-6">
+      <div class="card-body">
+        <div class="alert alert-info">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="font-bold">Единица измерения</h3>
+            <div class="text-sm">
+              Для выбранного материала единица измерения: <span class="font-mono font-bold">{{ selectedMaterialUnit }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GenericForm -->
+    <GenericForm
+      :config="formConfig"
+      :initial-data="initialData"
+      :on-submit="handleSubmit"
+      :on-cancel="handleCancel"
+      :validate-on-change="true"
+      :reset-on-submit="false"
+      @field-change="onFieldChange"
+    />
+
+    <!-- Информация об остатке -->
+    <div v-if="currentBalance !== null" class="card bg-base-100 border mt-6">
+      <div class="card-body">
+        <h2 class="card-title text-lg mb-4">Информация об остатке</h2>
+        <div class="alert alert-info">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="font-bold">Текущий остаток</h3>
+            <div class="text-sm">
+              На объекте "{{ objectName(formData.object) }}" материала "{{ materialName(formData.material) }}" 
+              остаток составляет: <span class="font-mono font-bold">{{ currentBalance }} {{ unitCode }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useWriteOffsStore } from '@/stores/writeOffs'
+import { useObjectsStore } from '@/stores/objects'
+import { useMaterialsStore } from '@/stores/materials'
+import { useEmployeesStore } from '@/stores/employees'
+import { useUnitsStore } from '@/stores/units'
+import GenericForm from '@/components/GenericForm.vue'
+import type { 
+  WriteOff, 
+  WriteOffCreateRequest, 
+  WriteOffUpdateRequest,
+  SiteObject, 
+  Material, 
+  Employee,
+  Unit
+} from '@/api/types'
+import type { GenericFormConfig } from '@/types/generic'
+import { useErrorHandler } from '@/composables/useErrorHandler'
+
+// Stores
+const writeOffsStore = useWriteOffsStore
+const objectsStore = useObjectsStore
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore
+const unitsStore = useUnitsStore
+const { handleFormError } = useErrorHandler()
+
+// Props
+const props = defineProps<{
+  initial?: WriteOff | null
+}>()
+
+// Emits
+const emit = defineEmits<{
+  saved: []
+  cancel: []
+}>()
+
+// Состояние
+const loading = ref(false)
+const errors = reactive<Record<string, string>>({})
+const currentBalance = ref<number | null>(null)
+const validationWarnings = ref<string[]>([])
+const selectedMaterialId = ref<number>(0)
+const formData = reactive<WriteOffCreateRequest>({
+  date: new Date().toISOString().split('T')[0],
+  object: 0,
+  material: null,
+  unit: 0,
+  quantity: '0',
+  stage: 'post_rough',
+  responsible: 0,
+  comment: ''
+})
+
+// Reactive materials list filtered by selected object
+const filteredMaterials = ref<Material[]>([])
+const materialsLoading = ref(false)
+
+// Computed для справочников
+const objects = computed(() => objectsStore.items)
+const materials = computed(() => materialsStore.items)
+const employees = computed(() => employeesStore.items)
+const units = computed(() => unitsStore.items)
+
+// Опции для селектов
+const objectOptions = computed(() => [
+  ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
+])
+
+const materialOptions = computed(() => [
+  ...filteredMaterials.value.map((m: Material) => ({ value: m.id, label: m.name }))
+])
+
+const employeeOptions = computed(() => [
+  ...employees.value.map((e: Employee) => ({ 
+    value: e.id, 
+    label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
+  }))
+])
+
+const unitOptions = computed(() => [
+  { value: 0, label: '— выберите единицу —' },
+  ...units.value.map((u: Unit) => ({ value: u.id, label: `${u.name} (${u.code})` }))
+])
+
+// Function to load materials by object
+async function loadMaterialsByObject(objectId: number) {
+  if (!objectId) {
+    filteredMaterials.value = []
+    return
+  }
+
+  materialsLoading.value = true
+  try {
+    const materials = await materialsStore.getMaterialsByObject(objectId)
+    filteredMaterials.value = materials
+  } catch (error) {
+    console.error('Error loading materials by object:', error)
+    filteredMaterials.value = []
+  } finally {
+    materialsLoading.value = false
+  }
+}
+
+// Watcher для загрузки материалов при изменении объекта
+watch(() => formData.object, async (objectId) => {
+  if (objectId) {
+    await loadMaterialsByObject(objectId)
+    // Сбрасываем выбранный материал при смене объекта
+    formData.material = null
+    formData.unit = 0
+    selectedMaterialId.value = 0
+  } else {
+    filteredMaterials.value = []
+    formData.material = null
+    formData.unit = 0
+    selectedMaterialId.value = 0
+  }
+}, { immediate: true })
+
+// Watcher для автоматического выбора единицы измерения при выборе материала
+watch(() => formData.material, (materialId) => {
+  if (materialId) {
+    const material = filteredMaterials.value.find((m: Material) => m.id === materialId)
+    if (material && material.default_unit) {
+      formData.unit = material.default_unit
+      selectedMaterialId.value = materialId
+    }
+  } else {
+    selectedMaterialId.value = 0
+    formData.unit = 0
+  }
+}, { immediate: true })
+
+// Computed для отображения
+const objectName = (id: number) => objects.value.find((o: SiteObject) => o.id === id)?.name
+const materialName = (id: number | null) => id ? filteredMaterials.value.find((m: Material) => m.id === id)?.name : 'Не выбран'
+const unitCode = computed(() => {
+  const unit = units.value.find((u: Unit) => u.id === formData.unit)
+  return unit?.code || ''
+})
+
+// GenericForm configuration
+const formConfig = computed<GenericFormConfig<WriteOffCreateRequest>>(() => ({
+  title: isEdit.value ? 'Редактировать списание' : 'Новое списание',
+  subtitle: 'Управление списанием материалов с объектов',
+  sections: [
+    {
+      title: 'Информация о списании',
+      description: 'Все данные о списании материалов',
+      fields: ['date', 'object', 'material', 'unit', 'quantity', 'stage', 'responsible', 'comment'],
+      order: 1
+    }
+  ],
+  fields: [
+    {
+      key: 'date',
+      type: 'date',
+      label: 'Дата списания',
+      required: true,
+      order: 1,
+      width: 'half'
+    },
+    {
+      key: 'object',
+      type: 'select',
+      label: 'Объект',
+      placeholder: '— выберите объект —',
+      required: true,
+      options: objectOptions.value,
+      order: 2,
+      width: 'half'
+    },
+    {
+      key: 'material',
+      type: 'select',
+      label: 'Материал',
+      placeholder: '— выберите материал —',
+      required: true,
+      options: materialOptions.value,
+      order: 3,
+      width: 'half'
+    },
+    {
+      key: 'unit',
+      type: 'select',
+      label: 'Единица измерения',
+      placeholder: '— выберите единицу —',
+      required: true,
+      options: unitOptions.value,
+      order: 4,
+      width: 'half'
+    },
+    {
+      key: 'quantity',
+      type: 'number',
+      label: 'Количество',
+      placeholder: 'Введите количество',
+      required: true,
+      validation: {
+        min: 0,
+        step: 0.000001
+      },
+      order: 5,
+      width: 'full'
+    },
+    {
+      key: 'stage',
+      type: 'select',
+      label: 'Этап работ',
+      placeholder: '— выберите этап —',
+      required: true,
+      options: stageOptions,
+      order: 6,
+      width: 'half'
+    },
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      placeholder: '— выберите ответственного —',
+      required: true,
+      options: employeeOptions.value,
+      order: 7,
+      width: 'half'
+    },
+    {
+      key: 'comment',
+      type: 'textarea',
+      label: 'Комментарий',
+      placeholder: 'Дополнительная информация о списании...',
+      order: 8,
+      width: 'full'
+    }
+  ],
+  submitText: isEdit.value ? 'Обновить' : 'Создать',
+  cancelText: 'Отмена',
+  showCancel: true,
+  validateOnChange: true,
+  resetOnSubmit: false,
+  mode: isEdit.value ? 'edit' : 'create'
+}))
+
+// Определяем режим редактирования
+const isEdit = computed(() => !!props.initial || !!route.params.id)
+
+// Computed property for selected material unit
+const selectedMaterialUnit = computed(() => {
+  if (selectedMaterialId.value === 0) return null
+  const material = materialsStore.items.find(m => m.id === selectedMaterialId.value)
+  return material?.default_unit_code || null
+})
+
+const stageOptions = [
+  { value: 'acceptance', label: 'Приемка' },
+  { value: 'request', label: 'Заявка' },
+  { value: 'delivery_fixed', label: 'Доставка' },
+  { value: 'post_rough', label: 'После черновых' },
+  { value: 'handover', label: 'Сдача' }
+]
+
+// Initial data for form
+const initialData = computed(() => {
+  if (props.initial) {
+    return {
+      date: props.initial.date,
+      object: props.initial.object,
+      material: props.initial.material,
+      unit: props.initial.unit,
+      quantity: props.initial.quantity,
+      stage: props.initial.stage,
+      responsible: props.initial.responsible,
+      comment: props.initial.comment || ''
+    }
+  }
+  return {
+    date: new Date().toISOString().split('T')[0],
+    object: 0,
+    material: 0,
+    unit: 0,
+    quantity: '0',
+    stage: 'post_rough',
+    responsible: 0,
+    comment: ''
+  }
+})
+
+// Form submission handler
+async function handleSubmit(data: WriteOffCreateRequest) {
+  Object.assign(formData, data)
+  
+  try {
+    if (isEdit.value) {
+      if (props.initial) {
+        const updateData: WriteOffUpdateRequest = { ...data }
+        await writeOffsStore.update(props.initial.id, updateData)
+      } else {
+        const id = parseInt(route.params.id as string)
+        const updateData: WriteOffUpdateRequest = { ...data }
+        await writeOffsStore.update(id, updateData)
+      }
+    } else {
+      await writeOffsStore.create(data)
+    }
+    
+    emit('saved')
+  } catch (error: unknown) {
+    await handleFormError(error)
+  }
+}
+
+function handleCancel() {
+  emit('cancel')
+}
+
+// Handle field changes
+function onFieldChange(key: string, value: any) {
+  if (key === 'material' && value) {
+    selectedMaterialId.value = value
+    const material = filteredMaterials.value.find(m => m.id === value)
+    if (material && material.default_unit) {
+      formData.unit = material.default_unit
+      selectedMaterialId.value = value
+    }
+  } else if (key === 'material' && (value === null || value === 0)) {
+    selectedMaterialId.value = 0
+    formData.unit = 0
+  }
+}
+
+// Load data on mount
+onMounted(async () => {
+  // Load reference data if not already loaded
+  const promises = []
+  if (objectsStore.items.length === 0) {
+    promises.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  }
+  if (employeesStore.items.length === 0) {
+    promises.push(employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any))
+  }
+  if (unitsStore.items.length === 0) {
+    promises.push(unitsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  }
+  
+  if (promises.length > 0) {
+    try {
+      await Promise.all(promises)
+    } catch (error) {
+      await handleFormError(error)
+    }
+  }
+  
+  // Load initial data if editing
+  if (isEdit.value && props.initial) {
+    Object.assign(formData, {
+      date: props.initial.date,
+      object: props.initial.object,
+      material: props.initial.material,
+      unit: props.initial.unit,
+      quantity: props.initial.quantity,
+      stage: props.initial.stage,
+      responsible: props.initial.responsible,
+      comment: props.initial.comment || ''
+    })
+    currentBalance.value = parseFloat(props.initial.current_balance)
+    validationWarnings.value = props.initial.validation_warnings
+    
+    // Load materials for the initial object
+    if (props.initial.object) {
+      await loadMaterialsByObject(props.initial.object)
+    }
+  }
+})
+</script>
+
+<style scoped>
+.writeoff-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+</style>
+```
+
+**Особенности WriteOffForm:**
+- **Фильтрация материалов по объекту**: При выборе объекта автоматически загружаются только те материалы, которые были закуплены для этого объекта
+- **Реактивное обновление**: При смене объекта список материалов обновляется автоматически
+- **Сброс выбора**: При смене объекта сбрасываются выбранный материал и единица измерения
+- **Автозаполнение единиц**: При выборе материала автоматически подставляется его базовая единица измерения
+- **Валидация остатков**: Отображается текущий остаток материала на объекте
+- **Режим редактирования**: Поддержка создания новых списаний и редактирования существующих
 
 #### ListHeader
 ```vue

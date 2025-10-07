@@ -105,40 +105,44 @@
           
           <!-- Actual Data -->
           <tbody v-else>
-            <tr v-for="item in store.items" :key="item.id" class="table-row">
-              <td v-for="column in config.columns" :key="column.key">
-                <slot 
-                  :name="`column-${column.key}`" 
-                  :item="item" 
-                  :value="getColumnValue(item, column)"
-                >
-                  <component 
-                    v-if="column.component"
-                    :is="column.component"
-                    :item="item"
+            <template v-for="item in store.items" :key="item.id">
+              <tr class="table-row">
+                <td v-for="column in config.columns" :key="column.key">
+                  <slot 
+                    :name="`column-${column.key}`" 
+                    :item="item" 
                     :value="getColumnValue(item, column)"
-                  />
-                      <span v-else>{{ formatColumnValue(getColumnValue(item, column), column, item) }}</span>
-                </slot>
-              </td>
-              <td v-if="config.actions && config.actions.length > 0" class="text-right">
-                <div class="flex gap-1 justify-end">
-                  <button 
-                    v-for="action in config.actions"
-                    :key="action.key"
-                    :class="[
-                      'btn btn-xs',
-                      action.class || 'btn-outline',
-                      action.disabled && action.disabled(item) ? 'btn-disabled' : ''
-                    ]"
-                    :disabled="action.disabled && action.disabled(item)"
-                    @click="handleAction(action.key, item)"
                   >
-                    {{ action.label }}
-                  </button>
-                </div>
-              </td>
-            </tr>
+                    <component 
+                      v-if="column.component"
+                      :is="column.component"
+                      :item="item"
+                      :value="getColumnValue(item, column)"
+                    />
+                        <span v-else>{{ formatColumnValue(getColumnValue(item, column), column, item) }}</span>
+                  </slot>
+                </td>
+                <td v-if="config.actions && config.actions.length > 0" class="text-right">
+                  <div class="flex gap-1 justify-end">
+                    <button 
+                      v-for="action in config.actions"
+                      :key="action.key"
+                      :class="[
+                        'btn btn-xs',
+                        action.class || 'btn-outline',
+                        action.disabled && action.disabled(item) ? 'btn-disabled' : ''
+                      ]"
+                      :disabled="action.disabled && action.disabled(item)"
+                      @click="handleAction(action.key, item)"
+                    >
+                      {{ action.label }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Expanded row slot -->
+              <slot name="row-expanded" :item="item" />
+            </template>
             <tr v-if="!store.loading && store.items.length === 0">
               <td :colspan="config.columns.length + (config.actions ? 1 : 0)" class="text-center text-gray-500 py-8">
                 <div class="flex flex-col items-center gap-2">
@@ -263,7 +267,7 @@ function formatColumnValue(value: any, column: ColumnConfig, item: any) {
   return String(value)
 }
 
-function handleSort(key: string) {
+async function handleSort(key: string) {
   if (sortBy.value === key) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -272,11 +276,11 @@ function handleSort(key: string) {
   }
   
   const ordering = sortOrder.value === 'desc' ? `-${key}` : key
-  props.store.setFilters({ ordering })
+  await props.store.setFilters({ ordering })
 }
 
-function handlePageChange(page: number) {
-  props.store.setPage(page)
+async function handlePageChange(page: number) {
+  await props.store.setPage(page)
 }
 
 async function handlePageSizeChange(size: number) {
@@ -349,20 +353,13 @@ const debouncedSearch = debounce(async () => {
 }, 500)
 
 // Update filter value
-function updateFilter(key: string, value: any) {
-  if (props.store.filters) {
-    props.store.filters[key] = value
-  }
+async function updateFilter(key: string, value: any) {
+  await props.store.setFilters({ [key]: value })
 }
 
 // Reset filters
-function handleResetFilters() {
-  if (props.store.filters) {
-    Object.keys(props.store.filters).forEach(key => {
-      props.store.filters[key] = ''
-    })
-  }
-  debouncedSearch()
+async function handleResetFilters() {
+  await props.store.resetFilters()
 }
 
 // Watch for filter changes
@@ -374,6 +371,9 @@ watch(
   },
   { deep: true }
 )
+
+
+
 </script>
 
 <style scoped>

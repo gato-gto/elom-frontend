@@ -1,7 +1,7 @@
 // src/stores/notifications.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { ID } from '@/api/types'
+import type { ID } from '@/api/types/common'
 
 export interface Notification {
   id: ID

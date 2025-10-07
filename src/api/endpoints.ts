@@ -44,17 +44,20 @@ export const endpoints = {
         list: join('/materials/'),
         one: (id: number) => join(`/materials/${id}/`),
         uploadPhoto: (id: number) => join(`/materials/${id}/upload-photo/`),
+        deletePhoto: (id: number) => join(`/materials/${id}/delete-photo/`),
         // Новые endpoints
         lite: join('/materials/lite/'),
         search: join('/materials/search/'),
         stats: join('/materials/stats/'),
         bulkUpdate: join('/materials/bulk-update/'),
+        byObject: join('/materials/by-object/'),
     },
 
     // Objects endpoints
     objects: {
         list: join('/objects/'),
         one: (id: number) => join(`/objects/${id}/`),
+        responsibles: join('/objects/responsibles/'),
     },
 
     // Purchases endpoints
@@ -85,6 +88,9 @@ export const endpoints = {
     stockSnapshots: {
         list: join('/stock/snapshots/'),
         one: (id: number) => join(`/stock/snapshots/${id}/`),
+        balance: join('/stock/snapshots/balance/'),
+        byObjects: join('/stock/snapshots/by-objects/'),
+        history: join('/stock/snapshots/history/'),
     },
 
     // WriteOff endpoints

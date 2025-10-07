@@ -18,6 +18,7 @@ export interface PaginationState {
 export interface BaseFilters {
   search: string
   ordering: string
+  [key: string]: any // Дополнительные фильтры
 }
 
 // Конфигурация для базового store
@@ -74,12 +75,21 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       error.value = null
 
       try {
-        const queryParams = {
+        const queryParams: Record<string, any> = {
           page: params?.page || pagination.value.page,
-          page_size: pagination.value.pageSize,
-          search: params?.search ?? filters.value.search ?? undefined,
-          ordering: params?.ordering ?? filters.value.ordering
+          page_size: params?.page_size || pagination.value.pageSize,
+          ...filters.value, // Добавляем все фильтры
+          // Переопределяем специфичные параметры если они переданы
+          ...(params?.search !== undefined && { search: params.search }),
+          ...(params?.ordering !== undefined && { ordering: params.ordering })
         }
+
+        // Удаляем undefined значения
+        Object.keys(queryParams).forEach(key => {
+          if (queryParams[key] === undefined || queryParams[key] === '') {
+            delete queryParams[key]
+          }
+        })
 
         const query = buildQuery(queryParams)
         const { data } = await api.get(config.endpoint.list + query)
@@ -205,28 +215,70 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       current.value = item
     }
 
-    const setFilters = (newFilters: Partial<BaseFilters>) => {
+    const setFilters = async (newFilters: Partial<BaseFilters>) => {
       Object.assign(filters.value, newFilters)
+      pagination.value.page = 1 // Сбрасываем на первую страницу при изменении фильтров
+      await fetchList()
     }
 
-    const resetFilters = () => {
-      filters.value = {
+    const resetFilters = async () => {
+      // Сохраняем только базовые фильтры
+      const baseFilters = {
         search: '',
         ordering: 'id'
       }
+      filters.value = baseFilters
+      pagination.value.page = 1 // Сбрасываем на первую страницу при сбросе фильтров
+      await fetchList()
     }
 
     const clearError = () => {
       error.value = null
     }
 
-    const setPageSize = (size: number) => {
+    const setPageSize = async (size: number) => {
       pagination.value.pageSize = size
       pagination.value.page = 1
+      await fetchList()
     }
 
-    const setPage = (page: number) => {
+    const setPage = async (page: number) => {
       pagination.value.page = page
+      await fetchList()
+    }
+
+    // Search method for autocomplete components
+    const search = async (query: string) => {
+      if (query.length < 2) return []
+      
+      try {
+        const { data } = await api.get(config.endpoint.list + `?search=${encodeURIComponent(query)}&page_size=20`)
+        return data.results || data
+      } catch (err: any) {
+        await handleApiErrorAsync(err, { operation: 'search' })
+        return []
+      }
+    }
+
+    // Alias for search (for backward compatibility)
+    const searchMaterials = search
+    const searchSuppliers = search
+
+    // Alias for delete (for backward compatibility)
+    const remove = deleteItem
+
+    // Placeholder methods for photo upload (to be implemented in specific stores)
+    const uploadPhoto = async (id: number, file: File) => {
+      throw new Error('uploadPhoto method not implemented for this store')
+    }
+
+    const deletePhoto = async (id: number) => {
+      throw new Error('deletePhoto method not implemented for this store')
+    }
+
+    // Placeholder method for object-specific materials (to be implemented in materials store)
+    const getMaterialsByObject = async (objectId: number) => {
+      throw new Error('getMaterialsByObject method not implemented for this store')
     }
 
     return {
@@ -256,7 +308,20 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       resetFilters,
       clearError,
       setPageSize,
-      setPage
+      setPage,
+
+      // Search methods
+      search,
+      searchMaterials,
+      searchSuppliers,
+
+      // Alias methods
+      remove,
+
+      // Placeholder methods
+      uploadPhoto,
+      deletePhoto,
+      getMaterialsByObject
     }
   })
   
@@ -288,30 +353,4 @@ export const reactivityUtils = {
     })
   },
 
-  // Debounce функция
-  debounce: <T extends (...args: any[]) => any>(
-    func: T,
-    delay: number
-  ): ((...args: Parameters<T>) => void) => {
-    let timeoutId: NodeJS.Timeout
-    return (...args: Parameters<T>) => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => func(...args), delay)
-    }
-  },
-
-  // Throttle функция
-  throttle: <T extends (...args: any[]) => any>(
-    func: T,
-    delay: number
-  ): ((...args: Parameters<T>) => void) => {
-    let lastCall = 0
-    return (...args: Parameters<T>) => {
-      const now = Date.now()
-      if (now - lastCall >= delay) {
-        lastCall = now
-        func(...args)
-      }
-    }
-  }
 }

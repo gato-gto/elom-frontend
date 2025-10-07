@@ -1,5 +1,40 @@
 <template>
   <div class="list-container">
+    <!-- Статистика архива -->
+    <div class="stats-container mb-6">
+      <div class="stats shadow">
+        <div class="stat">
+          <div class="stat-figure text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div class="stat-title">Всего периодов</div>
+          <div class="stat-value text-primary">{{ archiveStats.total }}</div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-figure text-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div class="stat-title">В этом году</div>
+          <div class="stat-value text-secondary">{{ archiveStats.thisYear }}</div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-figure text-accent">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-title">Последний период</div>
+          <div class="stat-value text-accent">{{ lastPeriodText }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- GenericList Component -->
     <GenericList
       :store="archiveStore"
@@ -10,72 +45,139 @@
     >
       <!-- Custom column for object name -->
       <template #column-object_name="{ item, value }">
-        <span>{{ value ?? item.object }}</span>
+        <div class="flex items-center gap-2">
+          <span class="font-medium">{{ value ?? item.object }}</span>
+          <div class="badge badge-outline badge-sm">{{ item.object }}</div>
+        </div>
+      </template>
+
+      <!-- Custom column for month -->
+      <template #column-month="{ item, value }">
+        <div class="flex items-center gap-2">
+          <span class="font-mono">{{ formatMonth(value) }}</span>
+          <div class="badge badge-info badge-sm">{{ getMonthName(value) }}</div>
+        </div>
       </template>
 
       <!-- Custom column for closed_at -->
       <template #column-closed_at="{ item, value }">
-        <span>{{ formatDateTime(value) }}</span>
+        <div class="flex flex-col">
+          <span class="text-sm">{{ formatDate(value) }}</span>
+          <span class="text-xs text-gray-500">{{ formatTime(value) }}</span>
+        </div>
       </template>
 
       <!-- Custom column for closed_by_name -->
       <template #column-closed_by_name="{ item, value }">
-        <span>{{ value ?? '—' }}</span>
+        <div class="flex items-center gap-2">
+          <div class="avatar placeholder">
+            <div class="bg-neutral text-neutral-content rounded-full w-6">
+              <span class="text-xs">{{ getInitials(value) }}</span>
+            </div>
+          </div>
+          <span>{{ value ?? '—' }}</span>
+        </div>
       </template>
 
       <!-- Custom column for is_closed status -->
       <template #column-is_closed="{ item, value }">
-        <span class="badge" :class="getStatusClass(value)">
-          {{ getStatusText(value) }}
-        </span>
+        <div class="flex items-center gap-2">
+          <span class="badge" :class="getStatusClass(value)">
+            <svg v-if="value" class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            <svg v-else class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+            {{ getStatusText(value) }}
+          </span>
+        </div>
       </template>
 
       <!-- Custom column for reopen action -->
       <template #column-actions="{ item }">
-        <button
-          class="btn btn-xs btn-warning"
-          :disabled="busyId === item.id || !item.is_closed"
-          @click="reopen(item)"
-        >
-          Открыть
-        </button>
+        <div class="flex gap-1">
+          <button
+            class="btn btn-xs btn-warning"
+            :disabled="busyId === item.id || !item.is_closed"
+            @click="reopen(item)"
+            title="Открыть период"
+          >
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            Открыть
+          </button>
+        </div>
       </template>
     </GenericList>
 
     <!-- Модалка закрытия периода -->
-    <dialog ref="dlg" class="modal">
-      <div class="modal-box w-11/12 max-w-md">
-        <h3 class="font-bold text-lg mb-4">Закрыть период</h3>
+    <dialog v-if="showCloseModal" class="modal modal-open">
+      <div class="modal-box w-11/12 max-w-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-lg">Закрыть период</h3>
+          <button class="btn btn-sm btn-circle btn-ghost" @click="closeDialog">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
         
-        <form class="grid gap-4" @submit.prevent="closePeriod">
+        <div class="alert alert-info mb-4">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Закрытие периода архивирует все закупки и складские операции за указанный месяц</span>
+        </div>
+        
+        <form class="grid gap-4" @submit.prevent="closePeriodAction">
           <div class="form-control">
-            <label class="label" for="dlg-month">
+            <label class="label" for="close-month">
               <span class="label-text font-medium">Месяц</span>
               <span class="label-text-alt text-error">*</span>
             </label>
             <input 
-              id="dlg-month" 
-              v-model="closeMonth" 
+              id="close-month" 
+              v-model="closeForm.month" 
               type="month" 
               class="input input-bordered"
+              :class="{ 'input-error': !closeForm.month }"
               required
             />
+            <label v-if="!closeForm.month" class="label">
+              <span class="label-text-alt text-error">Выберите месяц для архивирования</span>
+            </label>
           </div>
           
           <div class="form-control">
-            <label class="label" for="dlg-object">
+            <label class="label" for="close-object">
               <span class="label-text font-medium">Объект</span>
               <span class="label-text-alt text-error">*</span>
             </label>
             <select 
-              id="dlg-object" 
-              v-model.number="closeObjectId" 
+              id="close-object" 
+              v-model.number="closeForm.object" 
               class="select select-bordered"
+              :class="{ 'select-error': !closeForm.object }"
               required
             >
               <option :value="undefined" disabled>Выберите объект</option>
-              <option v-for="o in objects" :key="o.id" :value="o.id">{{ o.name }}</option>
+              <option v-for="obj in objectsStore.items" :key="obj.id" :value="obj.id">
+                {{ obj.name }} (ID: {{ obj.id }})
+              </option>
             </select>
+            <label v-if="!closeForm.object" class="label">
+              <span class="label-text-alt text-error">Выберите объект для архивирования</span>
+            </label>
+          </div>
+
+          <!-- Предупреждение о дублировании -->
+          <div v-if="closeForm.month && closeForm.object && !canClose" class="alert alert-warning">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Период {{ formatMonth(closeForm.month + '-01') }} для выбранного объекта уже архивирован</span>
           </div>
           
           <div class="modal-action">
@@ -85,118 +187,92 @@
             <button 
               type="submit" 
               class="btn btn-primary" 
-              :disabled="closing || !canClose"
+              :disabled="archiveStore.loading || !canClose"
             >
-              <svg v-if="closing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg v-if="archiveStore.loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {{ closing ? 'Закрываем…' : 'Закрыть период' }}
+              {{ archiveStore.loading ? 'Закрываем…' : 'Закрыть период' }}
             </button>
           </div>
         </form>
       </div>
-      <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-      </form>
+      <div class="modal-backdrop" @click="closeDialog"></div>
     </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, reactive } from 'vue'
-import api from '@/api/client'
-import endpoints, { buildQuery } from '@/api/endpoints'
-import type {
-  PageResponse,
-  ArchivePeriod,
-  ArchivePeriodRequest,
-  ArchiveListQuery,
-  SiteObject,
-} from '@/api/types'
+import { computed, ref, onMounted } from 'vue'
+import { useArchiveStore, getArchiveStats, closePeriod, reopenPeriod, canClosePeriod } from '@/stores/archive'
+import { useObjectsStore } from '@/stores/objects'
+import type { ArchivePeriod, ArchivePeriodRequest } from '@/api/types/archive'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDateTime, getStatusClass, getStatusText } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
+import { useNotifications } from '@/composables/useNotifications'
+import { useExport } from '@/composables/useExport'
 import GenericList from '@/components/GenericList.vue'
 
-type Query = Record<string, string | number | boolean | (string | number)[] | null | undefined>
+// Stores
+const archiveStore = useArchiveStore
+const objectsStore = useObjectsStore
 
-// Error handling
+
+// Composables
 const { handleLoadingError } = useErrorHandler()
+const { showSuccess, showError, showWarning } = useNotifications()
+const { exportToCSV, exportToExcel, exportToPDF } = useExport()
 
 // State
-const rows = ref<ArchivePeriod[]>([])
-const count = ref(0)
-const page = ref(1)
-const pageSize = ref(20)
-const loading = ref(false)
 const busyId = ref<number | null>(null)
-
-// Filters
-const filters = reactive({
-  month: new Date().toISOString().slice(0, 7), // YYYY-MM
-  object: undefined as number | undefined
+const showCloseModal = ref(false)
+const closeForm = ref<ArchivePeriodRequest>({
+  month: new Date().toISOString().slice(0, 7),
+  object: 0
 })
 
-const objects = ref<SiteObject[]>([])
+// Computed
+const archiveStats = computed(() => getArchiveStats())
 
-// Store-like interface for GenericList
-const archiveStore = {
-  items: rows,
-  loading,
-  error: ref<string | null>(null),
-  pagination: computed(() => ({
-    count: count.value,
-    page: page.value,
-    pageSize: pageSize.value,
-    next: null,
-    previous: null
-  })),
-  filters,
-  fetchList: async () => {
-    loading.value = true
-    try {
-      const q: ArchiveListQuery & { page: number; page_size: number } = {
-        page: page.value,
-        page_size: pageSize.value,
-        month: filters.month,
-        object: filters.object,
-      }
-      const { data } = await api.get<PageResponse<ArchivePeriod>>(endpoints.archive.periods.list + buildQuery(q as unknown as Query))
-      rows.value = data.results
-      count.value = data.count
-    } catch (error) {
-      await handleLoadingError(error, 'archive')
-    } finally {
-      loading.value = false
-    }
-  },
-  setPage: (newPage: number) => {
-    page.value = newPage
-  },
-  setPageSize: async (newSize: number) => {
-    pageSize.value = newSize
-    page.value = 1
-  },
-  setFilters: (newFilters: Partial<typeof filters>) => {
-    Object.assign(filters, newFilters)
-    page.value = 1
-  },
-  resetFilters: () => {
-    filters.month = new Date().toISOString().slice(0, 7)
-    filters.object = undefined
-    page.value = 1
-  },
-  clearError: () => {
-    // No error handling in this component
-  }
-}
+const lastPeriodText = computed(() => {
+  const lastPeriod = archiveStats.value.lastPeriod
+  if (!lastPeriod) return 'Нет'
+  return formatMonth(lastPeriod.month)
+})
 
-// Filter options
 const objectOptions = computed(() => [
   { value: '', label: 'Все объекты' },
-  ...objects.value.map(o => ({ value: o.id, label: o.name }))
+  ...objectsStore.items.map((obj: any) => ({ 
+    value: obj.id, 
+    label: `${obj.name} (ID: ${obj.id})` 
+  }))
+])
+
+const yearOptions = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let i = currentYear; i >= currentYear - 5; i--) {
+    years.push({ value: i, label: i.toString() })
+  }
+  return years
+})
+
+const monthOptions = computed(() => [
+  { value: '', label: 'Все месяцы' },
+  { value: 1, label: 'Январь' },
+  { value: 2, label: 'Февраль' },
+  { value: 3, label: 'Март' },
+  { value: 4, label: 'Апрель' },
+  { value: 5, label: 'Май' },
+  { value: 6, label: 'Июнь' },
+  { value: 7, label: 'Июль' },
+  { value: 8, label: 'Август' },
+  { value: 9, label: 'Сентябрь' },
+  { value: 10, label: 'Октябрь' },
+  { value: 11, label: 'Ноябрь' },
+  { value: 12, label: 'Декабрь' }
 ])
 
 // GenericList configuration
@@ -207,15 +283,15 @@ const listConfig = computed<GenericListConfig<ArchivePeriod>>(() => ({
   showCreate: true,
   createText: 'Закрыть период',
   canCreate: true,
-  showStats: true,
+  showStats: false, // Используем кастомную статистику
   exportable: true,
   exportFilename: 'archive',
-  exportUrl: '/api/v1/stock/archive/periods/',
+  exportUrl: '/api/v1/archive/periods/',
   loadingText: 'Загрузка архива...',
   emptyText: 'Нет архивных записей',
   emptyTitle: 'Нет архивных записей',
   emptySubtitle: 'Закройте первый период для начала работы',
-  filterColumns: 2,
+  filterColumns: 3,
   columns: [
     { key: 'id', label: 'ID', sortable: true },
     { key: 'month', label: 'Месяц', sortable: true },
@@ -229,13 +305,44 @@ const listConfig = computed<GenericListConfig<ArchivePeriod>>(() => ({
     {
       key: 'month',
       type: 'date',
-      label: 'Месяц'
+      label: 'Месяц',
+      placeholder: 'Выберите месяц'
+    },
+    {
+      key: 'month_from',
+      type: 'date',
+      label: 'Месяц от',
+      placeholder: 'Начало периода'
+    },
+    {
+      key: 'month_to',
+      type: 'date',
+      label: 'Месяц до',
+      placeholder: 'Конец периода'
     },
     {
       key: 'object',
       type: 'select',
       label: 'Объект',
       options: objectOptions.value
+    },
+    {
+      key: 'object_name',
+      type: 'text',
+      label: 'Название объекта',
+      placeholder: 'Поиск по названию'
+    },
+    {
+      key: 'year',
+      type: 'select',
+      label: 'Год',
+      options: yearOptions.value
+    },
+    {
+      key: 'month_number',
+      type: 'select',
+      label: 'Месяц',
+      options: monthOptions.value
     }
   ],
   actions: [
@@ -250,46 +357,85 @@ const listConfig = computed<GenericListConfig<ArchivePeriod>>(() => ({
   defaultSortOrder: 'desc'
 }))
 
-// --- Закрытие/открытие периодов ---
-const dlg = ref<HTMLDialogElement | null>(null)
-const closeMonth = ref<string | null>(null) // YYYY-MM
-const closeObjectId = ref<number | undefined>(undefined)
-const closing = ref(false)
-const canClose = computed(() => !!closeMonth.value && !!closeObjectId.value)
+// Utility functions
+function formatMonth(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit' })
+}
 
+function getMonthName(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('ru-RU', { month: 'long' })
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('ru-RU')
+}
+
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString('ru-RU', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })
+}
+
+function getInitials(name: string): string {
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+// --- Закрытие/открытие периодов ---
 function openCloseModal() {
-  closeMonth.value = filters.month ?? new Date().toISOString().slice(0, 7)
-  closeObjectId.value = filters.object
-  dlg.value?.showModal()
+  closeForm.value = {
+    month: new Date().toISOString().slice(0, 7),
+    object: 0
+  }
+  showCloseModal.value = true
 }
 
 function closeDialog() {
-  dlg.value?.close()
+  showCloseModal.value = false
 }
 
-async function closePeriod() {
-  if (!canClose.value) { return }
-  closing.value = true
+const canClose = computed(() => {
+  if (!closeForm.value.month || !closeForm.value.object) return false
+  return canClosePeriod(closeForm.value.month, closeForm.value.object)
+})
+
+async function closePeriodAction() {
+  if (!canClose.value) { 
+    showWarning('Заполните все обязательные поля')
+    return 
+  }
+  
   try {
-    const payload: ArchivePeriodRequest = { month: closeMonth.value!, object: closeObjectId.value! }
-    await api.post(endpoints.archive.close, payload)
+    await closePeriod(closeForm.value)
+    showSuccess('Период успешно закрыт')
     closeDialog()
-    await archiveStore.fetchList()
   } catch (error) {
+    showError('Ошибка при закрытии периода')
     await handleLoadingError(error, 'archive')
-  } finally {
-    closing.value = false
   }
 }
 
-async function reopen(p: ArchivePeriod) {
-  if (!p.is_closed) { return }
-  if (!confirm(`Открыть период ${p.month} по объекту "${p.object_name ?? p.object}"?`)) { return }
-  busyId.value = p.id
+async function reopen(period: ArchivePeriod) {
+  if (!period.is_closed) return
+  
+  const confirmed = confirm(
+    `Вы уверены, что хотите открыть период ${formatMonth(period.month)} по объекту "${period.object_name}"?`
+  )
+  
+  if (!confirmed) return
+  
+  busyId.value = period.id
   try {
-    await api.post(endpoints.archive.reopen, { month: p.month, object: p.object })
-    await archiveStore.fetchList()
+    await reopenPeriod({ 
+      month: period.month, 
+      object: period.object 
+    })
+    showSuccess('Период успешно открыт')
   } catch (error) {
+    showError('Ошибка при открытии периода')
     await handleLoadingError(error, 'archive')
   } finally {
     busyId.value = null
@@ -298,9 +444,11 @@ async function reopen(p: ArchivePeriod) {
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
-    const data = rows.value
+    const data = archiveStore.items
     const filename = `archive_${new Date().toISOString().split('T')[0]}`
 
+    // Используем функции экспорта
+    
     switch (format) {
       case 'csv':
         exportToCSV(data, filename)
@@ -312,7 +460,10 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
         exportToPDF(data, filename)
         break
     }
+    
+    showSuccess(`Данные экспортированы в формате ${format.toUpperCase()}`)
   } catch (error) {
+    showError('Ошибка при экспорте данных')
     await handleLoadingError(error, 'archive')
   }
 }
@@ -325,18 +476,17 @@ function handleAction(action: string, item: ArchivePeriod) {
   }
 }
 
-async function loadRefs() {
-  try {
-    const { data } = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({ page_size: 1000, ordering: 'name' }))
-    objects.value = data.results
-  } catch (error) {
-    await handleLoadingError(error, 'objects')
-  }
-}
-
+// Lifecycle
 onMounted(async () => {
-  await loadRefs()
-  await archiveStore.fetchList()
+  try {
+    // Загружаем объекты и архив параллельно
+    await Promise.all([
+      objectsStore.fetchList(),
+      archiveStore.fetchList()
+    ])
+  } catch (error) {
+    await handleLoadingError(error, 'archive')
+  }
 })
 </script>
 

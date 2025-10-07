@@ -2,7 +2,7 @@
 
 ## Обзор изменений
 
-В рамках улучшения архитектуры frontend приложения была проведена полная реструктуризация системы типов TypeScript. Основная цель - устранение дубликатов, улучшение организации кода и повышение поддерживаемости.
+В рамках улучшения архитектуры frontend приложения была проведена полная реструктуризация системы типов TypeScript и единообразной системы пагинации. Основная цель - устранение дубликатов, улучшение организации кода, повышение поддерживаемости и создание единообразной системы управления данными.
 
 ## Проблемы до рефакторинга
 
@@ -213,13 +213,191 @@ import type { MaterialReportItem } from '@/api/types/reports'
 - Добавить проверки на дубликаты в CI/CD
 - Создать скрипты для валидации типов
 
+## Рефакторинг системы пагинации
+
+### Проблемы до рефакторинга
+
+1. **Различные подходы к пагинации**:
+   - Некоторые stores использовали `createBaseStore`
+   - Другие stores имели собственную реализацию пагинации
+   - Несогласованное поведение между списками
+
+2. **Дублирование кода**:
+   - Повторяющаяся логика пагинации в разных stores
+   - Различные реализации `setPage`, `setPageSize`, `setFilters`
+   - Несогласованная обработка ошибок
+
+3. **Проблемы с типизацией**:
+   - Обращение к `.value` у ref-ов в неправильных местах
+   - Несогласованные типы для пагинации
+   - Ошибки TypeScript в компонентах
+
+### Решение
+
+#### 1. Единообразная система пагинации
+
+Все stores переведены на использование `createBaseStore`:
+
+```typescript
+// До рефакторинга
+export const useMaterialsStore = defineStore('materials', {
+  state: () => ({
+    // ... состояние
+  }),
+  actions: {
+    async setPage(page: number) {
+      this.pagination.page = page
+      // Собственная реализация
+    }
+  }
+})
+
+// После рефакторинга
+export const useMaterialsStore = defineStore('materials', () => {
+  const baseStore = createBaseStore<Material, MaterialRequest, PatchedMaterialRequest>({
+    endpoint: endpoints.materials,
+    entityName: 'materials',
+    entityNamePlural: 'материалы'
+  })
+  
+  // Расширенные фильтры
+  const extendedFilters = {
+    search: '',
+    name: '',
+    sku: '',
+    category: '',
+    ordering: 'name'
+  }
+  
+  return {
+    // Базовые свойства и методы
+    items: baseStore.items,
+    current: baseStore.current,
+    loading: baseStore.loading,
+    error: baseStore.error,
+    pagination: baseStore.pagination,
+    filters: extendedFilters,
+    
+    // CRUD операции
+    fetchList,
+    fetchOne: baseStore.fetchOne,
+    create,
+    update,
+    delete: baseStore.delete,
+    
+    // Пагинация и фильтры
+    setCurrent: baseStore.setCurrent,
+    clearError: baseStore.clearError,
+    setPage: baseStore.setPage,
+    setPageSize: baseStore.setPageSize,
+    setFilters,
+    resetFilters
+  }
+})
+```
+
+#### 2. Исправление типизации
+
+Устранены ошибки TypeScript:
+
+```typescript
+// До рефакторинга (ошибки)
+baseStore.loading.value = true  // ❌ Ошибка
+baseStore.error.value = null    // ❌ Ошибка
+
+// После рефакторинга (правильно)
+baseStore.loading = true        // ✅ Правильно
+baseStore.error = null          // ✅ Правильно
+```
+
+#### 3. Новый store для остатков
+
+Создан специализированный store для остатков по объектам:
+
+```typescript
+export const useBalancesStore = defineStore('balances', () => {
+  const baseStore = createBaseStore<MaterialBalance, any, any>({
+    endpoint: {
+      list: endpoints.stockSnapshots.byObjects,
+      one: (id: number) => `${endpoints.stockSnapshots.byObjects}${id}/`
+    },
+    entityName: 'balances',
+    entityNamePlural: 'остатки'
+  })
+  
+  // Специализированная обработка данных
+  const fetchList = async (params?: any) => {
+    const response = await api.get(`${endpoints.stockSnapshots.byObjects}?${apiParams}`)
+    
+    // Flattening для табличного отображения
+    const flattenedData: MaterialBalance[] = []
+    if (response.data.objects) {
+      response.data.objects.forEach((obj: any) => {
+        obj.materials.forEach((material: any) => {
+          flattenedData.push({
+            material_id: material.material_id,
+            material_name: material.material_name,
+            object_name: obj.object_name,
+            // ... другие поля
+          } as MaterialBalance)
+        })
+      })
+    }
+    
+    baseStore.items = flattenedData
+  }
+  
+  return {
+    // ... базовые методы
+  }
+})
+```
+
+### Результаты рефакторинга
+
+#### 1. Единообразная пагинация
+- Все 10 основных stores используют `createBaseStore`
+- Консистентное поведение во всех списках
+- Единообразный пользовательский опыт
+
+#### 2. Устранение дублирования
+- Один код для всех stores
+- Переиспользуемая логика пагинации
+- Упрощенная поддержка
+
+#### 3. Исправление типизации
+- Устранены все ошибки TypeScript
+- Строгая типизация для всех stores
+- Улучшенная поддержка IDE
+
+#### 4. Новые возможности
+- Специализированные stores для сложных данных
+- Расширенные фильтры для материалов
+- Flattening данных для остатков
+
+### Stores после рефакторинга
+
+1. **Закупки** (`usePurchasesStore`) - `createBaseStore`
+2. **Материалы** (`useMaterialsStore`) - `createBaseStore` + расширенные фильтры
+3. **Поставщики** (`useSuppliersStore`) - `createBaseStore`
+4. **Сотрудники** (`useEmployeesStore`) - `createBaseStore`
+5. **Объекты** (`useObjectsStore`) - `createBaseStore`
+6. **Списания** (`useWriteOffsStore`) - `createBaseStore`
+7. **Единицы измерения** (`useUnitsStore`) - `createBaseStore`
+8. **Движения остатков** (`useStockSnapshotsStore`) - `createBaseStore`
+9. **Категории материалов** (`useMaterialCategoriesStore`) - `createBaseStore`
+10. **Остатки по объектам** (`useBalancesStore`) - `createBaseStore` + специализированная обработка
+
 ## Заключение
 
-Рефакторинг системы типов значительно улучшил архитектуру frontend приложения:
+Рефакторинг системы типов и пагинации значительно улучшил архитектуру frontend приложения:
 
 - **Устранены дубликаты** - каждый тип определен в одном месте
 - **Улучшена организация** - логическая группировка по модулям
 - **Повышена точность** - типы соответствуют реальному API
 - **Сохранена совместимость** - все существующие импорты работают
+- **Единообразная пагинация** - все списки используют одинаковую логику
+- **Исправлена типизация** - устранены все ошибки TypeScript
+- **Улучшена поддерживаемость** - один код для всех stores
 
 Новая структура обеспечивает лучшую поддерживаемость, читаемость и расширяемость кода, что критически важно для долгосрочного развития проекта.

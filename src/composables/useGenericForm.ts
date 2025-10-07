@@ -143,7 +143,13 @@ export function useGenericForm<T extends Record<string, any>>(
         reset()
       }
     } catch (error) {
-      await handleFormError(error, 'form')
+      const parsedError = await handleFormError(error, 'form')
+      
+      // Устанавливаем ошибки полей в форме
+      Object.keys(parsedError.fieldErrors).forEach(field => {
+        const fieldError = parsedError.fieldErrors[field]
+        setFieldError(field, Array.isArray(fieldError) ? fieldError[0] : fieldError)
+      })
     } finally {
       isSubmitting.value = false
     }

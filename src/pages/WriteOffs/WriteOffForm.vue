@@ -1,293 +1,498 @@
 <template>
-  <div class="writeoff-form">
-    <!-- Unit Display -->
-    <div v-if="selectedMaterialUnit" class="card bg-base-100 border mb-6">
-      <div class="card-body">
-        <div class="alert alert-info">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 class="font-bold">Единица измерения</h3>
-            <div class="text-sm">
-              Для выбранного материала единица измерения: <span class="font-mono font-bold">{{ selectedMaterialUnit }}</span>
-            </div>
+  <Modal
+    :model-value="isOpen"
+    :title="props.initial ? 'Редактирование списания' : 'Новое списание'"
+    @close="closeModal"
+  >
+    <div class="space-y-6">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Информация о списании
+        </h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Все данные о списании материалов
+        </p>
+      </div>
+
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+        <!-- Дата списания -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Дата списания</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <input
+            v-model="formData.date"
+            type="date"
+            required
+            class="input input-bordered w-full"
+          />
+        </div>
+
+        <!-- Объект -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Объект</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <select
+            v-model="formData.object"
+            @change="onObjectChange"
+            required
+            class="select select-bordered w-full"
+            :class="{ 'select-error': errors.object }"
+          >
+            <option value="0" disabled>— выберите объект —</option>
+            <option
+              v-for="object in objectOptions"
+              :key="object.value"
+              :value="object.value"
+            >
+              {{ object.label }}
+            </option>
+          </select>
+          <div v-if="errors.object" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.object[0] }}
+            </span>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- GenericForm -->
-    <GenericForm
-      :config="formConfig"
-      :initial-data="initialData"
-      :on-submit="handleSubmit"
-      :on-cancel="handleCancel"
-      :validate-on-change="true"
-      :reset-on-submit="false"
-      @field-change="onFieldChange"
-    />
-
-    <!-- Информация об остатке -->
-    <div v-if="currentBalance !== null" class="card bg-base-100 border mt-6">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Информация об остатке</h2>
-        <div class="alert alert-info">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 class="font-bold">Текущий остаток</h3>
-            <div class="text-sm">
-              На объекте "{{ objectName(formData.object) }}" материала "{{ materialName(formData.material) }}" 
-              остаток составляет: <span class="font-mono font-bold">{{ currentBalance }} {{ unitCode }}</span>
-            </div>
+        <!-- Материал -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Материал</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <select
+            v-model="formData.material"
+            @change="onMaterialChange"
+            required
+            :disabled="!formData.object || materialsLoading"
+            class="select select-bordered w-full"
+            :class="{ 
+              'select-disabled': !formData.object || materialsLoading,
+              'select-error': errors.material 
+            }"
+          >
+            <option value="0" disabled>— выберите материал —</option>
+            <option
+              v-for="material in materialOptions"
+              :key="material.value"
+              :value="material.value"
+            >
+              {{ material.label }}
+            </option>
+          </select>
+          <div v-if="errors.material" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.material[0] }}
+            </span>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Предупреждения валидации -->
-    <div v-if="validationWarnings.length > 0" class="card bg-base-100 border mt-6">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Предупреждения валидации</h2>
-        <div class="alert alert-warning">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        <!-- Единица измерения -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Единица измерения</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <select
+            v-model="formData.unit"
+            @change="onUnitChange"
+            required
+            :disabled="isUnitDisabled"
+            class="select select-bordered w-full"
+            :class="{ 
+              'select-disabled': isUnitDisabled,
+              'select-error': errors.unit 
+            }"
+          >
+            <option value="0" disabled>— выберите единицу —</option>
+            <option
+              v-for="unit in unitOptions"
+              :key="unit.value"
+              :value="unit.value"
+            >
+              {{ unit.label }}
+            </option>
+          </select>
+          <div v-if="errors.unit" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.unit[0] }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Количество -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Количество</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <input
+            v-model="formData.quantity"
+            type="number"
+            step="0.000001"
+            required
+            class="input input-bordered w-full"
+            :class="{ 'input-error': errors.quantity }"
+          />
+          <div v-if="errors.quantity" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.quantity[0] }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Этап работ -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Этап работ</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <select
+            v-model="formData.stage"
+            required
+            class="select select-bordered w-full"
+          >
+            <option value="acceptance">Приемка</option>
+            <option value="request">Заявка</option>
+            <option value="delivery_fixed">Доставка</option>
+            <option value="post_rough">После черновых</option>
+            <option value="handover">Сдача</option>
+          </select>
+        </div>
+
+        <!-- Ответственный -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Ответственный</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <select
+            v-model="formData.responsible"
+            @change="onResponsibleChange"
+            required
+            class="select select-bordered w-full"
+            :class="{ 'select-error': errors.responsible }"
+          >
+            <option value="0" disabled>— выберите ответственного —</option>
+            <option
+              v-for="responsible in responsibleOptions"
+              :key="responsible.value"
+              :value="responsible.value"
+            >
+              {{ responsible.label }}
+            </option>
+          </select>
+          <div v-if="errors.responsible" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.responsible[0] }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Комментарий -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Комментарий</span>
+          </label>
+          <textarea
+            v-model="formData.comment"
+            rows="3"
+            class="textarea textarea-bordered w-full"
+          ></textarea>
+        </div>
+
+        <!-- Общие ошибки -->
+        <div v-if="errors.non_field_errors" class="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h3 class="font-bold">Внимание!</h3>
-            <ul class="text-sm space-y-1">
-              <li v-for="warning in validationWarnings" :key="warning" class="flex items-start gap-2">
-                <span class="text-warning mt-0.5">•</span>
-                <span>{{ warning }}</span>
+            <h3 class="font-bold">Ошибки валидации:</h3>
+            <ul class="list-disc list-inside">
+              <li v-for="error in errors.non_field_errors" :key="error">
+                {{ error }}
               </li>
             </ul>
           </div>
         </div>
-      </div>
+
+        <!-- Кнопки -->
+        <div class="flex justify-end gap-2 pt-4">
+          <button
+            type="button"
+            @click="closeModal"
+            class="btn btn-ghost"
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            :disabled="isSubmitting"
+            class="btn btn-primary"
+            :class="{ 'loading': isSubmitting }"
+          >
+            {{ isSubmitting ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
+          </button>
+        </div>
+      </form>
     </div>
-  </div>
+  </Modal>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import Modal from '@/components/Modal.vue'
 import { useWriteOffsStore } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
-import { useMaterialsStore } from '@/stores/materials'
-import { useEmployeesStore } from '@/stores/employees'
+import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
+import { useEmployeesStore, getByObject } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
-import GenericForm from '@/components/GenericForm.vue'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 import type { 
   WriteOff, 
   WriteOffCreateRequest, 
   WriteOffUpdateRequest,
-  SiteObject, 
-  Material, 
+  SiteObject,
+  Material,
   Employee,
   Unit
 } from '@/api/types'
-import type { GenericFormConfig } from '@/types/generic'
-import { useErrorHandler } from '@/composables/useErrorHandler'
 
-const route = useRoute()
-const router = useRouter()
-
-// Stores
 const writeOffsStore = useWriteOffsStore
 const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 const employeesStore = useEmployeesStore
 const unitsStore = useUnitsStore
-const { handleFormError } = useErrorHandler()
+const { handleFormError, errors, clearErrors } = useErrorHandler()
 
-// Props
 const props = defineProps<{
+  isOpen: boolean
   initial?: WriteOff | null
 }>()
 
-// Emits
 const emit = defineEmits<{
-  saved: []
-  cancel: []
+  close: []
+  success: []
 }>()
 
-// Состояние
-const loading = ref(false)
-const errors = reactive<Record<string, string>>({})
-const currentBalance = ref<number | null>(null)
-const validationWarnings = ref<string[]>([])
-const selectedMaterialId = ref<number>(0)
-const formData = reactive<WriteOffCreateRequest>({
+// Reactive data
+const formData = ref<WriteOffCreateRequest>({
   date: new Date().toISOString().split('T')[0],
   object: 0,
-  material: null, // nullable according to API
+  material: null,
   unit: 0,
   quantity: '0',
-  stage: 'post_rough',
+  stage: 'acceptance',
   responsible: 0,
   comment: ''
 })
 
-// Определяем режим редактирования
-const isEdit = computed(() => !!props.initial || !!route.params.id)
+// Loading states
+const materialsLoading = ref(false)
+const employeesLoading = ref(false)
+const isSubmitting = ref(false)
 
-// Computed property for selected material unit
-const selectedMaterialUnit = computed(() => {
-  if (selectedMaterialId.value === 0) return null
-  const material = materialsStore.items.find(m => m.id === selectedMaterialId.value)
-  return material?.default_unit_code || null
+// User modification tracking
+const userModifiedFields = ref({
+  material: false,
+  unit: false,
+  responsible: false
 })
 
-// Computed для справочников
-const objects = computed(() => objectsStore.items)
-const materials = computed(() => materialsStore.items)
-const employees = computed(() => employeesStore.items)
-const units = computed(() => unitsStore.items)
-
-// Опции для селектов
+// Options
 const objectOptions = computed(() => [
-  ...objects.value.map((o: SiteObject) => ({ value: o.id, label: o.name }))
+  { value: 0, label: '— выберите объект —' },
+  ...objectsStore.items.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
 ])
 
-const materialOptions = computed(() => [
-  ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
-])
-
-const employeeOptions = computed(() => [
-  ...employees.value.map((e: Employee) => ({ 
-    value: e.id, 
-    label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
-  }))
+const materialOptions = ref([
+  { value: 0, label: '— выберите материал —' }
 ])
 
 const unitOptions = computed(() => [
   { value: 0, label: '— выберите единицу —' },
-  ...units.value.map((u: Unit) => ({ value: u.id, label: `${u.name} (${u.code})` }))
+  ...unitsStore.items.map((unit: Unit) => ({ value: unit.id, label: `${unit.name} (${unit.code})` }))
 ])
 
-const stageOptions = [
-  { value: 'acceptance', label: 'Приемка' },
-  { value: 'request', label: 'Заявка' },
-  { value: 'delivery_fixed', label: 'Доставка' },
-  { value: 'post_rough', label: 'После черновых' },
-  { value: 'handover', label: 'Сдача' }
-]
+const responsibleOptions = ref([
+  { value: 0, label: '— выберите ответственного —' }
+])
 
-// Computed для отображения
-const objectName = (id: number) => objects.value.find((o: SiteObject) => o.id === id)?.name
-const materialName = (id: number | null) => id ? materials.value.find((m: Material) => m.id === id)?.name : 'Не выбран'
-const unitCode = computed(() => {
-  const unit = units.value.find((u: Unit) => u.id === formData.unit)
-  return unit?.code || ''
+// Computed properties
+const isUnitDisabled = computed(() => {
+  if (!formData.value.material) return false
+  const material = materialsStore.items.find((m: Material) => m.id === formData.value.material)
+  return !!material?.default_unit
 })
 
-// GenericForm configuration
-const formConfig = computed<GenericFormConfig<WriteOffCreateRequest>>(() => ({
-  title: isEdit.value ? 'Редактировать списание' : 'Новое списание',
-  subtitle: 'Управление списанием материалов с объектов',
-  sections: [
-    {
-      title: 'Информация о списании',
-      description: 'Все данные о списании материалов',
-      fields: ['date', 'object', 'material', 'unit', 'quantity', 'stage', 'responsible', 'comment'],
-      order: 1
-    }
-  ],
-  fields: [
-    {
-      key: 'date',
-      type: 'date',
-      label: 'Дата списания',
-      required: true,
-      order: 1,
-      width: 'half'
-    },
-    {
-      key: 'object',
-      type: 'select',
-      label: 'Объект',
-      placeholder: '— выберите объект —',
-      required: true,
-      options: objectOptions.value,
-      order: 2,
-      width: 'half'
-    },
-    {
-      key: 'material',
-      type: 'select',
-      label: 'Материал',
-      placeholder: '— выберите материал —',
-      required: true,
-      options: materialOptions.value,
-      order: 3,
-      width: 'half'
-    },
-    {
-      key: 'unit',
-      type: 'select',
-      label: 'Единица измерения',
-      placeholder: '— выберите единицу —',
-      required: true,
-      options: unitOptions.value,
-      order: 4,
-      width: 'half'
-    },
-    {
-      key: 'quantity',
-      type: 'number',
-      label: 'Количество',
-      placeholder: 'Введите количество',
-      required: true,
-      validation: {
-        min: 0,
-        step: 0.000001
-      },
-      order: 5,
-      width: 'full'
-    },
-    {
-      key: 'stage',
-      type: 'select',
-      label: 'Этап работ',
-      placeholder: '— выберите этап —',
-      required: true,
-      options: stageOptions,
-      order: 6,
-      width: 'half'
-    },
-    {
-      key: 'responsible',
-      type: 'select',
-      label: 'Ответственный',
-      placeholder: '— выберите ответственного —',
-      required: true,
-      options: employeeOptions.value,
-      order: 7,
-      width: 'half'
-    },
-    {
-      key: 'comment',
-      type: 'textarea',
-      label: 'Комментарий',
-      placeholder: 'Дополнительная информация о списании...',
-      order: 8,
-      width: 'full'
-    }
-  ],
-  submitText: isEdit.value ? 'Обновить' : 'Создать',
-  cancelText: 'Отмена',
-  showCancel: true,
-  validateOnChange: true,
-  resetOnSubmit: false,
-  mode: isEdit.value ? 'edit' : 'create'
-}))
+// Data loading functions
+const loadMaterialsByObject = async (objectId: number) => {
+  if (!objectId) {
+    materialOptions.value = [
+      { value: 0, label: '— выберите материал —' }
+    ]
+    return
+  }
 
-// Initial data for form
-const initialData = computed(() => {
+  materialsLoading.value = true
+  try {
+    const materials = await getMaterialsByObject(objectId)
+    materialOptions.value = [
+      { value: 0, label: '— выберите материал —' },
+      ...materials.map((m: Material) => ({ value: m.id, label: m.name }))
+    ]
+  } catch (error) {
+    console.error('Error loading materials by object:', error)
+    materialOptions.value = [
+      { value: 0, label: '— выберите материал —' }
+    ]
+  } finally {
+    materialsLoading.value = false
+  }
+}
+
+const loadEmployeesByObject = async (objectId: number) => {
+  // Базовый список - все бригадиры
+  let responsibleList = [
+    { value: 0, label: '— выберите ответственного —' },
+    ...employeesStore.items
+      .filter((emp: any) => emp.role === 'brigadier')
+      .map((emp: any) => ({ value: emp.id, label: emp.username }))
+  ]
+
+  if (!objectId) {
+    responsibleOptions.value = responsibleList
+    return
+  }
+
+  employeesLoading.value = true
+  try {
+    // Получаем объект для поиска его ответственного
+    const selectedObject = objectsStore.items.find((obj: any) => obj.id === objectId)
+    const objectResponsibleId = selectedObject?.responsible
+    
+    // Если у объекта есть ответственный, проверяем есть ли он в списке
+    if (objectResponsibleId) {
+      const objectResponsible = employeesStore.items.find((emp: any) => emp.id === objectResponsibleId)
+      if (objectResponsible) {
+        // Проверяем, есть ли уже в списке
+        const alreadyInList = responsibleList.some(item => item.value === objectResponsibleId)
+        if (!alreadyInList) {
+          // Добавляем ответственного за объект в список
+          responsibleList.push({ 
+            value: objectResponsible.id, 
+            label: `${objectResponsible.username} (ответственный за объект)` 
+          })
+        }
+      }
+    }
+    
+    responsibleOptions.value = responsibleList
+    
+    // Получаем всех сотрудников объекта
+    const objectEmployees = getByObject(objectId)
+    const brigadiers = objectEmployees.filter((emp: any) => emp.role === 'brigadier')
+
+    // Автозаполнение ответственного, если не изменен пользователем
+    if (!userModifiedFields.value.responsible) {
+      // Сначала пытаемся найти ответственного за объект
+      if (objectResponsibleId) {
+        formData.value.responsible = objectResponsibleId
+      } else if (brigadiers.length > 0) {
+        // Если нет ответственного за объект, выбираем первого бригадира объекта
+        formData.value.responsible = brigadiers[0].id
+      }
+    }
+  } catch (error) {
+    console.error('Error loading employees by object:', error)
+  } finally {
+    employeesLoading.value = false
+  }
+}
+
+// Event handlers
+const onObjectChange = async () => {
+  const objectId = formData.value.object
+  
+  // Очищаем ошибки при изменении полей
+  clearErrors()
+  
+  // Сбрасываем зависимые поля, если они не изменены пользователем
+  if (!userModifiedFields.value.material) {
+    formData.value.material = null
+  }
+  if (!userModifiedFields.value.unit) {
+    formData.value.unit = 0
+  }
+  if (!userModifiedFields.value.responsible) {
+    formData.value.responsible = 0
+  }
+
+  // Загружаем материалы и сотрудников для выбранного объекта
+  await Promise.all([
+    loadMaterialsByObject(objectId),
+    loadEmployeesByObject(objectId)
+  ])
+}
+
+const onMaterialChange = () => {
+  userModifiedFields.value.material = true
+  clearErrors()
+  
+  // Автозаполнение единицы измерения
+  if (formData.value.material) {
+    const material = materialsStore.items.find((m: Material) => m.id === formData.value.material)
+    if (material && material.default_unit && !userModifiedFields.value.unit) {
+      formData.value.unit = material.default_unit
+    }
+  }
+}
+
+const onUnitChange = () => {
+  userModifiedFields.value.unit = true
+  clearErrors()
+}
+
+const onResponsibleChange = () => {
+  userModifiedFields.value.responsible = true
+  clearErrors()
+}
+
+// Form handlers
+const handleSubmit = async () => {
+  isSubmitting.value = true
+  try {
+    if (props.initial) {
+      const updateData: WriteOffUpdateRequest = { ...formData.value }
+      await writeOffsStore.update(props.initial.id, updateData)
+    } else {
+      await writeOffsStore.create(formData.value)
+    }
+    
+    emit('success')
+  } catch (error) {
+    await handleFormError(error, 'списание')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const closeModal = () => {
+  emit('close')
+}
+
+// Initialize form
+const initializeForm = () => {
+  // Очищаем ошибки при инициализации формы
+  clearErrors()
+  
   if (props.initial) {
-    return {
+    formData.value = {
       date: props.initial.date,
       object: props.initial.object,
       material: props.initial.material,
@@ -297,61 +502,39 @@ const initialData = computed(() => {
       responsible: props.initial.responsible,
       comment: props.initial.comment || ''
     }
+  } else {
+    formData.value = {
+      date: new Date().toISOString().split('T')[0],
+      object: 0,
+      material: null,
+      unit: 0,
+      quantity: '0',
+      stage: 'acceptance',
+      responsible: 0,
+      comment: ''
+    }
   }
-  return {
-    date: new Date().toISOString().split('T')[0],
-    object: 0,
-    material: 0,
-    unit: 0,
-    quantity: '0',
-    stage: 'post_rough',
-    responsible: 0,
-    comment: ''
+  
+  // Reset user modification flags
+  userModifiedFields.value = {
+    material: false,
+    unit: false,
+    responsible: false
+  }
+}
+
+// Watchers
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    initializeForm()
   }
 })
 
-// Form submission handler
-async function handleSubmit(data: WriteOffCreateRequest) {
-  // Update formData for display purposes
-  Object.assign(formData, data)
-  
-  try {
-    if (isEdit.value) {
-      if (props.initial) {
-        const updateData: WriteOffUpdateRequest = { ...data }
-        await writeOffsStore.update(props.initial.id, updateData)
-      } else {
-        const id = parseInt(route.params.id as string)
-        const updateData: WriteOffUpdateRequest = { ...data }
-        await writeOffsStore.update(id, updateData)
-      }
-    } else {
-      await writeOffsStore.create(data)
-    }
-    
-    emit('saved')
-  } catch (error: unknown) {
-    await handleFormError(error)
+watch(() => props.initial, () => {
+  if (props.isOpen) {
+    initializeForm()
   }
-}
-
-function handleCancel() {
-  emit('cancel')
-}
-
-// Watcher для автоматического выбора единицы измерения при выборе материала
-watch(() => formData.material, (materialId) => {
-  if (materialId) {
-    const material = materials.value.find((m: Material) => m.id === materialId)
-    if (material && material.default_unit) {
-      formData.unit = material.default_unit
-      selectedMaterialId.value = materialId
-    }
-  } else {
-    selectedMaterialId.value = 0
-    formData.unit = 0
-  }
-}, { immediate: true })
+})
 
 // Load data on mount
 onMounted(async () => {
@@ -374,51 +557,12 @@ onMounted(async () => {
     try {
       await Promise.all(promises)
     } catch (error) {
-      await handleFormError(error)
+      console.error('Error loading reference data:', error)
     }
-  }
-  
-  // Load initial data if editing
-  if (isEdit.value && props.initial) {
-    Object.assign(formData, {
-      date: props.initial.date,
-      object: props.initial.object,
-      material: props.initial.material,
-      unit: props.initial.unit,
-      quantity: props.initial.quantity,
-      stage: props.initial.stage,
-      responsible: props.initial.responsible,
-      comment: props.initial.comment || ''
-    })
-    currentBalance.value = parseFloat(props.initial.current_balance)
-    validationWarnings.value = props.initial.validation_warnings
   }
 })
-
-// Handle field changes
-function onFieldChange(key: string, value: any) {
-  // Auto-fill unit when material is selected
-  if (key === 'material' && value) {
-    selectedMaterialId.value = value
-    const material = materialsStore.items.find(m => m.id === value)
-    if (material && material.default_unit) {
-      // Обновляем formData напрямую
-      formData.unit = material.default_unit
-      // Также обновляем selectedMaterialId для отображения
-      selectedMaterialId.value = value
-    }
-  } else if (key === 'material' && (value === null || value === 0)) {
-    selectedMaterialId.value = 0
-    formData.unit = 0
-  }
-}
 </script>
 
 <style scoped>
-/* Все стили теперь используют DaisyUI классы */
-.writeoff-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+/* Daisy UI стили уже применены через классы */
 </style>

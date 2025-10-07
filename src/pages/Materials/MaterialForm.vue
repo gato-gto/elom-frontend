@@ -63,9 +63,9 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const materialsStore = useMaterialsStore()
+const materialsStore = useMaterialsStore
 const unitsStore = useUnitsStore
-const materialCategoriesStore = useMaterialCategoriesStore()
+const materialCategoriesStore = useMaterialCategoriesStore
 const {handleFormError} = useErrorHandler()
 
 const deletingPhoto = ref(false)

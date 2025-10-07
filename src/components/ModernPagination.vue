@@ -10,28 +10,28 @@
     <!-- Навигация по страницам -->
     <div class="pagination-nav">
       <!-- Первая страница -->
-      <button
-        class="pagination-btn pagination-btn-nav"
-        :disabled="currentPage === 1"
-        @click="goToPage(1)"
-        title="Первая страница"
-      >
-        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-        </svg>
-      </button>
+<!--      <button-->
+<!--        class="pagination-btn pagination-btn-nav"-->
+<!--        :disabled="currentPage === 1"-->
+<!--        @click="goToPage(1)"-->
+<!--        title="Первая страница"-->
+<!--      >-->
+<!--        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
+<!--          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />-->
+<!--        </svg>-->
+<!--      </button>-->
 
       <!-- Предыдущая страница -->
-      <button
-        class="pagination-btn pagination-btn-nav"
-        :disabled="currentPage === 1"
-        @click="goToPage(currentPage - 1)"
-        title="Предыдущая страница"
-      >
-        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+<!--      <button-->
+<!--        class="pagination-btn pagination-btn-nav"-->
+<!--        :disabled="currentPage === 1"-->
+<!--        @click="goToPage(currentPage - 1)"-->
+<!--        title="Предыдущая страница"-->
+<!--      >-->
+<!--        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
+<!--          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />-->
+<!--        </svg>-->
+<!--      </button>-->
 
       <!-- Номера страниц -->
       <div class="pagination-pages">
@@ -49,28 +49,28 @@
       </div>
 
       <!-- Следующая страница -->
-      <button
-        class="pagination-btn pagination-btn-nav"
-        :disabled="currentPage === totalPages"
-        @click="goToPage(currentPage + 1)"
-        title="Следующая страница"
-      >
-        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+<!--      <button-->
+<!--        class="pagination-btn pagination-btn-nav"-->
+<!--        :disabled="currentPage === totalPages"-->
+<!--        @click="goToPage(currentPage + 1)"-->
+<!--        title="Следующая страница"-->
+<!--      >-->
+<!--        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
+<!--          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />-->
+<!--        </svg>-->
+<!--      </button>-->
 
       <!-- Последняя страница -->
-      <button
-        class="pagination-btn pagination-btn-nav"
-        :disabled="currentPage === totalPages"
-        @click="goToPage(totalPages)"
-        title="Последняя страница"
-      >
-        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-        </svg>
-      </button>
+<!--      <button-->
+<!--        class="pagination-btn pagination-btn-nav"-->
+<!--        :disabled="currentPage === totalPages"-->
+<!--        @click="goToPage(totalPages)"-->
+<!--        title="Последняя страница"-->
+<!--      >-->
+<!--        <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
+<!--          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />-->
+<!--        </svg>-->
+<!--      </button>-->
     </div>
   </div>
 </template>

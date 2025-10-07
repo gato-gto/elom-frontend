@@ -33,13 +33,14 @@ const EmployeeForm = () => import(/* webpackChunkName: "employees" */ '@/pages/E
 
 // Stocks
 const StocksList = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/List.vue')
+const StockBalances = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/Balances.vue')
 
 // WriteOffs
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
 const WriteOffForm = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/WriteOffForm.vue')
 
 // Archive
-const ArchiveList = () => import(/* webpackChunkName: "archive" */ '@/pages/Archive/List.vue')
+const ArchiveList = () => import(/* webpackChunkName: "archive" */ '@/pages/Archive/ListWorking.vue')
 
 // Reports
 const ReportByPeriod = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByPeriod.vue')
@@ -54,8 +55,8 @@ const SupplierForm = () => import(/* webpackChunkName: "suppliers" */ '@/pages/S
 
 // Route configuration with enhanced meta
 const routes = [
-  {
-    path: '/login',
+    {
+        path: '/login',
     name: 'Login',
     component: Login,
     meta: { 
@@ -65,9 +66,9 @@ const routes = [
       description: 'Страница входа в систему ELOM',
       category: 'auth'
     }
-  },
-  {
-    path: '/',
+    },
+    {
+        path: '/',
     redirect: '/purchases'
   },
   
@@ -251,9 +252,9 @@ const routes = [
       icon: 'straighten',
       breadcrumb: 'Единицы измерения',
       description: 'Управление единицами измерения',
-      category: 'settings',
+      category: 'reference_data',
       order: 8,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   {
@@ -264,8 +265,8 @@ const routes = [
       title: 'Новая единица',
       breadcrumb: 'Единицы / Новая',
       description: 'Создание новой единицы измерения',
-      category: 'settings',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   {
@@ -276,8 +277,8 @@ const routes = [
       title: 'Редактировать единицу',
       breadcrumb: 'Единицы / Редактировать',
       description: 'Редактирование существующей единицы измерения',
-      category: 'settings',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   
@@ -291,9 +292,9 @@ const routes = [
       icon: 'people',
       breadcrumb: 'Сотрудники',
       description: 'Управление сотрудниками и пользователями',
-      category: 'users',
+      category: 'reference_data',
       order: 7,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   {
@@ -304,8 +305,8 @@ const routes = [
       title: 'Новый сотрудник',
       breadcrumb: 'Сотрудники / Новый',
       description: 'Создание нового сотрудника',
-      category: 'users',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   {
@@ -316,8 +317,8 @@ const routes = [
       title: 'Редактировать сотрудника',
       breadcrumb: 'Сотрудники / Редактировать',
       description: 'Редактирование существующего сотрудника',
-      category: 'users',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
 
@@ -331,7 +332,7 @@ const routes = [
       icon: 'truck',
       breadcrumb: 'Поставщики',
       description: 'Управление поставщиками',
-      category: 'suppliers',
+      category: 'reference_data',
       order: 5,
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
@@ -344,7 +345,7 @@ const routes = [
       title: 'Новый поставщик',
       breadcrumb: 'Поставщики / Новый',
       description: 'Создание нового поставщика',
-      category: 'suppliers',
+      category: 'reference_data',
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
@@ -356,7 +357,7 @@ const routes = [
       title: 'Редактировать поставщика',
       breadcrumb: 'Поставщики / Редактировать',
       description: 'Редактирование существующего поставщика',
-      category: 'suppliers',
+      category: 'reference_data',
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
@@ -367,13 +368,27 @@ const routes = [
     name: 'StocksList',
     component: StocksList,
     meta: { 
-      title: 'Остатки',
+      title: 'Движения',
       icon: 'warehouse',
-      breadcrumb: 'Остатки',
-      description: 'Управление остатками материалов',
+      breadcrumb: 'Движения',
+      description: 'Журнал движений материалов',
       category: 'inventory',
       order: 6,
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+    }
+  },
+  {
+    path: '/stocks/balances',
+    name: 'StockBalances',
+    component: StockBalances,
+    meta: { 
+      title: 'Остатки',
+      icon: 'inventory_2',
+      breadcrumb: 'Остатки',
+      description: 'Текущие остатки материалов по объектам',
+      category: 'inventory',
+      order: 7,
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
 
@@ -387,8 +402,8 @@ const routes = [
       icon: 'minus-circle',
       breadcrumb: 'Списания',
       description: 'Управление списаниями материалов',
-      category: 'inventory',
-      order: 9,
+      category: 'writeoffs',
+      order: 3,
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
     }
   },
@@ -400,7 +415,7 @@ const routes = [
       title: 'Новое списание',
       breadcrumb: 'Списания / Новое',
       description: 'Создание нового списания',
-      category: 'inventory',
+      category: 'writeoffs',
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
     }
   },
@@ -412,7 +427,7 @@ const routes = [
       title: 'Редактировать списание',
       breadcrumb: 'Списания / Редактировать',
       description: 'Редактирование существующего списания',
-      category: 'inventory',
+      category: 'writeoffs',
       roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
     }
   },
@@ -429,7 +444,7 @@ const routes = [
       description: 'Архивные данные и отчеты',
       category: 'archive',
       order: 10,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
     }
   },
   
@@ -501,8 +516,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
+    history: createWebHistory(),
+    routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -514,8 +529,8 @@ const router = createRouter({
 
 // Simple auth guard
 router.beforeEach(async (to, from, next) => {
-  const auth = useAuthStore()
-  
+    const auth = useAuthStore()
+    
   // Wait for auth store to be initialized
   if (!auth.initialized) {
     try {
@@ -536,7 +551,7 @@ router.beforeEach(async (to, from, next) => {
   }
   
   // Protected routes
-  if (!auth.isAuthenticated) {
+        if (!auth.isAuthenticated) {
     const redirect = encodeURIComponent(to.fullPath)
     next(`/login?redirect=${redirect}`)
     return

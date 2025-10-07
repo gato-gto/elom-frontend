@@ -92,7 +92,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { debounce } from '@/utils/debounce'
-import type { PurchaseSupplier } from '@/api/types'
+import type { PurchaseSupplier } from '@/api/types/suppliers'
 
 const props = defineProps<{
   modelValue?: number | null
@@ -109,7 +109,7 @@ const emit = defineEmits<{
   'change': [supplier: PurchaseSupplier | null]
 }>()
 
-const suppliersStore = useSuppliersStore()
+const suppliersStore = useSuppliersStore
 
 // Reactive state
 const searchQuery = ref('')

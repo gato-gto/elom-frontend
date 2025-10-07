@@ -63,7 +63,7 @@
         :last-updated="new Date().toISOString()"
         @download="handleChartDownload"
       />
-    </div>
+        </div>
 
     <!-- Table -->
     <div class="list-content" :class="{ 'relative': loading }">
@@ -84,11 +84,11 @@
           text="Обновление данных..."
           :overlay="true"
         />
-      </div>
+    </div>
 
       <table class="modern-table">
         <thead>
-          <tr>
+        <tr>
             <th @click="handleSort('period')" class="cursor-pointer hover:bg-gray-50">
               Месяц
               <span v-if="sortBy === 'period'" class="ml-1">
@@ -119,7 +119,7 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-          </tr>
+        </tr>
         </thead>
         
         <!-- Skeleton Loading -->
@@ -137,7 +137,7 @@
             <td class="text-right">{{ r.purchases ?? '—' }}</td>
             <td class="text-right">{{ r.avg_amount ? formatCurrency(r.avg_amount) : '—' }}</td>
             <td class="text-right">{{ r.unique_objects ?? '—' }}</td>
-          </tr>
+        </tr>
           <tr v-if="!loading && rows.length === 0">
             <td colspan="5" class="text-center text-gray-500 py-8">
               <div class="flex flex-col items-center gap-2 empty-state">
@@ -147,16 +147,16 @@
                 <span class="text-sm">Нет данных по периодам</span>
               </div>
             </td>
-          </tr>
+        </tr>
         </tbody>
         <tfoot v-if="total">
-          <tr>
-            <th>Итого</th>
+        <tr>
+          <th>Итого</th>
             <th class="text-right">{{ formatCurrency(total) }}</th>
             <th/>
             <th/>
-            <th/>
-          </tr>
+          <th/>
+        </tr>
         </tfoot>
       </table>
     </div>

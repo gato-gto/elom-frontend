@@ -12,7 +12,7 @@ export interface Material {
   default_unit_code: string;
   description?: string;
   manufacturer?: string;
-  average_price?: string; // decimal as string
+  average_price?: number; // вычисляется динамически через агрегацию
   photo_url?: string;
   is_active: boolean;
   created_date?: string;
@@ -31,7 +31,7 @@ export interface MaterialRequest {
   default_unit: number;
   description?: string;
   manufacturer?: string;
-  average_price?: string;
+  // average_price удалено - вычисляется динамически через агрегацию
   is_active: boolean;
   created_date?: string;
 }
@@ -43,7 +43,7 @@ export interface PatchedMaterialRequest {
   default_unit?: number;
   description?: string;
   manufacturer?: string;
-  average_price?: string;
+  // average_price удалено - вычисляется динамически через агрегацию
   is_active?: boolean;
   created_date?: string;
 }
@@ -55,7 +55,7 @@ export interface MaterialFormData {
   default_unit: number;
   description?: string;
   manufacturer?: string;
-  average_price?: string; // decimal as string
+  // average_price удалено - вычисляется динамически через агрегацию
   is_active: boolean;
 }
 

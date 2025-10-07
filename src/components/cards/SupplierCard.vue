@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import MobileCard from '@/components/MobileCard.vue'
-import type { PurchaseSupplier } from '@/api/types'
+import type { PurchaseSupplier } from '@/api/types/suppliers'
 import { formatDate } from '@/utils/formatters'
 
 interface CardAction {

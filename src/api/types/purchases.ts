@@ -10,7 +10,7 @@ export interface PurchaseItem {
   unit_code: string;
   quantity: string; // decimal as string
   price?: string; // decimal as string, nullable
-  amount: string; // decimal as string
+  amount?: string; // decimal as string, вычисляется динамически
   created_at: string;
   updated_at: string;
 }
@@ -37,7 +37,7 @@ export interface Purchase {
   comment?: string;
   responsible: number;
   responsible_name?: string;
-  total_amount: string; // decimal as string
+  total_amount?: number; // вычисляется динамически через агрегацию
   is_archived: boolean;
   cover_photo_url?: string;
   purchase_no: string;

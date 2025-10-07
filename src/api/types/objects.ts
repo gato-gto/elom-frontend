@@ -63,6 +63,13 @@ export interface ObjectFilterParams extends PaginationParams, SearchParams, Orde
   page_size?: number;
 }
 
+// Responsible person for objects
+export interface ObjectResponsible {
+  id: number;
+  name: string;
+  objects_count: number;
+}
+
 // Paginated response
 export interface PaginatedObjectList {
   count: number;

@@ -37,7 +37,7 @@ export const archivedPurchases = computed(() => {
 
 export const totalAmount = computed(() => {
   return usePurchasesStore.items.reduce((sum: number, purchase: Purchase) => {
-    return sum + parseFloat(purchase.total_amount || '0')
+    return sum + parseFloat(String(purchase.total_amount || '0'))
   }, 0)
 })
 

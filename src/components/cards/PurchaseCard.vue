@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { Purchase } from '@/api/types'
+import { Purchase } from '@/api/types/purchases'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'

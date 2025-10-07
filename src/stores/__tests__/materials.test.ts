@@ -23,7 +23,7 @@ describe('Materials Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     
     expect(store.items).toEqual([])
     expect(store.current).toBeNull()
@@ -33,7 +33,7 @@ describe('Materials Store', () => {
   })
 
   it('fetches materials list successfully', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     const mockResponse = {
       data: {
         count: 2,
@@ -73,7 +73,7 @@ describe('Materials Store', () => {
   })
 
   it('fetches single material successfully', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     const mockMaterial = {
       id: 1,
       name: 'Test Material',
@@ -94,7 +94,7 @@ describe('Materials Store', () => {
   })
 
   it('creates material successfully', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     const materialData = {
       name: 'New Material',
       sku: 'NEW001',
@@ -123,7 +123,7 @@ describe('Materials Store', () => {
   })
 
   it('updates material successfully', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     const updateData = {
       name: 'Updated Material',
       is_active: false
@@ -151,7 +151,7 @@ describe('Materials Store', () => {
   })
 
   it('deletes material successfully', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
     
@@ -161,7 +161,7 @@ describe('Materials Store', () => {
   })
 
   it('uploads photo successfully', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
     const mockResponse = {
       data: {
@@ -178,7 +178,7 @@ describe('Materials Store', () => {
   })
 
   it('handles API errors correctly', async () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     const errorResponse = {
       response: {
         data: {
@@ -196,7 +196,7 @@ describe('Materials Store', () => {
   })
 
   it('sets filters correctly', () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     
     store.setFilters({
       search: 'test',
@@ -208,7 +208,7 @@ describe('Materials Store', () => {
   })
 
   it('resets filters correctly', () => {
-    const store = useMaterialsStore()
+    const store = useMaterialsStore
     store.setFilters({ search: 'test' })
     
     store.resetFilters()

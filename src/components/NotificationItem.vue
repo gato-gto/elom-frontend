@@ -97,7 +97,8 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import type { Notification, ID } from '@/api/types'
+import type { Notification } from '@/api/types/notifications'
+import type { ID } from '@/api/types/common'
 import { formatDateTime } from '@/utils/formatters'
 
 interface Props {

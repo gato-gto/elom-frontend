@@ -72,8 +72,8 @@ import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
 const auth = useAuthStore()
-const materialsStore = useMaterialsStore()
-const materialCategoriesStore = useMaterialCategoriesStore()
+const materialsStore = useMaterialsStore
+const materialCategoriesStore = useMaterialCategoriesStore
 
 // Используем новый композабл для обработки ошибок
 const { handleLoadingError, handleDeleteError } = useErrorHandler()

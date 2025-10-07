@@ -417,10 +417,22 @@ models.Index(fields=["source_type", "source_id"])
 
 ## Расширение моделей
 
+### Реализованные дополнения
+1. **Архивные периоды**: Модель `ArchivePeriod` для закрытия периодов ✅
+   ```python
+   class ArchivePeriod(models.Model):
+       month = models.DateField()  # Первое число месяца
+       object = models.ForeignKey(Object, on_delete=models.PROTECT)
+       closed_at = models.DateTimeField(auto_now_add=True)
+       closed_by = models.ForeignKey(User, on_delete=models.PROTECT)
+       
+       class Meta:
+           unique_together = ("month", "object")
+   ```
+2. **Аудит**: Расширенное логирование изменений ✅
+
 ### Планируемые дополнения
-1. **Архивные периоды**: Модель для закрытия периодов
-2. **Уведомления**: Система внутренних уведомлений
-3. **Отчеты**: Модели для кэширования отчетов
-4. **Аудит**: Расширенное логирование изменений
-5. **Интеграции**: Модели для внешних интеграций
+1. **Уведомления**: Система внутренних уведомлений
+2. **Отчеты**: Модели для кэширования отчетов
+3. **Интеграции**: Модели для внешних интеграций
 

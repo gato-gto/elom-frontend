@@ -24,7 +24,7 @@ import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 
-const suppliersStore = useSuppliersStore()
+const suppliersStore = useSuppliersStore
 const { handleFormError } = useErrorHandler()
 
 const props = defineProps<{

@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { SiteObject } from '@/api/types'
+import { SiteObject } from '@/api/types/objects'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'

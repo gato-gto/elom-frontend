@@ -231,7 +231,7 @@ import type { MaterialCategory } from '@/api/types'
 
 const route = useRoute()
 const router = useRouter()
-const materialCategoriesStore = useMaterialCategoriesStore()
+const materialCategoriesStore = useMaterialCategoriesStore
 
 const categoryId = computed(() => Number(route.params.id))
 const category = computed(() => materialCategoriesStore.items.find(c => c.id === categoryId.value))

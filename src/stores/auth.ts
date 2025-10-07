@@ -2,7 +2,7 @@
 import {defineStore} from 'pinia'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
-import type {Me } from '@/api/types'
+import type { Me } from '@/api/types/employees'
 
 type Tokens = { access: string; refresh: string }
 

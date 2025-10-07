@@ -20,7 +20,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const router = useRouter()
 const route = useRoute()
-const materialCategoriesStore = useMaterialCategoriesStore()
+const materialCategoriesStore = useMaterialCategoriesStore
 
 // Используем новый композабл для обработки ошибок
 const { handleFormError } = useErrorHandler()
@@ -54,7 +54,7 @@ const formConfig: GenericFormConfig = {
       required: false,
       options: [
         { value: '', label: 'Без родительской категории' },
-        ...materialCategoriesStore.selectOptions.filter(option => 
+        ...materialCategoriesStore.selectOptions.filter((option: any) => 
           !isEdit.value || option.value !== categoryId.value
         )
       ],

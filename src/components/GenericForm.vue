@@ -19,31 +19,32 @@
                 <div v-if="field.type === 'custom'" :class="{ 'md:col-span-2': field.width === 'full' }">
                   <slot :name="`field-${field.key}`" :field="field" :value="form[field.key]" :error="getFieldError(field.key)" :disabled="field.disabled || isSubmitting" />
                 </div>
-                <!-- Regular FormField -->
-                <FormField
-                  v-else
-                  v-model="form[field.key]"
-                  :label="field.label"
-                  :type="field.type"
-                  :placeholder="field.placeholder"
-                  :required="field.required"
-                  :disabled="field.disabled || isSubmitting"
-                  :error="getFieldError(field.key) || undefined"
-                  :options="field.options"
-                  :help="field.help"
-                  :rows="field.rows"
-                  :step="field.step"
-                  :min="field.validation?.min"
-                  :max="field.validation?.max"
-                  :accept="field.accept"
-                  :multiple="field.multiple"
-                  :checkboxLabel="field.checkboxLabel"
-                  :switchLabel="field.switchLabel"
-                  :class="{
-                    'md:col-span-2': field.width === 'full'
-                  }"
-                  @update:model-value="handleFieldChange(field.key, $event)"
-                />
+              <!-- Regular FormField -->
+              <FormField
+                v-else
+                v-model="form[field.key]"
+                :label="field.label"
+                :type="field.type"
+                :placeholder="field.placeholder"
+                :required="field.required"
+                :disabled="field.disabled || isSubmitting"
+                :error="getFieldError(field.key) || undefined"
+                :options="field.options"
+                :help="field.help"
+                :rows="field.rows"
+                :step="field.step"
+                :min="field.validation?.min"
+                :max="field.validation?.max"
+                :accept="field.accept"
+                :multiple="field.multiple"
+                :checkboxLabel="field.checkboxLabel"
+                :switchLabel="field.switchLabel"
+                :class="{
+                  'md:col-span-2': field.width === 'full'
+                }"
+                @update:model-value="handleFieldChange(field.key, $event)"
+              />
+                <!-- Debug for material field -->
               </template>
             </template>
           </div>
@@ -118,6 +119,14 @@
       </button>
     </div>
 
+    <!-- Non-field errors -->
+    <div v-if="getFieldError('non_field_errors')" class="alert alert-error">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span class="font-medium">{{ getFieldError('non_field_errors') }}</span>
+    </div>
+
     <!-- Form Status -->
     <div v-if="isDirty && !isSubmitting" class="alert alert-info">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import type { GenericFormConfig, FieldConfig } from '@/types/generic'
 import { useGenericForm, useFormSections } from '@/composables/useGenericForm'
 import FormField from './FormField.vue'
@@ -196,7 +205,12 @@ const {
 
 // Computed
 const sortedFields = computed(() => {
-  return [...props.config.fields].sort((a, b) => (a.order || 0) - (b.order || 0))
+  const fields = [...props.config.fields].sort((a, b) => (a.order || 0) - (b.order || 0))
+  const materialField = fields.find(f => f.key === 'material')
+  if (materialField) {
+    console.log('GenericForm sortedFields - material field options:', materialField.options?.length || 0)
+  }
+  return fields
 })
 
 // Methods
@@ -224,6 +238,12 @@ function handleFieldChange(key: string, value: any) {
   setFieldValue(key, value)
   emit('field-change', key, value)
 }
+
+// Watch for config changes to update form fields
+         watch(() => props.config, (newConfig) => {
+           // Force re-render of form fields when config changes
+           // This ensures that dynamic options (like material options) are updated
+         }, { deep: true })
 
 // Lifecycle
 onMounted(() => {

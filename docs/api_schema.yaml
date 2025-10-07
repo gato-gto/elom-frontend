@@ -1268,6 +1268,36 @@ paths:
               schema:
                 description: Количество обновленных материалов
           description: ''
+  /api/v1/materials/by-object/:
+    get:
+      operationId: materials_by_object
+      description: Получить список материалов, которые были закуплены для указанного
+        объекта
+      summary: Материалы по объекту
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+          default: true
+        description: Только активные материалы
+      - in: query
+        name: object_id
+        schema:
+          type: integer
+        description: ID объекта
+        required: true
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialLite'
+          description: ''
   /api/v1/materials/lite/:
     get:
       operationId: materials_lite
@@ -3517,6 +3547,34 @@ paths:
                     total_written_off: '24.500'
                   summary: Пример ответа
           description: ''
+  /api/v1/stock/snapshots/by-objects/:
+    get:
+      operationId: stock_snapshots_by_objects_retrieve
+      description: Получить текущие остатки всех материалов по объектам
+      summary: Получить остатки по объектам
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+        description: Дата расчета (YYYY-MM-DD, опционально)
+      - in: query
+        name: object_id
+        schema:
+          type: integer
+        description: ID объекта (опционально)
+      tags:
+      - Stock
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/v1/stock/snapshots/history/:
     get:
       operationId: stock_snapshots_history_retrieve
@@ -4458,7 +4516,7 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          nullable: true
+          readOnly: true
         purchases_count:
           type: integer
           readOnly: true
@@ -4485,6 +4543,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - average_price
       - category_name
       - created_at
       - current_stock
@@ -4635,11 +4694,6 @@ components:
           type: string
         manufacturer:
           type: string
-        average_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          nullable: true
       required:
       - default_unit
       - name
@@ -4677,7 +4731,13 @@ components:
           format: decimal
           pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
           readOnly: true
+        average_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
       required:
+      - average_price
       - category_name
       - current_stock
       - id
@@ -4753,6 +4813,11 @@ components:
           type: integer
           nullable: true
           description: Ответственный (только бригадир)
+        responsible_name:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Имя ответственного
         date_start:
           type: string
           format: date
@@ -5194,11 +5259,6 @@ components:
           type: string
         manufacturer:
           type: string
-        average_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          nullable: true
     PatchedObjectRequest:
       type: object
       properties:
@@ -5294,6 +5354,7 @@ components:
           type: boolean
     PatchedPurchaseRequest:
       type: object
+      description: Миксин для валидации закупок
       properties:
         date:
           type: string
@@ -5314,10 +5375,6 @@ components:
           type: string
         responsible:
           type: integer
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
         is_archived:
           type: boolean
         status:
@@ -5480,6 +5537,7 @@ components:
           description: Архивировано
     Purchase:
       type: object
+      description: Миксин для валидации закупок
       properties:
         id:
           type: integer
@@ -5512,6 +5570,7 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
         is_archived:
           type: boolean
         status:
@@ -5561,6 +5620,7 @@ components:
       - responsible
       - supplier
       - supplier_name
+      - total_amount
       - updated_at
     PurchaseBulkArchiveRequest:
       type: object
@@ -5694,7 +5754,7 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          description: Общая сумма (quantity * price)
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -5704,6 +5764,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - amount
       - created_at
       - id
       - material_name
@@ -5786,11 +5847,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           description: Цена за единицу
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          description: Общая сумма (quantity * price)
       required:
       - quantity
       - unit
@@ -5946,6 +6002,7 @@ components:
       - purchase
     PurchaseRequest:
       type: object
+      description: Миксин для валидации закупок
       properties:
         date:
           type: string
@@ -5966,10 +6023,6 @@ components:
           type: string
         responsible:
           type: integer
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
         is_archived:
           type: boolean
         status:
