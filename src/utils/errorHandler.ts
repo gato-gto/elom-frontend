@@ -9,21 +9,28 @@ function parseNestedErrors(errors: any): Record<string, string[]> {
   
   for (const [key, value] of Object.entries(errors)) {
     if (Array.isArray(value)) {
-      // Обрабатываем массивы (например, items)
-      value.forEach((item, index) => {
-        if (typeof item === 'object' && item !== null) {
-          // Обрабатываем объекты в массиве
-          for (const [fieldKey, fieldErrors] of Object.entries(item)) {
-            if (Array.isArray(fieldErrors)) {
-              const nestedKey = `${key}[${index}].${fieldKey}`
-              result[nestedKey] = fieldErrors as string[]
+      // Проверяем, является ли это массивом ошибок для одного поля
+      // (например, ["error1", "error2"]) или массивом объектов
+      if (value.length > 0 && typeof value[0] === 'string') {
+        // Это массив строк - ошибки для одного поля
+        result[key] = value as string[]
+      } else {
+        // Это массив объектов - обрабатываем как вложенную структуру
+        value.forEach((item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            // Обрабатываем объекты в массиве
+            for (const [fieldKey, fieldErrors] of Object.entries(item)) {
+              if (Array.isArray(fieldErrors)) {
+                const nestedKey = `${key}[${index}].${fieldKey}`
+                result[nestedKey] = fieldErrors as string[]
+              }
             }
+          } else if (typeof item === 'string') {
+            // Простые строки в массиве
+            result[`${key}[${index}]`] = [item]
           }
-        } else if (typeof item === 'string') {
-          // Простые строки в массиве
-          result[`${key}[${index}]`] = [item]
-        }
-      })
+        })
+      }
     } else if (typeof value === 'object' && value !== null) {
       // Обрабатываем объекты
       for (const [nestedKey, nestedValue] of Object.entries(value)) {
@@ -31,9 +38,6 @@ function parseNestedErrors(errors: any): Record<string, string[]> {
           result[`${key}.${nestedKey}`] = nestedValue as string[]
         }
       }
-    } else if (Array.isArray(value)) {
-      // Простые массивы строк
-      result[key] = value as string[]
     } else if (typeof value === 'string') {
       // Простые строки
       result[key] = [value]

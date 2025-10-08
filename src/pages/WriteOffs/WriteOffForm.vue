@@ -5,7 +5,7 @@
     @close="closeModal"
   >
     <div class="space-y-6">
-      <div>
+          <div>
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Информация о списании
         </h2>
@@ -56,7 +56,7 @@
               {{ errors.object[0] }}
             </span>
           </div>
-        </div>
+            </div>
 
         <!-- Материал -->
         <div class="form-control w-full">
@@ -121,8 +121,8 @@
             <span class="label-text-alt text-error">
               {{ errors.unit[0] }}
             </span>
-          </div>
-        </div>
+      </div>
+    </div>
 
         <!-- Количество -->
         <div class="form-control w-full">
@@ -190,8 +190,8 @@
             <span class="label-text-alt text-error">
               {{ errors.responsible[0] }}
             </span>
-          </div>
-        </div>
+      </div>
+    </div>
 
         <!-- Комментарий -->
         <div class="form-control w-full">
@@ -237,7 +237,7 @@
           >
             {{ isSubmitting ? 'Сохранение...' : (props.initial ? 'Обновить' : 'Создать') }}
           </button>
-        </div>
+      </div>
       </form>
     </div>
   </Modal>
@@ -257,8 +257,8 @@ import type {
   WriteOff, 
   WriteOffCreateRequest, 
   WriteOffUpdateRequest,
-  SiteObject,
-  Material,
+  SiteObject, 
+  Material, 
   Employee,
   Unit
 } from '@/api/types'
@@ -332,20 +332,30 @@ const isUnitDisabled = computed(() => {
 
 // Data loading functions
 const loadMaterialsByObject = async (objectId: number) => {
-  if (!objectId) {
-    materialOptions.value = [
-      { value: 0, label: '— выберите материал —' }
-    ]
-    return
-  }
-
   materialsLoading.value = true
   try {
+    if (!objectId) {
+      materialOptions.value = [
+        { value: 0, label: '— выберите материал —' }
+      ]
+      return
+    }
+
     const materials = await getMaterialsByObject(objectId)
-    materialOptions.value = [
+    let materialList = [
       { value: 0, label: '— выберите материал —' },
       ...materials.map((m: Material) => ({ value: m.id, label: m.name }))
     ]
+    
+    // При редактировании добавляем текущий материал, если его нет в списке
+    if (props.initial && props.initial.material) {
+      const currentMaterial = materialsStore.items.find((m: Material) => m.id === props.initial!.material)
+      if (currentMaterial && !materials.some(m => m.id === props.initial!.material)) {
+        materialList.push({ value: currentMaterial.id, label: `${currentMaterial.name} (недоступен для объекта)` })
+      }
+    }
+    
+    materialOptions.value = materialList
   } catch (error) {
     console.error('Error loading materials by object:', error)
     materialOptions.value = [
@@ -357,21 +367,21 @@ const loadMaterialsByObject = async (objectId: number) => {
 }
 
 const loadEmployeesByObject = async (objectId: number) => {
-  // Базовый список - все бригадиры
-  let responsibleList = [
-    { value: 0, label: '— выберите ответственного —' },
-    ...employeesStore.items
-      .filter((emp: any) => emp.role === 'brigadier')
-      .map((emp: any) => ({ value: emp.id, label: emp.username }))
-  ]
-
-  if (!objectId) {
-    responsibleOptions.value = responsibleList
-    return
-  }
-
   employeesLoading.value = true
   try {
+    // Базовый список - все бригадиры
+    let responsibleList = [
+      { value: 0, label: '— выберите ответственного —' },
+      ...employeesStore.items
+        .filter((emp: any) => emp.role === 'brigadier')
+        .map((emp: any) => ({ value: emp.id, label: emp.username }))
+    ]
+
+    if (!objectId) {
+      responsibleOptions.value = responsibleList
+      return
+    }
+
     // Получаем объект для поиска его ответственного
     const selectedObject = objectsStore.items.find((obj: any) => obj.id === objectId)
     const objectResponsibleId = selectedObject?.responsible
@@ -389,6 +399,17 @@ const loadEmployeesByObject = async (objectId: number) => {
             label: `${objectResponsible.username} (ответственный за объект)` 
           })
         }
+      }
+    }
+    
+    // При редактировании добавляем текущего ответственного, если его нет в списке
+    if (props.initial && props.initial.responsible) {
+      const currentResponsible = employeesStore.items.find((emp: any) => emp.id === props.initial!.responsible)
+      if (currentResponsible && !responsibleList.some(item => item.value === props.initial!.responsible)) {
+        responsibleList.push({ 
+          value: currentResponsible.id, 
+          label: `${currentResponsible.username} (текущий ответственный)` 
+        })
       }
     }
     
@@ -487,7 +508,7 @@ const closeModal = () => {
 }
 
 // Initialize form
-const initializeForm = () => {
+const initializeForm = async () => {
   // Очищаем ошибки при инициализации формы
   clearErrors()
   
@@ -502,17 +523,39 @@ const initializeForm = () => {
       responsible: props.initial.responsible,
       comment: props.initial.comment || ''
     }
+    
+    // Загружаем данные для выбранного объекта при редактировании
+    if (props.initial.object) {
+      // Временно помечаем поля как измененные пользователем, чтобы не перезаписывать значения
+      const wasMaterialModified = userModifiedFields.value.material
+      const wasUnitModified = userModifiedFields.value.unit
+      const wasResponsibleModified = userModifiedFields.value.responsible
+      
+      userModifiedFields.value.material = true
+      userModifiedFields.value.unit = true
+      userModifiedFields.value.responsible = true
+      
+      await Promise.all([
+        loadMaterialsByObject(props.initial.object),
+        loadEmployeesByObject(props.initial.object)
+      ])
+      
+      // Восстанавливаем флаги модификации
+      userModifiedFields.value.material = wasMaterialModified
+      userModifiedFields.value.unit = wasUnitModified
+      userModifiedFields.value.responsible = wasResponsibleModified
+    }
   } else {
     formData.value = {
-      date: new Date().toISOString().split('T')[0],
-      object: 0,
+    date: new Date().toISOString().split('T')[0],
+    object: 0,
       material: null,
-      unit: 0,
-      quantity: '0',
+    unit: 0,
+    quantity: '0',
       stage: 'acceptance',
-      responsible: 0,
-      comment: ''
-    }
+    responsible: 0,
+    comment: ''
+  }
   }
   
   // Reset user modification flags
@@ -524,15 +567,15 @@ const initializeForm = () => {
 }
 
 // Watchers
-watch(() => props.isOpen, (isOpen) => {
+watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
-    initializeForm()
+    await initializeForm()
   }
 })
 
-watch(() => props.initial, () => {
+watch(() => props.initial, async () => {
   if (props.isOpen) {
-    initializeForm()
+    await initializeForm()
   }
 })
 
