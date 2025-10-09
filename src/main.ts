@@ -32,7 +32,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 
 // Регистрируем stores для доступа из API клиента
-if (!window.__piniaStores) window.__piniaStores = {}
+if (!window.__piniaStores) {window.__piniaStores = {}}
 window.__piniaStores.auth = { useAuthStore }
 window.__piniaStores.ui = { useUiStore }
 

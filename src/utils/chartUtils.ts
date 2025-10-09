@@ -394,7 +394,7 @@ export function createDoughnutChartConfig(
 
 // Utility to truncate long labels
 export function truncateLabel(label: string, maxLength: number = 20): string {
-  if (label.length <= maxLength) return label
+  if (label.length <= maxLength) {return label}
   return label.substring(0, maxLength - 3) + '...'
 }
 

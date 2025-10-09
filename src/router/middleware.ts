@@ -142,7 +142,7 @@ export function applyMiddleware(
   let isCompleted = false
 
   function runNext() {
-    if (isCompleted) return
+    if (isCompleted) {return}
     
     if (index >= middlewares.length) {
       isCompleted = true
@@ -154,7 +154,7 @@ export function applyMiddleware(
     
     try {
       const result = middleware(to, from, (location?: any) => {
-        if (isCompleted) return
+        if (isCompleted) {return}
         isCompleted = true
         
         if (location) {
@@ -167,21 +167,21 @@ export function applyMiddleware(
       // Handle async middleware
       if (result instanceof Promise) {
         result.then(() => {
-          if (isCompleted) return
+          if (isCompleted) {return}
           runNext()
         }).catch((error) => {
-          if (isCompleted) return
+          if (isCompleted) {return}
           isCompleted = true
           console.error('Middleware error:', error)
           next('/purchases')
         })
       } else if (result === undefined) {
         // Synchronous middleware completed without calling next
-        if (isCompleted) return
+        if (isCompleted) {return}
         runNext()
       }
     } catch (error) {
-      if (isCompleted) return
+      if (isCompleted) {return}
       isCompleted = true
       console.error('Middleware error:', error)
       next('/purchases')
@@ -199,16 +199,16 @@ export function applyMiddleware(
 
 // Helper function to check if user has required role
 export function hasRequiredRole(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) return false
+  if (!userRole || !requiredRoles.length) {return false}
   return requiredRoles.includes(userRole)
 }
 
 // Helper function to get accessible routes for user
 export function getAccessibleRoutes(routes: any[], userRole: UserRole | null): any[] {
   return routes.filter(route => {
-    if (route.meta?.public) return true
-    if (!route.meta?.roles) return true
-    if (!userRole) return false
+    if (route.meta?.public) {return true}
+    if (!route.meta?.roles) {return true}
+    if (!userRole) {return false}
     
     return hasRequiredRole(userRole, route.meta.roles)
   })

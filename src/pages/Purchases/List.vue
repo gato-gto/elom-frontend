@@ -232,7 +232,7 @@ async function handleAction(action: string, item: Purchase) {
 }
 
 async function handleDelete(purchase: Purchase) {
-  if (!confirm(`Удалить закупку "${purchase.purchase_no || '#' + purchase.id}"?`)) return
+  if (!confirm(`Удалить закупку "${purchase.purchase_no || '#' + purchase.id}"?`)) {return}
   
   try {
     await purchasesStore.delete(purchase.id)

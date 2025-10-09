@@ -377,7 +377,7 @@ const chartLegendItems = computed(() => [
 ])
 
 const chartStats = computed(() => {
-  if (rows.value.length === 0) return undefined
+  if (rows.value.length === 0) {return undefined}
   
   const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
   const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)

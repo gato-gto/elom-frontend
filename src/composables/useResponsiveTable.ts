@@ -34,14 +34,14 @@ export function useResponsiveTable() {
 export function useMobileCardHelpers() {
   // Форматирование суммы
   const formatAmount = (amount: string | number, currency = 'UZS') => {
-    if (!amount) return '0'
+    if (!amount) {return '0'}
     const num = typeof amount === 'string' ? parseFloat(amount) : amount
     return new Intl.NumberFormat('ru-RU').format(num) + ` ${currency}`
   }
   
   // Форматирование даты
   const formatDate = (date: string | null) => {
-    if (!date) return '—'
+    if (!date) {return '—'}
     return new Date(date).toLocaleDateString('ru-RU')
   }
   
@@ -85,7 +85,7 @@ export function useMobileCardHelpers() {
   
   // Усечение длинного текста
   const truncateText = (text: string, maxLength = 50) => {
-    if (!text || text.length <= maxLength) return text
+    if (!text || text.length <= maxLength) {return text}
     return text.substring(0, maxLength) + '...'
   }
   

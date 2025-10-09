@@ -62,7 +62,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
 
 // Helper function to check if user has required role or higher
 export function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole) return false
+  if (!userRole) {return false}
   
   const userLevel = ROLE_HIERARCHY[userRole]
   return requiredRoles.some(role => userLevel >= ROLE_HIERARCHY[role])
@@ -71,9 +71,9 @@ export function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole
 // Helper function to get accessible routes for user
 export function getAccessibleRoutes(routes: AppRouteRecordRaw[], userRole: UserRole | null): AppRouteRecordRaw[] {
   return routes.filter(route => {
-    if (route.meta?.public) return true
-    if (!route.meta?.auth && !route.meta?.roles) return true
-    if (!userRole) return false
+    if (route.meta?.public) {return true}
+    if (!route.meta?.auth && !route.meta?.roles) {return true}
+    if (!userRole) {return false}
     
     if (route.meta?.roles) {
       return hasRoleAccess(userRole, route.meta.roles)

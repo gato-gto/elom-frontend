@@ -62,6 +62,7 @@ global.URL.createObjectURL = vi.fn(() => 'mock-url')
 global.URL.revokeObjectURL = vi.fn()
 
 // Mock canvas for PDF generation
+// eslint-disable-next-line no-undef
 Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
   value: vi.fn(() => 'data:image/png;base64,test')
 })

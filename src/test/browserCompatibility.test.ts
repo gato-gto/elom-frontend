@@ -70,6 +70,18 @@ describe('Browser Compatibility', () => {
       expect(support.backdropFilter).toBe(true)
     })
 
+    it('should detect webkit backdrop filter support (Safari)', () => {
+      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
+        if (prop === '-webkit-backdrop-filter' && value === 'blur(1px)') {
+          return true
+        }
+        return false
+      })
+
+      const support = browserSupport.getSupport()
+      expect(support.backdropFilter).toBe(true)
+    })
+
     it('should detect lack of backdrop filter support', () => {
       mockWindow.CSS.supports.mockImplementation(() => false)
 
@@ -185,9 +197,9 @@ describe('Browser Compatibility', () => {
       // Мокаем Function constructor для тестирования ES6
       const originalFunction = window.Function
       window.Function = vi.fn().mockImplementation((code: string) => {
-        if (code.includes('() => "test"')) return () => 'test'
-        if (code.includes('const x = 1')) return () => 1
-        if (code.includes('`test-${1}`')) return () => 'test-1'
+        if (code.includes('() => "test"')) {return () => 'test'}
+        if (code.includes('const x = 1')) {return () => 1}
+        if (code.includes('`test-${1}`')) {return () => 'test-1'}
         return originalFunction(code)
       }) as any
 
@@ -225,9 +237,9 @@ describe('Browser Compatibility', () => {
       // Мокаем Function для ES6 поддержки
       const originalFunction = window.Function
       window.Function = vi.fn().mockImplementation((code: string) => {
-        if (code.includes('() => "test"')) return () => 'test'
-        if (code.includes('const x = 1')) return () => 1
-        if (code.includes('`test-${1}`')) return () => 'test-1'
+        if (code.includes('() => "test"')) {return () => 'test'}
+        if (code.includes('const x = 1')) {return () => 1}
+        if (code.includes('`test-${1}`')) {return () => 'test-1'}
         return originalFunction(code)
       }) as any
 
@@ -261,6 +273,24 @@ describe('Browser Compatibility', () => {
 
       const recommendations = browserSupport.getRecommendations()
       expect(recommendations).toContain('CSS Variables not supported - some themes may not work correctly')
+    })
+
+    it('should NOT show backdrop filter warning for Safari', () => {
+      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
+      
+      // Эмулируем Safari с webkit-backdrop-filter, но без стандартного backdrop-filter
+      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
+        if (prop === '-webkit-backdrop-filter' && value === 'blur(1px)') {
+          return true
+        }
+        if (prop === 'backdrop-filter' && value === 'blur(1px)') {
+          return false
+        }
+        return true
+      })
+
+      const recommendations = browserSupport.getRecommendations()
+      expect(recommendations).not.toContain('Backdrop filter not supported - some visual effects will be disabled')
     })
 
     it('should provide IE specific recommendations', () => {

@@ -54,12 +54,6 @@
           <span class="font-medium ml-2">{{ truncateText(writeOff.comment, 80) }}</span>
         </div>
         
-        <div v-if="writeOff.validation_warnings && writeOff.validation_warnings.length > 0">
-          <span class="text-gray-500">Предупреждения:</span>
-          <span class="font-medium ml-2 text-warning">
-            {{ writeOff.validation_warnings.join(', ') }}
-          </span>
-        </div>
         
         <div v-if="writeOff.smart_quantity">
           <span class="text-gray-500">Умная конвертация:</span>

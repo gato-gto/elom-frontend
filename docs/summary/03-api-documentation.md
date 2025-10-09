@@ -724,7 +724,6 @@ Authorization: Bearer <access_token>
                 "display_unit": "кг",
                 "conversion_applied": false
             },
-            "validation_warnings": [],
             "created_at": "2024-01-20T00:00:00Z",
             "updated_at": "2024-01-20T00:00:00Z"
         }
@@ -749,6 +748,27 @@ Content-Type: application/json
     "comment": "Списание после работ"
 }
 ```
+
+### 3. Получение текущего остатка
+```http
+GET /stock/snapshots/balance/?object_id=1&material_id=1&date=2024-01-20
+Authorization: Bearer <access_token>
+```
+
+**Параметры запроса:**
+- `object_id` (required): ID объекта
+- `material_id` (required): ID материала
+- `date` (optional): Дата для расчета остатка (по умолчанию: сегодня)
+
+**Ответ:**
+```json
+{
+    "current_balance": "1500.000000"
+}
+```
+
+**Описание:**
+Этот endpoint возвращает текущий остаток материала на объекте на указанную дату. Используется в форме списаний для отображения актуального остатка перед операцией списания.
 
 ## Единицы измерения
 

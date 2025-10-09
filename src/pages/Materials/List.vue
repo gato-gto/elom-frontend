@@ -200,7 +200,7 @@ async function handleAction(action: string, item: Material) {
 }
 
 async function handleDelete(material: Material) {
-  if (!confirm(`Удалить материал "${material.name}"?`)) return
+  if (!confirm(`Удалить материал "${material.name}"?`)) {return}
   
   try {
     await materialsStore.delete(material.id)

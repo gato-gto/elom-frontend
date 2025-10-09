@@ -3,6 +3,7 @@
  */
 
 import { parseNestedErrors } from '@/utils/errorHandler'
+import { describe, test, expect } from 'vitest'
 
 describe('Validation Error Parsing', () => {
   test('should parse simple field errors', () => {

@@ -217,7 +217,7 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
 // Methods
 function formatQuantity(quantity: string): string {
   const num = parseFloat(quantity)
-  if (isNaN(num)) return '0'
+  if (isNaN(num)) {return '0'}
   
   // Форматируем с учетом количества знаков после запятой
   if (num % 1 === 0) {
@@ -269,8 +269,8 @@ function sortMaterials(materials: MaterialBalance[]): MaterialBalance[] {
         return 0
     }
     
-    if (aValue < bValue) return materialsSortOrder.value === 'asc' ? -1 : 1
-    if (aValue > bValue) return materialsSortOrder.value === 'asc' ? 1 : -1
+    if (aValue < bValue) {return materialsSortOrder.value === 'asc' ? -1 : 1}
+    if (aValue > bValue) {return materialsSortOrder.value === 'asc' ? 1 : -1}
     return 0
   })
 }

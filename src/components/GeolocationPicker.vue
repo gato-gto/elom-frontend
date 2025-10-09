@@ -193,7 +193,7 @@ function toggleMapView() {
 }
 
 async function initMap() {
-  if (!mapContainer.value) return
+  if (!mapContainer.value) {return}
 
   mapLoading.value = true
   mapError.value = ''
@@ -256,7 +256,7 @@ function loadYandexMapsAPI(): Promise<void> {
 }
 
 function addPlacemark(coords: number[]) {
-  if (!yandexMap.value) return
+  if (!yandexMap.value) {return}
 
   // Удаляем существующую метку
   if (placemark.value) {

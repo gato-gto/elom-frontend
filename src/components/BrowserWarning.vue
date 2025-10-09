@@ -14,8 +14,8 @@
           </ul>
           <p class="mt-2">
             Для лучшего опыта рекомендуем использовать 
-            <strong>Chrome 80+</strong>, <strong>Firefox 78+</strong>, 
-            <strong>Safari 13.1+</strong> или <strong>Edge 80+</strong>.
+            <strong>Chrome 90+</strong>, <strong>Firefox 88+</strong>, 
+            <strong>Safari 14+</strong> или <strong>Edge 90+</strong>.
           </p>
         </div>
       </div>
@@ -39,7 +39,7 @@ const recommendations = ref<string[]>([])
 onMounted(() => {
   // Проверяем, не было ли предупреждение уже отклонено
   const dismissed = localStorage.getItem('browser-warning-dismissed')
-  if (dismissed) return
+  if (dismissed) {return}
 
   // Получаем информацию о браузере
   browserInfo.value = browserSupport.getBrowserInfo()

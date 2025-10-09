@@ -93,8 +93,8 @@ export default {
     // Отключаем неиспользуемые компоненты для устранения предупреждений
     components: {
       // Отключаем компоненты, которые используют @property
-      "progress": false,
-      "radial-progress": false,
+     // "progress": false,
+     // "radial-progress": false,
     }
   },
 }

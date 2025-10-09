@@ -189,7 +189,7 @@ watch(() => props.modelValue, (newValue) => {
 }, { immediate: true })
 
 async function searchMaterials(query: string) {
-  if (query.length < 2) return
+  if (query.length < 2) {return}
   
   loading.value = true
   try {

@@ -54,13 +54,6 @@
         <span>{{ responsibleName(value) ?? '—' }}</span>
       </template>
 
-      <!-- Custom column for validation warnings -->
-      <template #column-validation_warnings="{ item, value }">
-        <span v-if="value && value.length > 0" class="badge badge-warning badge-xs">
-          {{ value.length }} предупреждений
-        </span>
-        <span v-else class="text-gray-400">—</span>
-      </template>
     </GenericList>
 
     <!-- WriteOffForm Modal -->
@@ -195,7 +188,6 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
     { key: 'stage', label: 'Этап', sortable: true },
     { key: 'current_balance', label: 'Остаток', sortable: true },
     { key: 'responsible', label: 'Ответственный', sortable: true },
-    { key: 'validation_warnings', label: 'Предупреждения', sortable: false }
   ],
   filters: [
     {

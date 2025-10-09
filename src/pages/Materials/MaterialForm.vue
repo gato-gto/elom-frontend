@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import {ref, computed, onMounted} from 'vue'
-import {useMaterialsStore} from '@/stores/materials'
+import {useMaterialsStore, uploadPhoto, deletePhoto} from '@/stores/materials'
 import {useUnitsStore} from '@/stores/units'
 import {useMaterialCategoriesStore} from '@/stores/materialCategories'
 import type {Material, MaterialRequest} from '@/api/types'
@@ -143,24 +143,13 @@ const formConfig = computed<GenericFormConfig<MaterialRequest & { photo?: File }
       }
     },
     {
-      key: 'average_price',
-      type: 'number',
-      label: 'Средняя цена (UZS)',
-      placeholder: 'Введите среднюю цену за единицу',
-      order: 8,
-      width: 'half',
-      validation: {
-        min: 0
-      }
-    },
-    {
       key: 'default_unit',
       type: 'select',
       label: 'Базовая единица измерения',
       placeholder: '— выберите единицу —',
       options: unitOptions.value,
       required: true,
-      order: 9,
+      order: 8,
       width: 'full',
       help: 'Базовая единица будет использоваться для автоматического округления значений (например, 1000г → 1кг).'
     },
@@ -190,7 +179,6 @@ const initialFormData = computed<MaterialRequest & { photo?: File }>(() => {
       created_date: props.initial.created_date || new Date().toISOString().split('T')[0],
       description: props.initial.description || '',
       manufacturer: props.initial.manufacturer || '',
-      average_price: props.initial.average_price,
       is_active: props.initial.is_active ?? true,
       photo: undefined // Photo will be handled separately
     }
@@ -204,7 +192,6 @@ const initialFormData = computed<MaterialRequest & { photo?: File }>(() => {
     created_date: new Date().toISOString().split('T')[0],
     description: '',
     manufacturer: '',
-    average_price: undefined,
     is_active: true,
     photo: undefined // Photo will be handled separately
   }
@@ -216,11 +203,11 @@ const unitOptions = computed(() => unitsStore.selectOptions)
 
 // Methods
 async function onDeletePhoto() {
-  if (!props.initial?.id) return
+  if (!props.initial?.id) {return}
 
   deletingPhoto.value = true
   try {
-    await materialsStore.deletePhoto(props.initial.id)
+    await deletePhoto(props.initial.id)
     currentPhotoUrl.value = null
   } catch (error) {
     await handleFormError(error, 'material')
@@ -248,7 +235,7 @@ async function handleSubmit(formData: MaterialRequest & { photo?: File }) {
 
     // Then, upload photo if exists
     if (photoFile) {
-      await materialsStore.uploadPhoto(materialId, photoFile)
+      await uploadPhoto(materialId, photoFile)
     }
 
     emit('saved')

@@ -40,18 +40,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
   title: props.initial ? 'Редактировать объект' : 'Новый объект',
   subtitle: 'Заполните информацию об объекте',
   sections: [
-    {
-      title: 'Основная информация',
-      description: 'Основные данные объекта',
-      fields: ['name', 'responsible', 'address', 'location_url'],
-      order: 1
-    },
-    {
-      title: 'Временные рамки',
-      description: 'Даты начала и окончания работ',
-      fields: ['date_start', 'date_end', 'is_active'],
-      order: 2
-    }
+
   ],
   fields: [
     {

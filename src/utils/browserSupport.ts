@@ -40,7 +40,11 @@ class BrowserSupportChecker {
   }
 
   private checkBackdropFilter(): boolean {
-    return window.CSS && window.CSS.supports && window.CSS.supports('backdrop-filter', 'blur(1px)');
+    if (!window.CSS || !window.CSS.supports) return false;
+    
+    // Проверяем стандартное свойство и webkit-префикс (для Safari)
+    return window.CSS.supports('backdrop-filter', 'blur(1px)') || 
+           window.CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
   }
 
   private checkCSSGrid(): boolean {
@@ -100,7 +104,9 @@ class BrowserSupportChecker {
   }
 
   public isFullySupported(): boolean {
-    const required = ['cssVariables', 'backdropFilter', 'grid', 'flexbox', 'fetch', 'promises', 'es6'];
+    // Для Safari проверяем только критичные возможности
+    // backdrop-filter опциональный, т.к. есть -webkit-backdrop-filter
+    const required = ['cssVariables', 'grid', 'flexbox', 'fetch', 'promises', 'es6'];
     return required.every(feature => this.support[feature as keyof BrowserSupport]);
   }
 
@@ -167,7 +173,9 @@ class BrowserSupportChecker {
       recommendations.push('CSS Variables not supported - some themes may not work correctly');
     }
 
-    if (!this.support.backdropFilter) {
+    // Не показываем предупреждение о backdrop-filter для Safari,
+    // т.к. он поддерживает -webkit-backdrop-filter
+    if (!this.support.backdropFilter && browserInfo.name !== 'Safari') {
       recommendations.push('Backdrop filter not supported - some visual effects will be disabled');
     }
 

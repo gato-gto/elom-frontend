@@ -153,7 +153,7 @@ export const animationUtils = {
 
   // Проверка поддержки reduced motion
   prefersReducedMotion(): boolean {
-    if (typeof window === 'undefined') return false
+    if (typeof window === 'undefined') {return false}
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   },
 

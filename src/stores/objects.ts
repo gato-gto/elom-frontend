@@ -30,8 +30,9 @@ export const fetchResponsibles = async (): Promise<ObjectResponsible[]> => {
   try {
     const response = await api.get(endpoints.objects.responsibles)
     return response.data
-  } catch (err: any) {
-    objectsStore.error = err?.response?.data?.detail || 'Ошибка загрузки ответственных'
+  } catch (err: unknown) {
+    const error = err as any
+    objectsStore.error = error?.response?.data?.detail || 'Ошибка загрузки ответственных'
     throw err
   } finally {
     objectsStore.loading = false

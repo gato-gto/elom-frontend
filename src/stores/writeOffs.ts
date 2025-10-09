@@ -31,9 +31,6 @@ export const getByResponsible = (responsibleId: number) => {
   return useWriteOffsStore.items.filter((item: WriteOff) => item.responsible === responsibleId)
 }
 
-export const getWithWarnings = () => {
-  return useWriteOffsStore.items.filter((item: WriteOff) => item.validation_warnings.length > 0)
-}
 
 // Computed для статистики
 export const totalQuantity = computed(() =>

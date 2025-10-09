@@ -41,6 +41,7 @@ withDefaults(defineProps<Props>(), {
   right: 0;
   bottom: 0;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 50;
   border-radius: 1rem;

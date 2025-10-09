@@ -249,7 +249,7 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
 
     // Search method for autocomplete components
     const search = async (query: string) => {
-      if (query.length < 2) return []
+      if (query.length < 2) {return []}
       
       try {
         const { data } = await api.get(config.endpoint.list + `?search=${encodeURIComponent(query)}&page_size=20`)

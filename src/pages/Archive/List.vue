@@ -209,7 +209,7 @@ import { useArchiveStore, getArchiveStats, closePeriod, reopenPeriod, canClosePe
 import { useObjectsStore } from '@/stores/objects'
 import type { ArchivePeriod, ArchivePeriodRequest } from '@/api/types/archive'
 import type { GenericListConfig } from '@/types/generic'
-import { formatDateTime, getStatusClass, getStatusText } from '@/utils/formatters'
+import { getStatusClass, getStatusText } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useNotifications } from '@/composables/useNotifications'
 import { useExport } from '@/composables/useExport'
@@ -238,7 +238,7 @@ const archiveStats = computed(() => getArchiveStats())
 
 const lastPeriodText = computed(() => {
   const lastPeriod = archiveStats.value.lastPeriod
-  if (!lastPeriod) return 'Нет'
+  if (!lastPeriod) {return 'Нет'}
   return formatMonth(lastPeriod.month)
 })
 
@@ -380,7 +380,7 @@ function formatTime(dateStr: string): string {
 }
 
 function getInitials(name: string): string {
-  if (!name) return '?'
+  if (!name) {return '?'}
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
@@ -398,7 +398,7 @@ function closeDialog() {
 }
 
 const canClose = computed(() => {
-  if (!closeForm.value.month || !closeForm.value.object) return false
+  if (!closeForm.value.month || !closeForm.value.object) {return false}
   return canClosePeriod(closeForm.value.month, closeForm.value.object)
 })
 
@@ -419,13 +419,13 @@ async function closePeriodAction() {
 }
 
 async function reopen(period: ArchivePeriod) {
-  if (!period.is_closed) return
+  if (!period.is_closed) {return}
   
   const confirmed = confirm(
     `Вы уверены, что хотите открыть период ${formatMonth(period.month)} по объекту "${period.object_name}"?`
   )
   
-  if (!confirmed) return
+  if (!confirmed) {return}
   
   busyId.value = period.id
   try {

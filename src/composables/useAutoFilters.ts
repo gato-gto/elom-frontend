@@ -19,7 +19,7 @@ export function useAutoFilters<T extends Record<string, any>>(
   
   // Debounced функция поиска
   const debouncedSearch = debounce(async () => {
-    if (!autoSearch) return
+    if (!autoSearch) {return}
     
     isSearching.value = true
     try {

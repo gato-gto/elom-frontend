@@ -215,7 +215,7 @@ async function handleAction(action: string, item: MaterialCategory) {
 }
 
 async function handleDelete(category: MaterialCategory) {
-  if (!confirm(`Удалить категорию "${category.name}"?`)) return
+  if (!confirm(`Удалить категорию "${category.name}"?`)) {return}
   
   try {
     await materialCategoriesStore.remove(category.id)

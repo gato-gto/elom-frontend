@@ -165,7 +165,7 @@ api.interceptors.response.use(
 
         // Попытка рефреша при 401
         if (response?.status === 401 && config && !(config as any)._retry) {
-            ;(config as any)._retry = true
+            (config as any)._retry = true
             
             // Если это запрос на refresh, не пытаемся обновить токен
             if (config.url?.includes('/token/refresh/')) {

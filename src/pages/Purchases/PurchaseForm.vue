@@ -592,8 +592,8 @@ const employeeOptions = computed(() => {
   
   // Сортируем так, чтобы текущий пользователь был первым
   const sortedEmployees = brigadiers.sort((a, b) => {
-    if (auth.me && a.id === auth.me.id) return -1
-    if (auth.me && b.id === auth.me.id) return 1
+    if (auth.me && a.id === auth.me.id) {return -1}
+    if (auth.me && b.id === auth.me.id) {return 1}
     return 0
   })
   
@@ -910,7 +910,7 @@ function recalc(item: PurchaseItemRequest & { _k: string, quantity: string, amou
 
 // Format money for display
 function formatMoney(amount: number | string | undefined): string {
-  if (!amount) return '0.00'
+  if (!amount) {return '0.00'}
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
   return num.toLocaleString('ru-RU', { 
     minimumFractionDigits: 2, 

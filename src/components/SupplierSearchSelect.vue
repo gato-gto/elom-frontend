@@ -128,7 +128,7 @@ const inputContainer = ref<HTMLDivElement>()
 const hasError = computed(() => !!props.error)
 
 const dropdownStyle = computed(() => {
-  if (!inputContainer.value) return {}
+  if (!inputContainer.value) {return {}}
   
   const rect = inputContainer.value.getBoundingClientRect()
   return {
@@ -195,7 +195,7 @@ const handleBlur = () => {
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (!showDropdown.value || searchResults.value.length === 0) return
+  if (!showDropdown.value || searchResults.value.length === 0) {return}
 
   const currentIndex = searchResults.value.findIndex(
     supplier => supplier.id === selectedSupplier.value?.id

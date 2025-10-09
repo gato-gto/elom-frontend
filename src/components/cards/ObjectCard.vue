@@ -96,14 +96,14 @@ defineEmits<Emits>()
 const { truncateText } = useMobileCardHelpers()
 
 const getProjectProgress = () => {
-  if (!props.object.date_start || !props.object.date_end) return null
+  if (!props.object.date_start || !props.object.date_end) {return null}
   
   const start = new Date(props.object.date_start)
   const end = new Date(props.object.date_end)
   const now = new Date()
   
-  if (now < start) return 0
-  if (now > end) return 100
+  if (now < start) {return 0}
+  if (now > end) {return 100}
   
   const total = end.getTime() - start.getTime()
   const passed = now.getTime() - start.getTime()

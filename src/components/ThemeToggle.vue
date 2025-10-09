@@ -101,6 +101,7 @@ const themeOptions = [
   color: #64748b;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -155,6 +156,7 @@ const themeOptions = [
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 0.75rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   overflow: hidden;
   z-index: 50;

@@ -63,7 +63,8 @@ if (!Array.from) {
 }
 
 // Полифилл для Promise (IE не поддерживает)
-if (!window.Promise) {
+// Не загружаем полифилл в тестовом окружении
+if (!window.Promise && typeof process === 'undefined') {
   window.Promise = class Promise {
     constructor(executor: any) {
       // Простая реализация Promise для старых браузеров

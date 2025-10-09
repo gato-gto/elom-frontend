@@ -205,6 +205,21 @@
           ></textarea>
         </div>
 
+        <!-- Информация о текущем остатке -->
+        <div v-if="formData.object && formData.material && currentBalance !== null" class="alert alert-info">
+          <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+            <div class="text-sm">
+            <div class="font-bold">Актуальный остаток материала</div>
+            <div class="mt-1">
+              <span class="font-mono">{{ currentBalance.toFixed(6) }}</span>
+              <span class="ml-1">{{ unitsStore.items.find(u => u.id === formData.unit)?.code || '' }}</span>
+            </div>
+          </div>
+        </div>
+
+
         <!-- Общие ошибки -->
         <div v-if="errors.non_field_errors" class="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -253,6 +268,8 @@ import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
 import { useEmployeesStore, getByObject } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import api from '@/api/client'
+import { endpoints } from '@/api/endpoints'
 import type { 
   WriteOff, 
   WriteOffCreateRequest, 
@@ -297,6 +314,9 @@ const materialsLoading = ref(false)
 const employeesLoading = ref(false)
 const isSubmitting = ref(false)
 
+// Current balance
+const currentBalance = ref<number>(0)
+
 // User modification tracking
 const userModifiedFields = ref({
   material: false,
@@ -325,10 +345,35 @@ const responsibleOptions = ref([
 
 // Computed properties
 const isUnitDisabled = computed(() => {
-  if (!formData.value.material) return false
+  if (!formData.value.material) {return false}
   const material = materialsStore.items.find((m: Material) => m.id === formData.value.material)
   return !!material?.default_unit
 })
+
+// Balance functions
+const loadCurrentBalance = async () => {
+  if (!formData.value.object || !formData.value.material) {
+    currentBalance.value = 0
+    return
+  }
+
+  try {
+    const { data } = await api.get(endpoints.stockSnapshots.balance, {
+      params: {
+        object_id: formData.value.object,
+        material_id: formData.value.material,
+        date: formData.value.date
+      }
+    })
+    
+    // Получаем актуальный остаток
+    currentBalance.value = parseFloat(data.current_balance || 0)
+  } catch (error) {
+    console.error('Error loading current balance:', error)
+    currentBalance.value = 0
+  }
+}
+
 
 // Data loading functions
 const loadMaterialsByObject = async (objectId: number) => {
@@ -342,7 +387,7 @@ const loadMaterialsByObject = async (objectId: number) => {
     }
 
     const materials = await getMaterialsByObject(objectId)
-    let materialList = [
+    const materialList = [
       { value: 0, label: '— выберите материал —' },
       ...materials.map((m: Material) => ({ value: m.id, label: m.name }))
     ]
@@ -370,7 +415,7 @@ const loadEmployeesByObject = async (objectId: number) => {
   employeesLoading.value = true
   try {
     // Базовый список - все бригадиры
-    let responsibleList = [
+    const responsibleList = [
       { value: 0, label: '— выберите ответственного —' },
       ...employeesStore.items
         .filter((emp: any) => emp.role === 'brigadier')
@@ -544,6 +589,11 @@ const initializeForm = async () => {
       userModifiedFields.value.material = wasMaterialModified
       userModifiedFields.value.unit = wasUnitModified
       userModifiedFields.value.responsible = wasResponsibleModified
+      
+      // Загружаем баланс и предупреждения
+      if (props.initial.material) {
+        await loadCurrentBalance()
+      }
     }
   } else {
     formData.value = {
@@ -578,6 +628,14 @@ watch(() => props.initial, async () => {
     await initializeForm()
   }
 })
+
+// Watch for balance updates
+watch([() => formData.value.object, () => formData.value.material, () => formData.value.date], async () => {
+  if (formData.value.object && formData.value.material) {
+    await loadCurrentBalance()
+  }
+})
+
 
 // Load data on mount
 onMounted(async () => {

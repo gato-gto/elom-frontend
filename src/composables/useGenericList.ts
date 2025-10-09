@@ -304,7 +304,7 @@ export function useListSorting(store: any) {
   }
 
   function getSortIcon(field: string): string {
-    if (sortBy.value !== field) return '↕️'
+    if (sortBy.value !== field) {return '↕️'}
     return sortOrder.value === 'asc' ? '↑' : '↓'
   }
 

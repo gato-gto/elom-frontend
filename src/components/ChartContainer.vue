@@ -481,6 +481,7 @@ watch(() => document.documentElement.classList.contains('dark'), () => {
   align-items: center;
   justify-content: center;
   background-color: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 10;
 }

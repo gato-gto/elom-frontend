@@ -146,7 +146,7 @@ function getIconPath(icon: string): string {
 }
 
 function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) return true
+  if (!userRole || !requiredRoles.length) {return true}
   return requiredRoles.includes(userRole)
 }
 
@@ -163,13 +163,13 @@ const allNavigationItems = computed((): NavigationItem[] => {
     const meta = route.meta
     
     // Skip routes without icon (not main nav items)
-    if (!meta?.icon) return
+    if (!meta?.icon) {return}
     
     // Skip public routes
-    if (meta.public) return
+    if (meta.public) {return}
     
     // Check role access
-    if (meta.roles && !hasRoleAccess(auth.role, meta.roles as UserRole[])) return
+    if (meta.roles && !hasRoleAccess(auth.role, meta.roles as UserRole[])) {return}
     
     const item: NavigationItem = {
       name: route.name as string,

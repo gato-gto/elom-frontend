@@ -51,7 +51,7 @@ export function useGenericForm<T extends Record<string, any>>(
 
   function validateField(key: string): boolean {
     const field = options.config.fields.find(f => f.key === key)
-    if (!field) return true
+    if (!field) {return true}
 
     const value = form.value[key]
     let isValid = true
@@ -340,7 +340,7 @@ export function useFormSections<T extends Record<string, any>>(
 
   function getSectionFields(sectionIndex: number) {
     const section = sections.value[sectionIndex]
-    if (!section) return []
+    if (!section) {return []}
     
     return config.fields.filter(field => section.fields.includes(field.key))
   }

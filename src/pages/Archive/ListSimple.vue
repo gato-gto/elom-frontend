@@ -247,12 +247,12 @@ const archiveStats = computed(() => {
 
 const lastPeriodText = computed(() => {
   const lastPeriod = archiveStats.value.lastPeriod
-  if (!lastPeriod) return 'Нет'
+  if (!lastPeriod) {return 'Нет'}
   return formatMonth(lastPeriod.month)
 })
 
 const canClose = computed(() => {
-  if (!closeForm.value.month || !closeForm.value.object) return false
+  if (!closeForm.value.month || !closeForm.value.object) {return false}
   // Проверяем, не закрыт ли уже период
   const existingPeriod = items.value.find(
     item => item.month === closeForm.value.month + '-01' && item.object === closeForm.value.object
@@ -283,7 +283,7 @@ function formatTime(dateStr: string): string {
 }
 
 function getInitials(name: string): string {
-  if (!name) return '?'
+  if (!name) {return '?'}
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
@@ -343,13 +343,13 @@ async function closePeriod() {
 }
 
 async function reopen(period: ArchivePeriod) {
-  if (!period.is_closed) return
+  if (!period.is_closed) {return}
   
   const confirmed = confirm(
     `Вы уверены, что хотите открыть период ${formatMonth(period.month)} по объекту "${period.object_name}"?`
   )
   
-  if (!confirmed) return
+  if (!confirmed) {return}
   
   busyId.value = period.id
   try {

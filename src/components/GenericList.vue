@@ -292,7 +292,7 @@ function handleAction(action: string, item: any) {
 }
 
 function getCardActions(item: any) {
-  if (!props.config.actions) return []
+  if (!props.config.actions) {return []}
   
   return props.config.actions.map(action => ({
     key: action.key,

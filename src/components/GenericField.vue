@@ -295,10 +295,10 @@ const fieldClasses = computed(() => {
 
 const inputType = computed(() => {
   // Determine input type based on field key or validation
-  if (props.field.key.includes('email')) return 'email'
-  if (props.field.key.includes('password')) return 'password'
-  if (props.field.key.includes('url')) return 'url'
-  if (props.field.key.includes('tel')) return 'tel'
+  if (props.field.key.includes('email')) {return 'email'}
+  if (props.field.key.includes('password')) {return 'password'}
+  if (props.field.key.includes('url')) {return 'url'}
+  if (props.field.key.includes('tel')) {return 'tel'}
   return 'text'
 })
 
@@ -379,7 +379,7 @@ function getOptionLabel(value: any): string {
 }
 
 function formatDateForInput(date: any): string {
-  if (!date) return ''
+  if (!date) {return ''}
   if (typeof date === 'string') {
     return date.split('T')[0] // Extract date part from ISO string
   }
@@ -390,7 +390,7 @@ function formatDateForInput(date: any): string {
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes'
+  if (bytes === 0) {return '0 Bytes'}
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))

@@ -225,25 +225,25 @@ export function formatDataForExport<T extends Record<string, any>>(
 // Предустановленные форматтеры для разных типов данных
 export const defaultFormatters = {
   date: (value: any) => {
-    if (!value) return ''
+    if (!value) {return ''}
     const date = new Date(value)
     return date.toLocaleDateString('ru-RU')
   },
   datetime: (value: any) => {
-    if (!value) return ''
+    if (!value) {return ''}
     const date = new Date(value)
     return date.toLocaleString('ru-RU')
   },
   boolean: (value: any) => value ? 'Да' : 'Нет',
   currency: (value: any) => {
-    if (typeof value !== 'number') return value
+    if (typeof value !== 'number') {return value}
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
       currency: 'RUB'
     }).format(value)
   },
   number: (value: any) => {
-    if (typeof value !== 'number') return value
+    if (typeof value !== 'number') {return value}
     return new Intl.NumberFormat('ru-RU').format(value)
   }
 }

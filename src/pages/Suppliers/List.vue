@@ -195,7 +195,7 @@ function confirmDelete(supplier: PurchaseSupplier) {
 }
 
 async function handleDelete() {
-  if (!deletingSupplier.value) return
+  if (!deletingSupplier.value) {return}
   
   deleting.value = true
   try {

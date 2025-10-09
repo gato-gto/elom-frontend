@@ -44,7 +44,7 @@ export const endpoints = {
         list: join('/materials/'),
         one: (id: number) => join(`/materials/${id}/`),
         uploadPhoto: (id: number) => join(`/materials/${id}/upload-photo/`),
-        deletePhoto: (id: number) => join(`/materials/${id}/delete-photo/`),
+        deletePhoto: (id: number) => join(`/materials/${id}/photo/`),
         // Новые endpoints
         lite: join('/materials/lite/'),
         search: join('/materials/search/'),

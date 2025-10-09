@@ -11,10 +11,51 @@ paths:
       summary: Список закрытых периодов
       parameters:
       - in: query
+        name: closed_at_from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: closed_at_to
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: closed_by
+        schema:
+          type: number
+      - in: query
+        name: closed_by_name
+        schema:
+          type: string
+      - in: query
+        name: month
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: month_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: month_number
+        schema:
+          type: number
+      - in: query
+        name: month_to
+        schema:
+          type: string
+          format: date
+      - in: query
         name: object
         schema:
           type: integer
         description: Фильтр по объекту (если предусмотрен в фильтре)
+      - in: query
+        name: object_name
+        schema:
+          type: string
       - in: query
         name: ordering
         schema:
@@ -26,6 +67,10 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: year
+        schema:
+          type: number
       tags:
       - Archive
       security:
@@ -55,6 +100,31 @@ paths:
                         closed_by: 2
                         closed_by_name: Director
                   summary: Пример ответа (страница)
+          description: ''
+    post:
+      operationId: archive_create
+      tags:
+      - archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
           description: ''
   /api/v1/archive/{id}/:
     get:
@@ -77,17 +147,103 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArchivePeriod'
           description: ''
+    put:
+      operationId: archive_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
+    patch:
+      operationId: archive_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArchivePeriodRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArchivePeriodRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
+    delete:
+      operationId: archive_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/archive/close/:
     post:
       operationId: archive_close_create
-      description: Помечает закупки и снимки за месяц как read-only (`is_archived=true`).
+      description: "\n        Закрывает период для объекта, помечая все закупки и\
+        \ снимки за указанный месяц как архивированные.\n        \n        **Бизнес-логика:**\n\
+        \        - Устанавливает `is_archived=True` для всех закупок за месяц\n  \
+        \      - Устанавливает `is_archived=True` для всех снимков за месяц\n    \
+        \    - Создает запись в `ArchivePeriod`\n        - Запрещает редактирование\
+        \ архивированных данных\n        \n        **Права доступа:**\n        - Только\
+        \ директора и администраторы\n        - Координаторы для своих объектов\n\
+        \        "
       summary: Закрыть период (месяц×объект)
       parameters:
       - in: query
         name: month
         schema:
           type: string
-        description: YYYY-MM
+        description: 'Месяц в формате YYYY-MM (например: 2024-01)'
         required: true
       - in: query
         name: object
@@ -141,9 +297,11 @@ paths:
                   summary: Пример успешного ответа
           description: ''
         '400':
-          description: invalid params / already closed
+          description: Ошибка валидации
         '403':
-          description: forbidden
+          description: Нет прав доступа
+        '404':
+          description: Объект не найден
   /api/v1/archive/periods/:
     get:
       operationId: archive_periods_list
@@ -151,10 +309,51 @@ paths:
       summary: Список закрытых периодов
       parameters:
       - in: query
+        name: closed_at_from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: closed_at_to
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: closed_by
+        schema:
+          type: number
+      - in: query
+        name: closed_by_name
+        schema:
+          type: string
+      - in: query
+        name: month
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: month_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: month_number
+        schema:
+          type: number
+      - in: query
+        name: month_to
+        schema:
+          type: string
+          format: date
+      - in: query
         name: object
         schema:
           type: integer
         description: Фильтр по объекту (если предусмотрен в фильтре)
+      - in: query
+        name: object_name
+        schema:
+          type: string
       - in: query
         name: ordering
         schema:
@@ -166,6 +365,10 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: year
+        schema:
+          type: number
       tags:
       - Archive
       security:
@@ -196,6 +399,31 @@ paths:
                         closed_by_name: Director
                   summary: Пример ответа (страница)
           description: ''
+    post:
+      operationId: archive_periods_create
+      tags:
+      - archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
   /api/v1/archive/periods/{id}/:
     get:
       operationId: archive_periods_retrieve
@@ -217,17 +445,103 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArchivePeriod'
           description: ''
+    put:
+      operationId: archive_periods_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivePeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
+    patch:
+      operationId: archive_periods_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArchivePeriodRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArchivePeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArchivePeriodRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivePeriod'
+          description: ''
+    delete:
+      operationId: archive_periods_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this archive period.
+        required: true
+      tags:
+      - archive
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/archive/periods/close/:
     post:
       operationId: archive_periods_close_create
-      description: Помечает закупки и снимки за месяц как read-only (`is_archived=true`).
+      description: "\n        Закрывает период для объекта, помечая все закупки и\
+        \ снимки за указанный месяц как архивированные.\n        \n        **Бизнес-логика:**\n\
+        \        - Устанавливает `is_archived=True` для всех закупок за месяц\n  \
+        \      - Устанавливает `is_archived=True` для всех снимков за месяц\n    \
+        \    - Создает запись в `ArchivePeriod`\n        - Запрещает редактирование\
+        \ архивированных данных\n        \n        **Права доступа:**\n        - Только\
+        \ директора и администраторы\n        - Координаторы для своих объектов\n\
+        \        "
       summary: Закрыть период (месяц×объект)
       parameters:
       - in: query
         name: month
         schema:
           type: string
-        description: YYYY-MM
+        description: 'Месяц в формате YYYY-MM (например: 2024-01)'
         required: true
       - in: query
         name: object
@@ -281,9 +595,11 @@ paths:
                   summary: Пример успешного ответа
           description: ''
         '400':
-          description: invalid params / already closed
+          description: Ошибка валидации
         '403':
-          description: forbidden
+          description: Нет прав доступа
+        '404':
+          description: Объект не найден
   /api/v1/archive/periods/reopen/:
     post:
       operationId: archive_periods_reopen_create
@@ -1434,6 +1750,10 @@ paths:
         schema:
           type: integer
       - in: query
+        name: responsible
+        schema:
+          type: integer
+      - in: query
         name: search
         schema:
           type: string
@@ -1578,6 +1898,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/objects/responsibles/:
+    get:
+      operationId: objects_responsibles
+      description: Получить список сотрудников, за которыми закреплены объекты
+      summary: Список ответственных за объекты
+      tags:
+      - Common
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+          description: ''
   /api/v1/purchase-items/:
     get:
       operationId: purchase_items_list
@@ -4815,9 +5158,7 @@ components:
           description: Ответственный (только бригадир)
         responsible_name:
           type: string
-          nullable: true
           readOnly: true
-          description: Имя ответственного
         date_start:
           type: string
           format: date
@@ -4841,6 +5182,7 @@ components:
       - date_start
       - id
       - name
+      - responsible_name
       - updated_at
     ObjectRequest:
       type: object
@@ -5181,6 +5523,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WriteOff'
+    PatchedArchivePeriodRequest:
+      type: object
+      properties:
+        month:
+          type: string
+          format: date
+        object:
+          type: integer
     PatchedEmployeeRequest:
       type: object
       properties:
@@ -6648,11 +6998,6 @@ components:
           type: object
           additionalProperties: {}
           readOnly: true
-        validation_warnings:
-          type: array
-          items:
-            type: string
-          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -6676,7 +7021,6 @@ components:
       - unit
       - unit_code
       - updated_at
-      - validation_warnings
     WriteOffRequest:
       type: object
       description: Сериализатор для списаний материалов

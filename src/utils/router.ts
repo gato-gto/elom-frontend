@@ -11,11 +11,11 @@ export function generateNavigation(routes: RouteRecordNormalized[], userRole: Us
   // Filter routes that should appear in navigation
   const navRoutes = routes.filter(route => {
     // Skip routes without meta or with public: true
-    if (!route.meta || route.meta.public) return false
+    if (!route.meta || route.meta.public) {return false}
     
     // Skip routes with specific names that shouldn't be in nav
     const skipRoutes = ['Login', 'NotFound', 'MaterialCreate', 'MaterialEdit', 'ObjectCreate', 'ObjectEdit', 'UnitCreate', 'UnitEdit', 'EmployeeCreate', 'EmployeeEdit', 'SupplierCreate', 'SupplierEdit', 'StockCreate', 'StockEdit', 'WriteOffCreate', 'WriteOffEdit', 'PurchaseCreate', 'PurchaseEdit']
-    if (skipRoutes.includes(route.name as string)) return false
+    if (skipRoutes.includes(route.name as string)) {return false}
     
     // Check role access
     if (route.meta.roles && userRole && !(route.meta.roles as UserRole[]).includes(userRole)) {
@@ -143,10 +143,10 @@ export function getBreadcrumbs(route: RouteRecordNormalized): Array<{ title: str
  */
 export function hasRouteAccess(route: RouteRecordNormalized, userRole: UserRole | null): boolean {
   // Public routes are always accessible
-  if (route.meta.public) return true
+  if (route.meta.public) {return true}
   
   // If no role required, accessible to authenticated users
-  if (!route.meta.roles) return true
+  if (!route.meta.roles) {return true}
   
   // Check if user role is in required roles
   return userRole ? (route.meta.roles as UserRole[]).includes(userRole) : false

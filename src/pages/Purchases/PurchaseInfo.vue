@@ -342,7 +342,7 @@ const activePhotoType = ref<'instructions' | 'report'>('instructions')
 
 // Computed properties
 const statusLabel = computed(() => {
-  if (!props.purchase) return '—'
+  if (!props.purchase) {return '—'}
   switch (props.purchase.status) {
     case 'new': return 'Новая'
     case 'completed': return 'Выполнено'
@@ -352,7 +352,7 @@ const statusLabel = computed(() => {
 })
 
 const statusClass = computed(() => {
-  if (!props.purchase) return ''
+  if (!props.purchase) {return ''}
   switch (props.purchase.status) {
     case 'new': return 'bg-blue-100 text-blue-800'
     case 'completed': return 'bg-green-100 text-green-800'
@@ -377,7 +377,7 @@ const hasPhotos = computed(() => {
 const photoTypes = computed(() => {
   const types = new Set<string>()
   allPhotos.value.forEach(photo => {
-    if (photo.type) types.add(photo.type)
+    if (photo.type) {types.add(photo.type)}
   })
   return Array.from(types) as ('instructions' | 'report')[]
 })
@@ -447,7 +447,7 @@ function selectPhoto(index: number) {
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes'
+  if (bytes === 0) {return '0 Bytes'}
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -456,7 +456,7 @@ function formatFileSize(bytes: number): string {
 
 // Клавиатурная навигация
 function handleKeydown(event: KeyboardEvent) {
-  if (!photoModalOpen.value) return
+  if (!photoModalOpen.value) {return}
   
   switch (event.key) {
     case 'ArrowLeft':

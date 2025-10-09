@@ -42,7 +42,6 @@ export interface WriteOff {
   is_archived: boolean;
   current_balance: string; // decimal as string
   smart_quantity: SmartQuantity;
-  validation_warnings: string[];
   created_at: string;
   updated_at: string;
 }

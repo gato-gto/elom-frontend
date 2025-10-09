@@ -166,58 +166,97 @@ export const useSuppliersStore = defineStore('suppliers', () => {
 })
 ```
 
-**Доступные stores:**
+**Доступные stores (16 stores):**
 
 #### Stores через createBaseStore (НЕ вызывать с `()`):
-- **usePurchasesStore**: Управление закупками
-- **useUnitsStore**: Управление единицами измерения
-- **useObjectsStore**: Управление объектами
-- **useEmployeesStore**: Управление сотрудниками
-- **useWriteOffsStore**: Управление списаниями
-- **useStockSnapshotsStore**: Управление движениями остатков
+1. **usePurchasesStore** - Управление закупками
+2. **useUnitsStore** - Управление единицами измерения
+3. **useObjectsStore** - Управление объектами
+4. **useEmployeesStore** - Управление сотрудниками
+5. **useWriteOffsStore** - Управление списаниями
+6. **useStockSnapshotsStore** - Управление движениями остатков
+7. **useSuppliersStore** - Управление поставщиками
+8. **useMaterialsStore** - Управление материалами (расширенный с доп. методами)
+9. **useMaterialCategoriesStore** - Управление категориями материалов
+10. **useBalancesStore** - Управление остатками по объектам
+11. **useArchiveStore** - Управление архивными периодами
 
 #### Stores через defineStore (вызывать с `()`):
-- **useAuthStore**: Аутентификация и профиль пользователя
-- **useMaterialsStore**: Управление материалами
-- **useSuppliersStore**: Управление поставщиками
-- **useMaterialCategoriesStore**: Управление категориями материалов
-- **useThemeStore**: Управление темами
-- **useNotificationsStore**: Уведомления
-- **useUiStore**: UI состояние (темы, модальные окна)
+12. **useAuthStore()** - Аутентификация и профиль пользователя
+13. **useThemeStore()** - Управление темами
+14. **useNotificationsStore()** - Уведомления
+15. **useUiStore()** - UI состояние (темы, модальные окна)
 
-#### 5. UI компоненты (48 файлов)
+#### 5. UI компоненты (46 файлов)
 
-**Универсальные компоненты:**
+**Универсальные компоненты (6):**
 - **GenericForm.vue**: Универсальная система форм с поддержкой 14 типов полей
 - **GenericList.vue**: Универсальная система списков с фильтрацией и пагинацией
-- **FormField.vue**: Атомарный компонент полей (14 типов: input, textarea, select, file, checkbox, switch, search, custom, etc.)
+- **FormField.vue**: Базовые поля форм (14 типов полей)
+- **GenericField.vue**: Расширенные поля форм
+- **GenericFormField.vue**: Специализированные поля форм
 - **Modal.vue**: Модальные окна с размерами от sm до 7xl
 
-**Специализированные компоненты:**
+**Списки и таблицы (8):**
+- **Table.vue**: Базовая таблица
+- **AnimatedTable.vue**: Анимированная таблица
+- **TableSkeleton.vue**: Скелетон таблицы с анимацией
+- **CardSkeleton.vue**: Скелетон карточки
+- **ListHeader.vue**: Заголовок списка с статистикой
+- **Pagination.vue**: Пагинация
+- **ModernPagination.vue**: Современная пагинация
+- **ExportButton.vue**: Кнопка экспорта (CSV, Excel, PDF)
+
+**Фильтры и поиск (4):**
+- **FilterPanel.vue**: Панель фильтров с адаптивной сеткой
+- **FilterField.vue**: Поля фильтров
 - **MaterialSearchSelect.vue**: Поиск материалов с автодополнением и debounce
 - **SupplierSearchSelect.vue**: Поиск поставщиков с клавиатурной навигацией
-- **FilterPanel.vue**: Панель фильтров с адаптивной сеткой
-- **FilterField.vue**: Поля фильтров (10 типов)
-- **ExportButton.vue**: Кнопка экспорта (CSV, Excel, PDF)
-- **LoadingSpinner.vue**: Спиннер загрузки с 4 размерами и 5 вариантами
-- **TableSkeleton.vue**: Скелетон таблицы с анимацией
-- **ListHeader.vue**: Заголовок списка с статистикой
 
-**Мобильные компоненты:**
+**Навигация (4):**
+- **AutoNavigation.vue**: Автоматическая десктопная навигация
+- **AutoMobileNavigation.vue**: Автоматическая мобильная навигация
+- **MobileNavigation.vue**: Мобильная навигация
+- **AppSidebar.vue**: Боковая панель
+
+**Мобильные карточки (9):**
 - **MobileCard.vue**: Базовая мобильная карточка
 - **MaterialCard.vue**: Карточка материала
 - **PurchaseCard.vue**: Карточка закупки
-- **AutoMobileNavigation.vue**: Автоматическая мобильная навигация
-- **AutoNavigation.vue**: Автоматическая десктопная навигация
+- **StockCard.vue**: Карточка движения
+- **SupplierCard.vue**: Карточка поставщика
+- **EmployeeCard.vue**: Карточка сотрудника
+- **ObjectCard.vue**: Карточка объекта
+- **UnitCard.vue**: Карточка единицы измерения
+- **WriteOffCard.vue**: Карточка списания
+- **MaterialCategoryCard.vue**: Карточка категории
+
+**UI компоненты (8):**
+- **LoadingSpinner.vue**: Спиннер загрузки с 4 размерами и 5 вариантами
+- **BrowserWarning.vue**: Предупреждение о браузере
+- **ThemeToggle.vue**: Переключатель темы
+- **ToastCenter.vue**: Центр уведомлений
+- **TopbarProgress.vue**: Прогресс-бар
+- **AppBreadcrumbs.vue**: Хлебные крошки
+- **NotificationContainer.vue**: Контейнер уведомлений
+- **NotificationItem.vue**: Элемент уведомления
+- **Notifications.vue**: Система уведомлений
+
+**Специализированные компоненты (7):**
+- **SmartUnitValue.vue**: Умное отображение единиц
+- **UnitValue.vue**: Отображение единиц
+- **FileInput.vue**: Загрузка файлов
+- **GeolocationPicker.vue**: Выбор геолокации
+- **ChartContainer.vue**: Контейнер графиков
 
 **Дизайн система:**
-- **DaisyUI**: Основа для стилизации
+- **DaisyUI v5**: Основа для стилизации
 - **Tailwind CSS v4**: Утилитарные стили
 - **Адаптивный дизайн**: Поддержка мобильных устройств
 - **Темная тема**: Переключение между светлой и темной темами
 - **Кастомные поля**: Поддержка сложных компонентов через слоты
-- **Мобильные карточки**: 8 специализированных карточек для мобильных устройств
-- **Упрощение интерфейса**: Удалены неиспользуемые поля (НДС) для улучшения UX
+- **Мобильные карточки**: 9 специализированных карточек для мобильных устройств
+- **Упрощение интерфейса**: Удалены неиспользуемые поля и предупреждения для улучшения UX
 
 ## Взаимодействие компонентов
 

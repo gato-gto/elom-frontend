@@ -210,6 +210,7 @@ export const navigateTo = async (wrapper: VueWrapper<any>, routeName: string) =>
 
 // Test utilities for API mocking
 export const mockApiCall = (method: string, url: string, response: any) => {
+  // eslint-disable-next-line no-undef
   const mockFn = vi.fn().mockResolvedValue(mockApiResponse(response))
   // This would be implemented based on your API mocking strategy
   return mockFn
@@ -228,10 +229,12 @@ export const clearLocalStorage = () => {
 
 // Test utilities for timers
 export const advanceTimers = (ms: number) => {
+  // eslint-disable-next-line no-undef
   vi.advanceTimersByTime(ms)
 }
 
 export const runAllTimers = () => {
+  // eslint-disable-next-line no-undef
   vi.runAllTimers()
 }
 

@@ -275,12 +275,12 @@ function getFileLabel(): string {
 }
 
 function isOptionSelected(value: any): boolean {
-  if (props.field.type !== 'multiselect') return false
+  if (props.field.type !== 'multiselect') {return false}
   return Array.isArray(localValue.value) && localValue.value.includes(value)
 }
 
 function toggleMultiselect() {
-  if (props.field.disabled || props.disabled) return
+  if (props.field.disabled || props.disabled) {return}
   isMultiselectOpen.value = !isMultiselectOpen.value
 }
 

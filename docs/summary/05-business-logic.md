@@ -386,56 +386,31 @@ STAGE_CHOICES = [
 
 ## Система валидации остатков
 
-### StockValidationService
-```python
-class StockValidationService:
-    @staticmethod
-    def validate_writeoff(writeoff):
-        """Валидация списания с проверкой остатков"""
-        
-        # Получаем текущий остаток
-        current_balance = StockSnapshot.get_current_balance(
-            object=writeoff.object,
-            material=writeoff.material,
-            unit=writeoff.unit
-        )
-        
-        # Проверяем достаточность остатка
-        if current_balance < writeoff.quantity:
-            raise ValidationError({
-                'quantity': f'Недостаточно остатка. Доступно: {current_balance}, требуется: {writeoff.quantity}'
-            })
-        
-        # Проверяем правила для ролей и этапов
-        if not StockValidationService.can_have_negative_balance(
-            writeoff.responsible.profile.role,
-            writeoff.stage
-        ):
-            if current_balance - writeoff.quantity < 0:
-                raise ValidationError({
-                    'quantity': 'Отрицательные остатки не разрешены для данной роли/этапа'
-                })
-    
-    @staticmethod
-    def can_have_negative_balance(role, stage):
-        """Определяет, может ли роль иметь отрицательные остатки на этапе"""
-        negative_balance_rules = {
-            'admin': ['acceptance', 'request', 'delivery_fixed', 'post_rough', 'handover'],
-            'director': ['acceptance', 'request', 'delivery_fixed', 'post_rough', 'handover'],
-            'coordinator': ['delivery_fixed', 'post_rough', 'handover'],
-            'brigadier': ['post_rough', 'handover'],
-            'buyer': [],
-            'site_manager': ['post_rough', 'handover']
-        }
-        
-        return stage in negative_balance_rules.get(role, [])
+### Упрощенная валидация
+Система валидации упрощена для повышения удобства использования. Удалена система `validation_warnings`, теперь отображается только актуальный остаток материала.
+
+#### Отображение остатка в форме списаний
+```vue
+<!-- Актуальный остаток материала -->
+<div v-if="formData.object && formData.material && currentBalance !== null" class="alert alert-info">
+  <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+  <div class="text-sm">
+    <div class="font-bold">Актуальный остаток материала</div>
+    <div class="mt-1">
+      <span class="font-mono">{{ currentBalance.toFixed(6) }}</span>
+      <span class="ml-1">{{ unitCode }}</span>
+    </div>
+  </div>
+</div>
 ```
 
-### Правила валидации по ролям
-- **Admin/Director**: Могут иметь отрицательные остатки на всех этапах
-- **Coordinator**: Могут иметь отрицательные остатки на этапах delivery_fixed, post_rough, handover
-- **Brigadier**: Могут иметь отрицательные остатки на этапах post_rough, handover
-- **Buyer/Site Manager**: Не могут иметь отрицательные остатки
+### Базовая валидация
+- **Обязательные поля**: Объект, материал, единица измерения, количество, этап, ответственный
+- **Количество**: Должно быть больше 0
+- **Остаток**: Отображается текущий остаток, но не блокирует списание
+- **Единица измерения**: Автоматически подставляется из материала
 
 ## Система конверсии единиц измерения
 

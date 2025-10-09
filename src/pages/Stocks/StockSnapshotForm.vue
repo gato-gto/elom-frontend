@@ -77,7 +77,7 @@ const isEdit = computed(() => !!props.initial)
 
 // Computed property for selected material unit
 const selectedMaterialUnit = computed(() => {
-  if (selectedMaterialId.value === 0) return null
+  if (selectedMaterialId.value === 0) {return null}
   const material = materialsStore.items.find(m => m.id === selectedMaterialId.value)
   return material?.default_unit_code || null
 })
@@ -270,7 +270,7 @@ const initialData = computed(() => {
 
 // Function to get unit from selected material
 function getUnitFromMaterial(materialId: number): number {
-  if (materialId === 0) return 0
+  if (materialId === 0) {return 0}
   const material = materialsStore.items.find(m => m.id === materialId)
   return material?.default_unit || 0
 }

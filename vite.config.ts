@@ -19,8 +19,8 @@ export default defineConfig({
     },
     server: {port: 5173, host: true},
     build: {
-        target: ['es2020', 'chrome80', 'firefox78', 'safari13.1', 'edge80'],
-        cssTarget: ['chrome80', 'firefox78', 'safari13.1', 'edge80'],
+        target: ['es2020', 'chrome90', 'firefox88', 'safari14', 'edge90'],
+        cssTarget: ['chrome90', 'firefox88', 'safari14', 'edge90'],
         rollupOptions: {
             output: {
                 manualChunks: {
@@ -29,7 +29,10 @@ export default defineConfig({
                     utils: ['axios']
                 }
             }
-        }
+        },
+        // Минификация с учетом Safari
+        minify: 'esbuild',
+        cssMinify: true
     },
     esbuild: {
         target: 'es2020'

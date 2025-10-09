@@ -172,21 +172,21 @@ function getCodeHelpText(): string {
 }
 
 function getSmartConversionAlertClass(): string {
-  if (!currentCode.value) return 'alert-info'
+  if (!currentCode.value) {return 'alert-info'}
   
   const isSmart = isUsedInSmartConversion(currentCode.value)
   return isSmart ? 'alert-success' : 'alert-warning'
 }
 
 function getSmartConversionTitle(): string {
-  if (!currentCode.value) return 'Введите код единицы'
+  if (!currentCode.value) {return 'Введите код единицы'}
   
   const isSmart = isUsedInSmartConversion(currentCode.value)
   return isSmart ? 'Умная конвертация поддерживается' : 'Умная конвертация не поддерживается'
 }
 
 function getSmartConversionDescription(): string {
-  if (!currentCode.value) return 'После ввода кода здесь появится информация о поддержке умной конвертации'
+  if (!currentCode.value) {return 'После ввода кода здесь появится информация о поддержке умной конвертации'}
   
   const isSmart = isUsedInSmartConversion(currentCode.value)
   

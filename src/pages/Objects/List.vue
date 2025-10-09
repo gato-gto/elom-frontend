@@ -219,7 +219,7 @@ async function handleAction(action: string, item: Object) {
 }
 
 async function handleDelete(object: Object) {
-  if (!confirm(`Удалить объект "${object.name}"?`)) return
+  if (!confirm(`Удалить объект "${object.name}"?`)) {return}
   
   try {
     await objectsStore.delete(object.id)

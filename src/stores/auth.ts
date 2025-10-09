@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', {
 
         async refreshTokens(): Promise<string | null> {
             try {
-                if (!this.refreshToken) return null
+                if (!this.refreshToken) {return null}
                 const {data} = await api.post<Tokens>(endpoints.auth.refresh, {refresh: this.refreshToken})
                 // simplejwt может возвращать только access или пару; учитываем оба
                 if ((data as any).refresh) {

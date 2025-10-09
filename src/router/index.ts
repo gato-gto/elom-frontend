@@ -570,7 +570,7 @@ router.beforeEach(async (to, from, next) => {
 
 // Helper function for role-based access
 function hasRequiredRole(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) return false
+  if (!userRole || !requiredRoles.length) {return false}
   
   return requiredRoles.includes(userRole)
 }

@@ -219,12 +219,12 @@ async function handleDelete(unit: Unit) {
     confirmMessage += `\n\nРекомендуется оставить единицу для корректной работы системы.`
   }
   
-  if (!confirm(confirmMessage)) return
+  if (!confirm(confirmMessage)) {return}
   
   // Дополнительное подтверждение для умных единиц
   if (isSmartUnit) {
     const doubleConfirm = confirm(`Вы уверены, что хотите удалить единицу "${unit.name}"?\n\nЭто может нарушить работу умной конвертации!`)
-    if (!doubleConfirm) return
+    if (!doubleConfirm) {return}
   }
   
   try {
