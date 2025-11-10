@@ -145,25 +145,6 @@
           </div>
         </div>
 
-        <!-- Этап работ -->
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text font-medium">Этап работ</span>
-            <span class="label-text-alt text-primary font-semibold">*</span>
-          </label>
-          <select
-            v-model="formData.stage"
-            required
-            class="select select-bordered w-full"
-          >
-            <option value="acceptance">Приемка</option>
-            <option value="request">Заявка</option>
-            <option value="delivery_fixed">Доставка</option>
-            <option value="post_rough">После черновых</option>
-            <option value="handover">Сдача</option>
-          </select>
-        </div>
-
         <!-- Ответственный -->
         <div class="form-control w-full">
           <label class="label">
@@ -304,7 +285,6 @@ const formData = ref<WriteOffCreateRequest>({
   material: null,
   unit: 0,
   quantity: '0',
-  stage: 'acceptance',
   responsible: 0,
   comment: ''
 })

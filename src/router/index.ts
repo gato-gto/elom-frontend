@@ -254,7 +254,7 @@ const routes = [
       description: 'Управление единицами измерения',
       category: 'reference_data',
       order: 8,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   {
@@ -266,7 +266,7 @@ const routes = [
       breadcrumb: 'Единицы / Новая',
       description: 'Создание новой единицы измерения',
       category: 'reference_data',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   {
@@ -278,7 +278,7 @@ const routes = [
       breadcrumb: 'Единицы / Редактировать',
       description: 'Редактирование существующей единицы измерения',
       category: 'reference_data',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   
@@ -294,7 +294,7 @@ const routes = [
       description: 'Управление сотрудниками и пользователями',
       category: 'reference_data',
       order: 7,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   {
@@ -306,7 +306,7 @@ const routes = [
       breadcrumb: 'Сотрудники / Новый',
       description: 'Создание нового сотрудника',
       category: 'reference_data',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   {
@@ -318,7 +318,7 @@ const routes = [
       breadcrumb: 'Сотрудники / Редактировать',
       description: 'Редактирование существующего сотрудника',
       category: 'reference_data',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
 
@@ -334,7 +334,7 @@ const routes = [
       description: 'Управление поставщиками',
       category: 'reference_data',
       order: 5,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   {
@@ -346,7 +346,7 @@ const routes = [
       breadcrumb: 'Поставщики / Новый',
       description: 'Создание нового поставщика',
       category: 'reference_data',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   {
@@ -358,7 +358,7 @@ const routes = [
       breadcrumb: 'Поставщики / Редактировать',
       description: 'Редактирование существующего поставщика',
       category: 'reference_data',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director']
     }
   },
   

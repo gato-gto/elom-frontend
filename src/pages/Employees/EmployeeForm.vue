@@ -40,7 +40,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     {
       title: 'Основная информация',
       description: 'Личные данные сотрудника',
-      fields: ['first_name', 'last_name', 'email', 'username'],
+      fields: ['first_name', 'last_name', 'email', 'username', 'phone'],
       order: 1
     },
     {
@@ -100,13 +100,25 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       }
     },
     {
+      key: 'phone',
+      type: 'input',
+      label: 'Телефон',
+      placeholder: '+998 XX XXX XX XX',
+      order: 5,
+      width: 'half',
+      validation: {
+        maxLength: 32
+      },
+      help: 'Обязательно для всех ролей кроме администратора и директора'
+    },
+    {
       key: 'role',
       type: 'select',
       label: 'Роль',
       placeholder: '— выберите роль —',
       options: roleOptions,
       required: true,
-      order: 5,
+      order: 6,
       width: 'half'
     },
     {
@@ -115,7 +127,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       label: 'Пароль',
       placeholder: 'Введите пароль',
       required: !props.initial,
-      order: 6,
+      order: 7,
       width: 'half',
       validation: props.initial ? {} : {
         minLength: 6,
@@ -126,7 +138,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       key: 'is_active',
       type: 'checkbox',
       label: 'Активный сотрудник',
-      order: 7,
+      order: 8,
       width: 'full'
     }
   ],
@@ -143,6 +155,7 @@ const initialFormData = computed<EmployeeRequest>(() => {
       last_name: props.initial.last_name || '',
       email: props.initial.email || '',
       username: props.initial.username,
+      phone: props.initial.phone || '',
       role: props.initial.role,
       password: undefined, // Не загружаем пароль
       is_active: props.initial.is_active
@@ -154,6 +167,7 @@ const initialFormData = computed<EmployeeRequest>(() => {
     last_name: '',
     email: '',
     username: '',
+    phone: '',
     role: 'buyer',
     password: undefined,
     is_active: true
@@ -165,7 +179,8 @@ const roleOptions = [
   { value: 'admin', label: 'Администратор' },
   { value: 'director', label: 'Директор' },
   { value: 'coordinator', label: 'Координатор' },
-  { value: 'site_manager', label: 'Бригадир' },
+  { value: 'site_manager', label: 'Менеджер объекта' },
+  { value: 'brigadier', label: 'Бригадир' },
   { value: 'buyer', label: 'Закупщик' }
 ]
 

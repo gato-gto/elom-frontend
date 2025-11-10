@@ -1,7 +1,7 @@
 <template>
   <MobileCard
     :title="writeOff.material_name"
-    :badge="getStageLabel(writeOff.stage)"
+    :badge="writeOff.stage ? getStageLabel(writeOff.stage) : undefined"
     badge-class="badge-warning"
     :actions="actions"
     @action="$emit('action', $event)"
@@ -30,7 +30,7 @@
           <span class="font-medium ml-2">{{ writeOff.responsible_name }}</span>
         </div>
         
-        <div>
+        <div v-if="writeOff.stage">
           <span class="text-gray-500">Этап:</span>
           <span class="font-medium ml-2">{{ getStageLabel(writeOff.stage) }}</span>
         </div>

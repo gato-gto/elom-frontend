@@ -66,11 +66,22 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       width: 'half'
     },
     {
+      key: 'current_stage',
+      type: 'select',
+      label: 'Текущий этап работ',
+      placeholder: '— выберите этап —',
+      options: stageOptions,
+      required: true,
+      order: 3,
+      width: 'half',
+      help: 'Текущий этап строительных работ на объекте'
+    },
+    {
       key: 'address',
       type: 'textarea',
       label: 'Адрес',
       placeholder: 'Введите адрес объекта',
-      order: 3,
+      order: 4,
       width: 'full',
       validation: {
         maxLength: 500
@@ -81,7 +92,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       type: 'input',
       label: 'Ссылка на карту',
       placeholder: 'https://yandex.ru/maps/... или https://maps.google.com/...',
-      order: 4,
+      order: 5,
       width: 'full',
       help: 'Укажите ссылку на Яндекс.Карты или Google Maps для точного местоположения объекта',
       validation: {
@@ -93,21 +104,21 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       key: 'date_start',
       type: 'date',
       label: 'Дата начала работ',
-      order: 5,
+      order: 6,
       width: 'half'
     },
     {
       key: 'date_end',
       type: 'date',
       label: 'Дата окончания работ',
-      order: 6,
+      order: 7,
       width: 'half'
     },
     {
       key: 'is_active',
       type: 'checkbox',
       label: 'Активный объект',
-      order: 7,
+      order: 8,
       width: 'full'
     }
   ],
@@ -115,6 +126,15 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
   cancelText: 'Отмена',
   showCancel: true
 }))
+
+// Stage options
+const stageOptions = [
+  { value: 'acceptance', label: 'Приемка' },
+  { value: 'request', label: 'Заявка' },
+  { value: 'delivery_fixed', label: 'Доставка' },
+  { value: 'post_rough', label: 'После черновых' },
+  { value: 'handover', label: 'Сдача' }
+]
 
 // Initial form data
 const initialFormData = computed<ObjectRequest>(() => {
@@ -125,6 +145,7 @@ const initialFormData = computed<ObjectRequest>(() => {
       is_active: props.initial.is_active,
       location_url: props.initial.location_url,
       responsible: props.initial.responsible,
+      current_stage: props.initial.current_stage || 'acceptance',
       date_start: props.initial.date_start,
       date_end: props.initial.date_end
     }
@@ -136,6 +157,7 @@ const initialFormData = computed<ObjectRequest>(() => {
     is_active: true,
     location_url: undefined,
     responsible: undefined,
+    current_stage: 'acceptance',
     date_start: undefined,
     date_end: undefined
   }

@@ -12,6 +12,8 @@ export interface SiteObject {
   location_url?: string;
   responsible?: number;
   responsible_name?: string;
+  current_stage: string;
+  current_stage_display?: string;
   key_person_name?: string;
   key_person_contacts?: string;
   date_start?: string;
@@ -29,6 +31,9 @@ export interface ObjectRequest {
   is_active: boolean;
   location_url?: string;
   responsible?: number;
+  current_stage?: string;
+  key_person_name?: string;
+  key_person_contacts?: string;
   date_start?: string;
   date_end?: string;
 }
@@ -39,6 +44,9 @@ export interface PatchedObjectRequest {
   is_active?: boolean;
   location_url?: string;
   responsible?: number;
+  current_stage?: string;
+  key_person_name?: string;
+  key_person_contacts?: string;
   date_start?: string;
   date_end?: string;
 }

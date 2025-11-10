@@ -62,11 +62,12 @@ export const stageStats = computed(() => {
   const stats: Record<string, { count: number; quantity: number }> = {}
   
   useWriteOffsStore.items.forEach((item: WriteOff) => {
-    if (!stats[item.stage]) {
-      stats[item.stage] = { count: 0, quantity: 0 }
+    const stage = item.stage || 'unknown'
+    if (!stats[stage]) {
+      stats[stage] = { count: 0, quantity: 0 }
     }
-    stats[item.stage].count += 1
-    stats[item.stage].quantity += parseFloat(item.quantity)
+    stats[stage].count += 1
+    stats[stage].quantity += parseFloat(item.quantity)
   })
   
   return stats

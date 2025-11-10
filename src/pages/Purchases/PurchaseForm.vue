@@ -854,6 +854,9 @@ async function onSaved(data: PurchaseRequest) {
       isEdit.value ? Number(route.params.id) : 0, 
       errorResult.detail
     )
+    
+    // Пробрасываем ошибку, чтобы GenericForm мог её обработать и показать в полях
+    throw error
   } finally {
     saving.value = false
   }

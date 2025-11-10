@@ -35,7 +35,7 @@ export interface WriteOff {
   unit: number;
   unit_code: string;
   quantity: string; // decimal as string
-  stage: Stage;
+  stage?: Stage | null; // Optional, deprecated - use Object.current_stage
   responsible: number;
   responsible_name?: string;
   comment?: string;
@@ -79,7 +79,7 @@ export interface WriteOffCreateRequest {
   material: number | null; // nullable according to API
   unit: number;
   quantity: string; // decimal as string
-  stage: Stage;
+  stage?: Stage | null; // Optional, deprecated - use Object.current_stage
   responsible: number;
   comment?: string;
 }
@@ -90,7 +90,7 @@ export interface WriteOffUpdateRequest {
   material?: number | null; // nullable according to API
   unit?: number;
   quantity?: string; // decimal as string
-  stage?: Stage;
+  stage?: Stage | null; // Optional, deprecated - use Object.current_stage
   responsible?: number;
   comment?: string;
 }
@@ -102,7 +102,7 @@ export interface WriteOffFormData {
   material: number;
   unit: number;
   quantity: string; // decimal as string
-  stage: Stage;
+  stage?: Stage | null; // Optional, deprecated - use Object.current_stage
   responsible: number;
   comment?: string;
 }

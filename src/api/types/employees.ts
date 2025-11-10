@@ -9,6 +9,7 @@ export interface Employee {
   last_name: string;
   email: string;
   role: UserRole;
+  phone: string;
   is_active: boolean;
   assigned_object_ids: number[];
   created_at: string;
@@ -21,6 +22,7 @@ export interface EmployeeCreateRequest {
   last_name?: string;
   email?: string;
   role: UserRole;
+  phone?: string;
   assigned_object_ids?: number[];
   password?: string;
 }
@@ -30,6 +32,7 @@ export interface EmployeeUpdateRequest {
   last_name?: string;
   email?: string;
   role?: UserRole;
+  phone?: string;
   assigned_object_ids?: number[];
   is_active?: boolean;
 }
@@ -40,6 +43,7 @@ export interface EmployeeRequest {
   last_name: string;
   email: string;
   role: UserRole;
+  phone?: string;
   assigned_object_ids?: number[];
   password?: string;
   is_active?: boolean;
@@ -51,6 +55,7 @@ export interface PatchedEmployeeRequest {
   last_name?: string;
   email?: string;
   role?: UserRole;
+  phone?: string;
   assigned_object_ids?: number[];
   is_active?: boolean;
 }
@@ -61,6 +66,7 @@ export interface EmployeeFormData {
   last_name: string;
   email: string;
   role: UserRole;
+  phone: string;
   assigned_object_ids: number[];
   password: string;
   is_active: boolean;
