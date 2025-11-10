@@ -109,7 +109,7 @@
         
         <!-- Actual Data -->
         <tbody v-else>
-        <tr v-for="r in rows" :key="r.responsible_id" class="table-row">
+        <tr v-for="r in rows" :key="r.responsible_id" >
           <td>{{ r.responsible_name }}</td>
           <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
           <td class="text-right">{{ r.purchases ?? '—' }}</td>

@@ -141,15 +141,7 @@ export const animationUtils = {
     }
   },
 
-  // Генерация стилей для staggered анимаций
-  generateStaggerStyles(count: number, baseDelay: number = 0.05): string {
-    let styles = ''
-    for (let i = 0; i < count; i++) {
-      const delay = i * baseDelay
-      styles += `.table-row:nth-child(${i + 1}) { animation-delay: ${delay}s; }\n`
-    }
-    return styles
-  },
+
 
   // Проверка поддержки reduced motion
   prefersReducedMotion(): boolean {

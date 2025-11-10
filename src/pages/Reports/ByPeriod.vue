@@ -131,7 +131,7 @@
         
         <!-- Actual Data -->
         <tbody v-else>
-          <tr v-for="r in rows" :key="r.period" class="table-row">
+          <tr v-for="r in rows" :key="r.period" >
             <td>{{ formatDate(r.period) }}</td>
             <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
             <td class="text-right">{{ r.purchases ?? '—' }}</td>

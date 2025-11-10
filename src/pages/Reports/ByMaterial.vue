@@ -122,7 +122,7 @@
         
         <!-- Actual Data -->
         <tbody v-else>
-        <tr v-for="r in rows" :key="r.material_id" class="table-row">
+        <tr v-for="r in rows" :key="r.material_id">
           <td>{{ r.material_name ?? '—' }}</td>
           <td>{{ r.unit ?? '—' }}</td>
           <td class="text-right">{{ formatCurrency(r.amount_total) }}</td>

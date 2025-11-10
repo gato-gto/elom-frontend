@@ -106,7 +106,7 @@
           <!-- Actual Data -->
           <tbody v-else>
             <template v-for="item in store.items" :key="item.id">
-              <tr class="table-row">
+              <tr >
                 <td v-for="column in config.columns" :key="column.key">
                   <slot 
                     :name="`column-${column.key}`" 
