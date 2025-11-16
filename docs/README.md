@@ -12,6 +12,11 @@
 
 ## 🚀 Быстрый старт
 
+### Для пользователей системы
+👉 Начните с **[USER_MANUAL.md](./USER_MANUAL.md)** - руководство пользователя
+- [Подробно по формам](./USER_GUIDE_FORMS.md) - что и зачем заполнять
+- [Подробно по спискам](./USER_GUIDE_LISTS.md) - как работать с таблицами
+
 ### Для новичков
 👉 Начните с **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - краткий обзор проекта
 
@@ -118,39 +123,59 @@
 
 ---
 
+### 📄 Руководства для пользователей
+
+1. **[USER_MANUAL.md](./USER_MANUAL.md)** ⭐ **НОВОЕ**
+   - Полное руководство пользователя
+   - Роли и доступ
+   - Типовые сценарии работы
+   - Решение проблем
+
+2. **[USER_GUIDE_FORMS.md](./USER_GUIDE_FORMS.md)** ⭐ **НОВОЕ**
+   - Подробно о каждой форме
+   - Что и зачем заполнять
+   - Примеры заполнения
+   - Автозаполнение и валидация
+
+3. **[USER_GUIDE_LISTS.md](./USER_GUIDE_LISTS.md)** ⭐ **НОВОЕ**
+   - Справочник по всем спискам
+   - Что показывает каждая таблица
+   - Фильтры и сортировка
+   - Экспорт данных
+
 ### 📄 Дополнительные документы
 
-1. **[PROJECT_STATUS.md](./PROJECT_STATUS.md)**
+4. **[PROJECT_STATUS.md](./PROJECT_STATUS.md)**
    - Краткий статус проекта
    - Что готово (95%)
    - Что осталось (5%)
 
-2. **[API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md)**
+5. **[API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md)**
    - Быстрая справка по API
    - Основные endpoints
    - Примеры
 
-3. **[WRITEOFF_SYSTEM_IMPLEMENTATION.md](./WRITEOFF_SYSTEM_IMPLEMENTATION.md)**
+6. **[WRITEOFF_SYSTEM_IMPLEMENTATION.md](./WRITEOFF_SYSTEM_IMPLEMENTATION.md)**
    - Детали реализации списаний
    - Технические решения
 
-4. **[DOCUMENTATION_UPDATE_2025.md](./DOCUMENTATION_UPDATE_2025.md)** ⭐ **НОВОЕ**
+7. **[DOCUMENTATION_UPDATE_2025.md](./DOCUMENTATION_UPDATE_2025.md)**
    - Сводка обновлений октябрь 2025
    - Актуальная статистика
 
-5. **[NAVIGATION_GUIDE.md](./NAVIGATION_GUIDE.md)** ⭐ **НОВОЕ**
+8. **[NAVIGATION_GUIDE.md](./NAVIGATION_GUIDE.md)**
    - Как пользоваться документацией
    - Для разных ролей
    - Чек-листы
 
-6. **[CHANGELOG_OCTOBER_2025.md](./CHANGELOG_OCTOBER_2025.md)** ⭐ **НОВОЕ**
+9. **[CHANGELOG_OCTOBER_2025.md](./CHANGELOG_OCTOBER_2025.md)**
    - Полный список изменений
    - Новые функции
    - Исправления багов
 
-7. **[api_schema.yaml](./api_schema.yaml)**
-   - OpenAPI 3.0 схема
-   - Автогенерация клиентов
+10. **[api_schema.yaml](./api_schema.yaml)**
+    - OpenAPI 3.0 схема
+    - Автогенерация клиентов
 
 ---
 

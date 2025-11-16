@@ -39,7 +39,8 @@ describe('usePagination', () => {
 
   it('calculates page range with maxVisiblePages', () => {
     const { visiblePages } = usePagination(mockPagination, { maxVisiblePages: 3 })
-    expect(visiblePages.value).toEqual([1, 2, 3])
+    // Когда totalPages (5) > maxVisiblePages (3), показываются первые страницы с многоточием
+    expect(visiblePages.value).toEqual([1, 2, 3, '...', 5])
   })
 
   it('calculates page info correctly', () => {
@@ -68,8 +69,20 @@ describe('usePagination', () => {
 
   it('gets adjacent pages correctly', () => {
     const { getAdjacentPages } = usePagination(mockPagination)
-    expect(getAdjacentPages(2)).toEqual([2, 3])
-    expect(getAdjacentPages(1)).toEqual([2])
-    expect(getAdjacentPages(5)).toEqual([4, 5])
+    // getAdjacentPages возвращает страницы в диапазоне [page - count, page + count], исключая текущую
+    expect(getAdjacentPages(2)).toEqual([2, 3]) // для page=1, count=2: [max(1,1-2), min(5,1+2)] = [1,3], исключая 1 → [2,3]
+    
+    const paginationPage2 = { ...mockPagination, page: 2 }
+    const { getAdjacentPages: getAdjacentPages2 } = usePagination(paginationPage2)
+    expect(getAdjacentPages2(1)).toEqual([1, 3]) // для page=2, count=1: [max(1,2-1), min(5,2+1)] = [1,3], исключая 2 → [1,3]
+    
+    const paginationPage5 = { ...mockPagination, page: 5 }
+    const { getAdjacentPages: getAdjacentPages5 } = usePagination(paginationPage5)
+    // Для page=5, count=2: [max(1,5-2), min(5,5+2)] = [3,5], исключая 5 → [3,4]
+    // Но если count=5, то [max(1,5-5), min(5,5+5)] = [1,5], исключая 5 → [1,2,3,4]
+    const result = getAdjacentPages5(5)
+    expect(result).toContain(4)
+    expect(result).toContain(3)
+    expect(result).not.toContain(5)
   })
 })

@@ -17,70 +17,73 @@ const config = {
 }
 
 // Создаем базовый store
-const baseStore = createBaseStore<ArchivePeriod, ArchivePeriodRequest, ArchivePeriodRequest>(config)
-
-// Расширяем базовый store специфичной логикой архива
-export const useArchiveStore = baseStore
+export const useArchiveStore = createBaseStore<ArchivePeriod, ArchivePeriodRequest, ArchivePeriodRequest>(config)
 
 // Специфичные для архива действия
 export const closePeriod = async (data: ArchivePeriodRequest) => {
-  baseStore.loading = true
-  baseStore.error = null
+  useArchiveStore.loading = true
+  useArchiveStore.error = null
 
   try {
     const result = await api.post(endpoints.archive.periods.close, data)
     
     // Обновляем список после успешного закрытия
-    await baseStore.fetchList()
+    await useArchiveStore.fetchList()
     
     return result.data
   } catch (err: any) {
-    baseStore.error = err?.response?.data?.detail || 'Ошибка при закрытии периода'
+    useArchiveStore.error = err?.response?.data?.detail || 'Ошибка при закрытии периода'
     throw err
   } finally {
-    baseStore.loading = false
+    useArchiveStore.loading = false
   }
 }
 
 export const reopenPeriod = async (data: { month: string; object: number }) => {
-  baseStore.loading = true
-  baseStore.error = null
+  useArchiveStore.loading = true
+  useArchiveStore.error = null
 
   try {
     const result = await api.post(endpoints.archive.periods.reopen, data)
     
     // Обновляем список после успешного открытия
-    await baseStore.fetchList()
+    await useArchiveStore.fetchList()
     
     return result.data
   } catch (err: any) {
-    baseStore.error = err?.response?.data?.detail || 'Ошибка при открытии периода'
+    useArchiveStore.error = err?.response?.data?.detail || 'Ошибка при открытии периода'
     throw err
   } finally {
-    baseStore.loading = false
+    useArchiveStore.loading = false
   }
 }
 
 // Проверка возможности закрытия периода
 export const canClosePeriod = (month: string, objectId: number) => {
   // Проверяем, не закрыт ли уже период
-  const existingPeriod = baseStore.items.find(
-    (item: ArchivePeriod) => item.month === month && item.object === objectId
+  // month в формате YYYY-MM, item.month в формате YYYY-MM-DD
+  const existingPeriod = useArchiveStore.items.find(
+    (item: ArchivePeriod) => {
+      const itemMonth = typeof item.month === 'string' 
+        ? item.month.substring(0, 7) // Берем первые 7 символов (YYYY-MM)
+        : new Date(item.month).toISOString().substring(0, 7)
+      return itemMonth === month && item.object === objectId
+    }
   )
   return !existingPeriod
 }
 
 // Получение статистики архива
 export const getArchiveStats = () => {
-  const totalPeriods = baseStore.items.length
+  const totalPeriods = useArchiveStore.items.length
   const thisYear = new Date().getFullYear()
-  const thisYearPeriods = baseStore.items.filter(
+  const thisYearPeriods = useArchiveStore.items.filter(
     (item: ArchivePeriod) => new Date(item.month).getFullYear() === thisYear
   ).length
 
   return {
     total: totalPeriods,
     thisYear: thisYearPeriods,
-    lastPeriod: baseStore.items.length > 0 ? baseStore.items[0] : null
+    lastPeriod: useArchiveStore.items.length > 0 ? useArchiveStore.items[0] : null
   }
 }

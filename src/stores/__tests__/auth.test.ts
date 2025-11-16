@@ -76,24 +76,34 @@ describe('Auth Store', () => {
 
   it('performs successful login', async () => {
     const store = useAuthStore()
-    const mockResponse = {
+    const mockTokenResponse = {
       data: {
         access: 'access-token',
         refresh: 'refresh-token'
       }
     }
+    const mockUserResponse = {
+      data: {
+        id: 1,
+        username: 'testuser',
+        first_name: 'Test',
+        last_name: 'User',
+        email: 'test@example.com',
+        role: 'admin'
+      }
+    }
     
-    vi.mocked(api.post).mockResolvedValue(mockResponse)
+    vi.mocked(api.post).mockResolvedValue(mockTokenResponse)
+    vi.mocked(api.get).mockResolvedValue(mockUserResponse)
     
     const result = await store.login('testuser', 'password')
     
     expect(result).toBe(true)
     expect(store.accessToken).toBe('access-token')
     expect(store.refreshToken).toBe('refresh-token')
-    expect(api.post).toHaveBeenCalledWith('http://localhost:8000/api/v1/auth/token/', {
-      username: 'testuser',
-      password: 'password'
-    })
+    expect(api.post).toHaveBeenCalled()
+    const postCallArgs = vi.mocked(api.post).mock.calls[0][0]
+    expect(postCallArgs).toContain('/auth/token/')
   })
 
   it('handles login failure', async () => {

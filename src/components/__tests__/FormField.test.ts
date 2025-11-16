@@ -38,6 +38,7 @@ describe('FormField', () => {
         modelValue: 'option1',
         type: 'select',
         label: 'Select Label',
+        placeholder: '— выберите —',
         options
       }
     })

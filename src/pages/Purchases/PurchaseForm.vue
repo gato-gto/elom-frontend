@@ -173,7 +173,7 @@
                 <tr>
                   <th style="min-width: 240px">Материал</th>
                   <th style="min-width: 120px">Ед.</th>
-                  <th style="min-width: 120px">Кол-во</th>
+                  <th style="min-width: 120px">Количество</th>
                   <th style="min-width: 120px">Цена</th>
                   <th class="text-right" style="min-width: 120px">Сумма</th>
                   <th class="text-right" style="min-width: 80px">Действия</th>
@@ -546,19 +546,15 @@ const employees = computed(() => employeesStore.items)
 const suppliers = computed(() => suppliersStore.items)
 
 const objectOptions = computed(() => {
-  // Фильтруем объекты по текущему пользователю
-  const userObjects = objects.value.filter((obj: any) => {
-    // Если у объекта есть ответственный, проверяем совпадение с текущим пользователем
-    if (obj.responsible && auth.me) {
-      return obj.responsible === auth.me.id
-    }
-    // Если у объекта нет ответственного, показываем всем
-    return true
-  })
-  
-  return userObjects.map((obj: any) => ({ 
-    value: obj.id, 
-    label: obj.name 
+  // Если у пользователя есть список назначенных объектов, показываем только их
+  const assignedIds = auth.me?.assigned_object_ids || []
+  const list = assignedIds.length > 0
+    ? objects.value.filter((obj: any) => assignedIds.includes(obj.id))
+    : objects.value
+
+  return list.map((obj: any) => ({
+    value: obj.id,
+    label: obj.name
   }))
 })
 
@@ -692,7 +688,8 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       type: 'textarea',
       label: 'Комментарий',
       order: 9,
-      width: 'full'
+      width: 'full',
+      rows: 1
     },
     {
       key: 'items',
@@ -1048,5 +1045,11 @@ onMounted(() => {
     min-height: 2rem;
     padding: 0.5rem;
   }
+}
+
+
+
+textarea.textarea[rows="1"],textarea.textarea[rows="2"] {
+    min-height: auto !important;
 }
 </style>

@@ -23,6 +23,7 @@
         customClass
       ]"
       :placeholder="placeholder"
+      :required="required"
       :disabled="disabled"
       :readonly="readonly"
       :min="min"

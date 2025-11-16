@@ -488,4 +488,8 @@ onUnmounted(() => {
   max-height: 80vh;
   overflow-y: auto;
 }
+
+textarea.textarea[rows="1"],textarea.textarea[rows="2"] {
+    min-height: auto !important;
+  }
 </style>

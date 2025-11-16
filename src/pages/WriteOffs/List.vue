@@ -289,7 +289,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       writeOffsStore.fetchList(),
-      objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
+      objectsStore.fetchList({ page_size: 1000, ordering: 'name' , is_active: true} as any),
       materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
       employeesStore.fetchList({ page_size: 1000, ordering: 'username' } as any)
     ])

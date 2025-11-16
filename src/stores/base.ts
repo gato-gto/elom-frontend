@@ -131,6 +131,7 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
 
         return data
       } catch (err: any) {
+        current.value = null
         await handleApiErrorAsync(err, { operation: 'dataLoading' })
         throw err
       } finally {
@@ -222,12 +223,21 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
     }
 
     const resetFilters = async () => {
-      // Сохраняем только базовые фильтры
-      const baseFilters = {
+      // Сохраняем структуру фильтров, но устанавливаем значения в пустые строки
+      const keys = Object.keys(filters.value)
+      const resetFiltersObj: BaseFilters = {
         search: '',
         ordering: 'id'
       }
-      filters.value = baseFilters
+      
+      // Устанавливаем все остальные фильтры в пустые строки
+      keys.forEach(key => {
+        if (key !== 'search' && key !== 'ordering') {
+          resetFiltersObj[key] = ''
+        }
+      })
+      
+      filters.value = resetFiltersObj
       pagination.value.page = 1 // Сбрасываем на первую страницу при сбросе фильтров
       await fetchList()
     }

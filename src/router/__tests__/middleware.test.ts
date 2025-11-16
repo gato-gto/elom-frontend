@@ -13,64 +13,72 @@ describe('Router Middleware', () => {
   })
 
   describe('auth middleware', () => {
-    it('allows access for authenticated users', () => {
+    it('allows access for authenticated users', async () => {
       const mockTo = {} as any
       const mockFrom = {} as any
       const mockNext = vi.fn()
 
       // Mock authenticated user
       vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: true
+        isAuthenticated: true,
+        initialized: true,
+        tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
-      middleware.auth(mockTo, mockFrom, mockNext)
+      await middleware.auth(mockTo, mockFrom, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
 
-    it('redirects unauthenticated users to login', () => {
+    it('redirects unauthenticated users to login', async () => {
       const mockTo = { fullPath: '/protected' } as any
       const mockFrom = {} as any
       const mockNext = vi.fn()
 
       // Mock unauthenticated user
       vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: false
+        isAuthenticated: false,
+        initialized: true,
+        tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
-      middleware.auth(mockTo, mockFrom, mockNext)
+      await middleware.auth(mockTo, mockFrom, mockNext)
 
       expect(mockNext).toHaveBeenCalledWith('/login?redirect=%2Fprotected')
     })
   })
 
   describe('guest middleware', () => {
-    it('allows access for unauthenticated users', () => {
+    it('allows access for unauthenticated users', async () => {
       const mockTo = {} as any
       const mockFrom = {} as any
       const mockNext = vi.fn()
 
       // Mock unauthenticated user
       vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: false
+        isAuthenticated: false,
+        initialized: true,
+        tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
-      middleware.guest(mockTo, mockFrom, mockNext)
+      await middleware.guest(mockTo, mockFrom, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
 
-    it('redirects authenticated users to purchases', () => {
+    it('redirects authenticated users to purchases', async () => {
       const mockTo = {} as any
       const mockFrom = {} as any
       const mockNext = vi.fn()
 
       // Mock authenticated user
       vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: true
+        isAuthenticated: true,
+        initialized: true,
+        tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
-      middleware.guest(mockTo, mockFrom, mockNext)
+      await middleware.guest(mockTo, mockFrom, mockNext)
 
       expect(mockNext).toHaveBeenCalledWith('/purchases')
     })
@@ -97,7 +105,7 @@ describe('Router Middleware', () => {
       expect(mockNext).toHaveBeenCalled()
     })
 
-    it('denies access for users without required role', () => {
+    it('denies access for users without required role', async () => {
       const mockTo = {
         meta: { roles: ['admin'] }
       } as any
@@ -108,11 +116,13 @@ describe('Router Middleware', () => {
       // Mock auth store with user role
       vi.mocked(useAuthStore).mockReturnValue({
         isAuthenticated: true,
-        role: 'user'
+        role: 'user',
+        initialized: true,
+        tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
       const rolesMiddleware = middleware.roles(['admin'])
-      rolesMiddleware(mockTo, mockFrom, mockNext)
+      await rolesMiddleware(mockTo, mockFrom, mockNext)
 
       expect(mockNext).toHaveBeenCalledWith('/purchases')
     })
@@ -161,12 +171,17 @@ describe('Router Middleware', () => {
 
       // Mock unauthenticated user
       vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: false
+        isAuthenticated: false,
+        initialized: true,
+        tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
       const middlewares = [middleware.auth, middleware.roles(['admin'])]
       
       applyMiddleware(mockTo, mockFrom, mockNext, middlewares)
+      
+      // Ждем выполнения асинхронных операций
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       expect(mockNext).toHaveBeenCalledWith('/login?redirect=%2Fprotected')
     })
@@ -184,6 +199,9 @@ describe('Router Middleware', () => {
       const middlewares = [middleware.auth]
       
       applyMiddleware(mockTo, mockFrom, mockNext, middlewares)
+      
+      // Ждем выполнения асинхронных операций
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       expect(mockNext).toHaveBeenCalledWith('/purchases')
     })

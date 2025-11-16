@@ -30,8 +30,8 @@ describe('ErrorHandlers', () => {
       const result = await ErrorHandlers.formValidation(error)
 
       expect(result.fieldErrors).toEqual({
-        name: 'This field is required',
-        email: 'Enter a valid email address'
+        name: ['This field is required'],
+        email: ['Enter a valid email address']
       })
       expect(result.hasErrors).toBe(true)
       expect(result.statusCode).toBe(400)
@@ -214,7 +214,7 @@ describe('parseApiError', () => {
     const result = parseApiError(error)
 
     expect(result.fieldErrors).toEqual({
-      name: 'This field is required'
+      name: ['This field is required']
     })
     expect(result.hasErrors).toBe(true)
     expect(result.statusCode).toBe(400)

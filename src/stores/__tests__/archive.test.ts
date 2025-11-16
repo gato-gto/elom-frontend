@@ -3,11 +3,20 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useArchiveStore } from '../archive'
+import { useArchiveStore, closePeriod, reopenPeriod, canClosePeriod, getArchiveStats } from '../archive'
 import type { ArchivePeriod, ArchivePeriodRequest } from '@/api/types/archive'
+import api from '@/api/client'
 
-// Мокаем fetch
-global.fetch = vi.fn()
+// Мокаем API client
+vi.mock('@/api/client', () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  }
+}))
 
 describe('Archive Store', () => {
   beforeEach(() => {
@@ -17,7 +26,7 @@ describe('Archive Store', () => {
 
   describe('closePeriod', () => {
     it('должен успешно закрыть период', async () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       const mockResponse = {
         id: 1,
         month: '2024-01-01',
@@ -29,75 +38,74 @@ describe('Archive Store', () => {
         is_closed: true
       }
 
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse)
-      } as Response)
+      vi.mocked(api.post).mockResolvedValueOnce({
+        data: mockResponse
+      })
+      vi.mocked(api.get).mockResolvedValueOnce({ data: { count: 0, results: [] } })
 
       const request: ArchivePeriodRequest = {
         month: '2024-01',
         object: 1
       }
 
-      const result = await store.closePeriod(request)
+      const result = await closePeriod(request)
 
-      expect(fetch).toHaveBeenCalledWith('/api/v1/archive/periods/close/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer null'
-        },
-        body: JSON.stringify(request)
-      })
+      // Проверяем, что был вызван правильный endpoint (может быть полный URL)
+      expect(api.post).toHaveBeenCalled()
+      const callArgs = vi.mocked(api.post).mock.calls[0]
+      expect(callArgs[0]).toContain('/archive/periods/close/')
+      expect(callArgs[1]).toEqual(request)
 
       expect(result).toEqual(mockResponse)
     })
 
     it('должен обработать ошибку при закрытии периода', async () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ detail: 'Period already closed' })
-      } as Response)
+      const errorResponse = {
+        response: {
+          data: {
+            detail: 'Period already closed'
+          }
+        }
+      }
+      vi.mocked(api.post).mockRejectedValueOnce(errorResponse)
+      vi.mocked(api.get).mockResolvedValueOnce({ data: { count: 0, results: [] } })
 
       const request: ArchivePeriodRequest = {
         month: '2024-01',
         object: 1
       }
 
-      await expect(store.closePeriod(request)).rejects.toThrow('Period already closed')
+      await expect(closePeriod(request)).rejects.toBe(errorResponse)
       expect(store.error).toBe('Period already closed')
     })
   })
 
   describe('reopenPeriod', () => {
     it('должен успешно открыть период', async () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       const mockResponse = {
         message: 'Period reopened successfully'
       }
 
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse)
-      } as Response)
+      vi.mocked(api.post).mockResolvedValueOnce({
+        data: mockResponse
+      })
+      vi.mocked(api.get).mockResolvedValueOnce({ data: { count: 0, results: [] } })
 
       const request = {
         month: '2024-01',
         object: 1
       }
 
-      const result = await store.reopenPeriod(request)
+      const result = await reopenPeriod(request)
 
-      expect(fetch).toHaveBeenCalledWith('/api/v1/archive/periods/reopen/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer null'
-        },
-        body: JSON.stringify(request)
-      })
+      // Проверяем, что был вызван правильный endpoint (может быть полный URL)
+      expect(api.post).toHaveBeenCalled()
+      const callArgs = vi.mocked(api.post).mock.calls[0]
+      expect(callArgs[0]).toContain('/archive/periods/reopen/')
+      expect(callArgs[1]).toEqual(request)
 
       expect(result).toEqual(mockResponse)
     })
@@ -105,7 +113,7 @@ describe('Archive Store', () => {
 
   describe('canClosePeriod', () => {
     it('должен вернуть true если период не закрыт', () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       store.items = [
         {
           id: 1,
@@ -119,12 +127,12 @@ describe('Archive Store', () => {
         }
       ]
 
-      const canClose = store.canClosePeriod('2024-02', 1)
+      const canClose = canClosePeriod('2024-02', 1)
       expect(canClose).toBe(true)
     })
 
     it('должен вернуть false если период уже закрыт', () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       store.items = [
         {
           id: 1,
@@ -138,14 +146,14 @@ describe('Archive Store', () => {
         }
       ]
 
-      const canClose = store.canClosePeriod('2024-01', 1)
+      const canClose = canClosePeriod('2024-01', 1)
       expect(canClose).toBe(false)
     })
   })
 
   describe('getArchiveStats', () => {
     it('должен вернуть корректную статистику', () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       const currentYear = new Date().getFullYear()
       
       store.items = [
@@ -181,7 +189,7 @@ describe('Archive Store', () => {
         }
       ]
 
-      const stats = store.getArchiveStats()
+      const stats = getArchiveStats()
 
       expect(stats.total).toBe(3)
       expect(stats.thisYear).toBe(2)
@@ -189,10 +197,10 @@ describe('Archive Store', () => {
     })
 
     it('должен вернуть пустую статистику для пустого списка', () => {
-      const store = useArchiveStore()
+      const store = useArchiveStore
       store.items = []
 
-      const stats = store.getArchiveStats()
+      const stats = getArchiveStats()
 
       expect(stats.total).toBe(0)
       expect(stats.thisYear).toBe(0)

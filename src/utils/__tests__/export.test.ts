@@ -180,10 +180,10 @@ describe('Export Utils', () => {
   })
 
   describe('error handling', () => {
-    it('handles export errors gracefully', () => {
+    it('handles export errors gracefully', async () => {
       // Mock xlsx to throw an error
-      const xlsx = vi.mocked(await import('xlsx'))
-      xlsx.utils.json_to_sheet.mockImplementation(() => {
+      const xlsx = await import('xlsx')
+      vi.mocked(xlsx.utils.json_to_sheet).mockImplementation(() => {
         throw new Error('Export error')
       })
 

@@ -1,152 +1,62 @@
 <template>
   <Modal
+    :size="'6xl'"
     :model-value="isOpen"
     :title="props.initial ? 'Редактирование списания' : 'Новое списание'"
     @close="closeModal"
   >
     <div class="space-y-6">
-          <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Информация о списании
-        </h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          Все данные о списании материалов
-        </p>
-      </div>
-
       <form @submit.prevent="handleSubmit" class="space-y-4">
-        <!-- Дата списания -->
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text font-medium">Дата списания</span>
-            <span class="label-text-alt text-primary font-semibold">*</span>
-          </label>
-          <input
-            v-model="formData.date"
-            type="date"
-            required
-            class="input input-bordered w-full"
-          />
-        </div>
-
-        <!-- Объект -->
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text font-medium">Объект</span>
-            <span class="label-text-alt text-primary font-semibold">*</span>
-          </label>
-          <select
-            v-model="formData.object"
-            @change="onObjectChange"
-            required
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.object }"
-          >
-            <option value="0" disabled>— выберите объект —</option>
-            <option
-              v-for="object in objectOptions"
-              :key="object.value"
-              :value="object.value"
-            >
-              {{ object.label }}
-            </option>
-          </select>
-          <div v-if="errors.object" class="label">
-            <span class="label-text-alt text-error">
-              {{ errors.object[0] }}
-            </span>
-          </div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <!-- Дата списания -->
+          <div class="form-control w-full">
+            <label class="label">
+              <span class="label-text font-medium">Дата списания</span>
+              <span class="label-text-alt text-primary font-semibold">*</span>
+            </label>
+            <input
+              v-model="formData.date"
+              type="date"
+              required
+              class="input input-bordered w-full"
+              :class="{ 'input-error': errors.date }"
+            />
+            <div v-if="errors.date" class="label">
+              <span class="label-text-alt text-error">
+                {{ errors.date[0] }}
+              </span>
             </div>
-
-        <!-- Материал -->
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text font-medium">Материал</span>
-            <span class="label-text-alt text-primary font-semibold">*</span>
-          </label>
-          <select
-            v-model="formData.material"
-            @change="onMaterialChange"
-            required
-            :disabled="!formData.object || materialsLoading"
-            class="select select-bordered w-full"
-            :class="{ 
-              'select-disabled': !formData.object || materialsLoading,
-              'select-error': errors.material 
-            }"
-          >
-            <option value="0" disabled>— выберите материал —</option>
-            <option
-              v-for="material in materialOptions"
-              :key="material.value"
-              :value="material.value"
-            >
-              {{ material.label }}
-            </option>
-          </select>
-          <div v-if="errors.material" class="label">
-            <span class="label-text-alt text-error">
-              {{ errors.material[0] }}
-            </span>
           </div>
-        </div>
-
-        <!-- Единица измерения -->
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text font-medium">Единица измерения</span>
-            <span class="label-text-alt text-primary font-semibold">*</span>
-          </label>
-          <select
-            v-model="formData.unit"
-            @change="onUnitChange"
-            required
-            :disabled="isUnitDisabled"
-            class="select select-bordered w-full"
-            :class="{ 
-              'select-disabled': isUnitDisabled,
-              'select-error': errors.unit 
-            }"
-          >
-            <option value="0" disabled>— выберите единицу —</option>
-            <option
-              v-for="unit in unitOptions"
-              :key="unit.value"
-              :value="unit.value"
+          <!-- Объект -->
+          <div class="form-control w-full">
+            <label class="label">
+              <span class="label-text font-medium">Объект</span>
+              <span class="label-text-alt text-primary font-semibold">*</span>
+            </label>
+            <select
+              v-model="formData.object"
+              @change="onObjectChange"
+              required
+              class="select select-bordered w-full"
+              :class="{ 'select-error': errors.object }"
             >
-              {{ unit.label }}
-            </option>
-          </select>
-          <div v-if="errors.unit" class="label">
-            <span class="label-text-alt text-error">
-              {{ errors.unit[0] }}
-            </span>
-      </div>
-    </div>
-
-        <!-- Количество -->
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text font-medium">Количество</span>
-            <span class="label-text-alt text-primary font-semibold">*</span>
-          </label>
-          <input
-            v-model="formData.quantity"
-            type="number"
-            step="0.000001"
-            required
-            class="input input-bordered w-full"
-            :class="{ 'input-error': errors.quantity }"
-          />
-          <div v-if="errors.quantity" class="label">
-            <span class="label-text-alt text-error">
-              {{ errors.quantity[0] }}
-            </span>
+              <option value="0" disabled>— выберите объект —</option>
+              <option
+                v-for="object in objectOptions"
+                :key="object.value"
+                :value="object.value"
+              >
+                {{ object.label }}
+              </option>
+            </select>
+            <div v-if="errors.object" class="label">
+              <span class="label-text-alt text-error">
+                {{ errors.object[0] }}
+              </span>
+            </div>
           </div>
-        </div>
-
-        <!-- Ответственный -->
-        <div class="form-control w-full">
+              <!-- Ответственный -->
+          <div class="form-control w-full">
           <label class="label">
             <span class="label-text font-medium">Ответственный</span>
             <span class="label-text-alt text-primary font-semibold">*</span>
@@ -171,6 +81,7 @@
             <span class="label-text-alt text-error">
               {{ errors.responsible[0] }}
             </span>
+          </div>
       </div>
     </div>
 
@@ -181,25 +92,248 @@
           </label>
           <textarea
             v-model="formData.comment"
-            rows="3"
+            rows="2"
             class="textarea textarea-bordered w-full"
+            :class="{ 'textarea-error': errors.comment }"
           ></textarea>
-        </div>
-
-        <!-- Информация о текущем остатке -->
-        <div v-if="formData.object && formData.material && currentBalance !== null" class="alert alert-info">
-          <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-            <div class="text-sm">
-            <div class="font-bold">Актуальный остаток материала</div>
-            <div class="mt-1">
-              <span class="font-mono">{{ currentBalance.toFixed(6) }}</span>
-              <span class="ml-1">{{ unitsStore.items.find(u => u.id === formData.unit)?.code || '' }}</span>
-            </div>
+          <div v-if="errors.comment" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.comment[0] }}
+            </span>
           </div>
         </div>
 
+        <!-- Позиции списания -->
+        <div class="space-y-6">
+     
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Позици
+        </h2>
+            <!-- Desktop table view -->
+            <div class="hidden md:block overflow-auto">
+              <table class="table w-full">
+                <thead>
+                <tr>
+                  <th style="min-width: 240px">Материал</th>
+                  <th style="min-width: 120px">Ед.</th>
+                  <th style="min-width: 120px">Количество</th>
+                  <th style="min-width: 150px">Текущий остаток</th>
+                  <th style="min-width: 150px">Будущий остаток</th>
+                  <th class="text-right" style="min-width: 80px">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(item, idx) in items" :key="item._k">
+                  <td>
+                    <div>
+                      <MaterialSearchSelect
+                        v-model="item.material"
+                        placeholder="— выберите материал —"
+                        size="sm"
+                        :disabled="!formData.object || materialsLoading"
+                        :class="{ 'border-error': getItemFieldError(idx, 'material') }"
+                        @change="onItemMaterialChange(item, $event)"
+                      />
+                      <div v-if="getItemFieldError(idx, 'material')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'material') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <div class="text-sm text-gray-600 p-2" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                        {{ getUnitName(item.unit) || '—' }}
+                      </div>
+                      <input type="hidden" v-model.number="item.unit" />
+                      <div v-if="getItemFieldError(idx, 'unit')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'unit') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <input 
+                        v-model="item.quantity" 
+                        type="number" 
+                        step="0.000001" 
+                        min="0.000001" 
+                        class="input input-bordered input-sm w-full"
+                        :class="{ 'input-error': getItemFieldError(idx, 'quantity') }"
+                        placeholder="0.000000"
+                        @input="onItemQuantityChange(item, idx)"
+                      />
+                      <div v-if="getItemFieldError(idx, 'quantity')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'quantity') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div v-if="item.currentBalance !== null && item.material" class="text-sm">
+                      <div class="font-mono">{{ item.currentBalance.toFixed(6) }}</div>
+                      <div class="text-xs text-gray-500">{{ getUnitName(item.unit) || '' }}</div>
+                    </div>
+                    <div v-else class="text-sm text-gray-400">—</div>
+                  </td>
+                  <td>
+                    <div v-if="item.currentBalance !== null && item.material" class="text-sm">
+                      <div
+                        class="font-mono"
+                        :class="{
+                          'text-error font-bold': getFutureBalance(item) < 0,
+                          'text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < parseFloat(item.currentBalance.toFixed(6)) * 0.1
+                        }"
+                      >
+                        {{ getFutureBalance(item).toFixed(6) }}
+                      </div>
+                      <div class="text-xs text-gray-500">{{ getUnitName(item.unit) || '' }}</div>
+                      <div v-if="getFutureBalance(item) < 0" class="text-xs text-error mt-1">
+                        Отрицательный остаток!
+                      </div>
+                    </div>
+                    <div v-else class="text-sm text-gray-400">—</div>
+                  </td>
+                  <td class="text-right">
+                    <button type="button" class="btn btn-error btn-xs" @click="removeItem(idx)">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Mobile card view -->
+            <div class="md:hidden space-y-4">
+              <div v-for="(item, idx) in items" :key="item._k" class="card bg-base-200 border">
+                <div class="card-body p-4">
+                  <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-medium text-sm">Позиция {{ idx + 1 }}</h3>
+                    <button type="button" class="btn btn-error btn-xs" @click="removeItem(idx)">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div class="space-y-3">
+                    <!-- Материал -->
+                    <div>
+                      <label class="label">
+                        <span class="label-text text-xs">Материал</span>
+                      </label>
+                      <MaterialSearchSelect
+                        v-model="item.material"
+                        placeholder="— выберите материал —"
+                        size="sm"
+                        :disabled="!formData.object || materialsLoading"
+                        :class="{ 'border-error': getItemFieldError(idx, 'material') }"
+                        @change="onItemMaterialChange(item, $event)"
+                      />
+                      <div v-if="getItemFieldError(idx, 'material')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'material') }}
+                      </div>
+                    </div>
+                    
+                    <!-- Единица измерения -->
+                    <div>
+                      <label class="label">
+                        <span class="label-text text-xs">Единица измерения</span>
+                      </label>
+                      <div class="text-sm text-gray-600 p-2 bg-base-100 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                        {{ getUnitName(item.unit) || '—' }}
+                      </div>
+                      <input type="hidden" v-model.number="item.unit" />
+                      <div v-if="getItemFieldError(idx, 'unit')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'unit') }}
+                      </div>
+                    </div>
+                    
+                    <!-- Количество -->
+                    <div>
+                      <label class="label">
+                        <span class="label-text text-xs">Количество</span>
+                      </label>
+                      <input 
+                        v-model="item.quantity" 
+                        type="number" 
+                        step="0.000001" 
+                        min="0.000001" 
+                        class="input input-bordered input-sm w-full"
+                        :class="{ 'input-error': getItemFieldError(idx, 'quantity') }"
+                        placeholder="0.000000"
+                        @input="onItemQuantityChange(item, idx)"
+                      />
+                      <div v-if="getItemFieldError(idx, 'quantity')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'quantity') }}
+                      </div>
+                    </div>
+                    
+                    <!-- Остаток -->
+                    <div>
+                      <label class="label">
+                        <span class="label-text text-xs">Текущий остаток</span>
+                      </label>
+                      <div v-if="item.currentBalance !== null && item.material" class="text-sm font-mono p-2 bg-base-100 rounded border">
+                        {{ item.currentBalance.toFixed(6) }} {{ getUnitName(item.unit) || '' }}
+                      </div>
+                      <div v-else class="text-sm text-gray-400 p-2 bg-base-100 rounded border">
+                        —
+                      </div>
+                    </div>
+                    
+                    <!-- Будущий остаток -->
+                    <div>
+                      <label class="label">
+                        <span class="label-text text-xs">Будущий остаток</span>
+                      </label>
+                      <div 
+                        v-if="item.currentBalance !== null && item.material" 
+                        class="text-sm font-mono p-2 rounded border"
+                        :class="{
+                          'bg-error/10 border-error text-error': getFutureBalance(item) < 0,
+                          'bg-warning/10 border-warning text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < parseFloat(item.currentBalance.toFixed(6)) * 0.1,
+                          'bg-base-100': getFutureBalance(item) >= parseFloat(item.currentBalance.toFixed(6)) * 0.1
+                        }"
+                      >
+                        {{ getFutureBalance(item).toFixed(6) }} {{ getUnitName(item.unit) || '' }}
+                        <div v-if="getFutureBalance(item) < 0" class="text-xs mt-1 font-bold">
+                          Отрицательный остаток!
+                        </div>
+                      </div>
+                      <div v-else class="text-sm text-gray-400 p-2 bg-base-100 rounded border">
+                        —
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add item button -->
+            <div class="mt-4">
+              <button 
+                type="button" 
+                class="btn btn-sm btn-primary w-full" 
+                @click="addItem"
+                :disabled="!formData.object || materialsLoading"
+              >
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Добавить позицию
+              </button>
+            </div>
+
+            <!-- Общие ошибки для позиций -->
+            <div v-if="getItemsGeneralError()" class="alert alert-error mb-4">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+              <span>{{ getItemsGeneralError() }}</span>
+            </div>
+        </div>
 
         <!-- Общие ошибки -->
         <div v-if="errors.non_field_errors" class="alert alert-error">
@@ -227,7 +361,7 @@
           </button>
           <button
             type="submit"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || items.length === 0"
             class="btn btn-primary"
             :class="{ 'loading': isSubmitting }"
           >
@@ -240,9 +374,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, reactive } from 'vue'
 import Modal from '@/components/Modal.vue'
+import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { useWriteOffsStore } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
@@ -278,40 +412,40 @@ const emit = defineEmits<{
   success: []
 }>()
 
-// Reactive data
-const formData = ref<WriteOffCreateRequest>({
+// Form data - общие поля
+const formData = ref({
   date: new Date().toISOString().split('T')[0],
   object: 0,
-  material: null,
-  unit: 0,
-  quantity: '0',
   responsible: 0,
   comment: ''
 })
+
+// Items - позиции списания
+interface WriteOffItem {
+  _k: string
+  material: number | null
+  unit: number
+  quantity: string
+  currentBalance: number | null
+}
+
+const items = ref<WriteOffItem[]>([])
+
+// Item errors
+const itemErrors = reactive<Record<string, string>>({})
 
 // Loading states
 const materialsLoading = ref(false)
 const employeesLoading = ref(false)
 const isSubmitting = ref(false)
 
-// Current balance
-const currentBalance = ref<number>(0)
-
-// User modification tracking
-const userModifiedFields = ref({
-  material: false,
-  unit: false,
-  responsible: false
-})
+// Сохраняем загруженные материалы для объекта для быстрого доступа
+const loadedMaterialsByObject = ref<Material[]>([])
 
 // Options
 const objectOptions = computed(() => [
   { value: 0, label: '— выберите объект —' },
   ...objectsStore.items.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
-])
-
-const materialOptions = ref([
-  { value: 0, label: '— выберите материал —' }
 ])
 
 const unitOptions = computed(() => [
@@ -323,17 +457,73 @@ const responsibleOptions = ref([
   { value: 0, label: '— выберите ответственного —' }
 ])
 
-// Computed properties
-const isUnitDisabled = computed(() => {
-  if (!formData.value.material) {return false}
-  const material = materialsStore.items.find((m: Material) => m.id === formData.value.material)
-  return !!material?.default_unit
+// User modification tracking
+const userModifiedFields = ref({
+  responsible: false
 })
 
+// Item management
+function addItem() {
+  if (!formData.value.object) {
+    return
+  }
+  
+  const newItem: WriteOffItem = {
+    _k: Math.random().toString(36).substr(2, 9),
+    material: null,
+    unit: 0,
+    quantity: '0',
+    currentBalance: null
+  }
+  items.value.push(newItem)
+  
+  // Очищаем ошибки дублирования материалов при добавлении новой позиции
+  clearItemsDuplicateErrors()
+}
+
+function removeItem(index: number) {
+  items.value.splice(index, 1)
+  
+  // Очищаем ошибки дублирования материалов при удалении позиции
+  clearItemsDuplicateErrors()
+  
+  // Очищаем ошибки для удаленной позиции
+  Object.keys(itemErrors).forEach(key => {
+    if (key.startsWith(`items[${index}]`)) {
+      delete itemErrors[key]
+    }
+  })
+}
+
+// Function to get item field error
+function getItemFieldError(itemIndex: number, fieldName: string): string {
+  const errorKey = `items[${itemIndex}].${fieldName}`
+  return itemErrors[errorKey] || ''
+}
+
+// Function to get general items error (like duplicate materials)
+function getItemsGeneralError(): string {
+  for (const [key, value] of Object.entries(itemErrors)) {
+    if (key.startsWith('items[') && typeof value === 'string' && value.includes('Нельзя добавлять один материал несколько раз')) {
+      return value
+    }
+  }
+  return ''
+}
+
+// Function to clear duplicate material errors
+function clearItemsDuplicateErrors() {
+  Object.keys(itemErrors).forEach(key => {
+    if (key.startsWith('items[') && itemErrors[key] && itemErrors[key].includes('Нельзя добавлять один материал несколько раз')) {
+      delete itemErrors[key]
+    }
+  })
+}
+
 // Balance functions
-const loadCurrentBalance = async () => {
-  if (!formData.value.object || !formData.value.material) {
-    currentBalance.value = 0
+const loadCurrentBalance = async (item: WriteOffItem, index: number) => {
+  if (!formData.value.object || !item.material) {
+    item.currentBalance = null
     return
   }
 
@@ -341,51 +531,32 @@ const loadCurrentBalance = async () => {
     const { data } = await api.get(endpoints.stockSnapshots.balance, {
       params: {
         object_id: formData.value.object,
-        material_id: formData.value.material,
+        material_id: item.material,
         date: formData.value.date
       }
     })
     
-    // Получаем актуальный остаток
-    currentBalance.value = parseFloat(data.current_balance || 0)
+    item.currentBalance = parseFloat(data.current_balance || 0)
   } catch (error) {
     console.error('Error loading current balance:', error)
-    currentBalance.value = 0
+    item.currentBalance = null
   }
 }
-
 
 // Data loading functions
 const loadMaterialsByObject = async (objectId: number) => {
   materialsLoading.value = true
   try {
     if (!objectId) {
-      materialOptions.value = [
-        { value: 0, label: '— выберите материал —' }
-      ]
+      loadedMaterialsByObject.value = []
       return
     }
 
     const materials = await getMaterialsByObject(objectId)
-    const materialList = [
-      { value: 0, label: '— выберите материал —' },
-      ...materials.map((m: Material) => ({ value: m.id, label: m.name }))
-    ]
-    
-    // При редактировании добавляем текущий материал, если его нет в списке
-    if (props.initial && props.initial.material) {
-      const currentMaterial = materialsStore.items.find((m: Material) => m.id === props.initial!.material)
-      if (currentMaterial && !materials.some(m => m.id === props.initial!.material)) {
-        materialList.push({ value: currentMaterial.id, label: `${currentMaterial.name} (недоступен для объекта)` })
-      }
-    }
-    
-    materialOptions.value = materialList
+    loadedMaterialsByObject.value = materials
   } catch (error) {
     console.error('Error loading materials by object:', error)
-    materialOptions.value = [
-      { value: 0, label: '— выберите материал —' }
-    ]
+    loadedMaterialsByObject.value = []
   } finally {
     materialsLoading.value = false
   }
@@ -415,10 +586,8 @@ const loadEmployeesByObject = async (objectId: number) => {
     if (objectResponsibleId) {
       const objectResponsible = employeesStore.items.find((emp: any) => emp.id === objectResponsibleId)
       if (objectResponsible) {
-        // Проверяем, есть ли уже в списке
         const alreadyInList = responsibleList.some(item => item.value === objectResponsibleId)
         if (!alreadyInList) {
-          // Добавляем ответственного за объект в список
           responsibleList.push({ 
             value: objectResponsible.id, 
             label: `${objectResponsible.username} (ответственный за объект)` 
@@ -446,11 +615,9 @@ const loadEmployeesByObject = async (objectId: number) => {
 
     // Автозаполнение ответственного, если не изменен пользователем
     if (!userModifiedFields.value.responsible) {
-      // Сначала пытаемся найти ответственного за объект
       if (objectResponsibleId) {
         formData.value.responsible = objectResponsibleId
       } else if (brigadiers.length > 0) {
-        // Если нет ответственного за объект, выбираем первого бригадира объекта
         formData.value.responsible = brigadiers[0].id
       }
     }
@@ -463,45 +630,58 @@ const loadEmployeesByObject = async (objectId: number) => {
 
 // Event handlers
 const onObjectChange = async () => {
-  const objectId = formData.value.object
-  
-  // Очищаем ошибки при изменении полей
   clearErrors()
+  Object.keys(itemErrors).forEach(key => delete itemErrors[key])
   
-  // Сбрасываем зависимые поля, если они не изменены пользователем
-  if (!userModifiedFields.value.material) {
-    formData.value.material = null
-  }
-  if (!userModifiedFields.value.unit) {
-    formData.value.unit = 0
-  }
+  // Сбрасываем позиции при изменении объекта
+  items.value = []
+  
+  // Сбрасываем ответственного, если не изменен пользователем
   if (!userModifiedFields.value.responsible) {
     formData.value.responsible = 0
   }
 
   // Загружаем материалы и сотрудников для выбранного объекта
   await Promise.all([
-    loadMaterialsByObject(objectId),
-    loadEmployeesByObject(objectId)
+    loadMaterialsByObject(formData.value.object),
+    loadEmployeesByObject(formData.value.object)
   ])
-}
-
-const onMaterialChange = () => {
-  userModifiedFields.value.material = true
-  clearErrors()
   
-  // Автозаполнение единицы измерения
-  if (formData.value.material) {
-    const material = materialsStore.items.find((m: Material) => m.id === formData.value.material)
-    if (material && material.default_unit && !userModifiedFields.value.unit) {
-      formData.value.unit = material.default_unit
-    }
+  // Добавляем одну позицию по умолчанию, если объект выбран
+  if (formData.value.object) {
+    addItem()
   }
 }
 
-const onUnitChange = () => {
-  userModifiedFields.value.unit = true
+const onItemMaterialChange = async (item: WriteOffItem, material: Material | null) => {
   clearErrors()
+  clearItemsDuplicateErrors()
+  
+  if (material) {
+    item.material = material.id
+  
+  // Автозаполнение единицы измерения
+    if (material.default_unit && !item.unit) {
+      item.unit = material.default_unit
+    }
+    
+    // Загружаем баланс для выбранного материала
+    if (formData.value.object && item.material) {
+      const index = items.value.findIndex(i => i._k === item._k)
+      await loadCurrentBalance(item, index)
+    }
+  } else {
+    item.material = null
+    item.unit = 0
+    item.currentBalance = null
+  }
+}
+
+const onItemQuantityChange = async (item: WriteOffItem, index: number) => {
+  // При изменении количества обновляем баланс, если нужно
+  if (formData.value.object && item.material && formData.value.date) {
+    // Баланс не зависит от количества списания, но можно обновить для актуальности
+  }
 }
 
 const onResponsibleChange = () => {
@@ -509,20 +689,94 @@ const onResponsibleChange = () => {
   clearErrors()
 }
 
+function getUnitName(unitId: number) {
+  const unit = unitsStore.items.find((u: Unit) => u.id === unitId)
+  return unit ? unit.code : null
+}
+
+// Вычисление будущего остатка для позиции
+function getFutureBalance(item: WriteOffItem): number {
+  if (item.currentBalance === null || !item.material) {
+    return 0
+  }
+  const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity) : Number(item.quantity)
+  const quantity = isNaN(qty) ? 0 : qty
+  return item.currentBalance - quantity
+}
+
 // Form handlers
 const handleSubmit = async () => {
   isSubmitting.value = true
+  clearErrors()
+  Object.keys(itemErrors).forEach(key => delete itemErrors[key])
+  
   try {
+    // Валидация: должна быть хотя бы одна позиция
+    if (items.value.length === 0) {
+      errors.value.non_field_errors = ['Добавьте хотя бы одну позицию списания']
+      isSubmitting.value = false
+      return
+    }
+    
+    // Валидация: проверка дубликатов материалов
+    const materialIds = items.value
+      .map(item => item.material)
+      .filter((id): id is number => id !== null && id !== 0)
+    
+    const duplicates = materialIds.filter((id, index) => materialIds.indexOf(id) !== index)
+    if (duplicates.length > 0) {
+      const duplicateMaterial = loadedMaterialsByObject.value.find(m => m.id === duplicates[0]) || 
+                                materialsStore.items.find(m => m.id === duplicates[0])
+      const duplicateName = duplicateMaterial?.name || 'материал'
+      itemErrors[`items[0].material`] = `Нельзя добавлять один материал несколько раз: ${duplicateName}`
+      isSubmitting.value = false
+      return
+    }
+    
     if (props.initial) {
-      const updateData: WriteOffUpdateRequest = { ...formData.value }
+      // Редактирование - пока поддерживается только одна запись
+      // TODO: Реализовать редактирование множественных записей
+      const updateData: WriteOffUpdateRequest = {
+        date: formData.value.date,
+        object: formData.value.object,
+        material: items.value[0]?.material || null,
+        unit: items.value[0]?.unit || 0,
+        quantity: items.value[0]?.quantity || '0',
+        responsible: formData.value.responsible,
+        comment: formData.value.comment
+      }
       await writeOffsStore.update(props.initial.id, updateData)
     } else {
-      await writeOffsStore.create(formData.value)
+      // Создание - создаем множественные WriteOff записи
+      const createPromises = items.value
+        .filter(item => item.material && item.unit && parseFloat(item.quantity) > 0)
+        .map(item => {
+          const writeOffData: WriteOffCreateRequest = {
+            date: formData.value.date,
+            object: formData.value.object,
+            material: item.material!,
+            unit: item.unit,
+            quantity: item.quantity,
+            responsible: formData.value.responsible,
+            comment: formData.value.comment || ''
+          }
+          return writeOffsStore.create(writeOffData)
+        })
+      
+      await Promise.all(createPromises)
     }
     
     emit('success')
   } catch (error) {
-    await handleFormError(error, 'списание')
+    const errorResult = await handleFormError(error, 'списание')
+    
+    // Устанавливаем ошибки полей (включая вложенные)
+    Object.keys(errorResult.fieldErrors).forEach(field => {
+      const fieldError = errorResult.fieldErrors[field]
+      if (field.startsWith('items[')) {
+        itemErrors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
+      }
+    })
   } finally {
     isSubmitting.value = false
   }
@@ -534,30 +788,28 @@ const closeModal = () => {
 
 // Initialize form
 const initializeForm = async () => {
-  // Очищаем ошибки при инициализации формы
   clearErrors()
+  Object.keys(itemErrors).forEach(key => delete itemErrors[key])
   
   if (props.initial) {
+    // Редактирование - загружаем как одну позицию
     formData.value = {
       date: props.initial.date,
       object: props.initial.object,
-      material: props.initial.material,
-      unit: props.initial.unit,
-      quantity: props.initial.quantity,
-      stage: props.initial.stage,
       responsible: props.initial.responsible,
       comment: props.initial.comment || ''
     }
     
+    items.value = [{
+      _k: Math.random().toString(36).substr(2, 9),
+      material: props.initial.material,
+      unit: props.initial.unit,
+      quantity: props.initial.quantity,
+      currentBalance: null
+    }]
+    
     // Загружаем данные для выбранного объекта при редактировании
     if (props.initial.object) {
-      // Временно помечаем поля как измененные пользователем, чтобы не перезаписывать значения
-      const wasMaterialModified = userModifiedFields.value.material
-      const wasUnitModified = userModifiedFields.value.unit
-      const wasResponsibleModified = userModifiedFields.value.responsible
-      
-      userModifiedFields.value.material = true
-      userModifiedFields.value.unit = true
       userModifiedFields.value.responsible = true
       
       await Promise.all([
@@ -565,33 +817,22 @@ const initializeForm = async () => {
         loadEmployeesByObject(props.initial.object)
       ])
       
-      // Восстанавливаем флаги модификации
-      userModifiedFields.value.material = wasMaterialModified
-      userModifiedFields.value.unit = wasUnitModified
-      userModifiedFields.value.responsible = wasResponsibleModified
-      
-      // Загружаем баланс и предупреждения
-      if (props.initial.material) {
-        await loadCurrentBalance()
+      // Загружаем баланс
+      if (props.initial.material && items.value[0]) {
+        await loadCurrentBalance(items.value[0], 0)
       }
     }
   } else {
     formData.value = {
     date: new Date().toISOString().split('T')[0],
     object: 0,
-      material: null,
-    unit: 0,
-    quantity: '0',
-      stage: 'acceptance',
     responsible: 0,
     comment: ''
   }
+    items.value = []
   }
   
-  // Reset user modification flags
   userModifiedFields.value = {
-    material: false,
-    unit: false,
     responsible: false
   }
 }
@@ -609,20 +850,23 @@ watch(() => props.initial, async () => {
   }
 })
 
-// Watch for balance updates
-watch([() => formData.value.object, () => formData.value.material, () => formData.value.date], async () => {
-  if (formData.value.object && formData.value.material) {
-    await loadCurrentBalance()
+// Watch for balance updates when date changes
+watch(() => formData.value.date, async () => {
+  if (formData.value.object) {
+    for (let i = 0; i < items.value.length; i++) {
+      const item = items.value[i]
+      if (item.material) {
+        await loadCurrentBalance(item, i)
+      }
+    }
   }
 })
 
-
 // Load data on mount
 onMounted(async () => {
-  // Load reference data if not already loaded
   const promises = []
   if (objectsStore.items.length === 0) {
-    promises.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+    promises.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name', is_active: true} as any))
   }
   if (materialsStore.items.length === 0) {
     promises.push(materialsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
@@ -645,5 +889,27 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Daisy UI стили уже применены через классы */
+/* Дополнительные стили для мобильной адаптации */
+@media (max-width: 640px) {
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .btn {
+    min-height: 2.5rem;
+  }
+  
+  .input {
+    min-height: 2.5rem;
+  }
+
+}
+
+textarea.textarea[rows="1"],textarea.textarea[rows="2"] {
+    min-height: auto !important;
+  }
 </style>

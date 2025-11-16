@@ -4,7 +4,7 @@ import type { ParsedApiError, ErrorType, ErrorDisplayConfig, ErrorContext } from
  * Парсит вложенные ошибки валидации
  * Обрабатывает структуры типа items[0].material, items[1].quantity и т.д.
  */
-function parseNestedErrors(errors: any): Record<string, string[]> {
+export function parseNestedErrors(errors: any): Record<string, string[]> {
   const result: Record<string, string[]> = {}
   
   for (const [key, value] of Object.entries(errors)) {
