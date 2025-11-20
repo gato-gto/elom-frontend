@@ -97,6 +97,9 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useMaterialsStore } from '@/stores/materials'
 import type { Material } from '@/api/types/materials'
+import api from '@/api/client'
+import { endpoints } from '@/api/endpoints'
+import type { MaterialBalance, ObjectBalance } from '@/api/types/stocks'
 
 const props = defineProps<{
   modelValue?: number | null
@@ -106,6 +109,9 @@ const props = defineProps<{
   required?: boolean
   disabled?: boolean
   size?: 'xs' | 'sm' | 'md' | 'lg'
+  objectId?: number | null // ID объекта для фильтрации по остаткам
+  date?: string | null // Дата для проверки остатков
+  filterByBalance?: boolean // Фильтровать только материалы с остатками > 0
 }>()
 
 const emit = defineEmits<{
@@ -193,7 +199,40 @@ async function searchMaterials(query: string) {
   
   loading.value = true
   try {
-    const results = await materialsStore.searchMaterials(query)
+    let results = await materialsStore.searchMaterials(query)
+    
+    // Фильтруем по остаткам, если указан objectId и включена фильтрация
+    if (props.filterByBalance && props.objectId && props.date) {
+      try {
+        // Получаем остатки для объекта на указанную дату
+        const apiParams = new URLSearchParams()
+        apiParams.append('object_id', String(props.objectId))
+        apiParams.append('date', props.date)
+        
+        const response = await api.get(`${endpoints.stockSnapshots.byObjects}?${apiParams}`)
+        
+        // Собираем все материалы с остатками > 0
+        const materialsWithBalance = new Set<number>()
+        if (response.data.objects && response.data.objects.length > 0) {
+          const objectData = response.data.objects[0] as ObjectBalance
+          if (objectData.materials) {
+            objectData.materials.forEach((material: MaterialBalance) => {
+              const balance = parseFloat(material.current_balance || '0')
+              if (balance > 0) {
+                materialsWithBalance.add(material.material_id)
+              }
+            })
+          }
+        }
+        
+        // Фильтруем результаты поиска, оставляя только материалы с остатками
+        results = results.filter((material: Material) => materialsWithBalance.has(material.id))
+      } catch (error) {
+        console.error('Error fetching balances for material filtering:', error)
+        // В случае ошибки показываем все результаты поиска
+      }
+    }
+    
     searchResults.value = results
     // Открываем dropdown только если пользователь активно печатает
     if (isUserTyping.value) {

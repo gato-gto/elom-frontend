@@ -29,10 +29,12 @@ vi.mock('@/stores/materials', () => {
   }
 })
 
-const apiGet = vi.fn()
-vi.mock('@/api/client', () => ({
-  default: { get: apiGet }
-}))
+vi.mock('@/api/client', () => {
+  const apiGet = vi.fn()
+  return {
+    default: { get: apiGet }
+  }
+})
 
 // Stubs
 const ModalStub = {

@@ -203,8 +203,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { debounce } from '@/utils/debounce'
+import { ref, computed } from 'vue'
 import { useResponsiveTable } from '@/composables/useResponsiveTable'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
@@ -251,10 +250,12 @@ const sortOrder = ref<'asc' | 'desc'>('asc')
 
 // Methods
 function getColumnValue(item: any, column: ColumnConfig) {
+  // Если есть displayKey, используем его для отображения, но key для сортировки
+  const displayKey = (column as any).displayKey || column.key
   if (column.path) {
     return column.path.split('.').reduce((obj, key) => obj?.[key], item)
   }
-  return item[column.key]
+  return item[displayKey]
 }
 
 function formatColumnValue(value: any, column: ColumnConfig, item: any) {
@@ -343,34 +344,20 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   }
 }
 
-// Debounced search
-const debouncedSearch = debounce(async () => {
-  try {
-    await props.store.fetchList()
-  } catch (error) {
-    await handleLoadingError(error, props.config.title.toLowerCase())
-  }
-}, 500)
-
 // Update filter value
 async function updateFilter(key: string, value: any) {
   await props.store.setFilters({ [key]: value })
+  // setFilters уже вызывает fetchList(), поэтому дополнительная загрузка не нужна
 }
 
 // Reset filters
 async function handleResetFilters() {
   await props.store.resetFilters()
+  // resetFilters уже вызывает fetchList(), поэтому дополнительная загрузка не нужна
 }
 
-// Watch for filter changes
-watch(
-  () => props.store.filters,
-  () => {
-    props.store.pagination.page = 1
-    debouncedSearch()
-  },
-  { deep: true }
-)
+// Убрали watch на filters, так как setFilters и resetFilters уже вызывают fetchList()
+// Это предотвращает двойную загрузку данных при изменении фильтров
 
 
 

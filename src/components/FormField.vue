@@ -39,7 +39,7 @@
     <textarea
       v-else-if="type === 'textarea'"
       :value="modelValue"
-      class="textarea textarea-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0 resize-y min-h-[100px]"
+      class="textarea textarea-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0 resize-y"
       :class="[
         { 'textarea-error hover:border-error focus:border-error': hasError || error || errorMessage },
         { 'textarea-xs': size === 'xs' },
@@ -48,6 +48,8 @@
         { 'textarea-lg': size === 'lg' },
         { 'bg-base-100': !disabled },
         { 'bg-base-200 cursor-not-allowed': disabled },
+        // Применяем min-h только если rows не задан или >= 4, и customClass не переопределяет min-h
+        { 'min-h-[100px]': (!rows || rows >= 4) && !customClass?.includes('min-h') },
         customClass
       ]"
       :placeholder="placeholder"

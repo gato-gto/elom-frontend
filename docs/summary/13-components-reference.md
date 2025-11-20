@@ -106,6 +106,26 @@
 - Debounce (300ms)
 - Клавиатурная навигация
 - Индикатор загрузки
+- Фильтрация по остаткам (опционально)
+- Показ категории материала в результатах поиска
+
+**Props:**
+- `modelValue` - ID выбранного материала
+- `objectId` - ID объекта для фильтрации по остаткам (опционально)
+- `date` - Дата для проверки остатков (опционально)
+- `filterByBalance` - Включить фильтрацию только материалов с остатками > 0 (опционально)
+- `label`, `placeholder`, `error`, `required`, `disabled`, `size` - стандартные props
+
+**Использование:**
+```vue
+<MaterialSearchSelect
+  v-model="materialId"
+  :object-id="objectId"
+  :date="date"
+  :filter-by-balance="true"
+  placeholder="— выберите материал —"
+/>
+```
 
 #### 3.4 SupplierSearchSelect.vue
 **Назначение**: Поиск поставщиков

@@ -114,9 +114,9 @@ const listConfig = computed<GenericListConfig<Purchase>>(() => ({
     { key: 'id', label: 'ID', sortable: true },
     { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
     { key: 'purchase_no', label: '№ закупки', sortable: true },
-    { key: 'object_name', label: 'Объект', sortable: true },
-    { key: 'supplier', label: 'Поставщик', sortable: true },
-    { key: 'responsible', label: 'Ответственный', sortable: true },
+    { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name
+    { key: 'supplier__name', label: 'Поставщик', sortable: true, displayKey: 'supplier_name' }, // Используем supplier__name для сортировки, но отображаем supplier_name
+    { key: 'responsible__id', label: 'Ответственный', sortable: true, displayKey: 'responsible' }, // Используем responsible__id для сортировки, но отображаем responsible
     { key: 'items', label: 'Позиций', sortable: false, formatter: (value) => value?.length ?? 0 }
   ],
   filters: [

@@ -180,16 +180,19 @@ describe('Export Utils', () => {
   })
 
   describe('error handling', () => {
-    it('handles export errors gracefully', async () => {
-      // Mock xlsx to throw an error
-      const xlsx = await import('xlsx')
-      vi.mocked(xlsx.utils.json_to_sheet).mockImplementation(() => {
+    it('handles export errors gracefully', () => {
+      // Mock downloadFile to throw an error
+      const originalCreateElement = document.createElement
+      document.createElement = vi.fn(() => {
         throw new Error('Export error')
-      })
+      }) as any
 
       expect(() => {
-        exportToExcel(mockData, 'test.xlsx')
+        exportToCSV(mockData, 'test.csv')
       }).toThrow('Export error')
+
+      // Restore
+      document.createElement = originalCreateElement
     })
   })
 })

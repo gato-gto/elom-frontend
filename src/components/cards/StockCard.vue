@@ -86,7 +86,7 @@
 import { StockSnapshot } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, formatNumberClean } from '@/utils/formatters'
 
 interface Props {
   stock: StockSnapshot
@@ -112,7 +112,8 @@ const { truncateText } = useMobileCardHelpers()
 
 const formatQuantityWithSign = () => {
   const quantity = parseFloat(props.stock.quantity_signed)
-  return quantity > 0 ? `+${quantity}` : quantity.toString()
+  const formatted = formatNumberClean(quantity)
+  return quantity > 0 ? `+${formatted}` : formatted
 }
 
 const isIncome = () => {

@@ -269,13 +269,16 @@ class WriteOffSerializer(serializers.ModelSerializer):
         </option>
       </select>
       
-      <!-- Материал -->
-      <select v-model="formData.material" @change="onMaterialChange" 
-              :disabled="!formData.object || materialsLoading" required>
-        <option v-for="material in materialOptions" :value="material.value">
-          {{ material.label }}
-        </option>
-      </select>
+      <!-- Материал с фильтрацией по остаткам -->
+      <MaterialSearchSelect
+        v-model="formData.material"
+        placeholder="— выберите материал —"
+        :object-id="formData.object || null"
+        :date="formData.date || null"
+        :filter-by-balance="true"
+        :disabled="!formData.object || materialsLoading"
+        @change="onMaterialChange"
+      />
       
       <!-- Единица измерения -->
       <select v-model="formData.unit" @change="onUnitChange"
@@ -432,7 +435,26 @@ GET /api/v1/materials/by-object/?object_id={id}&is_active=true
 
 GET /api/v1/stock/snapshots/balance/?object_id={id}&material_id={id}&date={date}
     - Получение текущего остатка материала
+
+GET /api/v1/stock/snapshots/by-objects/?object_id={id}&date={date}
+    - Получение остатков всех материалов для объекта (для фильтрации)
 ```
+
+### Фильтрация материалов по остаткам
+
+В форме списаний реализована автоматическая фильтрация материалов при поиске. Компонент `MaterialSearchSelect` поддерживает фильтрацию по остаткам:
+
+**Как это работает:**
+1. При вводе названия материала (2+ символа) выполняется поиск
+2. Если включена фильтрация (`filterByBalance=true`) и указаны `objectId` и `date`:
+   - Выполняется запрос к `/stock/snapshots/by-objects/` для получения остатков
+   - Результаты поиска фильтруются, оставляя только материалы с `current_balance > 0`
+3. Пользователь видит только доступные материалы
+
+**Преимущества:**
+- Снижается вероятность ошибок при выборе материалов без остатков
+- Улучшается UX при работе с формой
+- Автоматическая проверка наличия материалов
 
 ### Типы данных
 

@@ -76,7 +76,7 @@
                   <tr v-for="item in purchase.items" :key="item.id" class="hover:bg-gray-50">
                     <td class="px-4 py-3 text-sm text-gray-900">{{ item.material_name || '—' }}</td>
                     <td class="px-4 py-3 text-sm text-gray-500">{{ item.unit_code || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono">{{ formatNumber(item.quantity) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono">{{ formatNumberClean(item.quantity) }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono">{{ formatCurrency(item.price) }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">{{ formatCurrency(item.amount) }}</td>
                   </tr>
@@ -105,7 +105,7 @@
                     </div>
                     <div>
                       <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Количество</p>
-                      <p class="text-sm text-gray-900 mt-1 font-mono">{{ formatNumber(item.quantity) }}</p>
+                      <p class="text-sm text-gray-900 mt-1 font-mono">{{ formatNumberClean(item.quantity) }}</p>
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-4">
@@ -316,7 +316,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
-import { formatDate, formatCurrency, formatNumber } from '@/utils/formatters'
+import { formatDate, formatCurrency, formatNumberClean } from '@/utils/formatters'
 import { useEmployeesStore } from '@/stores/employees'
 import Modal from '@/components/Modal.vue'
 

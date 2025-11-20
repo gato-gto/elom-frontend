@@ -31,7 +31,7 @@
             v-else
             :class="parseFloat(value) >= 0 ? 'font-mono text-sm text-green-600' : 'font-mono text-sm text-red-600'"
           >
-            {{ parseFloat(value) >= 0 ? '+' : '' }}{{ value }} {{ item.unit_code }}
+            {{ parseFloat(value) >= 0 ? '+' : '' }}{{ formatNumberClean(value) }} {{ item.unit_code }}
           </span>
         </div>
       </template>
@@ -81,7 +81,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { StockSnapshot, SiteObject, Material, Employee, Me } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, formatNumberClean } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useStockSnapshotsStore } from '@/stores/stockSnapshots'

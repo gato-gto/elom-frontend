@@ -64,10 +64,18 @@ export function parseApiError(error: any, context?: ErrorContext): ParsedApiErro
   const detail = data?.detail || error?.message || 'Произошла неизвестная ошибка'
   const fieldErrors = parseNestedErrors(data?.errors || {})
   const nonFieldErrors = data?.non_field_errors || []
+  const allErrors = data?.errors?.__all__ || []
   
-  // Добавляем non_field_errors к fieldErrors для отображения
+  // Добавляем non_field_errors и __all__ к fieldErrors для отображения
   if (nonFieldErrors.length > 0) {
     fieldErrors['non_field_errors'] = nonFieldErrors
+  }
+  // Обрабатываем ошибки __all__ как non_field_errors
+  if (allErrors.length > 0) {
+    if (!fieldErrors['non_field_errors']) {
+      fieldErrors['non_field_errors'] = []
+    }
+    fieldErrors['non_field_errors'].push(...allErrors)
   }
 
   // Создаем конфигурацию отображения

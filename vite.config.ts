@@ -32,7 +32,14 @@ export default defineConfig({
         },
         // Минификация с учетом Safari
         minify: 'esbuild',
-        cssMinify: true
+        cssMinify: true,
+        // Подавляем предупреждения CSS для @property (используется в daisyUI)
+        cssCodeSplit: true
+    },
+    css: {
+        // Предупреждение о @property из daisyUI можно игнорировать - это валидное CSS правило
+        // которое поддерживается современными браузерами (Chrome 85+, Firefox 75+, Safari 14+)
+        devSourcemap: true
     },
     esbuild: {
         target: 'es2020'

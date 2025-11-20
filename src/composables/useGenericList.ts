@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import type { GenericListConfig, UseGenericListOptions, UseGenericListReturn } from '@/types/generic'
 import { useErrorHandler } from './useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
@@ -82,24 +82,9 @@ export function useGenericList<T extends Record<string, any>>(
     }
   }
 
-  // Debounced search
-  const debouncedSearch = debounce(async () => {
-    try {
-      await options.store.fetchList()
-    } catch (error) {
-      await handleLoadingError(error, options.config.title.toLowerCase())
-    }
-  }, options.debounceMs || 500)
-
-  // Watch for filter changes
-  watch(
-    () => options.store.filters,
-    () => {
-      options.store.pagination.page = 1
-      debouncedSearch()
-    },
-    { deep: true }
-  )
+  // Убрали watch на filters, так как setFilters и resetFilters в base.ts уже вызывают fetchList()
+  // Это предотвращает двойную загрузку данных при изменении фильтров
+  // Если нужна debounced загрузка для прямых изменений filters, можно добавить watch с флагом
 
   // Auto-fetch on mount if enabled
   if (options.autoFetch !== false) {

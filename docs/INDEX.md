@@ -74,9 +74,9 @@
 |----------|----------|--------|
 | [API_QUICK_REFERENCE](./API_QUICK_REFERENCE.md) | Быстрая справка по API | Маленький |
 | [WRITEOFF_SYSTEM_IMPLEMENTATION](./WRITEOFF_SYSTEM_IMPLEMENTATION.md) | Детали реализации | Средний |
-| [DOCUMENTATION_UPDATE_2025](./DOCUMENTATION_UPDATE_2025.md) | Обновления октябрь 2025 | Средний |
+| [CHANGES_SUMMARY](./CHANGES_SUMMARY.md) | ⭐ Сводка изменений | Маленький |
+| [CHANGELOG_TODAY](./CHANGELOG_TODAY.md) | Отчет по изменениям сегодня | Маленький |
 | [CHANGELOG_OCTOBER_2025](./CHANGELOG_OCTOBER_2025.md) | История изменений | Средний |
-| [DOCUMENTATION_COMPLETE_REPORT](./DOCUMENTATION_COMPLETE_REPORT.md) | Отчет о завершении | Средний |
 | [api_schema.yaml](./api_schema.yaml) | OpenAPI схема | Большой |
 
 ---
@@ -190,8 +190,8 @@
 
 ---
 
-**Последнее обновление**: 08 Октября 2025  
-**Версия**: 3.0  
+**Последнее обновление**: 20 Ноября 2025  
+**Версия**: 3.1  
 **Статус**: ✅ 100% актуальна
 
 

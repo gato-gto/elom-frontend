@@ -11,6 +11,16 @@
       <!-- Header actions -->
       <template #header-actions>
         <button 
+          v-if="canEdit"
+          class="btn btn-primary btn-sm mr-2"
+          @click="openBulkCreate"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Массовое добавление
+        </button>
+        <button 
           class="btn btn-outline btn-sm"
           @click="$router.push('/materials/categories')"
         >
@@ -52,6 +62,13 @@
         @cancel="modalOpen = false"
       />
     </Modal>
+
+    <!-- Material Bulk Form Modal -->
+    <MaterialBulkForm
+      :is-open="bulkModalOpen"
+      @close="bulkModalOpen = false"
+      @success="onBulkSaved"
+    />
   </div>
 </template>
 
@@ -61,6 +78,7 @@ import { useRouter } from 'vue-router'
 import type { Material, Me } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import MaterialForm from './MaterialForm.vue'
+import MaterialBulkForm from './MaterialBulkForm.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMaterialsStore } from '@/stores/materials'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
@@ -154,12 +172,17 @@ const listConfig = computed<GenericListConfig<Material>>(() => ({
 
 // Modal state
 const modalOpen = ref(false)
+const bulkModalOpen = ref(false)
 const current = ref<Material | null>(null)
 
 // Methods
 function openCreate() {
   current.value = null
   modalOpen.value = true
+}
+
+function openBulkCreate() {
+  bulkModalOpen.value = true
 }
 
 function openEdit(material: Material) {
@@ -212,6 +235,11 @@ async function handleDelete(material: Material) {
 async function onSaved() {
   modalOpen.value = false
   current.value = null
+  await materialsStore.fetchList()
+}
+
+async function onBulkSaved() {
+  bulkModalOpen.value = false
   await materialsStore.fetchList()
 }
 

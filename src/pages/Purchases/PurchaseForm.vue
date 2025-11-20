@@ -408,6 +408,7 @@ import type { Purchase, PurchaseRequest, PurchaseItemRequest, Employee, Material
 import type { GenericFormConfig } from '@/types/generic'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import api from '@/api/client'
+import { endpoints } from '@/api/endpoints'
 import { calculateItemAmount, calculatePurchaseTotal, formatCurrency } from '@/utils/calculations'
 
 // Props
@@ -507,20 +508,61 @@ function removeReportPhoto(index: number) {
 
 // Upload purchase photo
 async function uploadPurchasePhoto(purchaseId: number, file: File, type: 'instructions' | 'report') {
+  if (!purchaseId || Number.isNaN(purchaseId)) {
+    ui.toast({ type: 'error', text: 'Невозможно загрузить фото: закупка не создана' })
+    return
+  }
   const formData = new FormData()
   formData.append('file', file)
   formData.append('type', type)
-  formData.append('purchase', purchaseId.toString())
+  formData.append('purchase', String(purchaseId))
   
   try {
+    // Используем endpoint /purchase-photos/ (PurchasePhotoViewSet.create)
+    // который правильно обрабатывает FormData с полями file, type, purchase
     const response = await api.post('/purchase-photos/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
+    console.log('Photo uploaded successfully:', response.data)
     return response.data
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading photo:', error)
+    console.error('Error response:', error?.response)
+    console.error('Error response data:', error?.response?.data)
+    
+    // Более детальная обработка ошибок
+    let errorMessage = 'Ошибка загрузки фото'
+    if (error?.response?.data) {
+      if (error.response.data.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error.response.data.file) {
+        errorMessage = Array.isArray(error.response.data.file) 
+          ? error.response.data.file[0] 
+          : error.response.data.file
+      } else if (error.response.data.type) {
+        errorMessage = Array.isArray(error.response.data.type) 
+          ? error.response.data.type[0] 
+          : error.response.data.type
+      } else if (error.response.data.purchase) {
+        errorMessage = Array.isArray(error.response.data.purchase) 
+          ? error.response.data.purchase[0] 
+          : error.response.data.purchase
+      } else if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data
+      } else {
+        // Показываем все ошибки валидации
+        const errors = Object.entries(error.response.data)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
+          .join(', ')
+        errorMessage = errors || errorMessage
+      }
+    } else if (error?.message) {
+      errorMessage = error.message
+    }
+    
+    ui.toast({ type: 'error', text: errorMessage })
     throw error
   }
 }
@@ -629,15 +671,7 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       order: 2,
       width: 'half'
     },
-    {
-      key: 'responsible',
-      type: 'select',
-      label: 'Ответственный',
-      placeholder: 'Не указан',
-      options: employeeOptions.value,
-      order: 3,
-      width: 'half'
-    },
+    // responsible убран - устанавливается автоматически из объекта (бригадир объекта)
     {
       key: 'supplier',
       type: 'select',
@@ -732,7 +766,7 @@ const initialData = computed(() => {
     return {
       date: props.initial.date,
       object: props.initial.object,
-      responsible: props.initial.responsible,
+      // responsible убран - устанавливается автоматически из объекта
       supplier: props.initial.supplier,
       invoice_number: props.initial.invoice_number || '',
       purchase_no: props.initial.purchase_no || '',
@@ -745,7 +779,7 @@ const initialData = computed(() => {
   return {
     date: new Date().toISOString().split('T')[0],
     object: 0,
-    responsible: auth.me?.id || 0, // По умолчанию текущий пользователь
+    // responsible убран - устанавливается автоматически из объекта
     supplier: 0,
     invoice_number: '',
     purchase_no: '',
@@ -766,7 +800,7 @@ async function onSaved(data: PurchaseRequest) {
     const purchaseData: PurchaseRequest = {
       date: data.date,
       object: data.object,
-      responsible: data.responsible,
+      // responsible убран - устанавливается автоматически из объекта на бэкенде
       supplier: data.supplier,
       invoice_number: data.invoice_number,
       purchase_no: data.purchase_no,
@@ -796,18 +830,63 @@ async function onSaved(data: PurchaseRequest) {
       notifications.notifyPurchaseEdit(purchaseId, auth.me?.username || 'Неизвестный пользователь')
     } else {
       const newPurchase = await purchasesStore.create(purchaseData)
-      purchaseId = newPurchase.id
+      console.log('Created purchase response:', newPurchase)
+      
+      // Проверяем, что ответ содержит id
+      purchaseId = newPurchase?.id
+      
+      // Если id нет в ответе, но есть объект, пытаемся получить его из другого источника
+      if (!purchaseId || Number.isNaN(purchaseId)) {
+        // Возможно, API вернул данные в другом формате
+        console.warn('Purchase ID not found in response, checking alternative sources...')
+        console.warn('Response structure:', Object.keys(newPurchase || {}))
+        
+        // Если это объект запроса (данные, которые мы отправили), значит API не вернул id
+        if (newPurchase && !newPurchase.id && newPurchase.date) {
+          console.error('API returned request data instead of created purchase:', newPurchase)
+          ui.toast({ type: 'error', text: 'Ошибка: сервер не вернул ID созданной закупки. Попробуйте обновить страницу.' })
+          throw new Error('API did not return purchase ID')
+        }
+        
+        console.error('Failed to get purchase ID after creation:', newPurchase)
+        ui.toast({ type: 'error', text: 'Ошибка: не удалось получить ID созданной закупки' })
+        throw new Error('Failed to get purchase ID')
+      }
+      
+      console.log('Created purchase with ID:', purchaseId)
     }
     
     // Загружаем фотоинструкции если есть (всегда)
     if (instructionPhotos.value.length > 0) {
+      console.log('Uploading instruction photos:', instructionPhotos.value.length, 'photos for purchase', purchaseId)
+      let uploadedCount = 0
+      let failedCount = 0
+      
       for (const photo of instructionPhotos.value) {
-        await uploadPurchasePhoto(purchaseId, photo, 'instructions')
+        try {
+          await uploadPurchasePhoto(purchaseId, photo, 'instructions')
+          uploadedCount++
+          console.log('Successfully uploaded instruction photo:', photo.name)
+        } catch (error) {
+          failedCount++
+          console.error('Failed to upload instruction photo:', photo.name, error)
+          // Продолжаем загрузку остальных фото даже если одно не загрузилось
+        }
+      }
+      
+      if (uploadedCount > 0) {
+        ui.toast({ 
+          type: 'success', 
+          text: `Загружено фотоинструкций: ${uploadedCount}${failedCount > 0 ? ` (не загружено: ${failedCount})` : ''}` 
+        })
+      }
+      if (failedCount > 0 && uploadedCount === 0) {
+        ui.toast({ type: 'error', text: `Не удалось загрузить фотоинструкции (${failedCount})` })
       }
     }
     
     // Загружаем фотоотчеты если есть (только при редактировании и статусе "completed")
-    if (isEdit.value && data.status === 'completed' && reportPhotos.value.length > 0) {
+    if (isEdit.value && data.status === 'completed' && reportPhotos.value.length > 0 && purchaseId && !Number.isNaN(purchaseId)) {
       for (const photo of reportPhotos.value) {
         await uploadPurchasePhoto(purchaseId, photo, 'report')
       }

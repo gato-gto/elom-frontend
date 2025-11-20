@@ -66,33 +66,59 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       width: 'half'
     },
     {
+      key: 'address',
+      type: 'textarea',
+      label: 'Адрес',
+      placeholder: 'Введите адрес объекта',
+      order: 3,
+      width: 'full',
+      rows: 2,
+      validation: {
+        maxLength: 500
+      },
+      customClass: 'min-h-0'
+    },
+    {
+      key: 'key_person_name',
+      type: 'input',
+      label: 'Ключевое лицо',
+      placeholder: 'Введите имя ключевого лица (прораба)',
+      order: 4,
+      width: 'half',
+      validation: {
+        maxLength: 128
+      },
+      help: 'Имя прораба или другого ключевого лица на объекте'
+    },
+    {
       key: 'current_stage',
       type: 'select',
       label: 'Текущий этап работ',
       placeholder: '— выберите этап —',
       options: stageOptions,
       required: true,
-      order: 3,
+      order: 5,
       width: 'half',
       help: 'Текущий этап строительных работ на объекте'
     },
     {
-      key: 'address',
+      key: 'key_person_contacts',
       type: 'textarea',
-      label: 'Адрес',
-      placeholder: 'Введите адрес объекта',
-      order: 4,
+      label: 'Контакты',
+      placeholder: 'Введите контакты ключевого лица (телефон, email и т.д.)',
+      order: 6,
       width: 'full',
       validation: {
         maxLength: 500
-      }
+      },
+      help: 'Контактная информация ключевого лица'
     },
     {
       key: 'location_url',
       type: 'input',
       label: 'Ссылка на карту',
       placeholder: 'https://yandex.ru/maps/... или https://maps.google.com/...',
-      order: 5,
+      order: 7,
       width: 'full',
       help: 'Укажите ссылку на Яндекс.Карты или Google Maps для точного местоположения объекта',
       validation: {
@@ -104,21 +130,21 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       key: 'date_start',
       type: 'date',
       label: 'Дата начала работ',
-      order: 6,
+      order: 8,
       width: 'half'
     },
     {
       key: 'date_end',
       type: 'date',
       label: 'Дата окончания работ',
-      order: 7,
+      order: 9,
       width: 'half'
     },
     {
       key: 'is_active',
       type: 'checkbox',
       label: 'Активный объект',
-      order: 8,
+      order: 10,
       width: 'full'
     }
   ],
@@ -146,6 +172,8 @@ const initialFormData = computed<ObjectRequest>(() => {
       location_url: props.initial.location_url,
       responsible: props.initial.responsible,
       current_stage: props.initial.current_stage || 'acceptance',
+      key_person_name: props.initial.key_person_name || '',
+      key_person_contacts: props.initial.key_person_contacts || '',
       date_start: props.initial.date_start,
       date_end: props.initial.date_end
     }
@@ -158,6 +186,8 @@ const initialFormData = computed<ObjectRequest>(() => {
     location_url: undefined,
     responsible: undefined,
     current_stage: 'acceptance',
+    key_person_name: '',
+    key_person_contacts: '',
     date_start: undefined,
     date_end: undefined
   }

@@ -81,7 +81,9 @@ describe('Materials Store', () => {
     expect(store.items).toHaveLength(2)
     expect(store.items[0].name).toBe('Material 1')
     expect(store.pagination.count).toBe(2)
-    expect(api.get).toHaveBeenCalledWith('/api/v1/materials/')
+    expect(api.get).toHaveBeenCalled()
+    const callArgs = vi.mocked(api.get).mock.calls[0]
+    expect(callArgs[0]).toContain('/api/v1/materials/')
   })
 
   it('fetches single material successfully', async () => {

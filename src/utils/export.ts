@@ -95,7 +95,7 @@ export function exportToCSV<T extends Record<string, any>>(
   filename: string,
   options?: ExportOptions | string[]
 ) {
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     throw new Error('Нет данных для экспорта')
   }
 
@@ -119,6 +119,7 @@ export function exportToCSV<T extends Record<string, any>>(
   ].join('\n')
 
   downloadFile(csvContent, `${filename}.csv`, 'text/csv;charset=utf-8;')
+  return true
 }
 
 export function exportToExcel<T extends Record<string, any>>(
@@ -139,6 +140,7 @@ export function exportToExcel<T extends Record<string, any>>(
     link.click()
     document.body.removeChild(link)
   }, 100)
+  return true
 }
 
 export function exportToPDF<T extends Record<string, any>>(
@@ -146,7 +148,7 @@ export function exportToPDF<T extends Record<string, any>>(
   filename: string,
   options?: ExportOptions | string[]
 ) {
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     throw new Error('Нет данных для экспорта')
   }
 
@@ -193,6 +195,7 @@ export function exportToPDF<T extends Record<string, any>>(
   `
 
   downloadFile(pdfContent, `${filename}.html`, 'text/html')
+  return true
 }
 
 // Утилиты для форматирования данных перед экспортом

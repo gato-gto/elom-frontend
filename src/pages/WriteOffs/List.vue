@@ -28,23 +28,16 @@
             class-name="font-mono text-sm text-red-600"
           />
           <span v-else class="font-mono text-sm text-red-600">
-            {{ value }} {{ item.unit_code }}
+            {{ formatNumberClean(value) }} {{ item.unit_code }}
           </span>
         </div>
-      </template>
-
-      <!-- Custom column for stage -->
-      <template #column-stage="{ item, value }">
-        <span class="badge badge-outline badge-xs">
-          {{ getStageDisplayName(value) }}
-        </span>
       </template>
 
       <!-- Custom column for current balance -->
       <template #column-current_balance="{ item, value }">
         <div class="text-right">
           <span class="font-mono text-sm text-gray-600">
-            {{ value }} {{ item.unit_code }}
+            {{ formatNumberClean(value) }} {{ item.unit_code }}
           </span>
         </div>
       </template>
@@ -70,7 +63,7 @@
 import { computed, onMounted, ref } from 'vue'
 import type { WriteOff, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, formatNumberClean } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useWriteOffsStore } from '@/stores/writeOffs'
@@ -185,7 +178,6 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
     { key: 'object', label: 'Объект', sortable: true },
     { key: 'material', label: 'Материал', sortable: true },
     { key: 'quantity', label: 'Количество', sortable: true },
-    { key: 'stage', label: 'Этап', sortable: true },
     { key: 'current_balance', label: 'Остаток', sortable: true },
     { key: 'responsible', label: 'Ответственный', sortable: true },
   ],

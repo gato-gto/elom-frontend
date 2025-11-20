@@ -34,20 +34,17 @@ describe('API Client', () => {
 
   it('sets up request and response interceptors', async () => {
     const axios = await import('axios')
-    const mockAxiosInstance = vi.mocked(axios.default.create).mock.results[0]?.value
+    // Импортируем клиент, чтобы инициализировать interceptors
+    await import('../client')
     
+    // Проверяем, что create был вызван
+    expect(axios.default.create).toHaveBeenCalled()
+    
+    // Проверяем, что interceptors были настроены
+    const mockAxiosInstance = vi.mocked(axios.default.create).mock.results[0]?.value
     if (mockAxiosInstance && mockAxiosInstance.interceptors) {
-      // Проверяем, что interceptors были настроены при создании инстанса
       expect(mockAxiosInstance.interceptors.request.use).toBeDefined()
       expect(mockAxiosInstance.interceptors.response.use).toBeDefined()
-      // Проверяем, что они были вызваны (если это функции)
-      if (typeof mockAxiosInstance.interceptors.request.use === 'function') {
-        // Interceptors устанавливаются при импорте модуля, проверяем что create был вызван
-        expect(axios.default.create).toHaveBeenCalled()
-      }
-    } else {
-      // Если мок не работает как ожидалось, просто проверяем что create был вызван
-      expect(axios.default.create).toHaveBeenCalled()
     }
   })
 })

@@ -56,7 +56,7 @@ export interface PurchaseCreateRequest {
   invoice_number?: string;
   currency: Currency;
   comment?: string;
-  responsible: number;
+  responsible?: number; // Опционально - устанавливается автоматически из object.responsible на бэкенде
   status?: 'new' | 'completed' | 'cancelled';
   items: PurchaseItemCreateRequest[];
 }
@@ -80,7 +80,7 @@ export interface PurchaseRequest {
   purchase_no?: string;
   currency: Currency;
   comment?: string;
-  responsible: number;
+  responsible?: number; // Опционально - устанавливается автоматически из object.responsible на бэкенде
   status?: 'new' | 'completed' | 'cancelled';
   items: PurchaseItemCreateRequest[];
 }

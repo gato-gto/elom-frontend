@@ -3,6 +3,7 @@
  * Умная система округления единиц измерения
  * Основана на логике из бэкенда с категориями и умными правилами
  */
+import { formatNumberClean } from '@/utils/formatters'
 
 export interface UnitRoundingRule {
   fromUnit: string
@@ -191,7 +192,8 @@ export function formatValueWithUnit(
   unit: string,
   precision: number = 2
 ): string {
-  const formattedValue = Number(value.toFixed(precision))
+  // Используем умное форматирование без лишних нулей
+  const formattedValue = formatNumberClean(value)
   return `${formattedValue} ${unit}`
 }
 

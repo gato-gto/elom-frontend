@@ -137,6 +137,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { formatNumberClean } from '@/utils/formatters'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useUiStore } from '@/stores/ui'
 import { useObjectsStore } from '@/stores/objects'
@@ -216,15 +217,7 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
 
 // Methods
 function formatQuantity(quantity: string): string {
-  const num = parseFloat(quantity)
-  if (isNaN(num)) {return '0'}
-  
-  // Форматируем с учетом количества знаков после запятой
-  if (num % 1 === 0) {
-    return num.toString()
-  } else {
-    return num.toFixed(3).replace(/\.?0+$/, '')
-  }
+  return formatNumberClean(quantity)
 }
 
 function toggleExpanded(objectId: number) {

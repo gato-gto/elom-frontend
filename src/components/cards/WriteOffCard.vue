@@ -82,7 +82,7 @@
 import { WriteOff } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, formatNumberClean } from '@/utils/formatters'
 
 interface Props {
   writeOff: WriteOff
@@ -107,13 +107,13 @@ defineEmits<Emits>()
 const { truncateText } = useMobileCardHelpers()
 
 const formatQuantity = (quantity: string) => {
-  return parseFloat(quantity).toFixed(2)
+  return formatNumberClean(parseFloat(quantity))
 }
 
 const getBalanceAfter = () => {
   const current = parseFloat(props.writeOff.current_balance)
   const writeOffQty = parseFloat(props.writeOff.quantity)
-  return (current - writeOffQty).toFixed(2)
+  return formatNumberClean(current - writeOffQty)
 }
 
 const getStageLabel = (stage: string) => {

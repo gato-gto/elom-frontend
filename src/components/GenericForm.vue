@@ -39,6 +39,7 @@
                 :multiple="field.multiple"
                 :checkboxLabel="field.checkboxLabel"
                 :switchLabel="field.switchLabel"
+                :customClass="field.customClass"
                 :class="{
                   'md:col-span-2': field.width === 'full'
                 }"
@@ -85,6 +86,7 @@
                 :multiple="field.multiple"
                 :checkboxLabel="field.checkboxLabel"
                 :switchLabel="field.switchLabel"
+                :customClass="field.customClass"
                 :class="{
                   'md:col-span-2': field.width === 'full'
                 }"

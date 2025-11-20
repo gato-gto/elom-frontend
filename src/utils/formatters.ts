@@ -73,10 +73,50 @@ export function formatCurrency(value: number | string | null | undefined): strin
 }
 
 /**
+ * Форматирует число, убирая лишние нули в конце
+ * Если число целое, показывает как целое
+ * Показывает дробную часть только если она действительно есть
+ * 
+ * Примеры:
+ * - 14.000000 -> "14"
+ * - 14.5 -> "14.5"
+ * - 14.50 -> "14.5"
+ * - 0.5 -> "0.5"
+ * - 0 -> "0"
+ */
+export function formatNumberClean(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') { return '—' }
+  
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) { return '—' }
+  
+  // Если число целое, возвращаем как целое
+  if (Number.isInteger(num)) {
+    return num.toString()
+  }
+  
+  // Для дробных чисел убираем лишние нули в конце
+  // Используем toFixed с достаточным количеством знаков, затем убираем нули
+  const str = num.toString()
+  
+  // Если число в научной нотации, конвертируем в обычный формат
+  if (str.includes('e') || str.includes('E')) {
+    // Используем toFixed для больших чисел
+    const fixed = num.toFixed(10)
+    return fixed.replace(/\.?0+$/, '')
+  }
+  
+  // Убираем завершающие нули после точки
+  // Сначала убираем завершающие нули, затем убираем точку если она осталась одна
+  return str.replace(/\.?0+$/, '')
+}
+
+/**
  * Форматирует количество с единицей измерения
+ * Использует умное форматирование без лишних нулей
  */
 export function formatQuantity(value: number | string | null | undefined, unit?: string): string {
-  const formatted = formatNumber(value)
+  const formatted = formatNumberClean(value)
   if (formatted === '—') { return '—' }
   
   return unit ? `${formatted} ${unit}` : formatted

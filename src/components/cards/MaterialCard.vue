@@ -30,12 +30,12 @@
         
         <div v-if="material.current_stock !== undefined">
           <span class="text-gray-500">Текущий остаток:</span>
-          <span class="font-medium ml-2">{{ material.current_stock }} {{ material.unit_code }}</span>
+          <span class="font-medium ml-2">{{ formatNumberClean(material.current_stock) }} {{ material.unit_code }}</span>
         </div>
         
         <div v-if="material.average_price">
           <span class="text-gray-500">Средняя цена:</span>
-          <span class="font-medium ml-2">{{ material.average_price }}</span>
+          <span class="font-medium ml-2">{{ formatNumberClean(material.average_price) }}</span>
         </div>
         
         <div>
@@ -54,7 +54,7 @@
         
         <div v-if="material.total_purchased">
           <span class="text-gray-500">Куплено всего:</span>
-          <span class="font-medium ml-2">{{ material.total_purchased }} {{ material.unit_code }}</span>
+          <span class="font-medium ml-2">{{ formatNumberClean(material.total_purchased) }} {{ material.unit_code }}</span>
         </div>
         
         <div v-if="material.last_purchase_date">
@@ -79,7 +79,7 @@
 import { Material } from '@/api/types/materials'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, formatNumberClean } from '@/utils/formatters'
 
 interface Props {
   material: Material & {

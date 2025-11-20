@@ -91,6 +91,7 @@ export interface FieldConfig {
   order?: number
   width?: 'full' | 'half' | 'third' | 'quarter'
   condition?: () => boolean // Условие для отображения поля
+  customClass?: string // Дополнительные CSS классы для поля
 }
 
 export interface FormSection {

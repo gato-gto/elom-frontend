@@ -8,55 +8,55 @@
     <div class="space-y-6">
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div class="grid md:grid-cols-3 gap-4">
-          <!-- Дата списания -->
-          <div class="form-control w-full">
-            <label class="label">
-              <span class="label-text font-medium">Дата списания</span>
-              <span class="label-text-alt text-primary font-semibold">*</span>
-            </label>
-            <input
-              v-model="formData.date"
-              type="date"
-              required
-              class="input input-bordered w-full"
+        <!-- Дата списания -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Дата списания</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <input
+            v-model="formData.date"
+            type="date"
+            required
+            class="input input-bordered w-full"
               :class="{ 'input-error': errors.date }"
-            />
+          />
             <div v-if="errors.date" class="label">
               <span class="label-text-alt text-error">
                 {{ errors.date[0] }}
               </span>
             </div>
-          </div>
-          <!-- Объект -->
-          <div class="form-control w-full">
-            <label class="label">
-              <span class="label-text font-medium">Объект</span>
-              <span class="label-text-alt text-primary font-semibold">*</span>
-            </label>
-            <select
-              v-model="formData.object"
-              @change="onObjectChange"
-              required
-              class="select select-bordered w-full"
-              :class="{ 'select-error': errors.object }"
+        </div>
+        <!-- Объект -->
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-medium">Объект</span>
+            <span class="label-text-alt text-primary font-semibold">*</span>
+          </label>
+          <select
+            v-model="formData.object"
+            @change="onObjectChange"
+            required
+            class="select select-bordered w-full"
+            :class="{ 'select-error': errors.object }"
+          >
+            <option value="0" disabled>— выберите объект —</option>
+            <option
+              v-for="object in objectOptions"
+              :key="object.value"
+              :value="object.value"
             >
-              <option value="0" disabled>— выберите объект —</option>
-              <option
-                v-for="object in objectOptions"
-                :key="object.value"
-                :value="object.value"
-              >
-                {{ object.label }}
-              </option>
-            </select>
-            <div v-if="errors.object" class="label">
-              <span class="label-text-alt text-error">
-                {{ errors.object[0] }}
-              </span>
-            </div>
+              {{ object.label }}
+            </option>
+          </select>
+          <div v-if="errors.object" class="label">
+            <span class="label-text-alt text-error">
+              {{ errors.object[0] }}
+            </span>
           </div>
-              <!-- Ответственный -->
-          <div class="form-control w-full">
+            </div>
+        <!-- Ответственный -->
+        <div class="form-control w-full">
           <label class="label">
             <span class="label-text font-medium">Ответственный</span>
             <span class="label-text-alt text-primary font-semibold">*</span>
@@ -131,6 +131,9 @@
                         placeholder="— выберите материал —"
                         size="sm"
                         :disabled="!formData.object || materialsLoading"
+                        :object-id="formData.object || null"
+                        :date="formData.date || null"
+                        :filter-by-balance="true"
                         :class="{ 'border-error': getItemFieldError(idx, 'material') }"
                         @change="onItemMaterialChange(item, $event)"
                       />
@@ -169,7 +172,7 @@
                   </td>
                   <td>
                     <div v-if="item.currentBalance !== null && item.material" class="text-sm">
-                      <div class="font-mono">{{ item.currentBalance.toFixed(6) }}</div>
+                      <div class="font-mono">{{ formatNumberClean(item.currentBalance) }}</div>
                       <div class="text-xs text-gray-500">{{ getUnitName(item.unit) || '' }}</div>
                     </div>
                     <div v-else class="text-sm text-gray-400">—</div>
@@ -180,10 +183,10 @@
                         class="font-mono"
                         :class="{
                           'text-error font-bold': getFutureBalance(item) < 0,
-                          'text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < parseFloat(item.currentBalance.toFixed(6)) * 0.1
+                          'text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1
                         }"
                       >
-                        {{ getFutureBalance(item).toFixed(6) }}
+                        {{ formatNumberClean(getFutureBalance(item)) }}
                       </div>
                       <div class="text-xs text-gray-500">{{ getUnitName(item.unit) || '' }}</div>
                       <div v-if="getFutureBalance(item) < 0" class="text-xs text-error mt-1">
@@ -228,6 +231,9 @@
                         placeholder="— выберите материал —"
                         size="sm"
                         :disabled="!formData.object || materialsLoading"
+                        :object-id="formData.object || null"
+                        :date="formData.date || null"
+                        :filter-by-balance="true"
                         :class="{ 'border-error': getItemFieldError(idx, 'material') }"
                         @change="onItemMaterialChange(item, $event)"
                       />
@@ -276,7 +282,7 @@
                         <span class="label-text text-xs">Текущий остаток</span>
                       </label>
                       <div v-if="item.currentBalance !== null && item.material" class="text-sm font-mono p-2 bg-base-100 rounded border">
-                        {{ item.currentBalance.toFixed(6) }} {{ getUnitName(item.unit) || '' }}
+                        {{ formatNumberClean(item.currentBalance) }} {{ getUnitName(item.unit) || '' }}
                       </div>
                       <div v-else class="text-sm text-gray-400 p-2 bg-base-100 rounded border">
                         —
@@ -293,11 +299,11 @@
                         class="text-sm font-mono p-2 rounded border"
                         :class="{
                           'bg-error/10 border-error text-error': getFutureBalance(item) < 0,
-                          'bg-warning/10 border-warning text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < parseFloat(item.currentBalance.toFixed(6)) * 0.1,
-                          'bg-base-100': getFutureBalance(item) >= parseFloat(item.currentBalance.toFixed(6)) * 0.1
+                          'bg-warning/10 border-warning text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1,
+                          'bg-base-100': getFutureBalance(item) >= item.currentBalance * 0.1
                         }"
                       >
-                        {{ getFutureBalance(item).toFixed(6) }} {{ getUnitName(item.unit) || '' }}
+                        {{ formatNumberClean(getFutureBalance(item)) }} {{ getUnitName(item.unit) || '' }}
                         <div v-if="getFutureBalance(item) < 0" class="text-xs mt-1 font-bold">
                           Отрицательный остаток!
                         </div>
@@ -321,7 +327,7 @@
               >
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
+          </svg>
                 Добавить позицию
               </button>
             </div>
@@ -332,7 +338,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
               <span>{{ getItemsGeneralError() }}</span>
-            </div>
+          </div>
         </div>
 
         <!-- Общие ошибки -->
@@ -383,6 +389,7 @@ import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
 import { useEmployeesStore, getByObject } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { formatNumberClean } from '@/utils/formatters'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import type { 
@@ -774,9 +781,22 @@ const handleSubmit = async () => {
     Object.keys(errorResult.fieldErrors).forEach(field => {
       const fieldError = errorResult.fieldErrors[field]
       if (field.startsWith('items[')) {
-        itemErrors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
+        // Ошибки для позиций списания
+        itemErrors[field] = Array.isArray(fieldError) ? fieldError[0] : String(fieldError)
+      } else if (field === 'non_field_errors') {
+        // Обрабатываем общие ошибки (включая __all__)
+        errors.value.non_field_errors = Array.isArray(fieldError) ? fieldError : [String(fieldError)]
+      } else {
+        // Обрабатываем обычные ошибки полей
+        errors.value[field] = Array.isArray(fieldError) ? fieldError : [String(fieldError)]
       }
     })
+    
+    // Если есть общие ошибки, но они не были обработаны выше
+    if (errorResult.fieldErrors.non_field_errors && !errors.value.non_field_errors) {
+      const nonFieldErrors = errorResult.fieldErrors.non_field_errors
+      errors.value.non_field_errors = Array.isArray(nonFieldErrors) ? nonFieldErrors : [String(nonFieldErrors)]
+    }
   } finally {
     isSubmitting.value = false
   }
