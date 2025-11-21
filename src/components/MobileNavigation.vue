@@ -68,15 +68,15 @@
 
         <!-- Stocks Balances -->
         <router-link 
-          to="/stocks/balances" 
+          to="/balances" 
           class="mobile-nav-item"
-          :class="{ 'active': $route.path.startsWith('/stocks/balances') }"
+          :class="{ 'active': $route.path.startsWith('/balances') }"
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <div v-if="$route.path.startsWith('/stocks/balances')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
+            <div v-if="$route.path.startsWith('/balances')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
           <span>Остатки</span>
         </router-link>
@@ -103,7 +103,7 @@
         <router-link 
           to="/stocks" 
           class="mobile-more-item"
-          :class="{ 'active': $route.path.startsWith('/stocks') && !$route.path.startsWith('/stocks/balances') }"
+          :class="{ 'active': $route.path.startsWith('/stocks') }"
           @click="closeMoreMenu"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

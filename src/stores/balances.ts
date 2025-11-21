@@ -48,6 +48,7 @@ export const fetchBalancesList = async (params?: {
     if (response.data.objects) {
       response.data.objects.forEach((obj: any) => {
         objectsData.push({
+          id: obj.object_id, // Добавляем id для совместимости с GenericList
           object_id: obj.object_id,
           object_name: obj.object_name,
           object_address: obj.object_address,
@@ -60,7 +61,7 @@ export const fetchBalancesList = async (params?: {
             total_written_off: material.total_written_off
           } as MaterialBalance)),
           total_materials: obj.materials.length
-        } as ObjectBalance)
+        } as ObjectBalance & { id: number })
       })
     }
     

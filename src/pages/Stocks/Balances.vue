@@ -146,7 +146,7 @@ import type { GenericListConfig } from '@/types/generic'
 import type { MaterialBalance, ObjectBalance } from '@/api/types/stocks'
 import GenericList from '@/components/GenericList.vue'
 import ExportButton from '@/components/ExportButton.vue'
-import { log } from 'console'
+import BalanceCard from '@/components/cards/BalanceCard.vue'
 
 // Stores
 const ui = useUiStore()
@@ -211,6 +211,8 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
       label: 'Дата'
     }
   ],
+  mobileCardComponent: BalanceCard,
+  mobileCardProp: 'balance',
   defaultSort: 'object_name',
   defaultSortOrder: 'asc'
 }))

@@ -137,6 +137,7 @@ export interface MaterialBalance {
 }
 
 export interface ObjectBalance {
+  id?: number; // Добавлено для совместимости с GenericList (равен object_id)
   object_id: number;
   object_name: string;
   object_address: string;

@@ -378,7 +378,7 @@ const routes = [
     }
   },
   {
-    path: '/stocks/balances',
+    path: '/balances',
     name: 'StockBalances',
     component: StockBalances,
     meta: { 
