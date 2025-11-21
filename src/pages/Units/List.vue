@@ -89,7 +89,7 @@ const modalTitle = computed(() => {
 const listConfig = computed<GenericListConfig<Unit>>(() => ({
   title: 'Единицы измерения',
   subtitle: 'Управление базовыми единицами для материалов и закупок',
-  icon: 'M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h3a1 1 0 110 2h-1v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6H4a1 1 0 110-2h3zM9 4h6V3H9v1z',
+  icon: 'straighten',
   showCreate: canEdit.value,
   createText: 'Добавить единицу',
   canCreate: canEdit.value,

@@ -4,7 +4,7 @@
       <div class="header-title-section">
         <h1 class="list-title">
           <svg v-if="icon" class="title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icon" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(icon)" />
           </svg>
           {{ title }}
         </h1>
@@ -42,6 +42,8 @@
 </template>
 
 <script setup lang="ts">
+import { getIconPath } from '@/assets/icons'
+
 interface Props {
   title: string
   subtitle?: string

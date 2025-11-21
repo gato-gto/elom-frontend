@@ -13,7 +13,7 @@
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('inventory')" />
             </svg>
             <div v-if="$route.path.startsWith('/materials')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
@@ -28,7 +28,7 @@
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('shopping_cart')" />
             </svg>
             <div v-if="$route.path.startsWith('/purchases')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
@@ -43,8 +43,7 @@
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('location_on')" />
             </svg>
             <div v-if="$route.path.startsWith('/objects')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
@@ -59,7 +58,7 @@
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('minus-circle')" />
             </svg>
             <div v-if="$route.path.startsWith('/writeoffs')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
@@ -74,7 +73,7 @@
         >
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('inventory_2')" />
             </svg>
             <div v-if="$route.path.startsWith('/balances')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
@@ -85,7 +84,7 @@
         <div class="mobile-nav-item mobile-nav-more" @click="toggleMoreMenu">
           <div class="relative">
             <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('dots-vertical')" />
             </svg>
             <!-- Индикатор активного меню -->
             <div v-if="showMoreMenu" class="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></div>
@@ -193,6 +192,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { getIconPath } from '@/assets/icons'
 
 const auth = useAuthStore()
 
