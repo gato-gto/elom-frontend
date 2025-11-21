@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { GenericListConfig, UseGenericListOptions, UseGenericListReturn } from '@/types/generic'
 import { useErrorHandler } from './useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
@@ -151,7 +151,7 @@ export function useListFilters<T extends Record<string, any>>(
   // Watch for filter changes and save them
   watch(
     () => store.filters,
-    (newFilters) => {
+    (_newFilters: Record<string, any>) => {
       saveFilters()
     },
     { deep: true }
@@ -255,7 +255,7 @@ export function useListSearch(
   }
 
   // Watch for search query changes
-  watch(searchQuery, (newQuery) => {
+  watch(searchQuery, (newQuery: string) => {
     if (newQuery !== store.filters[searchField]) {
       debouncedSearch()
     }
