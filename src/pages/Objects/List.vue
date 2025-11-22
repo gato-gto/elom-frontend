@@ -50,6 +50,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Object, Me } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate } from '@/utils/formatters'
@@ -64,6 +65,7 @@ import GenericList from '@/components/GenericList.vue'
 import ObjectCard from '@/components/cards/ObjectCard.vue'
 
 // Stores
+const router = useRouter()
 const objectsStore = useObjectsStore
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -151,6 +153,11 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
   ],
   actions: [
     {
+      key: 'view',
+      label: 'Открыть',
+      class: 'btn-outline'
+    },
+    {
       key: 'edit',
       label: 'Редактировать',
       class: 'btn-outline',
@@ -209,6 +216,9 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 
 async function handleAction(action: string, item: Object) {
   switch (action) {
+    case 'view':
+      router.push({ name: 'ObjectInfo', params: { id: item.id } })
+      break
     case 'edit':
       openEdit(item)
       break

@@ -1,6 +1,6 @@
 <!-- src/pages/Objects/ObjectForm.vue -->
 <template>
-  <div class="object-form">
+  <div>
     <!-- Generic Form -->
     <GenericForm
       :config="formConfig"

@@ -87,6 +87,11 @@ export const fetchBalancesList = async (params?: {
 // Расширенные методы для фильтров
 export const setBalancesFilters = async (newFilters: any) => {
   Object.assign(extendedFilters.value, newFilters)
+  // Синхронизируем с store.filters для отображения в UI
+  useBalancesStore.filters = {
+    ...extendedFilters.value,
+    ordering: useBalancesStore.filters?.ordering || 'object_name'
+  }
   useBalancesStore.pagination.page = 1
   await fetchBalancesList()
 }
@@ -97,6 +102,11 @@ export const resetBalancesFilters = async () => {
     object: '',
     date: new Date().toISOString().split('T')[0]
   })
+  // Синхронизируем с store.filters для отображения в UI
+  useBalancesStore.filters = {
+    ...extendedFilters.value,
+    ordering: useBalancesStore.filters?.ordering || 'object_name'
+  }
   useBalancesStore.pagination.page = 1
   await fetchBalancesList()
 }

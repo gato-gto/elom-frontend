@@ -22,6 +22,7 @@ const PurchaseForm = () => import(/* webpackChunkName: "purchases" */ '@/pages/P
 // Objects
 const ObjectsList = () => import(/* webpackChunkName: "objects" */ '@/pages/Objects/List.vue')
 const ObjectForm = () => import(/* webpackChunkName: "objects" */ '@/pages/Objects/ObjectForm.vue')
+const ObjectInfo = () => import(/* webpackChunkName: "objects" */ '@/pages/Objects/ObjectInfo.vue')
 
 // Units
 const UnitsList = () => import(/* webpackChunkName: "units" */ '@/pages/Units/List.vue')
@@ -230,13 +231,13 @@ const routes = [
     }
   },
   {
-    path: '/objects/:id/edit',
-    name: 'ObjectEdit',
-    component: ObjectForm,
-    meta: { 
-      title: 'Редактировать объект',
-      breadcrumb: 'Объекты / Редактировать',
-      description: 'Редактирование существующего объекта',
+    path: '/objects/:id',
+    name: 'ObjectInfo',
+    component: ObjectInfo,
+    meta: {
+      title: 'Информация об объекте',
+      breadcrumb: 'Объекты / Просмотр',
+      description: 'Просмотр статуса объекта, контактов и связанных данных',
       category: 'objects',
       roles: ['admin', 'director', 'coordinator', 'site_manager']
     }

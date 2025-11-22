@@ -136,6 +136,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { formatNumberClean } from '@/utils/formatters'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
@@ -148,6 +149,9 @@ import GenericList from '@/components/GenericList.vue'
 import ExportButton from '@/components/ExportButton.vue'
 import BalanceCard from '@/components/cards/BalanceCard.vue'
 
+// Router
+const route = useRoute()
+
 // Stores
 const ui = useUiStore()
 const objectsStore = useObjectsStore
@@ -159,8 +163,11 @@ const { handleLoadingError } = useErrorHandler()
 balancesStore.fetchList = fetchBalancesList
 balancesStore.setFilters = setBalancesFilters
 balancesStore.resetFilters = resetBalancesFilters
+
+// Инициализируем filters из extendedFilters
+const extendedFilters = getBalancesFilters()
 balancesStore.filters = {
-  ...getBalancesFilters().value,
+  ...extendedFilters.value,
   ordering: 'object_name'
 }
 
@@ -309,8 +316,16 @@ onMounted(async () => {
   try {
     // Load objects for filter options
     await objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any)
-    // Load balances
-    await fetchBalancesList()
+    
+    // Apply query parameters from URL if present
+    const queryObject = route.query.object
+    if (queryObject) {
+      // setBalancesFilters already calls fetchBalancesList, so we don't need to call it again
+      await setBalancesFilters({ object: String(queryObject) })
+    } else {
+      // Load balances without filter
+      await fetchBalancesList()
+    }
     
   } catch (error) {
     await handleLoadingError(error, 'balances')
