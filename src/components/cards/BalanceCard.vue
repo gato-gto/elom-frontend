@@ -138,8 +138,8 @@ function sortMaterials(materials: MaterialBalance[]): MaterialBalance[] {
         return 0
     }
     
-    if (aValue < bValue) return props.materialsSortOrder === 'asc' ? -1 : 1
-    if (aValue > bValue) return props.materialsSortOrder === 'asc' ? 1 : -1
+    if (aValue < bValue) {return props.materialsSortOrder === 'asc' ? -1 : 1}
+    if (aValue > bValue) {return props.materialsSortOrder === 'asc' ? 1 : -1}
     return 0
   })
 }

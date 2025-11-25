@@ -52,7 +52,6 @@ describe('GenericForm', () => {
   const mockConfig: GenericFormConfig<any> = {
     title: 'Test Form',
     subtitle: 'Test subtitle',
-    showCancel: true,
     sections: [
       {
         title: 'Basic Info',

@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable no-undef */
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { debounce } from '@/utils/debounce'
@@ -117,12 +118,12 @@ const searchResults = ref<PurchaseSupplier[]>([])
 const selectedSupplier = ref<PurchaseSupplier | null>(null)
 const showDropdown = ref(false)
 const loading = ref(false)
-const searchTimeout = ref<NodeJS.Timeout | null>(null)
+const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 
 // Refs
-const searchInput = ref<HTMLInputElement>()
-const dropdown = ref<HTMLDivElement>()
-const inputContainer = ref<HTMLDivElement>()
+const searchInput = ref<InstanceType<typeof HTMLInputElement>>()
+const dropdown = ref<InstanceType<typeof HTMLDivElement>>()
+const inputContainer = ref<InstanceType<typeof HTMLDivElement>>()
 
 // Computed
 const hasError = computed(() => !!props.error)

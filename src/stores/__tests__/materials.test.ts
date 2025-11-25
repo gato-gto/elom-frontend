@@ -9,7 +9,7 @@ vi.mock('@/api/client')
 vi.mock('@/api/endpoints', () => ({
   API_PREFIX: '/api/v1',
   buildQuery: (params?: Record<string, any>) => {
-    if (!params) return ''
+    if (!params) {return ''}
     const q = new URLSearchParams()
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null) {

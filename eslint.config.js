@@ -103,6 +103,24 @@ export default [
     }
   },
   {
+    files: ['**/*.cjs', 'scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        exports: 'readonly'
+      },
+      sourceType: 'commonjs'
+    },
+    rules: {
+      'no-console': 'off'
+    }
+  },
+  {
     ignores: [
       'dist/**',
       'node_modules/**',

@@ -33,23 +33,23 @@ describe('calculations utilities', () => {
   describe('formatCurrency', () => {
     it('formats number as currency (RUB by default)', () => {
       const s = formatCurrency(1234.5)
-      // Examples: "1 234,50 ₽" depending on environment locale symbols
-      expect(s).toMatch(/1[\s\u00A0]234[,\.]50/)
+      // Examples: "1 234,50 ₽" depending on environment locale symbols
+      expect(s).toMatch(/1[\s\u00A0]234[,.]50/)
     })
 
     it('supports different currency code', () => {
       const s = formatCurrency(99.9, 'USD')
-      expect(s).toMatch(/99[,\.]90/)
+      expect(s).toMatch(/99[,.]90/)
     })
   })
 
   describe('formatNumber', () => {
     it('formats number with default 2 decimals', () => {
-      expect(formatNumber(12.3456)).toMatch(/12[,\.]35/)
+      expect(formatNumber(12.3456)).toMatch(/12[,.]35/)
     })
 
     it('formats number with custom decimals', () => {
-      expect(formatNumber(12.3456, 3)).toMatch(/12[,\.]346/)
+      expect(formatNumber(12.3456, 3)).toMatch(/12[,.]346/)
     })
   })
 })

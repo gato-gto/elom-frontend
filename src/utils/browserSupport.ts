@@ -40,7 +40,7 @@ class BrowserSupportChecker {
   }
 
   private checkBackdropFilter(): boolean {
-    if (!window.CSS || !window.CSS.supports) return false;
+    if (!window.CSS || !window.CSS.supports) {return false;}
     
     // Проверяем стандартное свойство и webkit-префикс (для Safari)
     return window.CSS.supports('backdrop-filter', 'blur(1px)') || 
