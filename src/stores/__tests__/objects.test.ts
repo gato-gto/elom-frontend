@@ -33,10 +33,12 @@ describe('Objects Store', () => {
             name: 'Object 1',
             address: 'Address 1',
             responsible: 1,
-            key_person: 'John Doe',
-            key_person_phone: '+998901234567',
-            start_date: '2024-01-01',
-            end_date: '2024-12-31',
+            responsible_name: 'John Doe',
+            current_stage: 'acceptance',
+            key_person_name: 'John Doe',
+            key_person_contacts: '+998901234567',
+            date_start: '2024-01-01',
+            date_end: '2024-12-31',
             is_active: true,
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z'
@@ -46,10 +48,12 @@ describe('Objects Store', () => {
             name: 'Object 2',
             address: 'Address 2',
             responsible: 2,
-            key_person: 'Jane Smith',
-            key_person_phone: '+998901234568',
-            start_date: '2024-02-01',
-            end_date: '2024-11-30',
+            responsible_name: 'Jane Smith',
+            current_stage: 'request',
+            key_person_name: 'Jane Smith',
+            key_person_contacts: '+998901234568',
+            date_start: '2024-02-01',
+            date_end: '2024-11-30',
             is_active: true,
             created_at: '2024-02-01T00:00:00Z',
             updated_at: '2024-02-01T00:00:00Z'
@@ -77,9 +81,10 @@ describe('Objects Store', () => {
       name: 'New Object',
       address: 'New Address',
       responsible: 1,
-      key_person: 'New Person',
-      key_person_phone: '+998901234569',
-      start_date: '2024-01-01',
+      current_stage: 'acceptance',
+      key_person_name: 'New Person',
+      key_person_contacts: '+998901234569',
+      date_start: '2024-01-01',
       is_active: true
     }
     
@@ -117,10 +122,12 @@ describe('Objects Store', () => {
         name: 'Updated Object',
         address: 'Address 1',
         responsible: 1,
-        key_person: 'John Doe',
-        key_person_phone: '+998901234567',
-        start_date: '2024-01-01',
-        end_date: '2024-12-31',
+        responsible_name: 'John Doe',
+        current_stage: 'acceptance',
+        key_person_name: 'John Doe',
+        key_person_contacts: '+998901234567',
+        date_start: '2024-01-01',
+        date_end: '2024-12-31',
         is_active: false,
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
@@ -197,6 +204,37 @@ describe('Objects Store', () => {
     
     expect(store.filters.search).toBe('')
     expect(store.filters.is_active).toBe('')
+  })
+
+  it('fetches responsibles successfully', async () => {
+    const mockResponse = {
+      data: [
+        { id: 1, name: 'John Doe', objects_count: 5 },
+        { id: 2, name: 'Jane Smith', objects_count: 3 }
+      ]
+    }
+    
+    vi.mocked(api.get).mockResolvedValue(mockResponse)
+    
+    const { fetchResponsibles } = await import('../objects')
+    const result = await fetchResponsibles()
+    
+    expect(result).toHaveLength(2)
+    expect(result[0].name).toBe('John Doe')
+    expect(result[0].objects_count).toBe(5)
+    expect(api.get).toHaveBeenCalled()
+  })
+
+  it('filters active objects correctly', async () => {
+    const store = useObjectsStore
+    store.items = [
+      { id: 1, name: 'Active Object', is_active: true } as any,
+      { id: 2, name: 'Inactive Object', is_active: false } as any
+    ]
+    
+    const { activeObjects } = await import('../objects')
+    expect(activeObjects.value).toHaveLength(1)
+    expect(activeObjects.value[0].name).toBe('Active Object')
   })
 })
 

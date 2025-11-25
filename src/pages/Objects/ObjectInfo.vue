@@ -207,23 +207,6 @@
                   </div>
                 </div>
               </div>
-
-              <!-- Служебные данные -->
-              <div class="info-section">
-                <h3 class="info-section-title">Служебные данные</h3>
-                <div class="info-item">
-                  <label class="info-label">ID объекта</label>
-                  <p class="info-value">#{{ object.id }}</p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Создан</label>
-                  <p class="info-value">{{ formatDate(object.created_at) }}</p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Обновлён</label>
-                  <p class="info-value">{{ formatDate(object.updated_at) }}</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>

@@ -185,10 +185,15 @@
                     <div>
                     <MaterialSearchSelect
                       v-model="it.material"
-                      placeholder="— выберите материал —"
+                      :placeholder="isEdit ? '— выберите материал —' : '— выберите или введите материал —'"
                       size="sm"
-                        :class="{ 'border-error': getItemFieldError(idx, 'material') }"
+                      :class="{ 'border-error': getItemFieldError(idx, 'material') }"
+                      :is-success="!!(it.isNewMaterial && it.material_name && !getItemFieldError(idx, 'material'))"
+                      :exclude-materials="addedMaterialIds.filter(id => id !== it.material)"
+                      :allow-custom="!isEdit"
                       @change="onMaterialChange(it, $event)"
+                      @custom-material="onCustomMaterial(it, $event)"
+                      @input="onMaterialInput(it, $event)"
                     />
                       <div v-if="getItemFieldError(idx, 'material')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'material') }}
@@ -197,10 +202,28 @@
                   </td>
                   <td>
                     <div>
-                      <div class="text-sm text-gray-600 p-2" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
-                      {{ getUnitName(it.unit) || '—' }}
-                    </div>
-                    <input type="hidden" v-model.number="it.unit" />
+                      <!-- Если материал выбран из списка - показываем единицу (disabled) -->
+                      <!-- При редактировании всегда disabled -->
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-gray-600 p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                        {{ getUnitName(it.unit) || '—' }}
+                      </div>
+                      <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
+                      <select
+                        v-else
+                        v-model.number="it.unit"
+                        class="select select-bordered select-sm w-full"
+                        :class="[
+                          { 'select-error': getItemFieldError(idx, 'unit') },
+                          { 'select-success': it.isNewMaterial && it.material_name && it.unit && it.unit > 0 && !getItemFieldError(idx, 'unit') }
+                        ]"
+                        :disabled="!it.isNewMaterial && !isEdit"
+                      >
+                        <option :value="0">— выберите единицу —</option>
+                        <option v-for="unit in units" :key="unit.id" :value="unit.id">
+                          {{ unit.code }} ({{ unit.name }})
+                        </option>
+                      </select>
+                      <input v-if="(it.material && !it.isNewMaterial) || isEdit" type="hidden" v-model.number="it.unit" />
                       <div v-if="getItemFieldError(idx, 'unit')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'unit') }}
                       </div>
@@ -279,10 +302,15 @@
                       </label>
                       <MaterialSearchSelect
                         v-model="it.material"
-                        placeholder="— выберите материал —"
+                        :placeholder="isEdit ? '— выберите материал —' : '— выберите или введите материал —'"
                         size="sm"
                         :class="{ 'border-error': getItemFieldError(idx, 'material') }"
+                        :is-success="!!(it.isNewMaterial && it.material_name && !getItemFieldError(idx, 'material'))"
+                        :exclude-materials="addedMaterialIds.filter(id => id !== it.material)"
+                        :allow-custom="!isEdit"
                         @change="onMaterialChange(it, $event)"
+                        @custom-material="onCustomMaterial(it, $event)"
+                        @input="onMaterialInput(it, $event)"
                       />
                       <div v-if="getItemFieldError(idx, 'material')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'material') }}
@@ -294,10 +322,28 @@
                       <label class="label">
                         <span class="label-text text-xs">Единица измерения</span>
                       </label>
-                      <div class="text-sm text-gray-600 p-2 bg-base-100 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <!-- Если материал выбран из списка - показываем единицу (disabled) -->
+                      <!-- При редактировании всегда disabled -->
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-gray-600 p-2 bg-base-100 rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
-                      <input type="hidden" v-model.number="it.unit" />
+                      <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
+                      <select
+                        v-else
+                        v-model.number="it.unit"
+                        class="select select-bordered select-sm w-full"
+                        :class="[
+                          { 'select-error': getItemFieldError(idx, 'unit') },
+                          { 'select-success': it.isNewMaterial && it.material_name && it.unit && it.unit > 0 && !getItemFieldError(idx, 'unit') }
+                        ]"
+                        :disabled="!it.isNewMaterial && !isEdit"
+                      >
+                        <option :value="0">— выберите единицу —</option>
+                        <option v-for="unit in units" :key="unit.id" :value="unit.id">
+                          {{ unit.code }} ({{ unit.name }})
+                        </option>
+                      </select>
+                      <input v-if="(it.material && !it.isNewMaterial) || isEdit" type="hidden" v-model.number="it.unit" />
                       <div v-if="getItemFieldError(idx, 'unit')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'unit') }}
                       </div>
@@ -568,7 +614,14 @@ async function uploadPurchasePhoto(purchaseId: number, file: File, type: 'instru
 }
 
 // Items management
-const items = ref<Array<PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number }>>([])
+const items = ref<Array<PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }>>([])
+
+// Computed: список ID уже добавленных материалов (для фильтрации)
+const addedMaterialIds = computed(() => {
+  return items.value
+    .map(item => item.material)
+    .filter((id): id is number => id !== undefined && id !== null && id > 0)
+})
 
 // Photo management
 const instructionPhotos = ref<File[]>([])
@@ -795,6 +848,35 @@ async function onSaved(data: PurchaseRequest) {
   saving.value = true
   Object.keys(errors).forEach(key => delete errors[key])
   
+  // Валидация позиций перед отправкой
+  for (let idx = 0; idx < items.value.length; idx++) {
+    const item = items.value[idx]
+    
+    // Проверка материала
+    if (!item.material && !item.material_name) {
+      errors[`items[${idx}].material`] = 'Материал обязателен'
+    }
+    
+    // Если новый материал - проверяем единицу измерения
+    if (item.isNewMaterial && item.material_name) {
+      if (!item.unit || item.unit === 0) {
+        errors[`items[${idx}].unit`] = 'Единица измерения обязательна для нового материала'
+      }
+    }
+    
+    // Проверка количества
+    if (!item.quantity || parseFloat(item.quantity) <= 0) {
+      errors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
+    }
+  }
+  
+  // Если есть ошибки валидации - не отправляем
+  if (Object.keys(errors).length > 0) {
+    saving.value = false
+    ui.toast({ type: 'error', text: 'Пожалуйста, исправьте ошибки в позициях' })
+    return
+  }
+  
   try {
     // Prepare purchase data
     const purchaseData: PurchaseRequest = {
@@ -803,17 +885,28 @@ async function onSaved(data: PurchaseRequest) {
       // responsible убран - устанавливается автоматически из объекта на бэкенде
       supplier: data.supplier,
       invoice_number: data.invoice_number,
-      purchase_no: data.purchase_no,
+      // Если purchase_no не задан или пустой - не передаём его, чтобы бэкенд сгенерировал автоматически
+      ...(data.purchase_no?.trim() ? { purchase_no: data.purchase_no.trim() } : {}),
       status: data.status,
       currency: data.currency || 'UZS',
       comment: data.comment,
-      items: items.value.map((item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number }) => ({
-        material: item.material,
-        unit: item.unit,
-        quantity: item.quantity,
-        amount: item.amount,
-        price: item.price || '0'
-      }))
+      items: items.value.map((item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }) => {
+        const itemData: any = {
+          unit: item.unit,
+          quantity: item.quantity,
+          amount: item.amount,
+          price: item.price || '0'
+        }
+        
+        // Если материал новый - передаём material_name, иначе material
+        if (item.isNewMaterial && item.material_name) {
+          itemData.material_name = item.material_name
+        } else if (item.material) {
+          itemData.material = item.material
+        }
+        
+        return itemData
+      })
     }
     
     let purchaseId: number
@@ -942,12 +1035,14 @@ async function onSaved(data: PurchaseRequest) {
 function addItem() {
   const newItem = {
     _k: Math.random().toString(36).substr(2, 9),
-    material: 0,
+    material: undefined,
+    material_name: undefined,
     unit: 0,
     quantity: '0',
     amount: '0',
     price: '0',
-    total: 0
+    total: 0,
+    isNewMaterial: false
   }
   items.value.push(newItem)
   recalc(newItem) // Calculate initial values
@@ -963,15 +1058,93 @@ function removeItem(index: number) {
   clearItemsDuplicateErrors()
 }
 
-function onMaterialChange(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number }, material: Material | null) {
-  if (material?.default_unit) {
-    item.unit = material.default_unit
+function onMaterialChange(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, material: Material | null) {
+  if (material) {
+    // Материал выбран из списка
+    item.material = material.id
+    item.material_name = undefined
+    item.isNewMaterial = false
+    if (material.default_unit) {
+      item.unit = material.default_unit
+    }
+  } else {
+    // Материал сброшен
+    item.material = undefined
+    item.material_name = undefined
+    item.isNewMaterial = false
+    item.unit = 0
   }
   // Recalculate total when material changes
   recalc(item)
   
   // Очищаем ошибки дублирования материалов при изменении материала
   clearItemsDuplicateErrors()
+}
+
+function onCustomMaterial(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, materialName: string) {
+  // При редактировании не разрешаем создавать новые материалы
+  if (isEdit.value) {
+    return
+  }
+  
+  // Пользователь ввёл новый материал
+  item.material = undefined
+  item.material_name = materialName.trim()
+  item.isNewMaterial = true
+  item.unit = 0 // Сбрасываем единицу, пользователь должен выбрать
+  
+  // Очищаем ошибки
+  clearItemsDuplicateErrors()
+}
+
+function onMaterialInput(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, query: string) {
+  // При редактировании не обрабатываем ввод текста для создания новых материалов
+  if (isEdit.value) {
+    return
+  }
+  
+  // Пользователь вводит текст - проверяем, есть ли точное совпадение
+  const trimmedQuery = query.trim()
+  
+  if (trimmedQuery.length >= 2) {
+    // Ищем точное совпадение (case-insensitive)
+    const exactMatch = materials.value.find((m: Material) => 
+      m.name.toLowerCase() === trimmedQuery.toLowerCase()
+    )
+    
+    if (exactMatch) {
+      // Найдено точное совпадение - автоматически выбираем материал
+      item.material = exactMatch.id
+      item.material_name = undefined
+      item.isNewMaterial = false
+      if (exactMatch.default_unit) {
+        item.unit = exactMatch.default_unit
+      }
+      recalc(item)
+    } else {
+      // Точного совпадения нет - это потенциально новый материал
+      // Но только если пользователь не выбрал материал из списка
+      if (item.material && !item.isNewMaterial) {
+        // Был выбран материал из списка, но теперь введён другой текст - сбрасываем
+        item.material = undefined
+        item.material_name = trimmedQuery
+        item.isNewMaterial = true
+        item.unit = 0 // Сбрасываем единицу для нового материала
+      } else if (!item.material || item.isNewMaterial) {
+        // Материал не был выбран ИЛИ уже был новый материал - обновляем название
+        item.material_name = trimmedQuery
+        item.isNewMaterial = true
+        // Единицу не сбрасываем, если она уже выбрана пользователем
+        // Но если единица не выбрана, оставляем 0
+      }
+    }
+  } else if (trimmedQuery.length === 0) {
+    // Поле очищено - сбрасываем всё
+    item.material = undefined
+    item.material_name = undefined
+    item.isNewMaterial = false
+    item.unit = 0
+  }
 }
 
 function getUnitName(unitId: number) {
@@ -1045,17 +1218,46 @@ async function loadData() {
         purchase = await purchasesStore.fetchOne(Number(route.params.id))
       }
       
-      if (purchase) {
+        if (purchase) {
+        // Загружаем материалы из позиций закупки в store (включая неактивные)
+        // Это нужно для того, чтобы MaterialSearchSelect мог их отобразить
+        if (purchase.items && purchase.items.length > 0) {
+          const materialIds = purchase.items
+            .map(item => item.material)
+            .filter((id): id is number => id !== null && id !== undefined)
+          
+          // Загружаем каждый материал по отдельности, чтобы получить даже неактивные
+          for (const materialId of materialIds) {
+            try {
+              // Проверяем, есть ли материал уже в store
+              const existingMaterial = materialsStore.items.find(m => m.id === materialId)
+              if (!existingMaterial) {
+                // Загружаем материал по ID (даже если он неактивен)
+                const material = await materialsStore.fetchOne(materialId)
+                // Убеждаемся, что материал добавлен в список items
+                if (material && !materialsStore.items.find(m => m.id === materialId)) {
+                  materialsStore.items.push(material)
+                }
+              }
+            } catch (error) {
+              console.warn(`Failed to load material ${materialId}:`, error)
+              // Продолжаем загрузку других материалов
+            }
+          }
+        }
+        
         // Load items
         items.value = purchase.items?.map(item => {
           const newItem = {
           _k: Math.random().toString(36).substr(2, 9),
           material: item.material,
+          material_name: undefined,
           unit: item.unit,
           quantity: item.quantity,
           amount: item.amount || '0',
           price: item.price || '0',
-          total: 0
+          total: 0,
+          isNewMaterial: false // При редактировании все материалы уже существуют
           }
           // Calculate total for loaded items
           recalc(newItem)

@@ -10,6 +10,9 @@ export function formatDate(dateString: string | null | undefined): string {
   
   try {
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return '—'
+    }
     return date.toLocaleDateString('ru-RU', {
       year: 'numeric',
       month: '2-digit',
@@ -28,6 +31,9 @@ export function formatDateTime(dateString: string | null | undefined): string {
   
   try {
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return '—'
+    }
     return date.toLocaleString('ru-RU', {
       year: 'numeric',
       month: '2-digit',

@@ -115,7 +115,8 @@ export interface PurchaseItemUpdateRequest {
 }
 
 export interface PurchaseItemRequest {
-  material: number;
+  material?: number; // ID материала (если выбран из списка)
+  material_name?: string; // Название материала (если введён вручную)
   unit: number;
   quantity: string;
   price?: string;

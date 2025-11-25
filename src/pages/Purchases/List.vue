@@ -18,7 +18,7 @@
 
       <!-- Custom column for responsible with name lookup -->
       <template #column-responsible="{ item, value }">
-        <span>{{ responsibleName(value) || '—' }}</span>
+        <span>{{ item.responsible_name || responsibleName(item.responsible) || '—' }}</span>
       </template>
     </GenericList>
 
@@ -116,7 +116,7 @@ const listConfig = computed<GenericListConfig<Purchase>>(() => ({
     { key: 'purchase_no', label: '№ закупки', sortable: true },
     { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name
     { key: 'supplier__name', label: 'Поставщик', sortable: true, displayKey: 'supplier_name' }, // Используем supplier__name для сортировки, но отображаем supplier_name
-    { key: 'responsible__id', label: 'Ответственный', sortable: true, displayKey: 'responsible' }, // Используем responsible__id для сортировки, но отображаем responsible
+    { key: 'responsible__id', label: 'Ответственный', sortable: true, displayKey: 'responsible_name' }, // Используем responsible__id для сортировки, но отображаем responsible_name
     { key: 'items', label: 'Позиций', sortable: false, formatter: (value) => value?.length ?? 0 }
   ],
   filters: [

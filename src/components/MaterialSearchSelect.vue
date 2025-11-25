@@ -33,6 +33,7 @@
         class="input input-bordered w-full"
         :class="[
           { 'input-error': hasError || error },
+          { 'input-success': isSuccess },
           { 'input-xs': size === 'xs' },
           { 'input-sm': size === 'sm' },
           { 'input-md': size === 'md' },
@@ -65,8 +66,22 @@
         :style="dropdownStyle"
       >
           <!-- No results -->
-          <div v-if="searchResults.length === 0 && searchQuery.length >= 2" class="p-3 text-sm text-base-content/70">
-            Материалы не найдены
+          <div v-if="searchResults.length === 0 && searchQuery.length >= 2" class="p-3">
+            <div class="text-sm text-base-content/70 mb-2">Материалы не найдены</div>
+            <!-- Предложение создать новый материал -->
+            <button
+              v-if="allowCustom && searchQuery.length >= 2"
+              type="button"
+              class="w-full px-3 py-2 text-left hover:bg-base-200 focus:bg-base-200 focus:outline-none border-t border-base-300 mt-2 pt-2"
+              @click="selectCustomMaterial"
+            >
+              <div class="font-medium text-primary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Создать
+              </div>
+            </button>
           </div>
           
           <!-- Results -->
@@ -112,11 +127,16 @@ const props = defineProps<{
   objectId?: number | null // ID объекта для фильтрации по остаткам
   date?: string | null // Дата для проверки остатков
   filterByBalance?: boolean // Фильтровать только материалы с остатками > 0
+  excludeMaterials?: number[] // Исключить материалы из списка (уже добавленные в форму)
+  allowCustom?: boolean // Разрешить ввод произвольного текста (для создания новых материалов)
+  isSuccess?: boolean // Показать успешное состояние (зеленая обводка)
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: number | null]
   'change': [material: Material | null]
+  'input': [query: string] // Событие при вводе текста
+  'custom-material': [materialName: string] // Событие при вводе нового материала
 }>()
 
 const materialsStore = useMaterialsStore
@@ -133,6 +153,7 @@ const searchTimeout = ref<NodeJS.Timeout>()
 const isUserTyping = ref(false) // Флаг для отслеживания активного ввода пользователя
 
 const hasError = computed(() => !!props.error)
+const isSuccess = computed(() => !!props.isSuccess)
 
 // Calculate dropdown position - simplified with teleport
 const dropdownStyle = computed(() => {
@@ -200,6 +221,11 @@ async function searchMaterials(query: string) {
   loading.value = true
   try {
     let results = await materialsStore.searchMaterials(query)
+    
+    // Фильтруем исключённые материалы (уже добавленные в форму)
+    if (props.excludeMaterials && props.excludeMaterials.length > 0) {
+      results = results.filter((material: Material) => !props.excludeMaterials!.includes(material.id))
+    }
     
     // Фильтруем по остаткам, если указан objectId и включена фильтрация
     if (props.filterByBalance && props.objectId && props.date) {
@@ -296,7 +322,21 @@ function clearSelection() {
 function handleSearch() {
   // Устанавливаем флаг активного ввода пользователя
   isUserTyping.value = true
+  // Emit input event для отслеживания ввода текста
+  emit('input', searchQuery.value)
   // Search is handled by watch
+}
+
+function selectCustomMaterial() {
+  // Пользователь выбрал создать новый материал
+  const materialName = searchQuery.value.trim()
+  if (materialName.length >= 2) {
+    showDropdown.value = false
+    selectedMaterial.value = null
+    emit('update:modelValue', null)
+    emit('change', null)
+    emit('custom-material', materialName)
+  }
 }
 
 function handleFocus() {

@@ -12,9 +12,9 @@ describe('calculations utilities', () => {
     })
 
     it('returns 0 for NaN inputs', () => {
-      // @ts-expect-error intentionally wrong input
+      // @ts-ignore intentionally wrong input for testing
       expect(calculateItemAmount('x', 3)).toBe(0)
-      // @ts-expect-error intentionally wrong input
+      // @ts-ignore intentionally wrong input for testing
       expect(calculateItemAmount(2, 'y')).toBe(0)
     })
   })
