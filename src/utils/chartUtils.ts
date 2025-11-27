@@ -1,4 +1,4 @@
-import { ChartConfiguration, ChartOptions, TooltipItem } from 'chart.js'
+import type { ChartConfiguration, ChartOptions } from 'chart.js'
 
 // DaisyUI color palette
 export const DAISY_COLORS = [
@@ -137,9 +137,9 @@ export function createLineChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context: TooltipItem<'line'>) => {
+            label: (context) => {
               const label = context.dataset.label || ''
-              const value = context.parsed.y
+              const value = context.parsed.y ?? 0
               return `${label}: ${formatCurrencyTooltip(value)}`
             }
           }
@@ -199,9 +199,9 @@ export function createBarChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context: TooltipItem<'bar'>) => {
+            label: (context) => {
               const label = context.dataset.label || ''
-              const value = context.parsed.y
+              const value = context.parsed.y ?? 0
               return `${label}: ${formatCurrencyTooltip(value)}`
             }
           }
@@ -262,9 +262,9 @@ export function createHorizontalBarChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context: TooltipItem<'bar'>) => {
+            label: (context) => {
               const label = context.dataset.label || ''
-              const value = context.parsed.x
+              const value = context.parsed.x ?? 0
               return `${label}: ${formatCurrencyTooltip(value)}`
             }
           }
@@ -332,10 +332,10 @@ export function createPieChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context: TooltipItem<'pie'>) => {
+            label: (context) => {
               const label = context.label || ''
-              const value = context.parsed
-              const total = context.dataset.data.reduce((a: number, b: any) => a + (typeof b === 'number' ? b : 0), 0)
+              const value = context.parsed as number
+              const total = (context.dataset.data as number[]).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0)
               const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
               return `${label}: ${formatCurrencyTooltip(value)} (${percentage}%)`
             }
@@ -377,10 +377,10 @@ export function createDoughnutChartConfig(
         },
         tooltip: {
           callbacks: {
-            label: (context: TooltipItem<'doughnut'>) => {
+            label: (context) => {
               const label = context.label || ''
-              const value = context.parsed
-              const total = context.dataset.data.reduce((a: number, b: any) => a + (typeof b === 'number' ? b : 0), 0)
+              const value = context.parsed as number
+              const total = (context.dataset.data as number[]).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0)
               const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
               return `${label}: ${formatCurrencyTooltip(value)} (${percentage}%)`
             }
