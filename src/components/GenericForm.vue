@@ -5,7 +5,7 @@
       <div
         v-for="(section, index) in sections"
         :key="index"
-        class="card bg-base-100 border"
+        class="bg-base-100"
       >
         <div class="">
           <h2 class="card-title text-lg mb-4">{{ section.title }}</h2>
