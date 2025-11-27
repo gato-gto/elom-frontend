@@ -880,7 +880,8 @@ function validatePurchaseItems(): Record<string, string> {
     }
     
     // Проверка количества
-    if (!item.quantity || parseFloat(item.quantity) <= 0) {
+    const quantityValue = typeof item.quantity === 'string' ? item.quantity : String(item.quantity)
+    if (!item.quantity || parseFloat(quantityValue) <= 0) {
       validationErrors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
     }
   })
@@ -1098,7 +1099,7 @@ function removeItem(index: number) {
   removeItemBase(index)
 }
 
-function onMaterialChange(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, material: Material | null) {
+function onMaterialChange(item: PurchaseItem, material: Material | null) {
   if (material) {
     // Материал выбран из списка
     item.material = material.id
@@ -1121,7 +1122,7 @@ function onMaterialChange(item: PurchaseItemRequest & { _k: string, quantity: st
   clearItemsDuplicateErrors()
 }
 
-function onCustomMaterial(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, materialName: string) {
+function onCustomMaterial(item: PurchaseItem, materialName: string) {
   // При редактировании не разрешаем создавать новые материалы
   if (isEdit.value) {
     return
@@ -1137,7 +1138,7 @@ function onCustomMaterial(item: PurchaseItemRequest & { _k: string, quantity: st
   clearItemsDuplicateErrors()
 }
 
-function onMaterialInput(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, query: string) {
+function onMaterialInput(item: PurchaseItem, query: string) {
   // При редактировании не обрабатываем ввод текста для создания новых материалов
   if (isEdit.value) {
     return
@@ -1193,7 +1194,7 @@ function getUnitName(unitId: number) {
 }
 
 // Calculate total for an item
-function recalc(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number }) {
+function recalc(item: PurchaseItem) {
   const total = calculateItemAmount(item.quantity, item.price || '0')
   
   item.total = total
