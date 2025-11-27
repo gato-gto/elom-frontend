@@ -191,18 +191,31 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       error.value = null
 
       try {
-        await api.delete(config.endpoint.one(id))
+        const response = await api.delete(config.endpoint.one(id))
         
-        // Remove from list
-        items.value = items.value.filter(item => item.id !== id)
-        pagination.value.count--
+        // Проверяем, был ли объект деактивирован вместо удаления
+        // (ответ 200 с action: 'deactivated')
+        const wasDeactivated = response.status === 200 && response.data?.action === 'deactivated'
+        
+        if (wasDeactivated) {
+          // Обновляем элемент в списке (помечаем как неактивный)
+          const index = items.value.findIndex(item => item.id === id)
+          if (index !== -1) {
+            items.value[index] = { ...items.value[index], is_active: false }
+          }
+        } else {
+          // Удаляем из списка
+          items.value = items.value.filter(item => item.id !== id)
+          pagination.value.count--
+        }
 
         // Clear current if it's the same
         if (current.value?.id === id) {
           current.value = null
         }
 
-        return true
+        // Возвращаем данные ответа (для обработки деактивации)
+        return response.data || { action: 'deleted' }
       } catch (err: any) {
         await handleApiErrorAsync(err, { operation: 'delete' })
         throw err

@@ -63,14 +63,13 @@ const modalTitle = computed(() => {
   return current.value ? 'Редактировать сотрудника' : 'Добавить сотрудника'
 })
 
-// Filter options
+// Filter options - только 4 роли
 const roleFilterOptions = computed(() => [
   { value: '', label: 'Все роли' },
   { value: 'admin', label: 'Администратор' },
   { value: 'director', label: 'Директор' },
   { value: 'coordinator', label: 'Координатор' },
-  { value: 'site_manager', label: 'Бригадир' },
-  { value: 'buyer', label: 'Закупщик' }
+  { value: 'brigadier', label: 'Бригадир' }
 ])
 
 const statusFilterOptions = computed(() => [
@@ -147,25 +146,23 @@ const listConfig = computed<GenericListConfig<Employee>>(() => ({
 }))
 
 function getRoleDisplayName(role: string): string {
-  switch (role) {
-    case 'admin': return 'Администратор'
-    case 'director': return 'Директор'
-    case 'coordinator': return 'Координатор'
-    case 'site_manager': return 'Бригадир'
-    case 'buyer': return 'Закупщик'
-    default: return 'Пользователь'
+  const roles: Record<string, string> = {
+    'admin': 'Администратор',
+    'director': 'Директор',
+    'coordinator': 'Координатор',
+    'brigadier': 'Бригадир'
   }
+  return roles[role] || 'Роль не задана'
 }
 
 function getRoleBadgeClass(role: string): string {
-  switch (role) {
-    case 'admin': return 'badge-error'
-    case 'director': return 'badge-warning'
-    case 'coordinator': return 'badge-info'
-    case 'site_manager': return 'badge-success'
-    case 'buyer': return 'badge-primary'
-    default: return 'badge-neutral'
+  const badges: Record<string, string> = {
+    'admin': 'badge-error',
+    'director': 'badge-warning',
+    'coordinator': 'badge-info',
+    'brigadier': 'badge-success'
   }
+  return badges[role] || 'badge-ghost'
 }
 
 // Methods

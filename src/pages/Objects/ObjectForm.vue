@@ -17,6 +17,7 @@
 import { computed, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore, brigadierOptions } from '@/stores/employees'
+import { useAuthStore } from '@/stores/auth'
 import type { Object, ObjectRequest } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
@@ -33,7 +34,11 @@ const emit = defineEmits<{
 
 const objectsStore = useObjectsStore
 const employeesStore = useEmployeesStore
+const auth = useAuthStore()
 const { handleFormError } = useErrorHandler()
+
+// Проверка, является ли текущий пользователь бригадиром
+const isBrigadier = computed(() => auth.me?.role === 'brigadier')
 
 // Form configuration
 const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
@@ -63,7 +68,10 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       placeholder: '— выберите ответственного —',
       options: employeeOptions.value,
       order: 2,
-      width: 'half'
+      width: 'half',
+      // Для бригадиров поле заблокировано - они всегда ответственные за свои объекты
+      disabled: isBrigadier.value,
+      help: isBrigadier.value ? 'Вы автоматически назначены ответственным за этот объект' : undefined
     },
     {
       key: 'address',
@@ -164,13 +172,16 @@ const stageOptions = [
 
 // Initial form data
 const initialFormData = computed<ObjectRequest>(() => {
+  const currentUserId = auth.me?.id
+  
   if (props.initial) {
     return {
       name: props.initial.name,
       address: props.initial.address || '',
       is_active: props.initial.is_active,
       location_url: props.initial.location_url,
-      responsible: props.initial.responsible,
+      // Для бригадиров ответственный всегда они сами
+      responsible: isBrigadier.value ? currentUserId : props.initial.responsible,
       current_stage: props.initial.current_stage || 'acceptance',
       key_person_name: props.initial.key_person_name || '',
       key_person_contacts: props.initial.key_person_contacts || '',
@@ -179,12 +190,13 @@ const initialFormData = computed<ObjectRequest>(() => {
     }
   }
   
+  // Для новых объектов: если текущий пользователь - бригадир, автоматически назначаем его ответственным
   return {
     name: '',
     address: '',
     is_active: true,
     location_url: undefined,
-    responsible: undefined,
+    responsible: isBrigadier.value ? currentUserId : undefined,
     current_stage: 'acceptance',
     key_person_name: '',
     key_person_contacts: '',
@@ -195,6 +207,14 @@ const initialFormData = computed<ObjectRequest>(() => {
 
 // Computed options
 const employeeOptions = computed(() => {
+  // Для бригадиров показываем только их самих
+  if (isBrigadier.value && auth.me) {
+    const currentUserName = `${auth.me.first_name || ''} ${auth.me.last_name || ''}`.trim() || auth.me.username
+    return [
+      { value: auth.me.id, label: currentUserName }
+    ]
+  }
+  
   const brigadiers = brigadierOptions.value
   const allEmployees = employeesStore.items
   const options = [...brigadiers]

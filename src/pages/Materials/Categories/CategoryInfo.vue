@@ -54,7 +54,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 class="card-title">Основная информация</h2>
+            <h2 class="text-lg font-semibold">Основная информация</h2>
           </div>
           <div class="card-content">
             <div class="info-item">
@@ -80,7 +80,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <h2 class="card-title">Статистика</h2>
+            <h2 class="text-lg font-semibold">Статистика</h2>
           </div>
           <div class="card-content">
             <div class="stat-item">
@@ -116,7 +116,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 class="card-title">Даты</h2>
+            <h2 class="text-lg font-semibold">Даты</h2>
           </div>
           <div class="card-content">
             <div class="info-item">
@@ -182,10 +182,10 @@
       </div>
 
       <!-- Материалы в категории -->
-      <div v-if="category && category.materials_count > 0" class="card bg-base-100 border">
-        <div class="card-body">
+      <div v-if="category && category.materials_count > 0" class="bg-base-100 rounded-lg">
+        <div class="">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="card-title text-lg">Материалы в категории ({{ category.materials_count }})</h2>
+            <h2 class="text-lg font-semibold">Материалы в категории ({{ category.materials_count }})</h2>
             <button 
               class="btn btn-primary btn-sm"
               @click="$router.push(`/materials?category=${categoryId}`)"
@@ -201,8 +201,8 @@
       </div>
 
       <!-- Пустая категория -->
-      <div v-else-if="category && category.materials_count === 0 && category.children_count === 0" class="card bg-base-100 border">
-        <div class="card-body text-center py-12">
+      <div v-else-if="category && category.materials_count === 0 && category.children_count === 0" class="bg-base-100 rounded-lg">
+        <div class="text-center py-12">
           <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
@@ -433,16 +433,6 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-:root.dark .card-title {
-  color: #e2e8f0;
-}
 
 .card-content {
   padding: 1.5rem;

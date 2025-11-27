@@ -235,9 +235,7 @@ export function useRoutePermissions() {
   const isAdmin = computed(() => hasRole('admin'))
   const isDirector = computed(() => hasRole('director'))
   const isCoordinator = computed(() => hasRole('coordinator'))
-  const isSiteManager = computed(() => hasRole('site_manager'))
   const isBrigadier = computed(() => hasRole('brigadier'))
-  const isBuyer = computed(() => hasRole('buyer'))
 
   return {
     canView,
@@ -251,9 +249,7 @@ export function useRoutePermissions() {
     isAdmin,
     isDirector,
     isCoordinator,
-    isSiteManager,
-    isBrigadier,
-    isBuyer
+    isBrigadier
   }
 }
 

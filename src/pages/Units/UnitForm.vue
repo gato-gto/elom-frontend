@@ -11,9 +11,9 @@
     />
 
     <!-- Информация о конвертации -->
-    <div v-if="currentCode" class="card bg-base-100 border">
-      <div class="card-body">
-        <h2 class="card-title text-lg mb-4">Умная конвертация</h2>
+    <div v-if="currentCode" class="bg-base-100 rounded-lg mt-6">
+      <div class="">
+        <h2 class="text-lg font-semibold mb-4">Умная конвертация</h2>
         <div class="alert" :class="getSmartConversionAlertClass()">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>

@@ -12,11 +12,11 @@
     >
       <!-- Custom instruction photos field -->
       <template #field-instruction_photos="{ field, value, error, disabled }">
-        <div class="card bg-base-100 border">
-          <div class="card-body">
+        <div class="bg-base-100 rounded-lg">
+          <div class="">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
-                <h2 class="card-title text-lg">{{ field.label }}</h2>
+                <h2 class="text-lg font-semibold">{{ field.label }}</h2>
                 <p v-if="field.help" class="text-sm text-base-content/70">{{ field.help }}</p>
               </div>
               <input
@@ -83,11 +83,11 @@
 
       <!-- Custom report photos field -->
       <template #field-report_photos="{ field, value, error, disabled }">
-        <div class="card bg-base-100 border">
-          <div class="card-body">
+        <div class="bg-base-100 rounded-lg">
+          <div class="">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
-                <h2 class="card-title text-lg">{{ field.label }}</h2>
+                <h2 class="text-lg font-semibold">{{ field.label }}</h2>
                 <p v-if="field.help" class="text-sm text-base-content/70">{{ field.help }}</p>
                 <div class="alert alert-info mt-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,10 +160,10 @@
 
       <!-- Custom items field -->
       <template #field-items="{ field, value, error, disabled }">
-        <div class="card bg-base-100 border">
-          <div class="card-body">
+        <div class="bg-base-100 ">
+          <div class="">
             <div class="mb-4">
-              <h2 class="card-title text-lg">{{ field.label }}</h2>
+              <h2 class="text-lg font-semibold">{{ field.label }}</h2>
             </div>
 
             <!-- Desktop table view -->
@@ -283,8 +283,8 @@
 
             <!-- Mobile card view -->
             <div class="md:hidden space-y-4">
-              <div v-for="(it, idx) in items" :key="it._k" class="card bg-base-200 border">
-                <div class="card-body p-4">
+              <div v-for="(it, idx) in items" :key="it._k" class="bg-base-200 rounded-lg">
+                <div class="">
                   <div class="flex justify-between items-start mb-3">
                     <h3 class="font-medium text-sm">Позиция {{ idx + 1 }}</h3>
                     <button type="button" class="btn btn-error btn-xs" @click="removeItem(idx)">
@@ -453,6 +453,8 @@ import GenericForm from '@/components/GenericForm.vue'
 import type { Purchase, PurchaseRequest, PurchaseItemRequest, Employee, Material, PurchasePhoto } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useItemsForm } from '@/composables/useItemsForm'
+import type { BaseItem } from '@/composables/useItemsForm'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { calculateItemAmount, calculatePurchaseTotal, formatCurrency } from '@/utils/calculations'
@@ -493,10 +495,7 @@ const formData = ref({
 })
 
 // Function to get item field error
-function getItemFieldError(itemIndex: number, fieldName: string): string {
-  const errorKey = `items[${itemIndex}].${fieldName}`
-  return errors[errorKey] || ''
-}
+// getItemFieldError теперь из useItemsForm composable
 
 // Function to get general items error (like duplicate materials)
 function getItemsGeneralError(): string {
@@ -510,14 +509,7 @@ function getItemsGeneralError(): string {
 }
 
 // Function to clear duplicate material errors
-function clearItemsDuplicateErrors() {
-  // Удаляем все ошибки дублирования материалов
-  Object.keys(errors).forEach(key => {
-    if (key.startsWith('items[') && errors[key] && errors[key].includes('Нельзя добавлять один материал несколько раз')) {
-      delete errors[key]
-    }
-  })
-}
+// clearItemsDuplicateErrors теперь из useItemsForm composable
 
 // Photo management functions
 function getPhotoPreview(file: File): string {
@@ -613,14 +605,36 @@ async function uploadPurchasePhoto(purchaseId: number, file: File, type: 'instru
   }
 }
 
-// Items management
-const items = ref<Array<PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }>>([])
+// Items management using composable
+interface PurchaseItem extends BaseItem {
+  material_name?: string
+  price?: string
+  amount: string
+  total?: number
+  isNewMaterial?: boolean
+}
 
-// Computed: список ID уже добавленных материалов (для фильтрации)
-const addedMaterialIds = computed(() => {
-  return items.value
-    .map(item => item.material)
-    .filter((id): id is number => id !== undefined && id !== null && id > 0)
+const {
+  items,
+  itemErrors,
+  addItem: addItemBase,
+  removeItem: removeItemBase,
+  getItemFieldError,
+  clearItemsDuplicateErrors,
+  usedMaterialIds: addedMaterialIds
+} = useItemsForm<PurchaseItem>({
+  createNewItem: () => ({
+    _k: Math.random().toString(36).substr(2, 9),
+    material: undefined,
+    material_name: undefined,
+    unit: 0,
+    quantity: '0',
+    amount: '0',
+    price: '0',
+    total: 0,
+    isNewMaterial: false
+  }),
+  recalculate: (item) => recalc(item)
 })
 
 // Photo management
@@ -644,8 +658,8 @@ const objectOptions = computed(() => {
   // Если у пользователя есть список назначенных объектов, показываем только их
   const assignedIds = auth.me?.assigned_object_ids || []
   const list = assignedIds.length > 0
-    ? objects.value.filter((obj: any) => assignedIds.includes(obj.id))
-    : objects.value
+    ? objects.value.filter((obj: any) => assignedIds.includes(obj.id) && obj.is_active)
+    : objects.value.filter((obj: any) => obj.is_active)
 
   return list.map((obj: any) => ({
     value: obj.id,
@@ -843,151 +857,192 @@ const initialData = computed(() => {
   }
 })
 
-// Form submission handler
-async function onSaved(data: PurchaseRequest) {
-  saving.value = true
-  Object.keys(errors).forEach(key => delete errors[key])
+// ========== Вспомогательные функции для onSaved ==========
+
+/**
+ * Валидация позиций закупки
+ * @returns Объект с ошибками валидации (пустой если ошибок нет)
+ */
+function validatePurchaseItems(): Record<string, string> {
+  const validationErrors: Record<string, string> = {}
   
-  // Валидация позиций перед отправкой
-  for (let idx = 0; idx < items.value.length; idx++) {
-    const item = items.value[idx]
-    
+  items.value.forEach((item, idx) => {
     // Проверка материала
     if (!item.material && !item.material_name) {
-      errors[`items[${idx}].material`] = 'Материал обязателен'
+      validationErrors[`items[${idx}].material`] = 'Материал обязателен'
     }
     
     // Если новый материал - проверяем единицу измерения
     if (item.isNewMaterial && item.material_name) {
       if (!item.unit || item.unit === 0) {
-        errors[`items[${idx}].unit`] = 'Единица измерения обязательна для нового материала'
+        validationErrors[`items[${idx}].unit`] = 'Единица измерения обязательна для нового материала'
       }
     }
     
     // Проверка количества
     if (!item.quantity || parseFloat(item.quantity) <= 0) {
-      errors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
+      validationErrors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
+    }
+  })
+  
+  return validationErrors
+}
+
+/**
+ * Подготовка данных закупки для отправки на сервер
+ */
+function preparePurchaseData(data: PurchaseRequest): PurchaseRequest {
+  return {
+    date: data.date,
+    object: data.object,
+    supplier: data.supplier,
+    invoice_number: data.invoice_number,
+    // Если purchase_no не задан или пустой - не передаём его, чтобы бэкенд сгенерировал автоматически
+    ...(data.purchase_no?.trim() ? { purchase_no: data.purchase_no.trim() } : {}),
+    status: data.status,
+    currency: data.currency || 'UZS',
+    comment: data.comment,
+    items: items.value.map((item) => {
+      const itemData: any = {
+        unit: item.unit,
+        quantity: item.quantity,
+        amount: item.amount,
+        price: item.price || '0'
+      }
+      
+      // Если материал новый - передаём material_name, иначе material
+      if (item.isNewMaterial && item.material_name) {
+        itemData.material_name = item.material_name
+      } else if (item.material) {
+        itemData.material = item.material
+      }
+      
+      return itemData
+    })
+  }
+}
+
+/**
+ * Загрузка фотографий для закупки
+ * @returns Количество успешно загруженных и неудачных фото
+ */
+async function uploadPhotos(
+  purchaseId: number, 
+  photos: File[], 
+  type: 'instructions' | 'report'
+): Promise<{ uploaded: number, failed: number }> {
+  let uploadedCount = 0
+  let failedCount = 0
+  
+  if (import.meta.env.DEV) {
+    console.log(`Uploading ${type} photos:`, photos.length, 'photos for purchase', purchaseId)
+  }
+  
+  for (const photo of photos) {
+    try {
+      await uploadPurchasePhoto(purchaseId, photo, type)
+      uploadedCount++
+      if (import.meta.env.DEV) {
+        console.log(`Successfully uploaded ${type} photo:`, photo.name)
+      }
+    } catch (error) {
+      failedCount++
+      if (import.meta.env.DEV) {
+        console.error(`Failed to upload ${type} photo:`, photo.name, error)
+      }
     }
   }
   
-  // Если есть ошибки валидации - не отправляем
-  if (Object.keys(errors).length > 0) {
+  return { uploaded: uploadedCount, failed: failedCount }
+}
+
+/**
+ * Создание или обновление закупки
+ * @returns ID созданной или обновленной закупки
+ */
+async function createOrUpdatePurchase(purchaseData: PurchaseRequest): Promise<number> {
+  let purchaseId: number
+  
+  if (isEdit.value) {
+    // Режим редактирования
+    purchaseId = props.initial?.id || Number(route.params.id)
+    await purchasesStore.update(purchaseId, purchaseData)
+    
+    // Уведомление об изменении закупки
+    notifications.notifyPurchaseEdit(purchaseId, auth.me?.username || 'Неизвестный пользователь')
+  } else {
+    // Режим создания
+    const newPurchase = await purchasesStore.create(purchaseData)
+    
+    if (import.meta.env.DEV) {
+      console.log('Created purchase response:', newPurchase)
+    }
+    
+    purchaseId = newPurchase?.id
+    
+    // Проверяем, что ответ содержит id
+    if (!purchaseId || Number.isNaN(purchaseId)) {
+      if (import.meta.env.DEV) {
+        console.error('Purchase ID not found in response:', newPurchase)
+      }
+      throw new Error('Failed to get purchase ID from API response')
+    }
+    
+    if (import.meta.env.DEV) {
+      console.log('Created purchase with ID:', purchaseId)
+    }
+  }
+  
+  return purchaseId
+}
+
+// ========== Основной обработчик отправки формы ==========
+
+/**
+ * Обработчик сохранения закупки
+ */
+async function onSaved(data: PurchaseRequest) {
+  saving.value = true
+  Object.keys(errors).forEach(key => delete errors[key])
+  
+  // 1. Валидация позиций
+  const validationErrors = validatePurchaseItems()
+  if (Object.keys(validationErrors).length > 0) {
+    Object.assign(errors, validationErrors)
     saving.value = false
     ui.toast({ type: 'error', text: 'Пожалуйста, исправьте ошибки в позициях' })
     return
   }
   
   try {
-    // Prepare purchase data
-    const purchaseData: PurchaseRequest = {
-      date: data.date,
-      object: data.object,
-      // responsible убран - устанавливается автоматически из объекта на бэкенде
-      supplier: data.supplier,
-      invoice_number: data.invoice_number,
-      // Если purchase_no не задан или пустой - не передаём его, чтобы бэкенд сгенерировал автоматически
-      ...(data.purchase_no?.trim() ? { purchase_no: data.purchase_no.trim() } : {}),
-      status: data.status,
-      currency: data.currency || 'UZS',
-      comment: data.comment,
-      items: items.value.map((item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }) => {
-        const itemData: any = {
-          unit: item.unit,
-          quantity: item.quantity,
-          amount: item.amount,
-          price: item.price || '0'
-        }
-        
-        // Если материал новый - передаём material_name, иначе material
-        if (item.isNewMaterial && item.material_name) {
-          itemData.material_name = item.material_name
-        } else if (item.material) {
-          itemData.material = item.material
-        }
-        
-        return itemData
-      })
-    }
+    // 2. Подготовка данных
+    const purchaseData = preparePurchaseData(data)
     
-    let purchaseId: number
+    // 3. Создание или обновление закупки
+    const purchaseId = await createOrUpdatePurchase(purchaseData)
     
-    if (isEdit.value) {
-      if (props.initial) {
-        purchaseId = props.initial.id
-      } else {
-        purchaseId = Number(route.params.id)
-      }
-      await purchasesStore.update(purchaseId, purchaseData)
-      
-      // Уведомление об изменении закупки
-      notifications.notifyPurchaseEdit(purchaseId, auth.me?.username || 'Неизвестный пользователь')
-    } else {
-      const newPurchase = await purchasesStore.create(purchaseData)
-      console.log('Created purchase response:', newPurchase)
-      
-      // Проверяем, что ответ содержит id
-      purchaseId = newPurchase?.id
-      
-      // Если id нет в ответе, но есть объект, пытаемся получить его из другого источника
-      if (!purchaseId || Number.isNaN(purchaseId)) {
-        // Возможно, API вернул данные в другом формате
-        console.warn('Purchase ID not found in response, checking alternative sources...')
-        console.warn('Response structure:', Object.keys(newPurchase || {}))
-        
-        // Если это объект запроса (данные, которые мы отправили), значит API не вернул id
-        if (newPurchase && !newPurchase.id && newPurchase.date) {
-          console.error('API returned request data instead of created purchase:', newPurchase)
-          ui.toast({ type: 'error', text: 'Ошибка: сервер не вернул ID созданной закупки. Попробуйте обновить страницу.' })
-          throw new Error('API did not return purchase ID')
-        }
-        
-        console.error('Failed to get purchase ID after creation:', newPurchase)
-        ui.toast({ type: 'error', text: 'Ошибка: не удалось получить ID созданной закупки' })
-        throw new Error('Failed to get purchase ID')
-      }
-      
-      console.log('Created purchase with ID:', purchaseId)
-    }
-    
-    // Загружаем фотоинструкции если есть (всегда)
+    // 4. Загрузка фотоинструкций
     if (instructionPhotos.value.length > 0) {
-      console.log('Uploading instruction photos:', instructionPhotos.value.length, 'photos for purchase', purchaseId)
-      let uploadedCount = 0
-      let failedCount = 0
+      const { uploaded, failed } = await uploadPhotos(purchaseId, instructionPhotos.value, 'instructions')
       
-      for (const photo of instructionPhotos.value) {
-        try {
-          await uploadPurchasePhoto(purchaseId, photo, 'instructions')
-          uploadedCount++
-          console.log('Successfully uploaded instruction photo:', photo.name)
-        } catch (error) {
-          failedCount++
-          console.error('Failed to upload instruction photo:', photo.name, error)
-          // Продолжаем загрузку остальных фото даже если одно не загрузилось
-        }
-      }
-      
-      if (uploadedCount > 0) {
+      if (uploaded > 0) {
         ui.toast({ 
           type: 'success', 
-          text: `Загружено фотоинструкций: ${uploadedCount}${failedCount > 0 ? ` (не загружено: ${failedCount})` : ''}` 
+          text: `Загружено фотоинструкций: ${uploaded}${failed > 0 ? ` (не загружено: ${failed})` : ''}` 
         })
       }
-      if (failedCount > 0 && uploadedCount === 0) {
-        ui.toast({ type: 'error', text: `Не удалось загрузить фотоинструкции (${failedCount})` })
+      if (failed > 0 && uploaded === 0) {
+        ui.toast({ type: 'error', text: `Не удалось загрузить фотоинструкции (${failed})` })
       }
     }
     
-    // Загружаем фотоотчеты если есть (только при редактировании и статусе "completed")
-    if (isEdit.value && data.status === 'completed' && reportPhotos.value.length > 0 && purchaseId && !Number.isNaN(purchaseId)) {
-      for (const photo of reportPhotos.value) {
-        await uploadPurchasePhoto(purchaseId, photo, 'report')
-      }
+    // 5. Загрузка фотоотчетов (только при редактировании и статусе "completed")
+    if (isEdit.value && data.status === 'completed' && reportPhotos.value.length > 0) {
+      await uploadPhotos(purchaseId, reportPhotos.value, 'report')
     }
     
-    // Валидация: если статус "completed", должны быть фотоотчеты (только при редактировании)
+    // 6. Валидация фотоотчетов для завершенных закупок
     if (isEdit.value && data.status === 'completed' && reportPhotos.value.length === 0) {
-      // Проверяем, есть ли уже загруженные фотоотчеты
       try {
         const validationResponse = await api.get(`/purchases/${purchaseId}/validate/`)
         if (validationResponse.data.report_photos_count === 0) {
@@ -998,11 +1053,14 @@ async function onSaved(data: PurchaseRequest) {
           return
         }
       } catch (error) {
-        console.error('Error validating purchase:', error)
+        if (import.meta.env.DEV) {
+          console.error('Error validating purchase:', error)
+        }
       }
     }
     
-    ui.toast({ type: 'success', text: 'Закупка сохранена' })
+    // 7. Успешное завершение
+    ui.toast({ type: 'success', text: isEdit.value ? 'Закупка обновлена' : 'Закупка создана' })
     emit('saved')
   } catch (error: any) {
     const errorResult = await handleFormError(error, 'закупка')
@@ -1031,31 +1089,13 @@ async function onSaved(data: PurchaseRequest) {
   }
 }
 
-// Items management
+// Items management - обертки над composable
 function addItem() {
-  const newItem = {
-    _k: Math.random().toString(36).substr(2, 9),
-    material: undefined,
-    material_name: undefined,
-    unit: 0,
-    quantity: '0',
-    amount: '0',
-    price: '0',
-    total: 0,
-    isNewMaterial: false
-  }
-  items.value.push(newItem)
-  recalc(newItem) // Calculate initial values
-  
-  // Очищаем ошибки дублирования материалов при добавлении новой позиции
-  clearItemsDuplicateErrors()
+  addItemBase()
 }
 
 function removeItem(index: number) {
-  items.value.splice(index, 1)
-  
-  // Очищаем ошибки дублирования материалов при удалении позиции
-  clearItemsDuplicateErrors()
+  removeItemBase(index)
 }
 
 function onMaterialChange(item: PurchaseItemRequest & { _k: string, quantity: string, amount: string, price?: string, total?: number, isNewMaterial?: boolean }, material: Material | null) {
@@ -1293,10 +1333,6 @@ onMounted(() => {
 <style scoped>
 /* Дополнительные стили для мобильной адаптации */
 @media (max-width: 640px) {
-  .card-body {
-    padding: 1rem;
-  }
-  
   .table {
     font-size: 0.875rem;
   }

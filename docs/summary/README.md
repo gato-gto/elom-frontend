@@ -150,9 +150,11 @@ ELOM (Enterprise Logistics and Operations Management) - это комплекс�
 
 ### 🔐 Безопасность и роли
 - **Аутентификация**: JWT токены с автоматическим обновлением
-- **Роли пользователей**: admin, director, coordinator, site_manager, brigadier, buyer
+- **Роли пользователей**: admin, director, coordinator, brigadier (4 роли)
 - **Middleware**: Защита маршрутов по ролям
 - **Валидация**: Клиентская и серверная валидация данных
+
+> **Примечание:** Роли `buyer` и `site_manager` удалены в ноябре 2025 - их функции выполняет `brigadier`
 
 ### 🎨 Современный UI/UX
 - **Адаптивный дизайн**: Оптимизация для мобильных и десктопных устройств

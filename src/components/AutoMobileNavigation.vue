@@ -199,11 +199,9 @@ const roleDisplayName = computed(() => {
     admin: 'Администратор',
     director: 'Директор',
     coordinator: 'Координатор',
-    brigadier: 'Бригадир',
-    buyer: 'Покупатель',
-    site_manager: 'Управляющий'
+    brigadier: 'Бригадир'
   }
-  return roleNames[auth.role || ''] || 'Пользователь'
+  return roleNames[auth.role || ''] || 'Роль не задана'
 })
 
 const isDark = computed(() => theme.isDark)

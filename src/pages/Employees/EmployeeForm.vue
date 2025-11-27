@@ -168,20 +168,18 @@ const initialFormData = computed<EmployeeRequest>(() => {
     email: '',
     username: '',
     phone: '',
-    role: 'buyer',
+    role: 'brigadier',
     password: undefined,
     is_active: true
   }
 })
 
-// Role options
+// Role options - только 4 роли
 const roleOptions = [
   { value: 'admin', label: 'Администратор' },
   { value: 'director', label: 'Директор' },
   { value: 'coordinator', label: 'Координатор' },
-  { value: 'site_manager', label: 'Менеджер объекта' },
-  { value: 'brigadier', label: 'Бригадир' },
-  { value: 'buyer', label: 'Закупщик' }
+  { value: 'brigadier', label: 'Бригадир' }
 ]
 
 // Methods

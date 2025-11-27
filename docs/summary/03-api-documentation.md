@@ -102,7 +102,7 @@ Authorization: Bearer <access_token>
 - `page`: Номер страницы (по умолчанию: 1)
 - `page_size`: Размер страницы (по умолчанию: 20)
 - `search`: Поиск по имени, email, username
-- `role`: Фильтр по роли (admin, director, coordinator, brigadier, buyer, site_manager)
+- `role`: Фильтр по роли (admin, director, coordinator, brigadier)
 - `is_active`: Фильтр по активности (true/false)
 - `ordering`: Сортировка (username, -created_at, etc.)
 
@@ -140,7 +140,7 @@ Content-Type: application/json
     "first_name": "New",
     "last_name": "User",
     "email": "newuser@example.com",
-    "role": "buyer",
+    "role": "brigadier",
     "assigned_object_ids": [1, 2],
     "password": "securepassword"
 }

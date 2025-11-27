@@ -56,9 +56,7 @@ export function useMobileCardHelpers() {
       'admin': 'badge-primary',
       'director': 'badge-secondary',
       'coordinator': 'badge-accent',
-      'brigadier': 'badge-warning',
-      'buyer': 'badge-info',
-      'site_manager': 'badge-neutral'
+      'brigadier': 'badge-warning'
     }
     
     return statusClasses[status] || 'badge-neutral'
@@ -76,8 +74,7 @@ export function useMobileCardHelpers() {
       'director': 'Директор',
       'coordinator': 'Координатор',
       'brigadier': 'Бригадир',
-      'buyer': 'Покупатель',
-      'site_manager': 'Менеджер объекта'
+      '': 'Роль не задана'
     }
     
     return statusLabels[status] || status

@@ -80,7 +80,8 @@ const current = ref<Object | null>(null)
 // Computed
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'director'
+  // Бригадиры могут создавать и редактировать объекты
+  return role === 'admin' || role === 'director' || role === 'brigadier'
 })
 
 const modalTitle = computed(() => {
@@ -167,8 +168,8 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
-      disabled: () => !canEdit.value,
-      confirm: (item: Object) => `Удалить объект "${item.name}"?`
+      disabled: (item: Object) => !canEdit.value || !item.is_active,
+      confirm: (item: Object) => `Удалить объект "${item.name}"? Если у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
     }
   ],
   mobileCardComponent: ObjectCard,
@@ -229,11 +230,24 @@ async function handleAction(action: string, item: Object) {
 }
 
 async function handleDelete(object: Object) {
-  if (!confirm(`Удалить объект "${object.name}"?`)) {return}
+  const confirmMessage = `Удалить объект "${object.name}"?\n\nЕсли у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
+  if (!confirm(confirmMessage)) {return}
   
   try {
-    await objectsStore.delete(object.id)
-    ui.toast({ type: 'success', text: `Объект "${object.name}" удален` })
+    const response = await objectsStore.delete(object.id)
+    
+    // Проверяем, был ли объект деактивирован вместо удаления
+    if (response && response.action === 'deactivated') {
+      ui.toast({ 
+        type: 'info', 
+        text: `Объект "${object.name}" деактивирован (имеет связанные записи)` 
+      })
+    } else {
+      ui.toast({ type: 'success', text: `Объект "${object.name}" удален` })
+    }
+    
+    // Обновляем список
+    await objectsStore.fetchList()
   } catch (error) {
     await handleDeleteError(error, 'object', object.id)
   }

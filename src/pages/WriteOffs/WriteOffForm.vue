@@ -40,7 +40,7 @@
             class="select select-bordered w-full"
             :class="{ 'select-error': errors.object }"
           >
-            <option value="0" disabled>— выберите объект —</option>
+            <option v-if="!hasSingleObject" value="0" disabled>— выберите объект —</option>
             <option
               v-for="object in objectOptions"
               :key="object.value"
@@ -67,6 +67,7 @@
             required
             class="select select-bordered w-full"
             :class="{ 'select-error': errors.responsible }"
+            :disabled="isBrigadier"
           >
             <option value="0" disabled>— выберите ответственного —</option>
             <option
@@ -134,6 +135,7 @@
                         :object-id="formData.object || null"
                         :date="formData.date || null"
                         :filter-by-balance="true"
+                        :exclude-materials="addedMaterialIds.filter(id => id !== item.material)"
                         :class="{ 'border-error': getItemFieldError(idx, 'material') }"
                         @change="onItemMaterialChange(item, $event)"
                       />
@@ -209,8 +211,8 @@
 
             <!-- Mobile card view -->
             <div class="md:hidden space-y-4">
-              <div v-for="(item, idx) in items" :key="item._k" class="card bg-base-200 border">
-                <div class="card-body p-4">
+              <div v-for="(item, idx) in items" :key="item._k" class="bg-base-200 rounded-lg p-2">
+                <div class="">
                   <div class="flex justify-between items-start mb-3">
                     <h3 class="font-medium text-sm">Позиция {{ idx + 1 }}</h3>
                     <button type="button" class="btn btn-error btn-xs" @click="removeItem(idx)">
@@ -234,6 +236,7 @@
                         :object-id="formData.object || null"
                         :date="formData.date || null"
                         :filter-by-balance="true"
+                        :exclude-materials="addedMaterialIds.filter(id => id !== item.material)"
                         :class="{ 'border-error': getItemFieldError(idx, 'material') }"
                         @change="onItemMaterialChange(item, $event)"
                       />
@@ -388,7 +391,9 @@ import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
 import { useEmployeesStore, getByObject } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
+import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useUiStore } from '@/stores/ui'
 import { formatNumberClean } from '@/utils/formatters'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
@@ -407,7 +412,13 @@ const objectsStore = useObjectsStore
 const materialsStore = useMaterialsStore
 const employeesStore = useEmployeesStore
 const unitsStore = useUnitsStore
+const authStore = useAuthStore()
 const { handleFormError, errors, clearErrors } = useErrorHandler()
+const ui = useUiStore()
+
+// Проверяем, является ли текущий пользователь бригадиром
+const isBrigadier = computed(() => authStore.me?.role === 'brigadier')
+const currentUserId = computed(() => authStore.me?.id)
 
 const props = defineProps<{
   isOpen: boolean
@@ -450,10 +461,27 @@ const isSubmitting = ref(false)
 const loadedMaterialsByObject = ref<Material[]>([])
 
 // Options
-const objectOptions = computed(() => [
-  { value: 0, label: '— выберите объект —' },
-  ...objectsStore.items.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
-])
+// Backend уже фильтрует объекты для бригадира через get_user_objects()
+// Дополнительно фильтруем только активные объекты
+const objectOptions = computed(() => {
+  const objects = (objectsStore.items as SiteObject[]).filter((obj: SiteObject) => obj.is_active)
+  
+  // Если только один объект - не показываем placeholder
+  if (objects.length === 1) {
+    return objects.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
+  }
+  
+  return [
+    { value: 0, label: '— выберите объект —' },
+    ...objects.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
+  ]
+})
+
+// Проверка, есть ли только один объект
+const hasSingleObject = computed(() => {
+  const objects = (objectsStore.items as SiteObject[]).filter((obj: SiteObject) => obj.is_active)
+  return objects.length === 1
+})
 
 const unitOptions = computed(() => [
   { value: 0, label: '— выберите единицу —' },
@@ -463,6 +491,13 @@ const unitOptions = computed(() => [
 const responsibleOptions = ref([
   { value: 0, label: '— выберите ответственного —' }
 ])
+
+// Computed для уже добавленных материалов (для исключения из подсказок)
+const addedMaterialIds = computed(() => {
+  return items.value
+    .map(item => item.material)
+    .filter((id): id is number => id !== null && id !== 0)
+})
 
 // User modification tracking
 const userModifiedFields = ref({
@@ -572,7 +607,23 @@ const loadMaterialsByObject = async (objectId: number) => {
 const loadEmployeesByObject = async (objectId: number) => {
   employeesLoading.value = true
   try {
-    // Базовый список - все бригадиры
+    // Для бригадира: он автоматически становится ответственным
+    if (isBrigadier.value && currentUserId.value) {
+      const currentUser = employeesStore.items.find((emp: any) => emp.id === currentUserId.value)
+      const userName = currentUser 
+        ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.username
+        : authStore.me?.username || 'Вы'
+      responsibleOptions.value = [
+        { 
+          value: currentUserId.value, 
+          label: userName
+        }
+      ]
+      formData.value.responsible = currentUserId.value
+      return
+    }
+    
+    // Для других ролей: стандартная логика
     const responsibleList = [
       { value: 0, label: '— выберите ответственного —' },
       ...employeesStore.items
@@ -773,6 +824,12 @@ const handleSubmit = async () => {
       await Promise.all(createPromises)
     }
     
+    // Уведомление об успехе
+    ui.toast({ 
+      type: 'success', 
+      text: props.initial ? 'Списание обновлено' : 'Списание создано' 
+    })
+    
     emit('success')
   } catch (error) {
     const errorResult = await handleFormError(error, 'списание')
@@ -797,6 +854,12 @@ const handleSubmit = async () => {
       const nonFieldErrors = errorResult.fieldErrors.non_field_errors
       errors.value.non_field_errors = Array.isArray(nonFieldErrors) ? nonFieldErrors : [String(nonFieldErrors)]
     }
+    
+    // Уведомление об ошибке
+    ui.toast({ 
+      type: 'error', 
+      text: errorResult.detail || 'Ошибка при сохранении списания' 
+    })
   } finally {
     isSubmitting.value = false
   }
@@ -843,17 +906,48 @@ const initializeForm = async () => {
       }
     }
   } else {
+    // Для бригадира сразу устанавливаем его как ответственного
+    const defaultResponsible = isBrigadier.value && currentUserId.value ? currentUserId.value : 0
+    
+    // Если только один объект - выбираем его автоматически
+    const objects = objectsStore.items as SiteObject[]
+    const defaultObject = objects.length === 1 ? objects[0].id : 0
+    
     formData.value = {
-    date: new Date().toISOString().split('T')[0],
-    object: 0,
-    responsible: 0,
-    comment: ''
-  }
+      date: new Date().toISOString().split('T')[0],
+      object: defaultObject,
+      responsible: defaultResponsible,
+      comment: ''
+    }
     items.value = []
+    
+    // Для бригадира сразу заполняем опции ответственного
+    if (isBrigadier.value && currentUserId.value) {
+      const currentUser = employeesStore.items.find((emp: any) => emp.id === currentUserId.value)
+      const userName = currentUser 
+        ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.username
+        : authStore.me?.username || 'Вы'
+      responsibleOptions.value = [
+        { 
+          value: currentUserId.value, 
+          label: userName
+        }
+      ]
+    }
+    
+    // Если объект был автоматически выбран, загружаем его данные
+    if (defaultObject) {
+      await Promise.all([
+        loadMaterialsByObject(defaultObject),
+        loadEmployeesByObject(defaultObject)
+      ])
+      // Добавляем одну пустую позицию
+      addItem()
+    }
   }
   
   userModifiedFields.value = {
-    responsible: false
+    responsible: isBrigadier.value // Для бригадира считаем, что поле уже заполнено
   }
 }
 
@@ -911,10 +1005,6 @@ onMounted(async () => {
 <style scoped>
 /* Дополнительные стили для мобильной адаптации */
 @media (max-width: 640px) {
-  .card-body {
-    padding: 1rem;
-  }
-  
   .table {
     font-size: 0.875rem;
   }

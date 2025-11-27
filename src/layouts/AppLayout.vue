@@ -132,11 +132,9 @@ const roleDisplayName = computed(() => {
     admin: 'Администратор',
     director: 'Директор',
     coordinator: 'Координатор',
-    site_manager: 'Менеджер объекта',
-    buyer: 'Закупщик',
     brigadier: 'Бригадир'
   }
-  return roleNames[auth.role as UserRole] || auth.role || 'Пользователь'
+  return roleNames[auth.role as UserRole] || 'Роль не задана'
 })
 
 // Check if user can manage users (admin/director)

@@ -128,8 +128,8 @@
 
           <!-- Mobile card view -->
           <div class="md:hidden space-y-4">
-            <div v-for="(item, idx) in items" :key="item._k" class="card bg-base-200 border">
-              <div class="card-body p-4">
+            <div v-for="(item, idx) in items" :key="item._k" class="bg-base-200 rounded-lg p-2">
+              <div class="">
                 <div class="flex justify-between items-start mb-3">
                   <h3 class="font-medium text-sm">Материал {{ idx + 1 }}</h3>
                   <button type="button" class="btn btn-error btn-xs" @click="removeItem(idx)">

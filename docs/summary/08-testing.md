@@ -1,5 +1,16 @@
 # Тестирование ELOM
 
+**Последнее обновление:** 27 ноября 2025
+
+## Текущий статус тестов
+
+| Метрика | Значение |
+|---------|----------|
+| **Всего тестов** | 304 |
+| **Тестовых файлов** | 30 |
+| **Пройдено** | 304 ✅ |
+| **Провалено** | 0 |
+
 ## Обзор стратегии тестирования
 
 ELOM использует многоуровневую стратегию тестирования, включающую unit тесты, integration тесты, end-to-end тесты и тесты производительности. Система тестирования построена на современных инструментах и best practices.
@@ -153,20 +164,20 @@ class PurchaseModelTest(BaseTestCase):
     
     def test_purchase_validation_brigadier_role(self):
         """Тест валидации роли ответственного"""
-        # Создание пользователя с ролью buyer
-        buyer_user = User.objects.create_user(
-            username='buyer',
-            email='buyer@example.com',
+        # Создание пользователя с ролью coordinator (не бригадир)
+        coordinator_user = User.objects.create_user(
+            username='coordinator',
+            email='coordinator@example.com',
             password='testpass123'
         )
-        buyer_user.profile.role = 'buyer'
-        buyer_user.profile.save()
+        coordinator_user.profile.role = 'coordinator'
+        coordinator_user.profile.save()
         
         purchase = Purchase(
             date='2024-01-15',
             object=self.object,
             supplier=self.supplier,
-            responsible=buyer_user,
+            responsible=coordinator_user,
             currency='UZS'
         )
         

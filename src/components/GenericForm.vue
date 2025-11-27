@@ -7,7 +7,7 @@
         :key="index"
         class="card bg-base-100 border"
       >
-        <div class="card-body">
+        <div class="">
           <h2 class="card-title text-lg mb-4">{{ section.title }}</h2>
           <p v-if="section.description" class="text-base-content/70 text-sm mb-4">{{ section.description }}</p>
 
@@ -55,7 +55,7 @@
 
     <!-- Simple Form (no sections) as Single Card -->
     <div v-else class="card bg-base-100">
-      <div class="card-body">
+      <div class="">
         <p v-if="config.subtitle" class="text-base-content/70 text-sm mb-4">{{ config.subtitle }}</p>
 
         <div class="grid md:grid-cols-2 gap-4">

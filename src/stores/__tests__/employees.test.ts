@@ -48,7 +48,7 @@ describe('Employees Store', () => {
             last_name: 'Smith',
             email: 'jane@example.com',
             phone: '+998901234568',
-            role: 'buyer',
+            role: 'coordinator',
             is_active: true,
             assigned_object_ids: [1],
             created_at: '2024-01-01T00:00:00Z',

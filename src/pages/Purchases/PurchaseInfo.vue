@@ -282,8 +282,8 @@
           </div>
 
           <!-- Информация о фото -->
-          <div class="card bg-base-100 border">
-            <div class="card-body p-4">
+          <div class="bg-base-100 rounded-lg">
+            <div class="">
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
                   <span class="badge" :class="getPhotoTypeClass(selectedPhoto.type)">

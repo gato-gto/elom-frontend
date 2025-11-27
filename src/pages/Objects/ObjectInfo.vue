@@ -1,15 +1,15 @@
 <template>
   <div class="space-y-6">
       <!-- Loading state -->
-      <div v-if="loading" class="card bg-base-100 shadow border">
-        <div class="card-body">
+      <div v-if="loading" class="bg-base-100 rounded-lg shadow">
+        <div class="">
           <LoadingSpinner text="Загрузка информации об объекте..." :overlay="false" />
         </div>
       </div>
 
       <!-- Not found state -->
-      <div v-else-if="!object" class="card bg-base-100 shadow border">
-        <div class="card-body text-center space-y-4">
+      <div v-else-if="!object" class="bg-base-100 rounded-lg shadow">
+        <div class="text-center space-y-4">
           <svg class="w-16 h-16 mx-auto text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
@@ -88,7 +88,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 class="card-title">Информация об объекте</h2>
+            <h2 class="text-lg font-semibold">Информация об объекте</h2>
           </div>
           <div class="card-content">
             <div class="info-grid-unified">
@@ -334,7 +334,7 @@ const stageDictionary: Record<
 
 const canEdit = computed(() => {
   const role = authStore.role
-  return role === 'admin' || role === 'director' || role === 'coordinator' || role === 'site_manager'
+  return role === 'admin' || role === 'director' || role === 'coordinator'
 })
 
 const statusLabel = computed(() => (object.value?.is_active ? 'Активный объект' : 'Неактивный объект'))
@@ -680,16 +680,6 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-:root.dark .card-title {
-  color: #e2e8f0;
-}
 
 .card-content {
   padding: 1.5rem;

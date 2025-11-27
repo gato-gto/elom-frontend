@@ -255,12 +255,10 @@ const roleTitle = computed(() => {
     admin: 'Администратор',
     director: 'Директор',
     coordinator: 'Координатор',
-    site_manager: 'Менеджер объекта',
-    brigadier: 'Бригадир',
-    buyer: 'Покупатель'
+    brigadier: 'Бригадир'
   }
   
-  return authStore.role ? roleTitles[authStore.role as UserRole] : 'Пользователь'
+  return authStore.role ? roleTitles[authStore.role as UserRole] : 'Роль не задана'
 })
 
 // Функция больше не нужна, так как используем фиксированные разделы

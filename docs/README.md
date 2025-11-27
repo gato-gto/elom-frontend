@@ -1,378 +1,140 @@
-# Документация ELOM
+# 📚 Документация ELOM Frontend
 
-## 📚 Добро пожаловать в документацию ELOM!
-
-**ELOM** (Enterprise Logistics and Operations Management) - это комплексная система управления логистикой и операциями для строительных проектов.
-
-**Текущая версия**: 3.0  
-**Дата обновления**: 08 Октября 2025  
-**Статус**: ✅ Готов к продакшену (95%)
+**Дата обновления:** 27 ноября 2025
 
 ---
 
-## 🚀 Быстрый старт
+## 🗂️ Структура документации
 
-### Для пользователей системы
-👉 Начните с **[USER_MANUAL.md](./USER_MANUAL.md)** - руководство пользователя
-- [Подробно по формам](./USER_GUIDE_FORMS.md) - что и зачем заполнять
-- [Подробно по спискам](./USER_GUIDE_LISTS.md) - как работать с таблицами
+### 📖 Основные документы
+| Файл | Описание |
+|------|----------|
+| [INDEX.md](INDEX.md) | Главная страница документации |
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Текущий статус проекта |
+| [API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md) | Быстрый справочник API |
+| [api_schema.yaml](api_schema.yaml) | OpenAPI спецификация |
+| [BRIGADIER_FUNCTIONALITY_IMPLEMENTATION.md](../BRIGADIER_FUNCTIONALITY_IMPLEMENTATION.md) | Функциональность бригадира |
 
-### Для новичков
-👉 Начните с **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - краткий обзор проекта
+### 🗺️ Навигация и структура
+| Файл | Описание |
+|------|----------|
+| [APP_MAP_USER.md](APP_MAP_USER.md) | Карта приложения |
+| [NAVIGATION_GUIDE.md](NAVIGATION_GUIDE.md) | Руководство по навигации |
+| [FORM_STRUCTURE_GUIDE.md](FORM_STRUCTURE_GUIDE.md) | Структура форм |
 
-### Для разработчиков
-👉 Начните с **[summary/README.md](./summary/README.md)** - полная техническая документация
-
-### Для изучения API
-👉 Начните с **[API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md)** - быстрая справка по API
-
----
-
-## 📂 Структура документации
-
-### 📁 Основная документация (`summary/`)
-
-**16 файлов** с полной технической информацией:
-
-1. **[README.md](./summary/README.md)** ⭐ **НАЧНИТЕ ЗДЕСЬ**
-   - Обзор проекта
-   - Статистика
-   - Ссылки на все разделы
-
-2. **[01-architecture.md](./summary/01-architecture.md)**
-   - Архитектура системы
-   - Backend структура (Django)
-   - Frontend структура (Vue 3)
-   - 46 компонентов
-   - 16 stores
-
-3. **[02-data-models.md](./summary/02-data-models.md)**
-   - 15+ моделей данных
-   - Связи между моделями
-   - Валидация
-   - Миграции
-
-4. **[03-api-documentation.md](./summary/03-api-documentation.md)**
-   - 100+ API endpoints
-   - Примеры запросов
-   - Примеры ответов
-   - Обработка ошибок
-
-5. **[04-frontend-components.md](./summary/04-frontend-components.md)**
-   - 46 Vue компонентов
-   - 11 composables
-   - Примеры использования
-   - Тестирование
-
-6. **[05-business-logic.md](./summary/05-business-logic.md)**
-   - Роли пользователей
-   - Workflow процессов
-   - Валидация
-   - Автоматизация
-
-7. **[06-integrations.md](./summary/06-integrations.md)**
-   - Telegram уведомления
-   - Экспорт данных
-   - Внешние интеграции
-
-8. **[07-deployment.md](./summary/07-deployment.md)**
-   - Установка
-   - Конфигурация
-   - Мониторинг
-
-9. **[08-testing.md](./summary/08-testing.md)**
-   - Unit тесты
-   - Integration тесты
-   - E2E тесты
-
-10. **[09-security.md](./summary/09-security.md)**
-    - Аутентификация
-    - Авторизация
-    - Защита данных
-
-11. **[10-performance.md](./summary/10-performance.md)**
-    - Оптимизации
-    - Кэширование
-    - Метрики
-
-12. **[11-types-refactoring.md](./summary/11-types-refactoring.md)**
-    - Модульная система типов
-    - 15 модулей TypeScript
-
-13. **[12-writeoff-system.md](./summary/12-writeoff-system.md)** ⭐ **НОВОЕ**
-    - Полная документация системы списаний
-    - Автозаполнение полей
-    - Упрощенный интерфейс
-
-14. **[13-components-reference.md](./summary/13-components-reference.md)** ⭐ **НОВОЕ**
-    - Справочник всех 46 компонентов
-    - Категоризация
-    - 11 composables
-    - 16 stores
-
-15. **[14-api-endpoints-reference.md](./summary/14-api-endpoints-reference.md)** ⭐ **НОВОЕ**
-    - Справочник 100+ endpoints
-    - Параметры фильтрации
-    - Примеры
-
-16. **[15-current-state.md](./summary/15-current-state.md)** ⭐ **НОВОЕ**
-    - Актуальное состояние проекта
-    - Что реализовано (95%)
-    - Что в разработке (5%)
-    - Метрики
+### 🔌 Интеграции
+| Файл | Описание |
+|------|----------|
+| [TELEGRAM_INTEGRATION_STATUS.md](TELEGRAM_INTEGRATION_STATUS.md) | Статус Telegram |
+| [TELEGRAM_NOTIFICATIONS_REQUIREMENTS.md](TELEGRAM_NOTIFICATIONS_REQUIREMENTS.md) | Требования к уведомлениям |
+| [WRITEOFF_SYSTEM_IMPLEMENTATION.md](WRITEOFF_SYSTEM_IMPLEMENTATION.md) | Система списаний |
 
 ---
 
-### 📄 Руководства для пользователей
+## 📁 docs/manuals/ — Руководства пользователя
 
-1. **[USER_MANUAL.md](./USER_MANUAL.md)** ⭐ **НОВОЕ**
-   - Полное руководство пользователя
-   - Роли и доступ
-   - Типовые сценарии работы
-   - Решение проблем
-
-2. **[USER_GUIDE_FORMS.md](./USER_GUIDE_FORMS.md)** ⭐ **НОВОЕ**
-   - Подробно о каждой форме
-   - Что и зачем заполнять
-   - Примеры заполнения
-   - Автозаполнение и валидация
-
-3. **[USER_GUIDE_LISTS.md](./USER_GUIDE_LISTS.md)** ⭐ **НОВОЕ**
-   - Справочник по всем спискам
-   - Что показывает каждая таблица
-   - Фильтры и сортировка
-   - Экспорт данных
-
-### 📄 Дополнительные документы
-
-4. **[PROJECT_STATUS.md](./PROJECT_STATUS.md)**
-   - Краткий статус проекта
-   - Что готово (95%)
-   - Что осталось (5%)
-
-5. **[API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md)**
-   - Быстрая справка по API
-   - Основные endpoints
-   - Примеры
-
-6. **[WRITEOFF_SYSTEM_IMPLEMENTATION.md](./WRITEOFF_SYSTEM_IMPLEMENTATION.md)**
-   - Детали реализации списаний
-   - Технические решения
-
-7. **[DOCUMENTATION_UPDATE_2025.md](./DOCUMENTATION_UPDATE_2025.md)**
-   - Сводка обновлений октябрь 2025
-   - Актуальная статистика
-
-8. **[NAVIGATION_GUIDE.md](./NAVIGATION_GUIDE.md)**
-   - Как пользоваться документацией
-   - Для разных ролей
-   - Чек-листы
-
-9. **[CHANGELOG_OCTOBER_2025.md](./CHANGELOG_OCTOBER_2025.md)**
-   - Полный список изменений
-   - Новые функции
-   - Исправления багов
-
-10. **[api_schema.yaml](./api_schema.yaml)**
-    - OpenAPI 3.0 схема
-    - Автогенерация клиентов
+| Файл | Описание |
+|------|----------|
+| [USER_MANUAL.md](manuals/USER_MANUAL.md) | Полное руководство пользователя |
+| [QUICK_START_USER.md](manuals/QUICK_START_USER.md) | Быстрый старт |
+| [USER_GUIDE_FORMS.md](manuals/USER_GUIDE_FORMS.md) | Работа с формами |
+| [USER_GUIDE_LISTS.md](manuals/USER_GUIDE_LISTS.md) | Работа со списками |
 
 ---
 
-## 🗺️ Навигация по темам
+## 📁 docs/summary/ — Техническая документация
 
-### Хочу понять архитектуру
-→ `summary/01-architecture.md`
+### Архитектура и данные
+| Файл | Описание |
+|------|----------|
+| [01-architecture.md](summary/01-architecture.md) | Архитектура системы |
+| [02-data-models.md](summary/02-data-models.md) | Модели данных |
+| [03-api-documentation.md](summary/03-api-documentation.md) | API документация |
+| [04-frontend-components.md](summary/04-frontend-components.md) | Компоненты |
+| [05-business-logic.md](summary/05-business-logic.md) | Бизнес-логика |
 
-### Хочу изучить API
-→ `summary/14-api-endpoints-reference.md` (справочник)  
-→ `summary/03-api-documentation.md` (детали)  
-→ `API_QUICK_REFERENCE.md` (быстрая справка)
+### Интеграции и развертывание
+| Файл | Описание |
+|------|----------|
+| [06-integrations.md](summary/06-integrations.md) | Интеграции |
+| [07-deployment.md](summary/07-deployment.md) | Развертывание |
+| [08-testing.md](summary/08-testing.md) | Тестирование |
+| [09-security.md](summary/09-security.md) | Безопасность |
+| [10-performance.md](summary/10-performance.md) | Производительность |
 
-### Хочу создать компонент
-→ `summary/13-components-reference.md` (какие есть)  
-→ `summary/04-frontend-components.md` (как создать)
-
-### Хочу создать форму
-→ `summary/12-writeoff-system.md` (пример WriteOffForm)  
-→ `summary/04-frontend-components.md` (GenericForm)
-
-### Хочу понять бизнес-логику
-→ `summary/05-business-logic.md`
-
-### Хочу развернуть проект
-→ `summary/07-deployment.md`
-
-### Хочу написать тесты
-→ `summary/08-testing.md`
-
-### Хочу узнать текущее состояние
-→ `summary/15-current-state.md`  
-→ `PROJECT_STATUS.md`
+### Специализированные
+| Файл | Описание |
+|------|----------|
+| [11-types-refactoring.md](summary/11-types-refactoring.md) | Рефакторинг типов |
+| [12-writeoff-system.md](summary/12-writeoff-system.md) | Система списаний |
+| [13-components-reference.md](summary/13-components-reference.md) | Справочник компонентов |
+| [14-api-endpoints-reference.md](summary/14-api-endpoints-reference.md) | Справочник API |
+| [15-current-state.md](summary/15-current-state.md) | Текущее состояние |
 
 ---
 
-## 📊 Статистика проекта
+## 📁 Корень проекта — Отчеты о рефакторинге
 
-### Frontend
-- **46 компонентов** Vue
-- **16 stores** Pinia
-- **11 composables**
-- **25+ страниц**
-- **15 модулей типов** TypeScript
-- **11 утилит**
-
-### Backend
-- **4 модуля** Django
-- **15+ моделей** данных
-- **100+ endpoints** API
-
-### Документация
-- **16 файлов** в summary/
-- **7 дополнительных** файлов
-- **100% актуальна** ✅
+| Файл | Описание |
+|------|----------|
+| [FRONTEND_AUDIT_REPORT.md](../FRONTEND_AUDIT_REPORT.md) | Аудит кода (ноябрь 2025) |
+| [REFACTORING_FINAL_REPORT.md](../REFACTORING_FINAL_REPORT.md) | Финальный отчет о рефакторинге |
+| [REFACTORING_RECOMMENDATIONS.md](../REFACTORING_RECOMMENDATIONS.md) | Рекомендации по рефакторингу |
+| [BRIGADIER_FUNCTIONALITY_IMPLEMENTATION.md](../BRIGADIER_FUNCTIONALITY_IMPLEMENTATION.md) | Реализация функциональности бригадира |
 
 ---
 
-## 🎯 Что реализовано (95%)
+## 📁 Backend документация
 
-### ✅ Полностью готово
-- Управление материалами, объектами, закупками
-- **Система списаний** (WriteOff)
-- Остатки и движения материалов
-- Поставщики и сотрудники
-- 4 типа отчетов
-- Экспорт в CSV и Excel
-- Telegram уведомления
-- Мобильная версия
-- Система ролей
-- Архивирование
-
-### ⏳ В разработке (5%)
-- PDF экспорт
-- WebSocket уведомления
-- PWA поддержка
+| Файл | Описание |
+|------|----------|
+| [PURCHASE_STATUS_BUSINESS_LOGIC.md](../../elom-backend/PURCHASE_STATUS_BUSINESS_LOGIC.md) | Бизнес-логика статусов закупок |
 
 ---
 
-## 🔄 Последнее обновление
+## 📊 Статистика
 
-**Дата**: 08 Октября 2025
-
-### Что изменилось:
-- ✨ Добавлено 6 новых файлов документации
-- ✅ Обновлено 7 существующих файлов
-- 🗑️ Удалено 30 устаревших файлов
-- ✅ Документация теперь 100% актуальна
-
-### Ключевые улучшения:
-- ✨ Полная реализация системы списаний
-- ✨ Упрощение интерфейса (удалены предупреждения)
-- ✨ Улучшена обработка ошибок
-- ✨ Добавлены справочники компонентов и API
+| Категория | Количество |
+|-----------|------------|
+| Всего документов | **36** |
+| Основные (docs/) | 11 |
+| Руководства (manuals/) | 4 |
+| Техническая (summary/) | 16 |
+| Рефакторинг (корень) | 5 |
 
 ---
 
-## 📞 Поддержка
+## 🎯 Быстрая навигация
 
-### Нашли ошибку в документации?
-1. Сообщите команде
-2. Обновите документацию
-3. Создайте pull request (если используется)
+### Для новых разработчиков:
+1. [INDEX.md](INDEX.md) → Обзор проекта
+2. [summary/01-architecture.md](summary/01-architecture.md) → Архитектура
+3. [summary/04-frontend-components.md](summary/04-frontend-components.md) → Компоненты
 
-### Нужна помощь?
-1. Проверьте `NAVIGATION_GUIDE.md`
-2. Используйте поиск в файлах
-3. Обратитесь к команде
+### Для пользователей:
+1. [manuals/QUICK_START_USER.md](manuals/QUICK_START_USER.md) → Быстрый старт
+2. [manuals/USER_MANUAL.md](manuals/USER_MANUAL.md) → Полное руководство
 
----
-
-## 🎓 Рекомендуемый порядок изучения
-
-### День 1: Обзор (2-3 часа)
-1. PROJECT_STATUS.md (15 мин)
-2. summary/README.md (30 мин)
-3. summary/15-current-state.md (30 мин)
-4. NAVIGATION_GUIDE.md (15 мин)
-
-### День 2: Архитектура (3-4 часа)
-1. summary/01-architecture.md (1 час)
-2. summary/02-data-models.md (1 час)
-3. summary/03-api-documentation.md (1-2 часа)
-
-### День 3: Frontend (3-4 часа)
-1. summary/04-frontend-components.md (2 часа)
-2. summary/13-components-reference.md (1 час)
-3. summary/14-api-endpoints-reference.md (1 час)
-
-### День 4: Специализация (2-3 часа)
-1. summary/05-business-logic.md (1 час)
-2. summary/12-writeoff-system.md (1 час)
-3. Другие разделы по необходимости
-
-### День 5: Практика
-1. Развертывание (summary/07-deployment.md)
-2. Тестирование (summary/08-testing.md)
-3. Создание своей функции
+### Для code review:
+1. [FRONTEND_AUDIT_REPORT.md](../FRONTEND_AUDIT_REPORT.md) → Аудит кода
+2. [REFACTORING_FINAL_REPORT.md](../REFACTORING_FINAL_REPORT.md) → Рефакторинг
 
 ---
 
-## ✅ Проверка актуальности
+## 🆕 Последние изменения (27 ноября 2025)
 
-**Как проверить, что документация актуальна:**
+### Новая функциональность:
+- **Деактивация объектов** - безопасное удаление объектов со связями
+- **Защита от деактивированных объектов** - нельзя создавать закупки/списания
+- **Бизнес-логика статусов** - только `completed` закупки учитываются в остатках
+- **Функциональность бригадира** - полная реализация для роли brigadier
 
-1. ✅ Проверьте дату в `PROJECT_STATUS.md`
-2. ✅ Проверьте версию в `summary/15-current-state.md`
-3. ✅ Проверьте `CHANGELOG_OCTOBER_2025.md`
-
-**Текущая версия**: 3.0 (08.10.2025) ✅
-
----
-
-## 🎯 Цели документации
-
-### ✅ Достигнуто
-- [x] Полное покрытие функционала
-- [x] Актуальная информация
-- [x] Удобная навигация
-- [x] Примеры кода
-- [x] Справочники
-
-### Поддержка
-- [x] Регулярное обновление
-- [x] Удаление устаревшего
-- [x] Добавление нового
+### Обновленная документация:
+- `PROJECT_STATUS.md` - актуальный статус проекта
+- `05-business-logic.md` - бизнес-логика с новыми разделами
+- `BRIGADIER_FUNCTIONALITY_IMPLEMENTATION.md` - документация бригадира
+- `PURCHASE_STATUS_BUSINESS_LOGIC.md` (backend) - статусы закупок
 
 ---
 
-## 🚀 ELOM готов к продакшену!
-
-**Проект полностью задокументирован и готов к использованию!**
-
-### Следующие шаги:
-1. Изучите документацию
-2. Разверните проект
-3. Начните разработку
-4. Используйте справочники
-
-**Удачи в работе с ELOM! 🎉**
-
----
-
-## 📖 Полезные ссылки
-
-- [Обзор проекта](./PROJECT_STATUS.md)
-- [Навигация по документации](./NAVIGATION_GUIDE.md)
-- [Актуальное состояние](./summary/15-current-state.md)
-- [Справочник компонентов](./summary/13-components-reference.md)
-- [Справочник API](./summary/14-api-endpoints-reference.md)
-- [Система списаний](./summary/12-writeoff-system.md)
-- [История изменений](./CHANGELOG_OCTOBER_2025.md)
-
----
-
-**Документация обновлена: 08 Октября 2025**  
-**Версия: 3.0**  
-**Статус: ✅ 100% актуальна**
-
-
+*Документация актуальна на: 27 ноября 2025*

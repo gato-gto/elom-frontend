@@ -17,7 +17,10 @@ export default defineConfig({
       'dist',
       '.idea',
       '.git',
-      '.cache'
+      '.cache',
+      'tests/e2e/**',
+      'e2e/**',
+      '**/*.spec.ts'
     ],
     coverage: {
       provider: 'v8',

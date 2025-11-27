@@ -212,13 +212,13 @@ POST   /purchases/import/commit/           # Commit import
 }
 ```
 
-## User Roles
-- `admin` - Full access
-- `director` - All objects access
-- `coordinator` - Assigned objects only
-- `brigadier` - Assigned objects only
-- `buyer` - Assigned objects only
-- `site_manager` - Assigned objects only
+## User Roles (Updated November 2025)
+- `admin` - Administrator (Django Admin only)
+- `director` - Full access to all data
+- `coordinator` - Coordination between objects
+- `brigadier` - Work with assigned objects
+
+> Note: `buyer` and `site_manager` roles removed - their functions now performed by `brigadier`
 
 ## Stages
 - `acceptance` - Object acceptance

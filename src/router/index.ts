@@ -85,7 +85,7 @@ const routes = [
       description: 'Управление материалами и номенклатурой',
       category: 'inventory',
       order: 2,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -97,7 +97,7 @@ const routes = [
       breadcrumb: 'Материалы / Новый',
       description: 'Создание нового материала',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -109,7 +109,7 @@ const routes = [
       breadcrumb: 'Материалы / Редактировать',
       description: 'Редактирование существующего материала',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   
@@ -123,7 +123,7 @@ const routes = [
       breadcrumb: 'Материалы / Категории',
       description: 'Управление категориями материалов',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -135,7 +135,7 @@ const routes = [
       breadcrumb: 'Материалы / Категории / Новая',
       description: 'Создание новой категории материалов',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -147,7 +147,7 @@ const routes = [
       breadcrumb: 'Материалы / Категории / Просмотр',
       description: 'Просмотр информации о категории материалов',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -159,7 +159,7 @@ const routes = [
       breadcrumb: 'Материалы / Категории / Редактировать',
       description: 'Редактирование категории материалов',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   
@@ -175,7 +175,7 @@ const routes = [
       description: 'Управление закупками и поставками',
       category: 'purchases',
       order: 3,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -187,7 +187,7 @@ const routes = [
       breadcrumb: 'Закупки / Новая',
       description: 'Создание новой закупки',
       category: 'purchases',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -199,7 +199,7 @@ const routes = [
       breadcrumb: 'Закупки / Редактировать',
       description: 'Редактирование существующей закупки',
       category: 'purchases',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   
@@ -215,7 +215,7 @@ const routes = [
       description: 'Управление объектами строительства',
       category: 'objects',
       order: 4,
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -227,7 +227,7 @@ const routes = [
       breadcrumb: 'Объекты / Новый',
       description: 'Создание нового объекта',
       category: 'objects',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -239,7 +239,7 @@ const routes = [
       breadcrumb: 'Объекты / Просмотр',
       description: 'Просмотр статуса объекта, контактов и связанных данных',
       category: 'objects',
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   
@@ -375,7 +375,7 @@ const routes = [
       description: 'Журнал движений материалов',
       category: 'inventory',
       order: 6,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -389,7 +389,7 @@ const routes = [
       description: 'Текущие остатки материалов по объектам',
       category: 'inventory',
       order: 7,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
 
@@ -405,7 +405,7 @@ const routes = [
       description: 'Управление списаниями материалов',
       category: 'writeoffs',
       order: 3,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -417,7 +417,7 @@ const routes = [
       breadcrumb: 'Списания / Новое',
       description: 'Создание нового списания',
       category: 'writeoffs',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   {
@@ -429,7 +429,7 @@ const routes = [
       breadcrumb: 'Списания / Редактировать',
       description: 'Редактирование существующего списания',
       category: 'writeoffs',
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   
@@ -445,7 +445,7 @@ const routes = [
       description: 'Архивные данные и отчеты',
       category: 'archive',
       order: 10,
-      roles: ['admin', 'director', 'coordinator', 'site_manager', 'brigadier', 'buyer']
+      roles: ['admin', 'director', 'coordinator', 'brigadier']
     }
   },
   
@@ -460,7 +460,7 @@ const routes = [
       description: 'Отчеты по периодам времени',
       category: 'reports',
       order: 11,
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -473,7 +473,7 @@ const routes = [
       description: 'Отчеты по объектам строительства',
       category: 'reports',
       order: 12,
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -486,7 +486,7 @@ const routes = [
       description: 'Отчеты по материалам и номенклатуре',
       category: 'reports',
       order: 13,
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   {
@@ -499,7 +499,7 @@ const routes = [
       description: 'Отчеты по ответственным лицам',
       category: 'reports',
       order: 14,
-      roles: ['admin', 'director', 'coordinator', 'site_manager']
+      roles: ['admin', 'director', 'coordinator']
     }
   },
   

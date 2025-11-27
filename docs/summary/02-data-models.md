@@ -26,17 +26,17 @@ class TimeStamped(models.Model):
 ### 2. EmployeeProfile
 ```python
 class EmployeeProfile(models.Model):
+    # Роли системы (упрощены в ноябре 2025)
+    # buyer и site_manager удалены - их функции выполняет brigadier
     ROLE_CHOICES = [
-        ("admin", "Admin"),           # Полный доступ
-        ("director", "Director"),     # Доступ ко всем объектам
-        ("coordinator", "Coordinator"), # Назначенные объекты
-        ("brigadier", "Brigadier"),   # Назначенные объекты
-        ("buyer", "Buyer"),          # Назначенные объекты
-        ("site_manager", "Site Manager"), # Назначенные объекты
+        ("admin", "Администратор"),      # Только через Django Admin
+        ("director", "Директор"),        # Полный доступ ко всем данным
+        ("coordinator", "Координатор"),  # Координация между объектами
+        ("brigadier", "Бригадир"),       # Работа с назначенными объектами
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=32, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=32, choices=ROLE_CHOICES, default="brigadier")
     is_active = models.BooleanField(default=True)
     phone = models.CharField(max_length=32, blank=True)
     assigned_objects = models.ManyToManyField("common.Object", blank=True)
@@ -361,12 +361,13 @@ erDiagram
 
 ## Бизнес-правила и валидация
 
-### 1. Роли и доступ
-- **Admin**: Полный доступ ко всем данным
-- **Director**: Доступ ко всем объектам
-- **Coordinator**: Доступ к назначенным объектам
-- **Brigadier**: Доступ к назначенным объектам, может быть ответственным за объекты
-- **Buyer/Site Manager**: Доступ к назначенным объектам
+### 1. Роли и доступ (обновлено ноябрь 2025)
+- **Admin**: Администратор (только через Django Admin)
+- **Director**: Директор (полный доступ ко всем данным)
+- **Coordinator**: Координатор (координация между объектами, полный доступ)
+- **Brigadier**: Бригадир (работа с назначенными объектами, может быть ответственным)
+
+> **Примечание:** Роли `buyer` и `site_manager` удалены - их функции выполняет `brigadier`
 
 ### 2. Валидация закупок
 - Ответственный за закупку должен быть бригадиром
