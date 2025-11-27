@@ -11,6 +11,7 @@
       v-if="type === 'input' || type === 'text' || type === 'email' || type === 'password' || type === 'number' || type === 'date'"
       :value="modelValue"
       :type="getInputType()"
+      :name="uniqueFieldName"
       class="input input-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0"
       :class="[
         { 'input-error hover:border-error focus:border-error': hasError || error || errorMessage },
@@ -29,7 +30,7 @@
       :min="min"
       :max="max"
       :step="step"
-      :autocomplete="autocomplete"
+      :autocomplete="autocomplete || 'off'"
       @input="handleInput"
       @blur="handleBlur"
       @focus="handleFocus"
@@ -123,6 +124,7 @@
         <input
           :value="modelValue"
           type="text"
+          :name="uniqueFieldName + '_search'"
           class="input input-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0 pr-10"
           :class="[
             { 'input-error hover:border-error focus:border-error': hasError || error || errorMessage },
@@ -137,6 +139,7 @@
           :placeholder="placeholder"
           :disabled="disabled"
           :readonly="readonly"
+          autocomplete="off"
           @input="handleInput"
           @blur="handleBlur"
           @focus="handleFocus"
@@ -272,6 +275,9 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
+
+// Generate unique field name to prevent browser autocomplete recognition
+const uniqueFieldName = `field_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`
 
 interface Option {
   value: string | number | boolean | null

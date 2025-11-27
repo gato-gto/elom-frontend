@@ -58,6 +58,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       placeholder: 'Введите имя',
       order: 1,
       width: 'half',
+      autocomplete: 'nope',
       validation: {
         maxLength: 50
       }
@@ -69,6 +70,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       placeholder: 'Введите фамилию',
       order: 2,
       width: 'half',
+      autocomplete: 'nope',
       validation: {
         maxLength: 50
       }
@@ -80,6 +82,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       placeholder: 'Введите email',
       order: 3,
       width: 'half',
+      autocomplete: 'nope',
       validation: {
         pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         maxLength: 100
@@ -93,6 +96,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       required: true,
       order: 4,
       width: 'half',
+      autocomplete: 'nope',
       validation: {
         minLength: 3,
         maxLength: 50,
@@ -106,6 +110,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       placeholder: '+998 XX XXX XX XX',
       order: 5,
       width: 'half',
+      autocomplete: 'nope',
       validation: {
         maxLength: 32
       },
@@ -129,6 +134,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       required: !props.initial,
       order: 7,
       width: 'half',
+      autocomplete: 'new-password',
       validation: props.initial ? {} : {
         minLength: 6,
         maxLength: 128

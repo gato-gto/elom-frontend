@@ -92,6 +92,7 @@ export interface FieldConfig {
   width?: 'full' | 'half' | 'third' | 'quarter'
   condition?: () => boolean // Условие для отображения поля
   customClass?: string // Дополнительные CSS классы для поля
+  autocomplete?: string // Значение атрибута autocomplete для браузера
 }
 
 export interface FormSection {

@@ -1,5 +1,5 @@
 <template>
-  <form class="grid gap-4" @submit.prevent="submit">
+  <form class="grid gap-4" autocomplete="off" @submit.prevent="submit">
     <!-- Form Sections as Cards -->
     <div v-if="config.sections && config.sections.length > 0">
       <div
@@ -40,12 +40,12 @@
                 :checkboxLabel="field.checkboxLabel"
                 :switchLabel="field.switchLabel"
                 :customClass="field.customClass"
+                :autocomplete="field.autocomplete"
                 :class="{
                   'md:col-span-2': field.width === 'full'
                 }"
                 @update:model-value="handleFieldChange(field.key, $event)"
               />
-                <!-- Debug for material field -->
               </template>
             </template>
           </div>
@@ -87,6 +87,7 @@
                 :checkboxLabel="field.checkboxLabel"
                 :switchLabel="field.switchLabel"
                 :customClass="field.customClass"
+                :autocomplete="field.autocomplete"
                 :class="{
                   'md:col-span-2': field.width === 'full'
                 }"
