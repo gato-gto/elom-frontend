@@ -886,7 +886,7 @@ paths:
         name: role
         schema:
           type: string
-        description: 'Фильтр: роль (admin|buyer|site_manager|director|coordinator|brigadier)'
+        description: 'Фильтр: роль (admin|director|coordinator|brigadier). Примечание: buyer и site_manager удалены'
       - in: query
         name: search
         schema:

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#075985"/>
+    </linearGradient>
+    <linearGradient id="boltFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Rounded background -->
+  <rect width="512" height="512" rx="102" fill="url(#bgGradient)"/>
+  
+  <!-- Lightning bolt centered with padding and glow effect -->
+  <g transform="translate(86, 56)" filter="url(#glow)">
+    <path d="M212 0
+         H340
+         L191 200
+         H298
+         L128 400
+         H0
+         L149 200
+         H42 Z" fill="url(#boltFill)" stroke="#7dd3fc" stroke-width="6" stroke-linejoin="round"/>
+  </g>
+</svg>
+
