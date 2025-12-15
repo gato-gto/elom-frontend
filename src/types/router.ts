@@ -58,7 +58,9 @@ export interface NavigationItem {
 // - requester: Заявитель (просмотр и подача заявок)
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   admin: 100,
+  director: 95,
   manager: 90,
+  coordinator: 87,
   warehouse: 85,
   brigadier: 60,
   requester: 40

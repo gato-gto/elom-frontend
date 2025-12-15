@@ -132,7 +132,10 @@ const roleDisplayName = computed(() => {
     admin: 'Администратор',
     director: 'Директор',
     coordinator: 'Координатор',
-    brigadier: 'Бригадир'
+    manager: 'Управляющий',
+    brigadier: 'Бригадир',
+    warehouse: 'Склад',
+    requester: 'Заявитель'
   }
   return roleNames[auth.role as UserRole] || 'Роль не задана'
 })
