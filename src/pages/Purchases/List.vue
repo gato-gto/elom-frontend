@@ -58,9 +58,9 @@ import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore } from '@/stores/employees'
 
 // Stores
-const purchasesStore = usePurchasesStore
-const objectsStore = useObjectsStore
-const employeesStore = useEmployeesStore
+const purchasesStore = usePurchasesStore()
+const objectsStore = useObjectsStore()
+const employeesStore = useEmployeesStore()
 
 // Error handling
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
@@ -235,7 +235,7 @@ async function handleDelete(purchase: Purchase) {
   if (!confirm(`Удалить закупку "${purchase.purchase_no || '#' + purchase.id}"?`)) {return}
   
   try {
-    await purchasesStore.delete(purchase.id)
+    await purchasesStore.remove(purchase.id)
   } catch (error) {
     await handleDeleteError(error, 'purchase', purchase.id)
   }

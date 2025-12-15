@@ -1,13 +1,14 @@
 <template>
-  <div class="dropdown dropdown-end">
-    <div tabindex="0" role="button" class="btn btn-outline btn-sm" :class="{ 'btn-disabled': loading }" :disabled="loading">
+  <div class="dropdown dropdown-end w-full md:w-auto">
+    <div tabindex="0" role="button" class="btn btn-outline btn-sm w-full md:w-auto" :class="{ 'btn-disabled': loading }" :disabled="loading">
       <svg v-if="loading" class="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
       </svg>
       <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
-      {{ loading ? 'Экспорт...' : 'Экспорт' }}
+      <span class="hidden md:inline">{{ loading ? 'Экспорт...' : 'Экспорт' }}</span>
+      <span class="md:hidden text-xs">{{ loading ? '...' : 'Экспорт' }}</span>
     </div>
     
     <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">

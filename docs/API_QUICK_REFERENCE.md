@@ -53,50 +53,48 @@ GET    /purchases/                         # List purchases
 POST   /purchases/                         # Create purchase
 PUT    /purchases/{id}/                    # Update purchase
 DELETE /purchases/{id}/                    # Delete purchase
-POST   /purchases/{id}/archive/            # Archive purchase
-POST   /purchases/{id}/duplicate/          # Duplicate purchase
-
-# Purchase Items
-GET    /purchase-items/                    # List items
-POST   /purchase-items/                    # Create item
-PUT    /purchase-items/{id}/               # Update item
-DELETE /purchase-items/{id}/               # Delete item
-
-# Photos
-POST   /purchases/{id}/upload_photo/       # Upload photo
-DELETE /purchases/{id}/delete_photo/{photo_id}/  # Delete photo
-POST   /purchases/{id}/set_cover_photo/{photo_id}/  # Set cover
 ```
 
 ### Stock
 ```bash
-# Stock Snapshots (Movements)
-GET    /stock/snapshots/                   # List movements
+GET    /stock/snapshots/                   # List stock movements
+GET    /stock/snapshots/balance/           # Get balance
+GET    /stock/snapshots/by-objects/        # Balances by objects
+```
 
-# Write-offs
-GET    /writeoffs/                         # List write-offs
-POST   /writeoffs/                         # Create write-off
-PUT    /writeoffs/{id}/                    # Update write-off
-DELETE /writeoffs/{id}/                    # Delete write-off
+### WriteOffs
+```bash
+GET    /writeoffs/                         # List writeoffs
+POST   /writeoffs/                         # Create writeoff
+PUT    /writeoffs/{id}/                    # Update writeoff
+DELETE /writeoffs/{id}/                    # Delete writeoff
+```
 
-# Archive
-GET    /archive/periods/                   # List archive periods
+### Archive
+```bash
+GET    /archive/                           # List archive periods
 POST   /archive/periods/close/             # Close period
-POST   /archive/periods/{id}/reopen/       # Reopen period
+POST   /archive/periods/reopen/            # Reopen period
 ```
 
-### Reports
+### Tools (Admin only) 🆕
 ```bash
-GET    /reports/by-objects/                # Objects report
-GET    /reports/by-responsibles/           # Responsibles report
-GET    /reports/by-materials/              # Materials report
-```
+# Tools
+GET    /tools/                             # List tools
+POST   /tools/                             # Create tool
+GET    /tools/{id}/                        # Get tool
+PATCH  /tools/{id}/                        # Update tool
+DELETE /tools/{id}/                        # Delete tool
+GET    /tools/categories/                  # Get categories for autocomplete
+POST   /tools/bulk-create/                 # Bulk create tools
 
-### Import
-```bash
-POST   /purchases/import/prepare/          # Prepare import
-POST   /purchases/import/dry_run/          # Test import
-POST   /purchases/import/commit/           # Commit import
+# Tool Issues
+GET    /tool-issues/                       # List issues
+POST   /tool-issues/                       # Issue tool (standard create)
+POST   /tool-issues/issue/                 # Issue tool (recommended endpoint) 🆕
+GET    /tool-issues/{id}/                  # Get issue
+POST   /tool-issues/{id}/return/           # Return tool
+GET    /tool-issues/active/                # List active issues
 ```
 
 ## Common Query Parameters
@@ -115,129 +113,117 @@ POST   /purchases/import/commit/           # Commit import
 ```bash
 ?ordering=field_name          # ASC
 ?ordering=-field_name         # DESC
-?ordering=field1,-field2      # Multiple fields
 ```
 
-### Date Filters
+### Tools Filters
 ```bash
-?date_from=2024-01-01
-?date_to=2024-12-31
+?inventory_number=INV001
+?category=Перфоратор           # Фильтр по категории (частичное совпадение)
+?condition=good               # new|good|after_repair|needs_repair|broken|lost
+?current_holder=1
+?current_object=1
+?in_stock=true                 # true = на складе, false = выдано
 ```
 
-### Specific Filters
+### Tool Issues Filters
 ```bash
-# Purchases
-?object=1&responsible=1&is_archived=false
-
-# Materials
-?category=1&is_active=true
-
-# Write-offs
-?stage=post_rough&material=1
-
-# Stock
-?source_type=purchase_item&stage=delivery_fixed
+?tool=1
+?is_open=true                  # true = активна (не возвращена), false = закрыта (возвращена)
+?is_returned=false             # Альтернатива is_open (true = возвращена, false = не возвращена)
+?tool_inventory_number=INV001
+?issued_by=1
+?issued_to=1
+?object=1
+?is_returned=true             # true = returned, false = active
+?issue_condition=good
+?return_condition=good
+?issued_at_from=2024-01-01
+?issued_at_to=2024-12-31
 ```
 
 ## Data Types
 
-### Purchase
+### Tool 🆕
 ```typescript
 {
   "id": 1,
-  "date": "2024-01-15",
-  "object": 1,
-  "object_name": "ЖК Солнечный",
-  "supplier": "ООО Стройматериалы",
-  "invoice_number": "INV-001",
-  "vat_included": true,
-  "currency": "UZS",
-  "comment": "Закупка материалов",
-  "responsible": 1,
-  "total_amount": 5000000,
-  "is_archived": false,
-  "purchase_no": "PUR-2024-0001",
-  "items": [...],
-  "photos": [...]
+  "inventory_number": "INV001",
+  "name": "Перфоратор Makita HR2470",
+  "category": "Перфоратор, SDS-Plus",
+  "brand": "Makita",
+  "current_holder": 1,
+  "current_holder_name": "Иванов Петр",
+  "current_object": 1,
+  "current_object_name": "ЖК Солнечный",
+  "condition": "good",
+  "condition_display": "Хорошее",
+  "is_in_stock": false,
+  "status_display": "У Иванов Петр (объект: ЖК Солнечный)",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
 }
 ```
 
-### WriteOff
+### ToolIssue 🆕
 ```typescript
 {
   "id": 1,
-  "date": "2024-01-15",
+  "tool": 1,
+  "tool_name": "Перфоратор Makita HR2470",
+  "tool_inventory_number": "INV001",
+  "tool_category": "Перфоратор, SDS-Plus",  // 🆕 Категория инструмента
+  "tool_brand": "Makita",                   // 🆕 Марка инструмента
+  "issued_by": 1,
+  "issued_by_name": "Координатор",
+  "issued_to": 2,
+  "issued_to_name": "Иванов Петр",
+  "issued_at": "2024-01-15T10:30:00Z",
   "object": 1,
   "object_name": "ЖК Солнечный",
-  "material": 1,
-  "material_name": "Цемент М400",
-  "unit": 2,
-  "unit_code": "кг",
-  "quantity": 25.5,
-  "stage": "post_rough",
-  "responsible": 1,
-  "comment": "Списание после работ",
-  "is_archived": false,
-  "current_balance": 100.0,
-  "smart_quantity": {
-    "value": 25.5,
-    "unit": "кг",
-    "original_value": 25.5,
-    "original_unit": "кг"
-  },
-  "validation_warnings": []
+  "issue_condition": "good",              # Важно: issue_condition, не issued_condition
+  "issue_condition_display": "Хорошее",
+  "issue_comment": "",
+  "return_date": null,
+  "return_condition": null,               # Важно: return_condition, не returned_condition
+  "return_condition_display": null,
+  "return_comment": "",
+  "is_returned": false,
+  "is_open": true,                         # Алиас для !is_returned
+  "duration_days": 5,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
 }
 ```
 
-### StockSnapshot
+## User Roles
+
+| Role | Description |
+|------|-------------|
+| `admin` | Administrator (full access + tools) 🔧 |
+| `manager` | Full access without accounting (operations don't create StockSnapshot) |
+| `brigadier` | Create objects, writeoffs, purchases (assigned objects only) |
+| `warehouse` | Full access without accounting (warehouse/workshop/project operations) |
+| `requester` | View and create material requests only |
+
+> Note: Roles updated in December 2025. Manager and warehouse work "without accounting" - operations don't create StockSnapshot records.
+
+## Error Responses
 ```typescript
-{
-  "id": 1,
-  "date": "2024-01-15",
-  "object": 1,
-  "object_name": "ЖК Солнечный",
-  "material": 1,
-  "material_name": "Цемент М400",
-  "unit": 2,
-  "unit_code": "кг",
-  "quantity_signed": 100.0,  // + for income, - for outcome
-  "stage": "delivery_fixed",
-  "source_type": "purchase_item",
-  "source_id": 1,
-  "responsible": 1,
-  "comment": "",
-  "is_archived": false,
-  "smart_quantity": {...},
-  "source_description": "Закупка #PUR-2024-0001"
-}
+// 400 Bad Request
+{ "detail": "Error message" }
+{ "field_name": ["Error message"] }
+
+// 401 Unauthorized
+{ "detail": "Authentication credentials were not provided." }
+
+// 403 Forbidden
+{ "detail": "You do not have permission to perform this action." }
+
+// 404 Not Found
+{ "detail": "Not found." }
 ```
 
-## User Roles (Updated November 2025)
-- `admin` - Administrator (Django Admin only)
-- `director` - Full access to all data
-- `coordinator` - Coordination between objects
-- `brigadier` - Work with assigned objects
+---
 
-> Note: `buyer` and `site_manager` roles removed - their functions now performed by `brigadier`
-
-## Stages
-- `acceptance` - Object acceptance
-- `request` - Request
-- `delivery_fixed` - Actual delivery
-- `post_rough` - After rough work
-- `handover` - Handover
-
-## Source Types
-- `purchase_item` - From purchase
-- `writeoff` - From write-off
-
-## HTTP Status Codes
-- `200` - OK
-- `201` - Created
-- `204` - No Content
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `422` - Validation Error
-- `500` - Server Error
+**Last Updated:** November 27, 2025  
+**Version:** 3.5

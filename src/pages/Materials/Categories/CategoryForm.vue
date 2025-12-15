@@ -20,7 +20,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const router = useRouter()
 const route = useRoute()
-const materialCategoriesStore = useMaterialCategoriesStore
+const materialCategoriesStore = useMaterialCategoriesStore()
 
 // Используем новый композабл для обработки ошибок
 const { handleFormError } = useErrorHandler()
@@ -96,7 +96,7 @@ onMounted(async () => {
       await materialCategoriesStore.fetchOne(categoryId.value)
     } catch (error) {
       await handleFormError(error, 'category')
-      router.push('/materials/categories')
+      router.push('/material_categories')
     }
   }
 })
@@ -115,7 +115,7 @@ async function handleSubmit(data: any) {
       await materialCategoriesStore.create(categoryData)
     }
     
-    router.push('/materials/categories')
+    router.push('/material_categories')
   } catch (error) {
     await handleFormError(error, 'category')
   }
@@ -123,7 +123,7 @@ async function handleSubmit(data: any) {
 
 // Отмена
 function handleCancel() {
-  router.push('/materials/categories')
+  router.push('/material_categories')
 }
 </script>
 

@@ -1,7 +1,9 @@
-import { defineStore } from 'pinia'
+/**
+ * Store для управления материалами
+ */
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+import { createBaseStore } from './base'
 import type { 
   Material, 
   MaterialRequest, 
@@ -9,14 +11,18 @@ import type {
   PaginatedMaterialList 
 } from '@/api/types'
 
-// Create base store
+// Создаём store
 export const useMaterialsStore = createBaseStore<Material, MaterialRequest, PatchedMaterialRequest>({
   endpoint: endpoints.materials,
   entityName: 'materials',
-  entityNamePlural: 'материалы'
+  entityNamePlural: 'материалы',
+  defaultOrdering: 'name'
 })
 
-// Override getMaterialsByObject with actual implementation
+// ============================================================================
+// Custom Actions
+// ============================================================================
+
 export const getMaterialsByObject = async (objectId: number): Promise<Material[]> => {
   try {
     const queryParams = {
@@ -34,10 +40,10 @@ export const getMaterialsByObject = async (objectId: number): Promise<Material[]
   }
 }
 
-// Override uploadPhoto with actual implementation
 export const uploadPhoto = async (id: number, photo: File) => {
-  useMaterialsStore.loading = true
-  useMaterialsStore.error = null
+  const store = useMaterialsStore()
+  store.loading = true
+  store.error = null
 
   try {
     const formData = new FormData()
@@ -53,51 +59,50 @@ export const uploadPhoto = async (id: number, photo: File) => {
       }
     )
 
-    const index = useMaterialsStore.items.findIndex(item => item.id === id)
+    const index = store.items.findIndex(item => item.id === id)
     if (index !== -1) {
-      useMaterialsStore.items[index].photo_url = data.photo_url
+      store.items[index].photo_url = data.photo_url
     }
 
-    if (useMaterialsStore.current?.id === id) {
-      useMaterialsStore.current.photo_url = data.photo_url
+    if (store.current?.id === id) {
+      store.current.photo_url = data.photo_url
     }
 
     return data.photo_url
   } catch (error: any) {
-    useMaterialsStore.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
+    store.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
     throw error
   } finally {
-    useMaterialsStore.loading = false
+    store.loading = false
   }
 }
 
-// Override deletePhoto with actual implementation
 export const deletePhoto = async (id: number) => {
-  useMaterialsStore.loading = true
-  useMaterialsStore.error = null
+  const store = useMaterialsStore()
+  store.loading = true
+  store.error = null
 
   try {
     await api.delete(endpoints.materials.deletePhoto(id))
 
-    const index = useMaterialsStore.items.findIndex(item => item.id === id)
+    const index = store.items.findIndex(item => item.id === id)
     if (index !== -1) {
-      useMaterialsStore.items[index].photo_url = undefined
+      store.items[index].photo_url = undefined
     }
 
-    if (useMaterialsStore.current?.id === id) {
-      useMaterialsStore.current.photo_url = undefined
+    if (store.current?.id === id) {
+      store.current.photo_url = undefined
     }
 
     return true
   } catch (error: any) {
-    useMaterialsStore.error = error?.response?.data?.detail || 'Ошибка удаления фото'
+    store.error = error?.response?.data?.detail || 'Ошибка удаления фото'
     throw error
   } finally {
-    useMaterialsStore.loading = false
+    store.loading = false
   }
 }
 
-// Override searchMaterials with materials-specific implementation
 export const searchMaterials = async (query: string): Promise<Material[]> => {
   try {
     const queryParams = {
@@ -109,15 +114,19 @@ export const searchMaterials = async (query: string): Promise<Material[]> => {
     const queryString = buildQuery(queryParams)
     const { data } = await api.get<PaginatedMaterialList>(endpoints.materials.list + queryString)
     
-    return data.results
+    // API может возвращать либо объект с results, либо массив
+    return Array.isArray(data) ? data : (data?.results || [])
   } catch (error: any) {
     console.error('Error searching materials:', error)
     return []
   }
 }
 
-// Custom getters for materials
-export const getByCategory = (categoryId: number) => {
-  return useMaterialsStore.items.filter((item: Material) => item.category === categoryId)
-}
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
+export const getByCategory = (categoryId: number) => {
+  const store = useMaterialsStore()
+  return store.items.filter((item: Material) => item.category === categoryId)
+}

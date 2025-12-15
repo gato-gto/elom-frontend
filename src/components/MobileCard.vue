@@ -1,51 +1,46 @@
 <template>
-  <div class="card bg-base-100 shadow-sm border mobile-card">
-    <div class="card-body p-4">
-      <!-- Заголовок с бейджем -->
-      <div class="flex items-start justify-between">
-        <div class="flex-1 min-w-0">
-          <h3 class="card-title text-base leading-tight">{{ title }}</h3>
-        </div>
-      </div>
-      <div v-if="badge" class="badge flex-shrink-0" :class="badgeClass">{{ badge }}</div>
+  <div class="card bg-base-100 shadow-sm border mobile-card p-4">
+    <!-- Заголовок с бейджем -->
+    <div class="flex items-start justify-between mb-3">
+      <h3 class="card-title text-base leading-tight flex-1 min-w-0">{{ title }}</h3>
+      <div v-if="badge" class="badge flex-shrink-0 ml-2" :class="badgeClass">{{ badge }}</div>
+    </div>
 
-      <!-- Слот для основного контента -->
-      <div class="mobile-card-content">
-        <slot name="content"/>
-      </div>
+    <!-- Слот для основного контента -->
+    <div class="mobile-card-content">
+      <slot name="content"/>
+    </div>
 
-      <!-- Дополнительная информация (опционально) -->
-      <div v-if="$slots.extra" class="mobile-card-extra mt-3 pt-3 border-t border-base-300">
-        <slot name="extra"/>
-      </div>
+    <!-- Дополнительная информация (опционально) -->
+    <div v-if="$slots.extra" class="mobile-card-extra mt-3 pt-3 border-t border-base-300">
+      <slot name="extra"/>
+    </div>
 
-      <!-- Действия -->
+    <!-- Действия -->
       <div v-if="actions && actions.length > 0" class="card-actions justify-end mt-4">
         <button v-for="action in actions" :key="action.key" class="btn btn-sm" :class="action.class || 'btn-outline'" :disabled="action.disabled" :title="action.tooltip" @click="$emit('action', action.key)">
           <component :is="action.icon" v-if="action.icon" class="w-4 h-4 mr-1"/>
-          <span class="hidden sm:inline">{{ action.label }}</span>
-          <span class="sm:hidden">{{ action.shortLabel || action.label }}</span>
+          <span>{{ action.label }}</span>
         </button>
       </div>
 
-      <!-- Альтернативные действия (dropdown для экономии места) -->
-      <div v-else-if="dropdownActions && dropdownActions.length > 0" class="card-actions justify-end mt-4">
-        <div class="dropdown dropdown-top dropdown-end">
-          <label tabindex="0" class="btn btn-sm btn-outline">
-            Действия
-            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </label>
-          <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-            <li v-for="action in dropdownActions" :key="action.key">
-              <a :class="{ 'disabled': action.disabled }" @click="!action.disabled && $emit('action', action.key)">
-                <component :is="action.icon" v-if="action.icon" class="w-4 h-4"/>
-                {{ action.label }}
-              </a>
-            </li>
-          </ul>
-        </div>
+    <!-- Альтернативные действия (dropdown для экономии места) -->
+    <div v-else-if="dropdownActions && dropdownActions.length > 0" class="card-actions justify-end mt-4">
+      <div class="dropdown dropdown-top dropdown-end">
+        <label tabindex="0" class="btn btn-sm btn-outline">
+          Действия
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </label>
+        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li v-for="action in dropdownActions" :key="action.key">
+            <a :class="{ 'disabled': action.disabled }" @click="!action.disabled && $emit('action', action.key)">
+              <component :is="action.icon" v-if="action.icon" class="w-4 h-4"/>
+              {{ action.label }}
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
   </div>

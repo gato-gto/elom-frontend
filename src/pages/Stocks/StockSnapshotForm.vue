@@ -53,11 +53,11 @@ import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import { ErrorHandlers } from '@/utils/errorHandler'
 
-const stockSnapshotsStore = useStockSnapshotsStore
-const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore
-const employeesStore = useEmployeesStore
-const unitsStore = useUnitsStore
+const stockSnapshotsStore = useStockSnapshotsStore()
+const objectsStore = useObjectsStore()
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore()
+const unitsStore = useUnitsStore()
 const ui = useUiStore()
 
 const props = defineProps<{

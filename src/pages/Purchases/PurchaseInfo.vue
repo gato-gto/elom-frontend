@@ -331,7 +331,7 @@ const emit = defineEmits<{
 }>()
 
 // Stores
-const employeesStore = useEmployeesStore
+const employeesStore = useEmployeesStore()
 
 // Photo modal state
 const photoModalOpen = ref(false)

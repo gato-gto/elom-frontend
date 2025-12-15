@@ -433,6 +433,49 @@
         </div>
       </template>
     </GenericForm>
+
+    <!-- Modal для подтверждения новых материалов -->
+    <Modal v-model="confirmNewMaterialsModalOpen" title="Подтверждение создания новых материалов" size="lg" :closable="true">
+      <div class="space-y-4">
+        <div class="alert alert-warning">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>Будут созданы следующие новые материалы:</span>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Единица измерения</th>
+                <th>Количество</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(material, idx) in newMaterialsToConfirm" :key="idx">
+                <td>{{ material.name }}</td>
+                <td>{{ material.unit }}</td>
+                <td>{{ material.quantity }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="alert alert-info">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm">Материалы будут созданы автоматически с SKU формата AUTO-{uuid}</span>
+        </div>
+        
+        <div class="flex justify-end gap-2">
+          <button class="btn btn-ghost" @click="cancelNewMaterials">Отменить</button>
+          <button class="btn btn-primary" @click="confirmNewMaterials">Подтвердить и создать</button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -450,6 +493,7 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { useAuthStore } from '@/stores/auth'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import GenericForm from '@/components/GenericForm.vue'
+import Modal from '@/components/Modal.vue'
 import type { Purchase, PurchaseRequest, PurchaseItemRequest, Employee, Material, PurchasePhoto } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -473,12 +517,12 @@ const emit = defineEmits<{
 const router = useRouter()
 const route = useRoute()
 
-const purchasesStore = usePurchasesStore
-const materialsStore = useMaterialsStore
-const unitsStore = useUnitsStore
-const objectsStore = useObjectsStore
-const employeesStore = useEmployeesStore
-const suppliersStore = useSuppliersStore
+const purchasesStore = usePurchasesStore()
+const materialsStore = useMaterialsStore()
+const unitsStore = useUnitsStore()
+const objectsStore = useObjectsStore()
+const employeesStore = useEmployeesStore()
+const suppliersStore = useSuppliersStore()
 const ui = useUiStore()
 const notifications = useNotificationsStore()
 const auth = useAuthStore()
@@ -646,6 +690,11 @@ const reportPhotosInput = ref<HTMLInputElement>()
 // Existing photos from the purchase
 const existingInstructionPhotos = ref<PurchasePhoto[]>([])
 const existingReportPhotos = ref<PurchasePhoto[]>([])
+
+// Modal для подтверждения новых материалов
+const confirmNewMaterialsModalOpen = ref(false)
+const newMaterialsToConfirm = ref<Array<{name: string, unit: string, quantity: string}>>([])
+let newMaterialsConfirmResolve: ((value: boolean) => void) | null = null
 
 // Computed properties for form options
 const materials = computed(() => materialsStore.items)
@@ -1015,6 +1064,22 @@ async function onSaved(data: PurchaseRequest) {
     return
   }
   
+  // 2. Проверка на новые материалы (только при создании, не при редактировании)
+  if (!isEdit.value) {
+    const newMaterials = items.value.filter(item => 
+      item.isNewMaterial && item.material_name && item.material_name.trim()
+    )
+    
+    if (newMaterials.length > 0) {
+      // Показываем модальное окно подтверждения
+      const confirmed = await showNewMaterialsConfirmModal(newMaterials)
+      if (!confirmed) {
+        saving.value = false
+        return // Пользователь отменил
+      }
+    }
+  }
+  
   try {
     // 2. Подготовка данных
     const purchaseData = preparePurchaseData(data)
@@ -1324,6 +1389,35 @@ async function loadData() {
     // Add initial item for new purchase
     addItem()
   }
+}
+
+// Функции для модального окна подтверждения новых материалов
+function showNewMaterialsConfirmModal(materials: PurchaseItem[]): Promise<boolean> {
+  return new Promise((resolve) => {
+    newMaterialsToConfirm.value = materials.map(item => ({
+      name: item.material_name || '',
+      unit: getUnitName(item.unit) || '—',
+      quantity: String(item.quantity)
+    }))
+    newMaterialsConfirmResolve = resolve
+    confirmNewMaterialsModalOpen.value = true
+  })
+}
+
+function confirmNewMaterials() {
+  if (newMaterialsConfirmResolve) {
+    newMaterialsConfirmResolve(true)
+    newMaterialsConfirmResolve = null
+  }
+  confirmNewMaterialsModalOpen.value = false
+}
+
+function cancelNewMaterials() {
+  if (newMaterialsConfirmResolve) {
+    newMaterialsConfirmResolve(false)
+    newMaterialsConfirmResolve = null
+  }
+  confirmNewMaterialsModalOpen.value = false
 }
 
 onMounted(() => {

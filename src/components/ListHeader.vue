@@ -14,16 +14,17 @@
       <div class="header-actions">
         <slot name="actions" />
         
+        <!-- Стандартная кнопка "Добавить" - скрыта на мобильных, если есть кастомные actions -->
         <button
           v-if="showCreate && canCreate"
-          class="action-btn action-btn-primary"
+          class="action-btn action-btn-primary hidden md:flex"
           @click="$emit('create')"
           :disabled="loading"
         >
           <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          {{ createText }}
+          <span>{{ createText }}</span>
         </button>
       </div>
     </div>
@@ -96,8 +97,15 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  gap: 1rem;
+  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .header-content {
+    padding: 1.5rem;
+    gap: 1rem;
+  }
 }
 
 .header-title-section {
@@ -128,6 +136,73 @@ defineEmits<{
   color: hsl(var(--bc) / 0.7);
   font-size: 0.875rem;
   line-height: 1.4;
+}
+
+/* Мобильная адаптивность - оптимизированные отступы */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .header-title-section {
+    width: 100%;
+  }
+  
+  .list-title {
+    font-size: 1.125rem;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+  }
+  
+  .title-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  
+  .list-subtitle {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  
+  .header-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .action-btn {
+    flex: 1 1 auto;
+    min-width: fit-content;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .header-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .stat-item {
+    flex: 1 1 auto;
+    min-width: fit-content;
+    gap: 0.375rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+  
+  .stat-value {
+    font-size: 0.75rem;
+  }
 }
 
 .header-actions {
@@ -206,10 +281,17 @@ defineEmits<{
 .header-stats {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 1rem 1.5rem;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-top: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+@media (min-width: 768px) {
+  .header-stats {
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+  }
 }
 
 .stat-item {
@@ -234,21 +316,50 @@ defineEmits<{
   background-clip: text;
 }
 
-@media (max-width: 768px) {
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 480px) {
   .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    padding: 0.5rem;
+    gap: 0.375rem;
+  }
+  
+  .list-title {
+    font-size: 1rem;
+    gap: 0.25rem;
+  }
+  
+  .title-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .list-subtitle {
+    font-size: 0.6875rem;
+    margin-top: 0.125rem;
   }
   
   .header-actions {
-    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+  
+  .action-btn {
+    padding: 0.4375rem 0.625rem;
+    font-size: 0.6875rem;
+    min-height: 2.5rem; /* Сохраняем минимальный размер для кликабельности */
   }
   
   .header-stats {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 0.4375rem 0.5rem;
     gap: 0.5rem;
+  }
+  
+  .stat-item {
+    gap: 0.25rem;
+  }
+  
+  .stat-label,
+  .stat-value {
+    font-size: 0.6875rem;
   }
 }
 </style>

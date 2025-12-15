@@ -26,13 +26,13 @@ class TimeStamped(models.Model):
 ### 2. EmployeeProfile
 ```python
 class EmployeeProfile(models.Model):
-    # Роли системы (упрощены в ноябре 2025)
-    # buyer и site_manager удалены - их функции выполняет brigadier
+    # Роли системы (обновлено декабрь 2025)
     ROLE_CHOICES = [
-        ("admin", "Администратор"),      # Только через Django Admin
-        ("director", "Директор"),        # Полный доступ ко всем данным
-        ("coordinator", "Координатор"),  # Координация между объектами
-        ("brigadier", "Бригадир"),       # Работа с назначенными объектами
+        ("admin", "Администратор"),           # Полный доступ
+        ("manager", "Управляющий"),           # Полный доступ без учета изменений
+        ("brigadier", "Бригадир/Инженер"),    # Создание объекта, списание, закупка
+        ("warehouse", "Склад/Цех/Проект"),    # Полный доступ без учета изменений
+        ("requester", "Просмотр и подача заявки"),  # Просмотр и подача заявки
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -44,9 +44,10 @@ class EmployeeProfile(models.Model):
 
 **Назначение**: Расширенный профиль пользователя с ролями и правами доступа
 **Ключевые особенности**:
-- Обязательный телефон для всех ролей кроме admin/director
+- Обязательный телефон для всех ролей кроме admin/manager
 - Many-to-Many связь с объектами для ограничения доступа
 - Метод `get_accessible_objects()` для определения доступных объектов
+- Роли `manager` и `warehouse` работают "без учета изменений" - операции не создают StockSnapshot
 
 ### 3. Unit (Единицы измерения)
 ```python
@@ -323,6 +324,36 @@ class TelegramNotification(models.Model):
 
 **Назначение**: Логирование отправленных Telegram уведомлений
 
+### 17. MaterialRequest (Заявки на материалы)
+```python
+class MaterialRequest(TimeStamped):
+    STATUS_CHOICES = [
+        ("pending", "Ожидает"),
+        ("approved", "Одобрено"),
+        ("rejected", "Отклонено"),
+        ("fulfilled", "Выполнено"),
+    ]
+    
+    date = models.DateField()
+    object = models.ForeignKey(Object, on_delete=models.PROTECT)
+    material = models.ForeignKey(Material, on_delete=models.PROTECT)
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT)
+    quantity = models.DecimalField(max_digits=18, decimal_places=6)
+    requested_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='material_requests')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    comment = models.TextField(blank=True, default="")
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_requests')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, default="")
+```
+
+**Назначение**: Система заявок на материалы для объектов
+**Ключевые особенности**:
+- Позволяет пользователям запрашивать материалы
+- Статусы: ожидает, одобрено, отклонено, выполнено
+- Связь с объектом, материалом, количеством
+- Отслеживание кто подал заявку и кто одобрил
+
 ## Связи между моделями
 
 ### Диаграмма связей
@@ -361,13 +392,19 @@ erDiagram
 
 ## Бизнес-правила и валидация
 
-### 1. Роли и доступ (обновлено ноябрь 2025)
-- **Admin**: Администратор (только через Django Admin)
-- **Director**: Директор (полный доступ ко всем данным)
-- **Coordinator**: Координатор (координация между объектами, полный доступ)
-- **Brigadier**: Бригадир (работа с назначенными объектами, может быть ответственным)
+### 1. Роли и доступ (обновлено декабрь 2025)
+- **Admin**: Администратор (полный доступ)
+- **Manager**: Управляющий (полный доступ без учета изменений)
+- **Brigadier**: Бригадир/Инженер (создание объекта, списание, закупка)
+- **Warehouse**: Склад/Цех/Проект (полный доступ без учета изменений)
+- **Requester**: Просмотр и подача заявки на материал
 
-> **Примечание:** Роли `buyer` и `site_manager` удалены - их функции выполняет `brigadier`
+> **Примечание:** Роли `director`, `coordinator`, `buyer`, `site_manager` удалены или заменены новыми ролями
+
+**Особенности ролей без учета изменений:**
+- Роли `manager` и `warehouse` могут создавать закупки и списания
+- НО: эти операции НЕ создают записи в StockSnapshot
+- Это позволяет планировать и документировать операции без изменения фактических остатков
 
 ### 2. Валидация закупок
 - Ответственный за закупку должен быть бригадиром

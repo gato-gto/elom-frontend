@@ -40,9 +40,6 @@ const StockBalances = () => import(/* webpackChunkName: "stocks" */ '@/pages/Sto
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
 const WriteOffForm = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/WriteOffForm.vue')
 
-// Archive
-const ArchiveList = () => import(/* webpackChunkName: "archive" */ '@/pages/Archive/ListWorking.vue')
-
 // Reports
 const ReportByPeriod = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByPeriod.vue')
 const ReportByObject = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByObject.vue')
@@ -53,6 +50,10 @@ const ReportByResponsible = () => import(/* webpackChunkName: "reports" */ '@/pa
 // Suppliers
 const SuppliersList = () => import(/* webpackChunkName: "suppliers" */ '@/pages/Suppliers/List.vue')
 const SupplierForm = () => import(/* webpackChunkName: "suppliers" */ '@/pages/Suppliers/SupplierForm.vue')
+
+// Tools
+const ToolsList = () => import(/* webpackChunkName: "tools" */ '@/pages/Tools/List.vue')
+const ToolIssuesList = () => import(/* webpackChunkName: "tools" */ '@/pages/Tools/Issues/List.vue')
 
 // Route configuration with enhanced meta
 const routes = [
@@ -85,7 +86,7 @@ const routes = [
       description: 'Управление материалами и номенклатурой',
       category: 'inventory',
       order: 2,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -97,7 +98,7 @@ const routes = [
       breadcrumb: 'Материалы / Новый',
       description: 'Создание нового материала',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
@@ -109,57 +110,59 @@ const routes = [
       breadcrumb: 'Материалы / Редактировать',
       description: 'Редактирование существующего материала',
       category: 'inventory',
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   
   // Material Categories routes
   {
-    path: '/materials/categories',
+    path: '/material_categories',
     name: 'MaterialCategoriesList',
     component: MaterialCategoriesList,
     meta: { 
       title: 'Категории материалов',
-      breadcrumb: 'Материалы / Категории',
+      icon: 'category',
+      breadcrumb: 'Категории материалов',
       description: 'Управление категориями материалов',
-      category: 'inventory',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      order: 9,
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
-    path: '/materials/categories/create',
+    path: '/material_categories/create',
     name: 'MaterialCategoryCreate',
     component: MaterialCategoryForm,
     meta: { 
       title: 'Новая категория',
-      breadcrumb: 'Материалы / Категории / Новая',
+      breadcrumb: 'Категории материалов / Новая',
       description: 'Создание новой категории материалов',
-      category: 'inventory',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
-    path: '/materials/categories/:id',
+    path: '/material_categories/:id',
     name: 'MaterialCategoryInfo',
     component: MaterialCategoryInfo,
     meta: { 
       title: 'Информация о категории',
-      breadcrumb: 'Материалы / Категории / Просмотр',
+      breadcrumb: 'Категории материалов / Просмотр',
       description: 'Просмотр информации о категории материалов',
-      category: 'inventory',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
-    path: '/materials/categories/:id/edit',
+    path: '/material_categories/:id/edit',
     name: 'MaterialCategoryEdit',
     component: MaterialCategoryForm,
     meta: { 
       title: 'Редактировать категорию',
-      breadcrumb: 'Материалы / Категории / Редактировать',
+      breadcrumb: 'Категории материалов / Редактировать',
       description: 'Редактирование категории материалов',
-      category: 'inventory',
-      roles: ['admin', 'director', 'coordinator']
+      category: 'reference_data',
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   
@@ -175,7 +178,7 @@ const routes = [
       description: 'Управление закупками и поставками',
       category: 'purchases',
       order: 3,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -187,7 +190,7 @@ const routes = [
       breadcrumb: 'Закупки / Новая',
       description: 'Создание новой закупки',
       category: 'purchases',
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -199,7 +202,7 @@ const routes = [
       breadcrumb: 'Закупки / Редактировать',
       description: 'Редактирование существующей закупки',
       category: 'purchases',
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   
@@ -215,7 +218,7 @@ const routes = [
       description: 'Управление объектами строительства',
       category: 'objects',
       order: 4,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -227,7 +230,7 @@ const routes = [
       breadcrumb: 'Объекты / Новый',
       description: 'Создание нового объекта',
       category: 'objects',
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -239,7 +242,7 @@ const routes = [
       breadcrumb: 'Объекты / Просмотр',
       description: 'Просмотр статуса объекта, контактов и связанных данных',
       category: 'objects',
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   
@@ -255,7 +258,7 @@ const routes = [
       description: 'Управление единицами измерения',
       category: 'reference_data',
       order: 8,
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   {
@@ -267,7 +270,7 @@ const routes = [
       breadcrumb: 'Единицы / Новая',
       description: 'Создание новой единицы измерения',
       category: 'reference_data',
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   {
@@ -279,7 +282,7 @@ const routes = [
       breadcrumb: 'Единицы / Редактировать',
       description: 'Редактирование существующей единицы измерения',
       category: 'reference_data',
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   
@@ -295,7 +298,7 @@ const routes = [
       description: 'Управление сотрудниками и пользователями',
       category: 'reference_data',
       order: 7,
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   {
@@ -307,7 +310,7 @@ const routes = [
       breadcrumb: 'Сотрудники / Новый',
       description: 'Создание нового сотрудника',
       category: 'reference_data',
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   {
@@ -319,7 +322,7 @@ const routes = [
       breadcrumb: 'Сотрудники / Редактировать',
       description: 'Редактирование существующего сотрудника',
       category: 'reference_data',
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
 
@@ -335,7 +338,7 @@ const routes = [
       description: 'Управление поставщиками',
       category: 'reference_data',
       order: 5,
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   {
@@ -347,7 +350,7 @@ const routes = [
       breadcrumb: 'Поставщики / Новый',
       description: 'Создание нового поставщика',
       category: 'reference_data',
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   {
@@ -359,7 +362,7 @@ const routes = [
       breadcrumb: 'Поставщики / Редактировать',
       description: 'Редактирование существующего поставщика',
       category: 'reference_data',
-      roles: ['admin', 'director']
+      roles: ['admin']
     }
   },
   
@@ -375,7 +378,7 @@ const routes = [
       description: 'Журнал движений материалов',
       category: 'inventory',
       order: 6,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -389,7 +392,7 @@ const routes = [
       description: 'Текущие остатки материалов по объектам',
       category: 'inventory',
       order: 7,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
 
@@ -405,7 +408,7 @@ const routes = [
       description: 'Управление списаниями материалов',
       category: 'writeoffs',
       order: 3,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -417,7 +420,7 @@ const routes = [
       breadcrumb: 'Списания / Новое',
       description: 'Создание нового списания',
       category: 'writeoffs',
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   {
@@ -429,23 +432,7 @@ const routes = [
       breadcrumb: 'Списания / Редактировать',
       description: 'Редактирование существующего списания',
       category: 'writeoffs',
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
-    }
-  },
-  
-  // Archive routes
-  {
-    path: '/archive',
-    name: 'ArchiveList',
-    component: ArchiveList,
-    meta: { 
-      title: 'Архив',
-      icon: 'archive',
-      breadcrumb: 'Архив',
-      description: 'Архивные данные и отчеты',
-      category: 'archive',
-      order: 10,
-      roles: ['admin', 'director', 'coordinator', 'brigadier']
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }
   },
   
@@ -460,7 +447,7 @@ const routes = [
       description: 'Отчеты по периодам времени',
       category: 'reports',
       order: 11,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
@@ -473,7 +460,7 @@ const routes = [
       description: 'Отчеты по объектам строительства',
       category: 'reports',
       order: 12,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
@@ -486,7 +473,7 @@ const routes = [
       description: 'Отчеты по материалам и номенклатуре',
       category: 'reports',
       order: 13,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   {
@@ -499,10 +486,39 @@ const routes = [
       description: 'Отчеты по ответственным лицам',
       category: 'reports',
       order: 14,
-      roles: ['admin', 'director', 'coordinator']
+      roles: ['admin', 'manager', 'warehouse']
     }
   },
   
+  // Tools routes (только для admin)
+  {
+    path: '/tools_index',
+    name: 'ToolsList',
+    component: ToolsList,
+    meta: { 
+      title: 'Инструменты',
+      icon: 'build',
+      breadcrumb: 'Инструменты',
+      description: 'Учёт и управление инструментами',
+      category: 'tools',
+      order: 15,
+      roles: ['admin']
+    }
+  },
+  {
+    path: '/tools_issues',
+    name: 'ToolIssuesList',
+    component: ToolIssuesList,
+    meta: { 
+      title: 'Выдачи инструментов',
+      icon: 'assignment',
+      breadcrumb: 'Выдачи инструментов',
+      description: 'Журнал выдач и возвратов инструментов',
+      category: 'tools',
+      order: 16,
+      roles: ['admin']
+    }
+  },
   
   // 404 fallback
   {

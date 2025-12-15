@@ -80,7 +80,7 @@ import GenericList from '@/components/GenericList.vue'
 import SupplierCard from '@/components/cards/SupplierCard.vue'
 
 // Stores
-const suppliersStore = useSuppliersStore
+const suppliersStore = useSuppliersStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 
@@ -199,7 +199,7 @@ async function handleDelete() {
   
   deleting.value = true
   try {
-    await suppliersStore.delete(deletingSupplier.value.id)
+    await suppliersStore.remove(deletingSupplier.value.id)
     ui.toast({ type: 'success', text: 'Поставщик удален' })
     showDeleteModal.value = false
     deletingSupplier.value = null

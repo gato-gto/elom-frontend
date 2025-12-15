@@ -90,7 +90,13 @@ const gridClass = computed(() => {
 .filter-header {
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  padding: 1rem 1.5rem;
+  padding: 0.625rem 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .filter-header {
+    padding: 1rem 1.5rem;
+  }
 }
 
 :root.dark .filter-header {
@@ -101,11 +107,18 @@ const gridClass = computed(() => {
 .filter-title {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.125rem;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+}
+
+@media (min-width: 768px) {
+  .filter-title {
+    gap: 0.75rem;
+    font-size: 1.125rem;
+  }
 }
 
 :root.dark .filter-title {
@@ -119,12 +132,24 @@ const gridClass = computed(() => {
 }
 
 .filter-content {
-  padding: 1.5rem;
+  padding: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .filter-content {
+    padding: 1.5rem;
+  }
 }
 
 .filter-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .filter-grid {
+    gap: 1rem;
+  }
 }
 
 .filter-grid-1 {
@@ -172,10 +197,18 @@ const gridClass = computed(() => {
 .filter-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+@media (min-width: 768px) {
+  .filter-actions {
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
 }
 
 .filter-btn {

@@ -13,7 +13,7 @@ ELOM (Enterprise Logistics and Operations Management) - это комплекс�
 - **Общее количество файлов**: 200+ файлов
 - **Тестовые файлы**: 3 файла (basic, browserCompatibility, validation-errors)
 - **API типы**: 15 модулей типов (модульная структура, без дубликатов)
-- **Stores**: 16 Pinia stores (большинство используют createBaseStore для единообразной пагинации)
+- **Stores**: 18 Pinia stores (все entity stores используют createBaseStore)
 - **Composables**: 11 композаблов
 - **Страницы**: 25+ страниц приложения
 - **Типы полей**: 14 типов полей в GenericForm (включая 'search' и 'custom')
@@ -150,11 +150,13 @@ ELOM (Enterprise Logistics and Operations Management) - это комплекс�
 
 ### 🔐 Безопасность и роли
 - **Аутентификация**: JWT токены с автоматическим обновлением
-- **Роли пользователей**: admin, director, coordinator, brigadier (4 роли)
+- **Роли пользователей**: admin, manager, brigadier, warehouse, requester (5 ролей)
+- **Операции без учета**: manager и warehouse работают без создания StockSnapshot
 - **Middleware**: Защита маршрутов по ролям
 - **Валидация**: Клиентская и серверная валидация данных
+- **Заявки на материалы**: Новая система заявок для роли requester
 
-> **Примечание:** Роли `buyer` и `site_manager` удалены в ноябре 2025 - их функции выполняет `brigadier`
+> **Примечание:** Роли обновлены в декабре 2025. Добавлены manager, warehouse, requester. Роли director, coordinator, buyer, site_manager удалены или заменены.
 
 ### 🎨 Современный UI/UX
 - **Адаптивный дизайн**: Оптимизация для мобильных и десктопных устройств
@@ -314,11 +316,11 @@ import api from '@/api/client'
 import { api } from '@/api/client'
 ```
 
-**Правильное объявление Object stores:**
+**Правильное использование stores:**
 ```typescript
-// ✅ Правильно
-const objectsStore = useObjectsStore
-
-// ❌ Неправильно
+// ✅ Правильно — вызываем как функцию
 const objectsStore = useObjectsStore()
+
+// ❌ Неправильно — без вызова
+const objectsStore = useObjectsStore
 ```

@@ -1,15 +1,17 @@
 // Common types used across the application
 
 // Роли системы:
-// - admin: Администратор (только через Django Admin)
-// - director: Директор (полный доступ ко всем данным)
-// - coordinator: Координатор (координация между объектами)
-// - brigadier: Бригадир (работа с назначенными объектами)
+// - admin: Администратор (полный доступ)
+// - manager: Управляющий (полный доступ, но без учета изменений)
+// - brigadier: Бригадир/Инженер (работа с назначенными объектами)
+// - warehouse: Склад/Цех/Проект (полный доступ без учета изменений)
+// - requester: Заявитель (просмотр и подача заявок)
 export type UserRole = 
   | "admin"
-  | "director" 
-  | "coordinator"
-  | "brigadier";
+  | "manager"
+  | "brigadier"
+  | "warehouse"
+  | "requester";
 
 export type Stage = 
   | "acceptance"

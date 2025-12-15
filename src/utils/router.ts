@@ -18,8 +18,14 @@ export function generateNavigation(routes: RouteRecordNormalized[], userRole: Us
     if (skipRoutes.includes(route.name as string)) {return false}
     
     // Check role access
-    if (route.meta.roles && userRole && !(route.meta.roles as UserRole[]).includes(userRole)) {
-      return false
+    // Если у роута указаны roles, проверяем что текущая роль есть в списке
+    if (route.meta.roles && Array.isArray(route.meta.roles)) {
+      // Если роль пользователя не определена - скрываем защищённые роуты
+      if (!userRole) {return false}
+      // Если роль не входит в список разрешённых - скрываем
+      if (!(route.meta.roles as UserRole[]).includes(userRole)) {
+        return false
+      }
     }
     
     return true
@@ -51,19 +57,20 @@ export function generateNavigation(routes: RouteRecordNormalized[], userRole: Us
   // Sort categories and items within categories
   const sortedCategories = Array.from(categories.entries())
     .sort(([a], [b]) => {
-      const categoryOrder = {
-        'main': 1,
-        'inventory': 2,
-        'purchases': 3,
-        'objects': 4,
-        'suppliers': 5,
-        'users': 6,
-        'settings': 7,
-        'archive': 8,
-        'reports': 9,
-        'import': 10,
-        'other': 999
-      }
+const categoryOrder = {
+      'main': 1,
+      'inventory': 2,
+      'purchases': 3,
+      'objects': 4,
+      'suppliers': 5,
+      'users': 6,
+      'tools': 7,
+      'settings': 8,
+      'archive': 9,
+      'reports': 10,
+      'import': 11,
+      'other': 999
+    }
       return (categoryOrder[a as keyof typeof categoryOrder] || 999) - (categoryOrder[b as keyof typeof categoryOrder] || 999)
     })
   
@@ -100,6 +107,7 @@ function getCategoryTitle(category: string): string {
     'objects': 'Объекты',
     'suppliers': 'Поставщики',
     'users': 'Пользователи',
+    'tools': 'Инструменты',
     'settings': 'Настройки',
     'archive': 'Архив',
     'reports': 'Отчеты',
@@ -177,6 +185,7 @@ export function getCategoryIcon(category: string): string {
     'objects': 'location_on',
     'suppliers': 'truck',
     'users': 'people',
+    'tools': 'build',
     'settings': 'settings',
     'archive': 'archive',
     'reports': 'assessment',

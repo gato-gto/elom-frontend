@@ -139,7 +139,7 @@ const emit = defineEmits<{
   'custom-material': [materialName: string] // Событие при вводе нового материала
 }>()
 
-const materialsStore = useMaterialsStore
+const materialsStore = useMaterialsStore()
 
 const searchInput = ref<HTMLInputElement>()
 const inputContainer = ref<HTMLElement>()
@@ -220,7 +220,7 @@ async function searchMaterials(query: string) {
   
   loading.value = true
   try {
-    let results = await materialsStore.searchMaterials(query)
+    let results = await materialsStore.search(query)
     
     // Фильтруем исключённые материалы (уже добавленные в форму)
     if (props.excludeMaterials && props.excludeMaterials.length > 0) {

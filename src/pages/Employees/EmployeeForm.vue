@@ -29,7 +29,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const employeesStore = useEmployeesStore
+const employeesStore = useEmployeesStore()
 const { handleFormError } = useErrorHandler()
 
 // Form configuration

@@ -308,9 +308,9 @@ import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
 const router = useRouter()
-const objectsStore = useObjectsStore
-const purchasesStore = usePurchasesStore
-const writeOffsStore = useWriteOffsStore
+const objectsStore = useObjectsStore()
+const purchasesStore = usePurchasesStore()
+const writeOffsStore = useWriteOffsStore()
 const authStore = useAuthStore()
 const { handleLoadingError } = useErrorHandler()
 

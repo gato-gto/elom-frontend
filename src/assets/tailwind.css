@@ -67,9 +67,15 @@ html, body, #app {
     }
 
     /* Responsive tables like Bootstrap's .table-responsive */
-    .list-content {
+    /* Скролл только для desktop таблиц */
+    .list-content .table-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    /* Мобильная версия - без скролла */
+    .list-content.mobile-cards-wrapper {
+        overflow: visible;
     }
 
     /* Ensure tables scroll instead of collapsing columns */
@@ -96,20 +102,27 @@ html, body, #app {
         word-break: break-word;
     }
 
-    /* Мобильные карточки */
-    .mobile-cards-container {
-        @apply p-4 space-y-4;
+    /* Мобильные карточки - стили контейнера */
+    .mobile-cards-wrapper {
+        @apply space-y-2 p-2;
     }
     
-    .mobile-cards-container .card {
+    @media (min-width: 768px) {
+        .mobile-cards-wrapper {
+            @apply space-y-4 p-4;
+        }
+    }
+    
+    /* Мобильные карточки - анимации */
+    .mobile-only .card {
         @apply transition-all duration-200;
     }
     
-    .mobile-cards-container .card:hover {
+    .mobile-only .card:hover {
         @apply scale-[1.01] shadow-lg;
     }
     
-    .mobile-cards-container .card:active {
+    .mobile-only .card:active {
         @apply scale-[0.99];
     }
     
@@ -127,7 +140,7 @@ html, body, #app {
     }
     
     /* Улучшенная анимация загрузки для карточек */
-    .mobile-cards-container .animate-pulse .card-body > * {
+    .mobile-only .animate-pulse .card-body > * {
         @apply animate-pulse;
         animation-delay: calc(var(--index) * 0.1s);
     }

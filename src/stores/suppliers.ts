@@ -1,27 +1,34 @@
-import { defineStore } from 'pinia'
-import api from '@/api/client'
-import { endpoints, buildQuery } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+/**
+ * Store для управления поставщиками
+ */
+import { endpoints } from '@/api/endpoints'
+import { createBaseStore } from './base'
 import type { 
   PurchaseSupplier, 
   PurchaseSupplierCreateRequest, 
-  PurchaseSupplierUpdateRequest,
-  PaginatedPurchaseSupplierList 
+  PurchaseSupplierUpdateRequest
 } from '@/api/types'
 
+// Создаём store
 export const useSuppliersStore = createBaseStore<PurchaseSupplier, PurchaseSupplierCreateRequest, PurchaseSupplierUpdateRequest>({
   endpoint: endpoints.suppliers,
   entityName: 'suppliers',
-  entityNamePlural: 'поставщики'
+  entityNamePlural: 'поставщики',
+  defaultOrdering: 'name'
 })
 
-// Custom getters for suppliers
-export const activeSuppliers = () => {
-  return useSuppliersStore.items.filter(item => item.is_active)
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+export const getActiveSuppliers = () => {
+  const store = useSuppliersStore()
+  return store.items.filter(item => item.is_active)
 }
 
-export const searchOptions = () => {
-  return useSuppliersStore.items
+export const getSearchOptions = () => {
+  const store = useSuppliersStore()
+  return store.items
     .filter(item => item.is_active)
     .map(item => ({
       value: item.id,

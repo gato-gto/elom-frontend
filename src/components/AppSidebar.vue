@@ -116,14 +116,14 @@
         </ul>
       </div>
 
-      <!-- Archive -->
-      <div v-if="archive.length > 0" class="mb-6">
+      <!-- Tools -->
+      <div v-if="tools.length > 0" class="mb-6">
         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center">
-          <i class="material-icons mr-2 text-sm">archive</i>
-          Архив
+          <i class="material-icons mr-2 text-sm">build</i>
+          Инструменты
         </h3>
         <ul class="space-y-1">
-          <li v-for="item in archive" :key="item.name">
+          <li v-for="item in tools" :key="item.name">
             <router-link
               :to="item.path"
               :class="[
@@ -201,6 +201,11 @@ import type { UserRole } from '@/api/types/common'
 const { navigation, isRouteActive } = useAppRouter()
 const authStore = useAuthStore()
 
+// Debug: проверка навигации и роли
+console.log('[AppSidebar] Current role:', authStore.role)
+console.log('[AppSidebar] Navigation items:', navigation.value)
+console.log('[AppSidebar] Tools items:', navigation.value.filter(item => item.category === 'tools'))
+
 // Business Operations - основные бизнес-операции
 const businessOperations = computed(() => {
   return navigation.value.filter(item => 
@@ -229,10 +234,10 @@ const administration = computed(() => {
   )
 })
 
-// Archive - архивные данные
-const archive = computed(() => {
+// Tools - инструменты
+const tools = computed(() => {
   return navigation.value.filter(item => 
-    ['archive'].includes(item.category || '')
+    ['tools'].includes(item.category || '')
   )
 })
 

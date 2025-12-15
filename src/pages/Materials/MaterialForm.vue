@@ -40,6 +40,7 @@
         :on-cancel="handleCancel"
         :validate-on-change="true"
         :reset-on-submit="false"
+        @cancelled="handleCancel"
     />
   </div>
 </template>
@@ -63,9 +64,9 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const materialsStore = useMaterialsStore
-const unitsStore = useUnitsStore
-const materialCategoriesStore = useMaterialCategoriesStore
+const materialsStore = useMaterialsStore()
+const unitsStore = useUnitsStore()
+const materialCategoriesStore = useMaterialCategoriesStore()
 const {handleFormError} = useErrorHandler()
 
 const deletingPhoto = ref(false)

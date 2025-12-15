@@ -1,67 +1,66 @@
-import { defineStore } from 'pinia'
-import { computed } from 'vue'
+/**
+ * Store для управления списаниями
+ */
 import { endpoints } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+import { createBaseStore } from './base'
 import type { 
   WriteOff, 
   WriteOffCreateRequest, 
   WriteOffUpdateRequest
 } from '@/api/types'
 
+// Создаём store
 export const useWriteOffsStore = createBaseStore<WriteOff, WriteOffCreateRequest, WriteOffUpdateRequest>({
   endpoint: endpoints.writeOffs,
-  entityName: 'списание',
-  entityNamePlural: 'списания'
+  entityName: 'writeOffs',
+  entityNamePlural: 'списания',
+  defaultOrdering: '-date'
 })
 
-// Custom getters for writeOffs
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
 export const getByStage = (stage: string) => {
-  return useWriteOffsStore.items.filter((item: WriteOff) => item.stage === stage)
+  const store = useWriteOffsStore()
+  return store.items.filter((item: WriteOff) => item.stage === stage)
 }
 
 export const getByObject = (objectId: number) => {
-  return useWriteOffsStore.items.filter((item: WriteOff) => item.object === objectId)
+  const store = useWriteOffsStore()
+  return store.items.filter((item: WriteOff) => item.object === objectId)
 }
 
 export const getByMaterial = (materialId: number) => {
-  return useWriteOffsStore.items.filter((item: WriteOff) => item.material === materialId)
+  const store = useWriteOffsStore()
+  return store.items.filter((item: WriteOff) => item.material === materialId)
 }
 
 export const getByResponsible = (responsibleId: number) => {
-  return useWriteOffsStore.items.filter((item: WriteOff) => item.responsible === responsibleId)
+  const store = useWriteOffsStore()
+  return store.items.filter((item: WriteOff) => item.responsible === responsibleId)
 }
 
+export const getTotalQuantity = () => {
+  const store = useWriteOffsStore()
+  return store.items.reduce((sum: number, item: WriteOff) => sum + parseFloat(item.quantity), 0)
+}
 
-// Computed для статистики
-export const totalQuantity = computed(() =>
-  useWriteOffsStore.items.reduce((sum: number, item: WriteOff) => sum + parseFloat(item.quantity), 0)
-)
+export const getUniqueObjectsCount = () => {
+  const store = useWriteOffsStore()
+  return new Set(store.items.map((item: WriteOff) => item.object)).size
+}
 
-export const totalValue = computed(() => 
-  useWriteOffsStore.items.reduce((sum: number, item: WriteOff) => {
-    // Предполагаем, что у нас есть цена материала
-    // В реальном приложении это может быть вычислено по-другому
-    return sum + (parseFloat(item.quantity) * (item.smart_quantity?.value || 0))
-  }, 0)
-)
+export const getUniqueMaterialsCount = () => {
+  const store = useWriteOffsStore()
+  return new Set(store.items.map((item: WriteOff) => item.material)).size
+}
 
-export const uniqueObjects = computed(() => 
-  new Set(useWriteOffsStore.items.map((item: WriteOff) => item.object)).size
-)
-
-export const uniqueMaterials = computed(() => 
-  new Set(useWriteOffsStore.items.map((item: WriteOff) => item.material)).size
-)
-
-export const uniqueResponsibles = computed(() => 
-  new Set(useWriteOffsStore.items.map((item: WriteOff) => item.responsible)).size
-)
-
-// Статистика по этапам
-export const stageStats = computed(() => {
+export const getStageStats = () => {
+  const store = useWriteOffsStore()
   const stats: Record<string, { count: number; quantity: number }> = {}
   
-  useWriteOffsStore.items.forEach((item: WriteOff) => {
+  store.items.forEach((item: WriteOff) => {
     const stage = item.stage || 'unknown'
     if (!stats[stage]) {
       stats[stage] = { count: 0, quantity: 0 }
@@ -71,4 +70,4 @@ export const stageStats = computed(() => {
   })
   
   return stats
-})
+}

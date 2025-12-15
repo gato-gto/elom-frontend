@@ -76,10 +76,10 @@ import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import WriteOffCard from '@/components/cards/WriteOffCard.vue'
 
 // Stores
-const writeOffsStore = useWriteOffsStore
-const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore
-const employeesStore = useEmployeesStore
+const writeOffsStore = useWriteOffsStore()
+const objectsStore = useObjectsStore()
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore()
 
 // Error handling
 const { handleLoadingError } = useErrorHandler()

@@ -154,15 +154,10 @@ const route = useRoute()
 
 // Stores
 const ui = useUiStore()
-const objectsStore = useObjectsStore
-const balancesStore = useBalancesStore
+const objectsStore = useObjectsStore()
+const balancesStore = useBalancesStore()
 // Error handling
 const { handleLoadingError } = useErrorHandler()
-
-// Расширяем store для остатков
-balancesStore.fetchList = fetchBalancesList
-balancesStore.setFilters = setBalancesFilters
-balancesStore.resetFilters = resetBalancesFilters
 
 // Инициализируем filters из extendedFilters
 const extendedFilters = getBalancesFilters()

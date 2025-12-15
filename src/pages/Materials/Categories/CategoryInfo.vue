@@ -24,7 +24,7 @@
           <div class="header-actions">
             <button 
               class="action-btn action-btn-primary"
-              @click="$router.push(`/materials/categories/${categoryId}/edit`)"
+              @click="$router.push(`/material_categories/${categoryId}/edit`)"
             >
               <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -33,7 +33,7 @@
             </button>
             <button 
               class="action-btn action-btn-outline"
-              @click="$router.push('/materials/categories')"
+              @click="$router.push('/material_categories')"
             >
               <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -146,7 +146,7 @@
             v-for="child in childCategories" 
             :key="child.id"
             class="subcategory-card"
-            @click="$router.push(`/materials/categories/${child.id}`)"
+            @click="$router.push(`/material_categories/${child.id}`)"
           >
             <div class="subcategory-icon">
               <div class="h-12 w-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl border flex items-center justify-center">
@@ -182,21 +182,13 @@
       </div>
 
       <!-- Материалы в категории -->
-      <div v-if="category && category.materials_count > 0" class="bg-base-100 rounded-lg">
-        <div class="">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">Материалы в категории ({{ category.materials_count }})</h2>
-            <button 
-              class="btn btn-primary btn-sm"
-              @click="$router.push(`/materials?category=${categoryId}`)"
-            >
-              Просмотреть все материалы
-            </button>
-          </div>
-          <p class="text-base-content/70">
-            Для просмотра материалов в этой категории перейдите в раздел "Материалы" 
-            и отфильтруйте по данной категории.
-          </p>
+      <div v-if="category && category.materials_count > 0" class="materials-section">
+        <div class="materials-content">
+          <GenericList
+            :store="materialsStore"
+            :config="materialsListConfig"
+            @action="handleMaterialAction"
+          />
         </div>
       </div>
 
@@ -223,15 +215,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
+import { useMaterialsStore } from '@/stores/materials'
+import { useAuthStore } from '@/stores/auth'
+import GenericList from '@/components/GenericList.vue'
+import MaterialCard from '@/components/cards/MaterialCard.vue'
 import { formatDate } from '@/utils/formatters'
 import type { MaterialCategory } from '@/api/types'
+import type { Material } from '@/api/types'
+import type { GenericListConfig } from '@/types/list'
+import type { Me } from '@/api/types/common'
 
 const route = useRoute()
 const router = useRouter()
-const materialCategoriesStore = useMaterialCategoriesStore
+const materialCategoriesStore = useMaterialCategoriesStore()
+const materialsStore = useMaterialsStore()
+const auth = useAuthStore()
 
 const categoryId = computed(() => Number(route.params.id))
 const category = computed(() => materialCategoriesStore.items.find(c => c.id === categoryId.value))
@@ -239,6 +240,89 @@ const category = computed(() => materialCategoriesStore.items.find(c => c.id ===
 // Подкатегории
 const childCategories = computed(() => 
   materialCategoriesStore.items.filter(c => c.parent === categoryId.value)
+)
+
+// Права доступа
+const canEdit = computed(() => {
+  const role = auth.role as Me['role'] | undefined
+  return role === 'admin' || role === 'manager' || role === 'warehouse'
+})
+
+// Конфигурация списка материалов - показываем только материалы категории без фильтров
+const materialsListConfig = computed<GenericListConfig<Material>>(() => ({
+  title: 'Материалы в категории',
+  subtitle: `Категория: ${category.value?.name || ''}`,
+  icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+  showCreate: false, // Не показываем кнопку создания на странице категории
+  showStats: false, // Убираем статистику, так как показываем только материалы категории
+  exportable: false, // Убираем кнопку экспорта на странице категории
+  loadingText: 'Загрузка материалов...',
+  emptyText: 'Нет материалов в этой категории',
+  emptyTitle: 'Нет материалов',
+  emptySubtitle: 'В этой категории пока нет материалов',
+  filterColumns: 0, // Убираем фильтры - показываем только материалы категории
+  columns: [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'name', label: 'Название', sortable: true },
+    { key: 'sku', label: 'SKU', sortable: true },
+    { key: 'unit_code', label: 'Единица', sortable: true }
+  ],
+  filters: [], // Убираем все фильтры - показываем только материалы категории
+  actions: [
+    {
+      key: 'view',
+      label: 'Просмотр',
+      class: 'btn-outline'
+    },
+    {
+      key: 'edit',
+      label: 'Редактировать',
+      class: 'btn-outline',
+      disabled: () => !canEdit.value
+    },
+    {
+      key: 'delete',
+      label: 'Удалить',
+      class: 'btn-error',
+      disabled: () => !canEdit.value,
+      confirm: (item: Material) => `Удалить материал "${item.name}"?`
+    }
+  ],
+  mobileCardComponent: MaterialCard,
+  mobileCardProp: 'material'
+}))
+
+// Обработчик действий с материалами
+async function handleMaterialAction(item: Material, action: string) {
+  if (action === 'view') {
+    // Перенаправляем на редактирование, так как отдельной страницы просмотра нет
+    router.push(`/materials/${item.id}/edit`)
+  } else if (action === 'edit') {
+    router.push(`/materials/${item.id}/edit`)
+  } else if (action === 'delete') {
+    if (confirm(`Удалить материал "${item.name}"?`)) {
+      try {
+        await materialsStore.remove(item.id)
+        // Обновляем список после удаления
+        await materialsStore.fetchList()
+      } catch (error) {
+        console.error('Error deleting material:', error)
+      }
+    }
+  }
+}
+
+// Устанавливаем фильтр по категории при загрузке и изменении категории
+watch(
+  () => categoryId.value,
+  async (newId) => {
+    if (newId) {
+      // Устанавливаем фильтр по категории
+      await materialsStore.setFilters({ category: String(newId) })
+      await materialsStore.fetchList()
+    }
+  },
+  { immediate: true }
 )
 
 // Загрузка данных
@@ -253,7 +337,13 @@ onMounted(async () => {
     await materialCategoriesStore.fetchOne(categoryId.value)
   } catch (error) {
     console.error('Error loading category:', error)
-    router.push('/materials/categories')
+    router.push('/material_categories')
+  }
+  
+  // Загружаем материалы с фильтром по категории
+  if (categoryId.value) {
+    await materialsStore.setFilters({ category: String(categoryId.value) })
+    await materialsStore.fetchList()
   }
 })
 </script>
@@ -657,6 +747,43 @@ onMounted(async () => {
 .subcategory-card:hover .subcategory-arrow {
   opacity: 1;
   transform: translateX(4px);
+}
+
+/* Materials Section */
+.materials-section {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+:root.dark .materials-section {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.materials-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #10b981 100%);
+}
+
+.materials-content {
+  padding: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .materials-content {
+    padding: 1.5rem;
+  }
 }
 
 /* Responsive Design */

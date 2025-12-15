@@ -1,38 +1,45 @@
+/**
+ * Store для управления остатками материалов
+ */
 import { ref } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+import { createBaseStore } from './base'
 import type { MaterialBalance, ObjectBalance } from '@/api/types/stocks'
 
-// Создаем базовый store для остатков
-export const useBalancesStore = createBaseStore<ObjectBalance, any, any>({
+// Создаём базовый store
+export const useBalancesStore = createBaseStore<ObjectBalance & { id: number }, any, any>({
   endpoint: {
     list: endpoints.stockSnapshots.byObjects,
     one: (id: number) => `${endpoints.stockSnapshots.byObjects}${id}/`
   },
   entityName: 'balances',
-  entityNamePlural: 'остатки'
+  entityNamePlural: 'остатки',
+  defaultOrdering: 'object_name'
 })
 
-// Расширяем фильтры для остатков
+// Расширенные фильтры для остатков
 const extendedFilters = ref({
   search: '',
   object: '',
   date: new Date().toISOString().split('T')[0]
 })
 
-// Переопределяем fetchList для обработки специфичной структуры API остатков
+// ============================================================================
+// Custom Actions
+// ============================================================================
+
 export const fetchBalancesList = async (params?: {
   page?: number
   search?: string
   object?: string
   date?: string
 }) => {
-  useBalancesStore.loading = true
-  useBalancesStore.error = null
+  const store = useBalancesStore()
+  store.loading = true
+  store.error = null
 
   try {
-    // Call the API to get balances
     const apiParams = new URLSearchParams()
     if (extendedFilters.value.object) {
       apiParams.append('object_id', extendedFilters.value.object)
@@ -43,12 +50,11 @@ export const fetchBalancesList = async (params?: {
 
     const response = await api.get(`${endpoints.stockSnapshots.byObjects}?${apiParams}`)
     
-    // Keep the grouped data structure for expandable rows
-    const objectsData: ObjectBalance[] = []
+    const objectsData: (ObjectBalance & { id: number })[] = []
     if (response.data.objects) {
       response.data.objects.forEach((obj: any) => {
         objectsData.push({
-          id: obj.object_id, // Добавляем id для совместимости с GenericList
+          id: obj.object_id,
           object_id: obj.object_id,
           object_name: obj.object_name,
           object_address: obj.object_address,
@@ -61,57 +67,57 @@ export const fetchBalancesList = async (params?: {
             total_written_off: material.total_written_off
           } as MaterialBalance)),
           total_materials: obj.materials.length
-        } as ObjectBalance & { id: number })
+        })
       })
     }
     
-    // Update the reactive refs properly
-    useBalancesStore.items = objectsData
-    useBalancesStore.pagination.count = objectsData.length
-    useBalancesStore.pagination.page = 1
-    useBalancesStore.pagination.next = null
-    useBalancesStore.pagination.previous = null
+    store.items = objectsData
+    store.pagination.count = objectsData.length
+    store.pagination.page = 1
+    store.pagination.next = null
+    store.pagination.previous = null
 
-    // Update filters
     if (params) {
       Object.assign(extendedFilters.value, params)
     }
   } catch (error: any) {
-    useBalancesStore.error = 'Ошибка загрузки остатков'
+    store.error = 'Ошибка загрузки остатков'
     throw error
   } finally {
-    useBalancesStore.loading = false
+    store.loading = false
   }
 }
 
-// Расширенные методы для фильтров
 export const setBalancesFilters = async (newFilters: any) => {
+  const store = useBalancesStore()
   Object.assign(extendedFilters.value, newFilters)
-  // Синхронизируем с store.filters для отображения в UI
-  useBalancesStore.filters = {
+  store.filters = {
     ...extendedFilters.value,
-    ordering: useBalancesStore.filters?.ordering || 'object_name'
+    ordering: store.filters?.ordering || 'object_name'
   }
-  useBalancesStore.pagination.page = 1
+  store.pagination.page = 1
   await fetchBalancesList()
 }
 
 export const resetBalancesFilters = async () => {
+  const store = useBalancesStore()
   Object.assign(extendedFilters.value, {
     search: '',
     object: '',
     date: new Date().toISOString().split('T')[0]
   })
-  // Синхронизируем с store.filters для отображения в UI
-  useBalancesStore.filters = {
+  store.filters = {
     ...extendedFilters.value,
-    ordering: useBalancesStore.filters?.ordering || 'object_name'
+    ordering: store.filters?.ordering || 'object_name'
   }
-  useBalancesStore.pagination.page = 1
+  store.pagination.page = 1
   await fetchBalancesList()
 }
 
-// Custom getters for balances
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
 export const getBalancesFilters = () => {
   return extendedFilters
 }

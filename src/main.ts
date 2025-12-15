@@ -13,7 +13,8 @@ import '@/utils/browserSupport'
 import '@/assets/tailwind.css'
 import '@/assets/login-animations.css'
 import '@/assets/navigation-styles.css'
-import '@/styles/animations.css' 
+import '@/styles/animations.css'
+import '@/styles/components.css' 
 
 const app = createApp(App)
 const pinia = createPinia()

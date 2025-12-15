@@ -177,7 +177,7 @@
     
     <!-- Radio Group -->
     <div v-else-if="type === 'radio'" class="form-control">
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap gap-2 md:gap-4">
         <label
           v-for="option in options"
           :key="String(option.value)"

@@ -98,10 +98,10 @@ import StockCard from '@/components/cards/StockCard.vue'
 
 // Router and stores
 const router = useRouter()
-const stockSnapshotsStore = useStockSnapshotsStore
-const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore
-const employeesStore = useEmployeesStore
+const stockSnapshotsStore = useStockSnapshotsStore()
+const objectsStore = useObjectsStore()
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 

@@ -33,11 +33,11 @@ import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import { useFormErrorHandler } from '@/composables/useErrorHandler'
 
-const stockSnapshotsStore = useStockSnapshotsStore
-const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore
-const employeesStore = useEmployeesStore
-const unitsStore = useUnitsStore
+const stockSnapshotsStore = useStockSnapshotsStore()
+const objectsStore = useObjectsStore()
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore()
+const unitsStore = useUnitsStore()
 const ui = useUiStore()
 
 const props = defineProps<{
@@ -288,4 +288,68 @@ onMounted(async () => {
 
 <style scoped>
 /* Все стили теперь используют DaisyUI классы */
+
+/* Мобильная оптимизация для формы внесения остатков */
+@media (max-width: 768px) {
+  .stock-form :deep(.form-field) {
+    margin-bottom: 1rem;
+  }
+  
+  .stock-form :deep(.form-field input),
+  .stock-form :deep(.form-field select),
+  .stock-form :deep(.form-field textarea) {
+    min-height: 3rem;
+    font-size: 16px; /* Предотвращает zoom на iOS */
+    padding: 0.75rem 1rem;
+  }
+  
+  .stock-form :deep(.form-field label) {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stock-form :deep(.btn) {
+    min-height: 3rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  /* Улучшение для выпадающих списков на мобильных */
+  .stock-form :deep(select) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+  
+  /* Улучшение отображения ошибок на мобильных */
+  .stock-form :deep(.error-message) {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Улучшения для touch-устройств */
+@media (hover: none) and (pointer: coarse) {
+  .stock-form :deep(.form-field input),
+  .stock-form :deep(.form-field select),
+  .stock-form :deep(.form-field textarea) {
+    min-height: 3.5rem;
+    padding: 1rem;
+  }
+  
+  .stock-form :deep(.btn) {
+    min-height: 3.5rem;
+    padding: 1rem 1.5rem;
+  }
+  
+  /* Увеличенные области нажатия для кнопок */
+  .stock-form :deep(.btn) {
+    touch-action: manipulation;
+  }
+}
 </style>

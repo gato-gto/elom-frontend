@@ -1,32 +1,42 @@
-import { defineStore } from 'pinia'
-import { computed } from 'vue'
+/**
+ * Store для управления категориями материалов
+ */
 import api from '@/api/client'
-import { endpoints, buildQuery } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+import { endpoints } from '@/api/endpoints'
+import { createBaseStore } from './base'
 import type { MaterialCategory, MaterialCategoryLite } from '@/api/types/common'
-import type { PageResponse } from '@/api/types/common'
 
+// Создаём store
 export const useMaterialCategoriesStore = createBaseStore<MaterialCategory, any, any>({
   endpoint: endpoints.materialCategories,
   entityName: 'materialCategories',
-  entityNamePlural: 'категории материалов'
+  entityNamePlural: 'категории материалов',
+  defaultOrdering: 'name'
 })
 
-// Custom getters for material categories
-export const selectOptions = computed(() => 
-  useMaterialCategoriesStore.items.map((category: MaterialCategory) => ({
-    value: category.id,
-    label: category.name
-  }))
-)
+// ============================================================================
+// Custom Actions
+// ============================================================================
 
-// Custom actions for material categories
 export const fetchLite = async (): Promise<MaterialCategoryLite[]> => {
   try {
-    const { data } = await api.get<MaterialCategoryLite[]>(endpoints.materialCategories.list + 'lite/')
-    return data
+    const { data } = await api.get<MaterialCategoryLite[] | { results: MaterialCategoryLite[] }>(endpoints.materialCategories.list + 'lite/')
+    // API может возвращать либо массив, либо объект с results
+    return Array.isArray(data) ? data : (data?.results || [])
   } catch (error: any) {
     console.error('Error fetching lite categories:', error)
     return []
   }
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+export const getCategorySelectOptions = () => {
+  const store = useMaterialCategoriesStore()
+  return store.items.map((category: MaterialCategory) => ({
+    value: category.id,
+    label: category.name
+  }))
 }

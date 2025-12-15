@@ -45,7 +45,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const unitsStore = useUnitsStore
+const unitsStore = useUnitsStore()
 const { handleFormError } = useErrorHandler()
 
 // Track current code for smart conversion display

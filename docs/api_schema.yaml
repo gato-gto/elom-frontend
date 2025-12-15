@@ -103,8 +103,11 @@ paths:
           description: ''
     post:
       operationId: archive_create
+      description: Создать запись об архивном периоде. Используйте action close для
+        закрытия периода.
+      summary: Создать архивный период
       tags:
-      - archive
+      - Archive
       requestBody:
         content:
           application/json:
@@ -129,6 +132,8 @@ paths:
   /api/v1/archive/{id}/:
     get:
       operationId: archive_retrieve
+      description: Получить информацию о закрытом периоде по ID.
+      summary: Получить архивный период
       parameters:
       - in: path
         name: id
@@ -137,7 +142,7 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       security:
       - jwtAuth: []
       responses:
@@ -149,6 +154,8 @@ paths:
           description: ''
     put:
       operationId: archive_update
+      description: Обновление архивных периодов запрещено.
+      summary: Обновить архивный период (запрещено)
       parameters:
       - in: path
         name: id
@@ -157,7 +164,7 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       requestBody:
         content:
           application/json:
@@ -173,14 +180,12 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ArchivePeriod'
-          description: ''
+        '400':
+          description: Архивные периоды нельзя редактировать
     patch:
       operationId: archive_partial_update
+      description: Обновление архивных периодов запрещено.
+      summary: Частичное обновление архивного периода (запрещено)
       parameters:
       - in: path
         name: id
@@ -189,7 +194,7 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       requestBody:
         content:
           application/json:
@@ -204,14 +209,13 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ArchivePeriod'
-          description: ''
+        '400':
+          description: Архивные периоды нельзя редактировать
     delete:
       operationId: archive_destroy
+      description: Удаление архивных периодов запрещено. Используйте action reopen
+        для открытия периода.
+      summary: Удалить архивный период (запрещено)
       parameters:
       - in: path
         name: id
@@ -220,12 +224,12 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '400':
+          description: Архивные периоды нельзя удалять
   /api/v1/archive/close/:
     post:
       operationId: archive_close_create
@@ -401,8 +405,11 @@ paths:
           description: ''
     post:
       operationId: archive_periods_create
+      description: Создать запись об архивном периоде. Используйте action close для
+        закрытия периода.
+      summary: Создать архивный период
       tags:
-      - archive
+      - Archive
       requestBody:
         content:
           application/json:
@@ -427,6 +434,8 @@ paths:
   /api/v1/archive/periods/{id}/:
     get:
       operationId: archive_periods_retrieve
+      description: Получить информацию о закрытом периоде по ID.
+      summary: Получить архивный период
       parameters:
       - in: path
         name: id
@@ -435,7 +444,7 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       security:
       - jwtAuth: []
       responses:
@@ -447,6 +456,8 @@ paths:
           description: ''
     put:
       operationId: archive_periods_update
+      description: Обновление архивных периодов запрещено.
+      summary: Обновить архивный период (запрещено)
       parameters:
       - in: path
         name: id
@@ -455,7 +466,7 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       requestBody:
         content:
           application/json:
@@ -471,14 +482,12 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ArchivePeriod'
-          description: ''
+        '400':
+          description: Архивные периоды нельзя редактировать
     patch:
       operationId: archive_periods_partial_update
+      description: Обновление архивных периодов запрещено.
+      summary: Частичное обновление архивного периода (запрещено)
       parameters:
       - in: path
         name: id
@@ -487,7 +496,7 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       requestBody:
         content:
           application/json:
@@ -502,14 +511,13 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ArchivePeriod'
-          description: ''
+        '400':
+          description: Архивные периоды нельзя редактировать
     delete:
       operationId: archive_periods_destroy
+      description: Удаление архивных периодов запрещено. Используйте action reopen
+        для открытия периода.
+      summary: Удалить архивный период (запрещено)
       parameters:
       - in: path
         name: id
@@ -518,12 +526,12 @@ paths:
         description: A unique integer value identifying this archive period.
         required: true
       tags:
-      - archive
+      - Archive
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '400':
+          description: Архивные периоды нельзя удалять
   /api/v1/archive/periods/close/:
     post:
       operationId: archive_periods_close_create
@@ -659,40 +667,40 @@ paths:
   /api/v1/audit-logs/:
     get:
       operationId: audit_logs_list
-      description: Просмотр журнала аудита системы. Доступно только администраторам
-        и директорам.
+      description: Просмотр журнала аудита системы. Администраторы и директора видят
+        все записи, остальные — только свои.
       summary: Журнал аудита
       parameters:
       - in: query
         name: action
         schema:
           type: string
-        description: 'Фильтр: действие (create, update, delete, etc.)'
+        description: 'Фильтр: действие (create, update, delete, photo_upload, etc.)'
       - in: query
         name: detail
         schema:
           type: string
-        description: 'Фильтр: детали'
+        description: 'Фильтр: детали операции'
       - in: query
         name: ip
         schema:
           type: string
-        description: 'Фильтр: IP адрес'
+        description: 'Фильтр: IP адрес клиента'
       - in: query
         name: model
         schema:
           type: string
-        description: 'Фильтр: модель (Unit, Material, Purchase, etc.)'
+        description: 'Фильтр: модель (Unit, Material, Purchase, StockSnapshot, etc.)'
       - in: query
         name: object_id
         schema:
           type: string
-        description: 'Фильтр: ID объекта'
+        description: 'Фильтр: ID объекта аудита'
       - in: query
         name: ordering
         schema:
           type: string
-        description: 'Сортировка: ts (используйте ''-'' для desc)'
+        description: 'Сортировка: ts|user|action|model (используйте ''-'' для desc)'
       - name: page
         required: false
         in: query
@@ -725,7 +733,7 @@ paths:
           type: string
         description: 'Фильтр: имя пользователя'
       tags:
-      - Common
+      - Audit
       security:
       - jwtAuth: []
       responses:
@@ -735,9 +743,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedAuditLogList'
           description: ''
+        '401':
+          description: Не авторизован
   /api/v1/audit-logs/{id}/:
     get:
       operationId: audit_logs_retrieve
+      description: Получить детальную информацию о записи аудита по ID.
       summary: Получить запись аудита
       parameters:
       - in: path
@@ -747,7 +758,7 @@ paths:
         description: A unique integer value identifying this audit log.
         required: true
       tags:
-      - Common
+      - Audit
       security:
       - jwtAuth: []
       responses:
@@ -757,14 +768,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuditLog'
           description: ''
+        '401':
+          description: Не авторизован
+        '404':
+          description: Запись не найдена
   /api/v1/auth/token/:
     post:
       operationId: auth_token_create
-      description: |-
-        Takes a set of user credentials and returns an access and refresh JSON web
-        token pair to prove the authentication of those credentials.
+      description: "\n    Аутентификация пользователя и получение пары JWT токенов.\n\
+        \    \n    **Запрос:** username + password\n    **Ответ:** access token (15\
+        \ мин) + refresh token (1 день)\n    \n    Используйте access token в заголовке:\
+        \ `Authorization: Bearer <token>`\n    "
+      summary: Получить JWT токен
       tags:
-      - auth
+      - Auth
       requestBody:
         content:
           application/json:
@@ -787,11 +804,12 @@ paths:
   /api/v1/auth/token/refresh/:
     post:
       operationId: auth_token_refresh_create
-      description: |-
-        Takes a refresh type JSON web token and returns an access type JSON web
-        token if the refresh token is valid.
+      description: "\n    Обновление access токена с использованием refresh токена.\n\
+        \    \n    **Запрос:** refresh token\n    **Ответ:** новый access token\n\
+        \    \n    Вызывайте этот endpoint когда access token истекает.\n    "
+      summary: Обновить JWT токен
       tags:
-      - auth
+      - Auth
       requestBody:
         content:
           application/json:
@@ -814,11 +832,12 @@ paths:
   /api/v1/auth/token/verify/:
     post:
       operationId: auth_token_verify_create
-      description: |-
-        Takes a token and indicates if it is valid.  This view provides no
-        information about a token's fitness for a particular use.
+      description: "\n    Проверка валидности токена.\n    \n    **Запрос:** token\
+        \ (access или refresh)\n    **Ответ:** 200 OK если токен валиден, 401 если\
+        \ нет\n    "
+      summary: Проверить JWT токен
       tags:
-      - auth
+      - Auth
       requestBody:
         content:
           application/json:
@@ -837,8 +856,11 @@ paths:
   /api/v1/employees/:
     get:
       operationId: employees_list
-      description: Поиск по username/first_name/last_name/email; фильтры по роли,
-        активности и объекту.
+      description: "\n        Получить пагинированный список сотрудников системы.\n\
+        \        \n        Поддерживает поиск по username, first_name, last_name,\
+        \ email.\n        Фильтрация по роли, активности и объекту.\n        \n  \
+        \      **Примечание:** Доступ к списку зависит от роли пользователя.\n   \
+        \     "
       summary: Список сотрудников
       parameters:
       - in: query
@@ -853,7 +875,7 @@ paths:
         name: is_active
         schema:
           type: boolean
-        description: 'Фильтр: активность'
+        description: 'Фильтр: активность (true/false)'
       - in: query
         name: is_staff
         schema:
@@ -870,12 +892,13 @@ paths:
         name: object
         schema:
           type: integer
-        description: 'Фильтр: ID объекта (ответственный)'
+        description: 'Фильтр: ID объекта (сотрудники ответственные за объект)'
       - in: query
         name: ordering
         schema:
           type: string
-        description: 'Сортировка: username|first_name|last_name|id'
+        description: 'Сортировка: username|first_name|last_name|id (используйте ''-''
+          для desc)'
       - name: page
         required: false
         in: query
@@ -886,7 +909,12 @@ paths:
         name: role
         schema:
           type: string
-        description: 'Фильтр: роль (admin|director|coordinator|brigadier). Примечание: buyer и site_manager удалены'
+          enum:
+          - admin
+          - brigadier
+          - coordinator
+          - director
+        description: 'Фильтр: роль сотрудника'
       - in: query
         name: search
         schema:
@@ -907,8 +935,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedEmployeeList'
           description: ''
+        '401':
+          description: Не авторизован
     post:
       operationId: employees_create
+      description: "\n        Создать нового сотрудника в системе.\n        \n   \
+        \     **Обязательные поля:** username, password, role\n        **Опциональные:**\
+        \ first_name, last_name, email\n        \n        Требуется роль admin или\
+        \ director.\n        "
       summary: Создать сотрудника
       tags:
       - Employees
@@ -917,6 +951,17 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmployeeRequest'
+            examples:
+              СозданиеБригадира:
+                value:
+                  username: brigadier_new
+                  password: SecurePass123!
+                  first_name: Азиз
+                  last_name: Иброхимов
+                  email: aziz@elom.uz
+                  role: brigadier
+                  is_active: true
+                summary: Создание бригадира
         required: true
       security:
       - jwtAuth: []
@@ -927,9 +972,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
+        '400':
+          description: Ошибка валидации (username занят, слабый пароль и т.д.)
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
   /api/v1/employees/{id}/:
     get:
       operationId: employees_retrieve
+      description: Получить детальную информацию о сотруднике по ID.
       summary: Получить сотрудника
       parameters:
       - in: path
@@ -949,8 +1001,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Сотрудник не найден
     put:
       operationId: employees_update
+      description: Полное обновление данных сотрудника. Для смены пароля используйте
+        action set_password.
+      summary: Полное обновление сотрудника
       parameters:
       - in: path
         name: id
@@ -959,7 +1020,7 @@ paths:
         description: A unique integer value identifying this пользователь.
         required: true
       tags:
-      - employees
+      - Employees
       requestBody:
         content:
           application/json:
@@ -975,9 +1036,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Сотрудник не найден
     patch:
       operationId: employees_partial_update
-      summary: Обновить сотрудника
+      description: Частичное обновление данных сотрудника. Для смены пароля используйте
+        action set_password.
+      summary: Частичное обновление сотрудника
       parameters:
       - in: path
         name: id
@@ -1001,8 +1072,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Сотрудник не найден
     delete:
       operationId: employees_destroy
+      description: Удалить сотрудника из системы. Рекомендуется деактивировать (is_active=false)
+        вместо удаления.
       summary: Удалить сотрудника
       parameters:
       - in: path
@@ -1017,10 +1098,22 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Успешно удалено
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Сотрудник не найден
   /api/v1/employees/{id}/set_password/:
     post:
       operationId: employees_set_password
+      description: "\n        Установить новый пароль для сотрудника.\n        \n\
+        \        **Требования к паролю:**\n        - Минимум 6 символов\n        \n\
+        \        **Права доступа:**\n        - Только admin и director\n        \n\
+        \        **Примечание:** Сотрудник не может сменить пароль себе через этот\
+        \ endpoint.\n        Для самостоятельной смены пароля используйте другой механизм.\n\
+        \        "
       summary: Сменить пароль сотруднику
       parameters:
       - in: path
@@ -1031,17 +1124,39 @@ paths:
         required: true
       tags:
       - Employees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  minLength: 6
+                  description: Новый пароль
+              required:
+              - password
+            examples:
+              УстановкаНовогоПароля:
+                value:
+                  password: NewStrongPass123!
+                summary: Установка нового пароля
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Пароль успешно изменен
         '400':
-          description: invalid payload / forbidden
+          description: Некорректный пароль (менее 6 символов)
+        '403':
+          description: Нет прав доступа (требуется admin или director)
+        '404':
+          description: Сотрудник не найден
   /api/v1/material-categories/:
     get:
       operationId: material_categories_list
-      description: Пагинация, поиск и сортировка. Поиск по `name`. Поддержка иерархии.
+      description: Получить пагинированный список категорий материалов. Поддерживает
+        иерархию (родитель/дочерние).
       summary: Список категорий материалов
       parameters:
       - in: query
@@ -1086,7 +1201,7 @@ paths:
           type: string
         description: 'Поиск: name'
       tags:
-      - Common
+      - Material Categories
       security:
       - jwtAuth: []
       responses:
@@ -1096,11 +1211,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedMaterialCategoryList'
           description: ''
+        '401':
+          description: Не авторизован
     post:
       operationId: material_categories_create
+      description: Создать новую категорию материалов. Можно указать parent для создания
+        дочерней категории.
       summary: Создать категорию
       tags:
-      - Common
+      - Material Categories
       requestBody:
         content:
           application/json:
@@ -1122,9 +1241,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialCategory'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
   /api/v1/material-categories/{id}/:
     get:
       operationId: material_categories_retrieve
+      description: Получить детальную информацию о категории материала по ID.
       summary: Получить категорию
       parameters:
       - in: path
@@ -1134,7 +1260,7 @@ paths:
         description: A unique integer value identifying this material category.
         required: true
       tags:
-      - Common
+      - Material Categories
       security:
       - jwtAuth: []
       responses:
@@ -1144,8 +1270,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialCategory'
           description: ''
+        '401':
+          description: Не авторизован
+        '404':
+          description: Категория не найдена
     put:
       operationId: material_categories_update
+      description: Полное обновление категории материалов.
+      summary: Полное обновление категории
       parameters:
       - in: path
         name: id
@@ -1154,7 +1286,7 @@ paths:
         description: A unique integer value identifying this material category.
         required: true
       tags:
-      - material-categories
+      - Material Categories
       requestBody:
         content:
           application/json:
@@ -1176,9 +1308,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialCategory'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Категория не найдена
     patch:
       operationId: material_categories_partial_update
-      summary: Обновить категорию
+      description: Частичное обновление категории материалов.
+      summary: Частичное обновление категории
       parameters:
       - in: path
         name: id
@@ -1187,7 +1328,7 @@ paths:
         description: A unique integer value identifying this material category.
         required: true
       tags:
-      - Common
+      - Material Categories
       requestBody:
         content:
           application/json:
@@ -1208,8 +1349,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialCategory'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Категория не найдена
     delete:
       operationId: material_categories_destroy
+      description: Удалить категорию материалов. Нельзя удалить категорию с материалами
+        или дочерними категориями.
       summary: Удалить категорию
       parameters:
       - in: path
@@ -1219,12 +1370,18 @@ paths:
         description: A unique integer value identifying this material category.
         required: true
       tags:
-      - Common
+      - Material Categories
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Успешно удалено
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Категория не найдена
   /api/v1/material-categories/children/:
     get:
       operationId: material_categories_children
@@ -1248,7 +1405,7 @@ paths:
           type: integer
         description: ID родительской категории (0 для корневых)
       tags:
-      - Common
+      - Material Categories
       security:
       - jwtAuth: []
       responses:
@@ -1281,7 +1438,7 @@ paths:
           type: integer
         description: 'Размер страницы (по умолчанию: 50, максимум: 200)'
       tags:
-      - Common
+      - Material Categories
       security:
       - jwtAuth: []
       responses:
@@ -1290,7 +1447,8 @@ paths:
   /api/v1/materials/:
     get:
       operationId: materials_list
-      description: Пагинация, поиск и сортировка. Поиск по `name`, `sku`, `category__name`.
+      description: Получить пагинированный список материалов с расширенными фильтрами.
+        Поиск по `name`, `sku`, `category__name`.
       summary: Список материалов
       parameters:
       - in: query
@@ -1375,7 +1533,7 @@ paths:
           type: string
         description: 'Фильтр: артикул/код'
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1385,11 +1543,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedMaterialList'
           description: ''
+        '401':
+          description: Не авторизован
     post:
       operationId: materials_create
+      description: 'Создать новый материал. Обязательные поля: name, default_unit.'
       summary: Создать материал
       tags:
-      - Common
+      - Materials
       requestBody:
         content:
           multipart/form-data:
@@ -1408,9 +1569,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Material'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
   /api/v1/materials/{id}/:
     get:
       operationId: materials_retrieve
+      description: Получить детальную информацию о материале по ID, включая категорию
+        и единицу измерения.
       summary: Получить материал
       parameters:
       - in: path
@@ -1420,7 +1589,7 @@ paths:
         description: A unique integer value identifying this material.
         required: true
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1430,8 +1599,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Material'
           description: ''
+        '401':
+          description: Не авторизован
+        '404':
+          description: Материал не найден
     put:
       operationId: materials_update
+      description: Полное обновление материала.
+      summary: Полное обновление материала
       parameters:
       - in: path
         name: id
@@ -1440,7 +1615,7 @@ paths:
         description: A unique integer value identifying this material.
         required: true
       tags:
-      - materials
+      - Materials
       requestBody:
         content:
           multipart/form-data:
@@ -1459,9 +1634,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Material'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Материал не найден
     patch:
       operationId: materials_partial_update
-      summary: Обновить материал
+      description: Частичное обновление материала.
+      summary: Частичное обновление материала
       parameters:
       - in: path
         name: id
@@ -1470,7 +1654,7 @@ paths:
         description: A unique integer value identifying this material.
         required: true
       tags:
-      - Common
+      - Materials
       requestBody:
         content:
           multipart/form-data:
@@ -1488,8 +1672,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Material'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Материал не найден
     delete:
       operationId: materials_destroy
+      description: Удалить материал. Рекомендуется деактивировать (is_active=false)
+        вместо удаления.
       summary: Удалить материал
       parameters:
       - in: path
@@ -1499,12 +1693,18 @@ paths:
         description: A unique integer value identifying this material.
         required: true
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Успешно удалено
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Материал не найден
   /api/v1/materials/{id}/photo/:
     delete:
       operationId: materials_photo_delete
@@ -1518,7 +1718,7 @@ paths:
         description: A unique integer value identifying this material.
         required: true
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1539,7 +1739,7 @@ paths:
         description: A unique integer value identifying this material.
         required: true
       tags:
-      - Common
+      - Materials
       requestBody:
         content:
           multipart/form-data:
@@ -1562,7 +1762,7 @@ paths:
       description: Обновить несколько материалов одновременно
       summary: Массовое обновление материалов
       tags:
-      - Common
+      - Materials
       requestBody:
         content:
           application/json:
@@ -1604,7 +1804,7 @@ paths:
         description: ID объекта
         required: true
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1636,7 +1836,7 @@ paths:
           type: string
         description: Поиск по названию
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1670,7 +1870,7 @@ paths:
         description: Поисковый запрос
         required: true
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1708,7 +1908,7 @@ paths:
           type: boolean
         description: Фильтр по активности
       tags:
-      - Common
+      - Materials
       security:
       - jwtAuth: []
       responses:
@@ -1721,7 +1921,8 @@ paths:
   /api/v1/objects/:
     get:
       operationId: objects_list
-      description: Пагинация, поиск и сортировка. Поиск по `name`, `address`.
+      description: Получить список строительных объектов. Доступ ограничен по ролям
+        — пользователи видят только назначенные им объекты.
       summary: Список объектов
       parameters:
       - in: query
@@ -1742,7 +1943,7 @@ paths:
         name: ordering
         schema:
           type: string
-        description: 'Сортировка: name|id (используйте ''-'' для desc)'
+        description: 'Сортировка: name|id|responsible (используйте ''-'' для desc)'
       - name: page
         required: false
         in: query
@@ -1753,13 +1954,14 @@ paths:
         name: responsible
         schema:
           type: integer
+        description: 'Фильтр: ID ответственного сотрудника'
       - in: query
         name: search
         schema:
           type: string
         description: 'Поиск: name|address'
       tags:
-      - Common
+      - Objects
       security:
       - jwtAuth: []
       responses:
@@ -1769,16 +1971,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedObjectList'
           description: ''
+        '401':
+          description: Не авторизован
     post:
       operationId: objects_create
+      description: Создать новый строительный объект. Бригадир автоматически назначается
+        ответственным за созданный объект.
       summary: Создать объект
       tags:
-      - Common
+      - Objects
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ObjectRequest'
+            examples:
+              ПримерСозданияОбъекта:
+                value:
+                  name: ЖК Солнечный
+                  address: г. Ташкент, ул. Амира Темура, 15
+                  is_active: true
+                  current_stage: request
+                  key_person_name: Иванов И.И.
+                  key_person_contacts: '+998901234567'
+                  date_start: '2025-01-15'
+                  date_end: '2025-12-31'
+                summary: Пример создания объекта
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ObjectRequest'
@@ -1795,9 +2013,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Object'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
   /api/v1/objects/{id}/:
     get:
       operationId: objects_retrieve
+      description: 'Получить детальную информацию об объекте: адрес, ответственный,
+        контакты, даты.'
       summary: Получить объект
       parameters:
       - in: path
@@ -1807,7 +2033,7 @@ paths:
         description: A unique integer value identifying this object.
         required: true
       tags:
-      - Common
+      - Objects
       security:
       - jwtAuth: []
       responses:
@@ -1817,8 +2043,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Object'
           description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет доступа к объекту
+        '404':
+          description: Объект не найден
     put:
       operationId: objects_update
+      description: Полное обновление объекта. Бригадир не может сменить ответственного.
+      summary: Полное обновление объекта
       parameters:
       - in: path
         name: id
@@ -1827,7 +2061,7 @@ paths:
         description: A unique integer value identifying this object.
         required: true
       tags:
-      - objects
+      - Objects
       requestBody:
         content:
           application/json:
@@ -1849,9 +2083,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Object'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Объект не найден
     patch:
       operationId: objects_partial_update
-      summary: Обновить объект
+      description: Частичное обновление объекта. Бригадир не может сменить ответственного.
+      summary: Частичное обновление объекта
       parameters:
       - in: path
         name: id
@@ -1860,7 +2103,7 @@ paths:
         description: A unique integer value identifying this object.
         required: true
       tags:
-      - Common
+      - Objects
       requestBody:
         content:
           application/json:
@@ -1881,8 +2124,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Object'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Объект не найден
     delete:
       operationId: objects_destroy
+      description: Удалить объект. Рекомендуется деактивировать (is_active=false)
+        вместо удаления.
       summary: Удалить объект
       parameters:
       - in: path
@@ -1892,35 +2145,33 @@ paths:
         description: A unique integer value identifying this object.
         required: true
       tags:
-      - Common
+      - Objects
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Успешно удалено
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Объект не найден
   /api/v1/objects/responsibles/:
     get:
       operationId: objects_responsibles
-      description: Получить список сотрудников, за которыми закреплены объекты
+      description: Получить список сотрудников, за которыми закреплены объекты, с
+        количеством объектов.
       summary: Список ответственных за объекты
       tags:
-      - Common
+      - Objects
       security:
       - jwtAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-          description: ''
+          description: Список ответственных
+        '401':
+          description: Не авторизован
   /api/v1/purchase-items/:
     get:
       operationId: purchase_items_list
@@ -2012,7 +2263,24 @@ paths:
           description: ''
     post:
       operationId: purchase_items_create
-      description: ViewSet для управления позициями закупок
+      description: |-
+        ViewSet для управления позициями (строками) закупок.
+
+        Позиция закупки содержит:
+        - Материал из справочника
+        - Единицу измерения
+        - Количество
+        - Цену за единицу
+        - Сумму (рассчитывается автоматически)
+
+        **Дополнительные действия:**
+        - `bulk-create` — массовое создание позиций
+        - `bulk-update` — массовое обновление
+        - `stats` — статистика по позициям
+
+        **Права доступа:**
+        - Наследуются от закупки
+        - Нельзя изменять позиции архивных закупок
       summary: Создать позицию закупки
       tags:
       - Purchase Items
@@ -2040,7 +2308,24 @@ paths:
   /api/v1/purchase-items/{id}/:
     get:
       operationId: purchase_items_retrieve
-      description: ViewSet для управления позициями закупок
+      description: |-
+        ViewSet для управления позициями (строками) закупок.
+
+        Позиция закупки содержит:
+        - Материал из справочника
+        - Единицу измерения
+        - Количество
+        - Цену за единицу
+        - Сумму (рассчитывается автоматически)
+
+        **Дополнительные действия:**
+        - `bulk-create` — массовое создание позиций
+        - `bulk-update` — массовое обновление
+        - `stats` — статистика по позициям
+
+        **Права доступа:**
+        - Наследуются от закупки
+        - Нельзя изменять позиции архивных закупок
       summary: Получить позицию закупки
       parameters:
       - in: path
@@ -2062,7 +2347,25 @@ paths:
           description: ''
     put:
       operationId: purchase_items_update
-      description: ViewSet для управления позициями закупок
+      description: |-
+        ViewSet для управления позициями (строками) закупок.
+
+        Позиция закупки содержит:
+        - Материал из справочника
+        - Единицу измерения
+        - Количество
+        - Цену за единицу
+        - Сумму (рассчитывается автоматически)
+
+        **Дополнительные действия:**
+        - `bulk-create` — массовое создание позиций
+        - `bulk-update` — массовое обновление
+        - `stats` — статистика по позициям
+
+        **Права доступа:**
+        - Наследуются от закупки
+        - Нельзя изменять позиции архивных закупок
+      summary: Полное обновление позиции закупки
       parameters:
       - in: path
         name: id
@@ -2071,7 +2374,7 @@ paths:
         description: A unique integer value identifying this purchase item.
         required: true
       tags:
-      - purchase-items
+      - Purchase Items
       requestBody:
         content:
           application/json:
@@ -2091,12 +2394,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PurchaseItemUpdate'
+                $ref: '#/components/schemas/PurchaseItem'
           description: ''
     patch:
       operationId: purchase_items_partial_update
-      description: ViewSet для управления позициями закупок
-      summary: Изменить позицию закупки
+      description: |-
+        ViewSet для управления позициями (строками) закупок.
+
+        Позиция закупки содержит:
+        - Материал из справочника
+        - Единицу измерения
+        - Количество
+        - Цену за единицу
+        - Сумму (рассчитывается автоматически)
+
+        **Дополнительные действия:**
+        - `bulk-create` — массовое создание позиций
+        - `bulk-update` — массовое обновление
+        - `stats` — статистика по позициям
+
+        **Права доступа:**
+        - Наследуются от закупки
+        - Нельзя изменять позиции архивных закупок
+      summary: Частичное обновление позиции закупки
       parameters:
       - in: path
         name: id
@@ -2128,7 +2448,24 @@ paths:
           description: ''
     delete:
       operationId: purchase_items_destroy
-      description: ViewSet для управления позициями закупок
+      description: |-
+        ViewSet для управления позициями (строками) закупок.
+
+        Позиция закупки содержит:
+        - Материал из справочника
+        - Единицу измерения
+        - Количество
+        - Цену за единицу
+        - Сумму (рассчитывается автоматически)
+
+        **Дополнительные действия:**
+        - `bulk-create` — массовое создание позиций
+        - `bulk-update` — массовое обновление
+        - `stats` — статистика по позициям
+
+        **Права доступа:**
+        - Наследуются от закупки
+        - Нельзя изменять позиции архивных закупок
       summary: Удалить позицию закупки
       parameters:
       - in: path
@@ -2340,7 +2677,8 @@ paths:
   /api/v1/purchase-photos/:
     get:
       operationId: purchase_photos_list
-      description: ViewSet для управления фото закупок
+      description: Получить список фотографий с фильтрацией по закупке.
+      summary: Список фотографий закупок
       parameters:
       - name: limit
         required: false
@@ -2360,6 +2698,11 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: purchase_id
+        schema:
+          type: integer
+        description: Фильтр по ID закупки
       - name: search
         required: false
         in: query
@@ -2367,7 +2710,7 @@ paths:
         schema:
           type: string
       tags:
-      - purchase-photos
+      - Purchase Photos
       security:
       - jwtAuth: []
       responses:
@@ -2377,6 +2720,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPurchasePhotoList'
           description: ''
+        '401':
+          description: Не авторизован
     post:
       operationId: purchase_photos_create
       description: Загрузить фото для закупки (инструкции или отчет)
@@ -2403,7 +2748,8 @@ paths:
   /api/v1/purchase-photos/{id}/:
     get:
       operationId: purchase_photos_retrieve
-      description: ViewSet для управления фото закупок
+      description: Получить информацию о фотографии по ID.
+      summary: Получить фотографию
       parameters:
       - in: path
         name: id
@@ -2412,7 +2758,7 @@ paths:
         description: A unique integer value identifying this purchase photo.
         required: true
       tags:
-      - purchase-photos
+      - Purchase Photos
       security:
       - jwtAuth: []
       responses:
@@ -2422,9 +2768,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/PurchasePhoto'
           description: ''
+        '401':
+          description: Не авторизован
+        '404':
+          description: Фото не найдено
     put:
       operationId: purchase_photos_update
-      description: ViewSet для управления фото закупок
+      description: Обновить метаданные фотографии.
+      summary: Полное обновление фотографии
       parameters:
       - in: path
         name: id
@@ -2433,7 +2784,7 @@ paths:
         description: A unique integer value identifying this purchase photo.
         required: true
       tags:
-      - purchase-photos
+      - Purchase Photos
       requestBody:
         content:
           multipart/form-data:
@@ -2454,9 +2805,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/PurchasePhoto'
           description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Фото не найдено
     patch:
       operationId: purchase_photos_partial_update
-      description: ViewSet для управления фото закупок
+      description: Частичное обновление метаданных фотографии.
+      summary: Частичное обновление фотографии
       parameters:
       - in: path
         name: id
@@ -2465,7 +2823,7 @@ paths:
         description: A unique integer value identifying this purchase photo.
         required: true
       tags:
-      - purchase-photos
+      - Purchase Photos
       requestBody:
         content:
           multipart/form-data:
@@ -2486,9 +2844,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/PurchasePhoto'
           description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Фото не найдено
     delete:
       operationId: purchase_photos_destroy
-      description: ViewSet для управления фото закупок
+      description: Удалить фотографию закупки.
+      summary: Удалить фотографию
       parameters:
       - in: path
         name: id
@@ -2497,12 +2862,18 @@ paths:
         description: A unique integer value identifying this purchase photo.
         required: true
       tags:
-      - purchase-photos
+      - Purchase Photos
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Успешно удалено
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Фото не найдено
   /api/v1/purchases/:
     get:
       operationId: purchases_list
@@ -2645,6 +3016,7 @@ paths:
           description: ''
     post:
       operationId: purchases_create
+      description: Переопределяем create, чтобы вернуть полный объект с id
       summary: Создать закупку (с позициями)
       tags:
       - Purchases
@@ -2691,6 +3063,40 @@ paths:
   /api/v1/purchases/{id}/:
     get:
       operationId: purchases_retrieve
+      description: |-
+        ViewSet для управления закупками.
+
+        Закупка — основная операционная единица системы ELOM.
+        Содержит информацию о приобретении материалов для объекта.
+
+        **Состав закупки:**
+        - Дата, объект, поставщик, ответственный
+        - Позиции (материалы с количеством и ценой)
+        - Фотографии (чеки, инструкции, отчеты)
+        - Статус и флаг архивации
+
+        **Статусы:**
+        - `new` — новая заявка
+        - `in_progress` — в работе
+        - `completed` — выполнена
+        - `cancelled` — отменена
+
+        **Дополнительные действия:**
+        - `photos/upload` — загрузка фото
+        - `photos` — список фото
+        - `photos/{id}` — удаление/обновление фото
+        - `photos/{id}/set-cover` — установка обложки
+        - `photos/bulk-upload` — массовая загрузка
+        - `photos/reorder` — изменение порядка
+        - `bulk-archive` — массовое архивирование
+        - `bulk-delete` — массовое удаление
+        - `duplicate` — дублирование закупки
+        - `stats` — статистика
+        - `supplier-analysis` — анализ поставщиков
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
       summary: Получить закупку
       parameters:
       - in: path
@@ -2712,6 +3118,41 @@ paths:
           description: ''
     put:
       operationId: purchases_update
+      description: |-
+        ViewSet для управления закупками.
+
+        Закупка — основная операционная единица системы ELOM.
+        Содержит информацию о приобретении материалов для объекта.
+
+        **Состав закупки:**
+        - Дата, объект, поставщик, ответственный
+        - Позиции (материалы с количеством и ценой)
+        - Фотографии (чеки, инструкции, отчеты)
+        - Статус и флаг архивации
+
+        **Статусы:**
+        - `new` — новая заявка
+        - `in_progress` — в работе
+        - `completed` — выполнена
+        - `cancelled` — отменена
+
+        **Дополнительные действия:**
+        - `photos/upload` — загрузка фото
+        - `photos` — список фото
+        - `photos/{id}` — удаление/обновление фото
+        - `photos/{id}/set-cover` — установка обложки
+        - `photos/bulk-upload` — массовая загрузка
+        - `photos/reorder` — изменение порядка
+        - `bulk-archive` — массовое архивирование
+        - `bulk-delete` — массовое удаление
+        - `duplicate` — дублирование закупки
+        - `stats` — статистика
+        - `supplier-analysis` — анализ поставщиков
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
+      summary: Полное обновление закупки
       parameters:
       - in: path
         name: id
@@ -2720,18 +3161,18 @@ paths:
         description: A unique integer value identifying this purchase.
         required: true
       tags:
-      - purchases
+      - Purchases
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurchaseUpdateRequest'
+              $ref: '#/components/schemas/PurchaseRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PurchaseUpdateRequest'
+              $ref: '#/components/schemas/PurchaseRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PurchaseUpdateRequest'
+              $ref: '#/components/schemas/PurchaseRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2740,11 +3181,47 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PurchaseUpdate'
+                $ref: '#/components/schemas/Purchase'
           description: ''
+        '400':
+          description: Archived purchase is read-only
     patch:
       operationId: purchases_partial_update
-      summary: Изменить закупку
+      description: |-
+        ViewSet для управления закупками.
+
+        Закупка — основная операционная единица системы ELOM.
+        Содержит информацию о приобретении материалов для объекта.
+
+        **Состав закупки:**
+        - Дата, объект, поставщик, ответственный
+        - Позиции (материалы с количеством и ценой)
+        - Фотографии (чеки, инструкции, отчеты)
+        - Статус и флаг архивации
+
+        **Статусы:**
+        - `new` — новая заявка
+        - `in_progress` — в работе
+        - `completed` — выполнена
+        - `cancelled` — отменена
+
+        **Дополнительные действия:**
+        - `photos/upload` — загрузка фото
+        - `photos` — список фото
+        - `photos/{id}` — удаление/обновление фото
+        - `photos/{id}/set-cover` — установка обложки
+        - `photos/bulk-upload` — массовая загрузка
+        - `photos/reorder` — изменение порядка
+        - `bulk-archive` — массовое архивирование
+        - `bulk-delete` — массовое удаление
+        - `duplicate` — дублирование закупки
+        - `stats` — статистика
+        - `supplier-analysis` — анализ поставщиков
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
+      summary: Частичное обновление закупки
       parameters:
       - in: path
         name: id
@@ -2778,6 +3255,40 @@ paths:
           description: Archived purchase is read-only
     delete:
       operationId: purchases_destroy
+      description: |-
+        ViewSet для управления закупками.
+
+        Закупка — основная операционная единица системы ELOM.
+        Содержит информацию о приобретении материалов для объекта.
+
+        **Состав закупки:**
+        - Дата, объект, поставщик, ответственный
+        - Позиции (материалы с количеством и ценой)
+        - Фотографии (чеки, инструкции, отчеты)
+        - Статус и флаг архивации
+
+        **Статусы:**
+        - `new` — новая заявка
+        - `in_progress` — в работе
+        - `completed` — выполнена
+        - `cancelled` — отменена
+
+        **Дополнительные действия:**
+        - `photos/upload` — загрузка фото
+        - `photos` — список фото
+        - `photos/{id}` — удаление/обновление фото
+        - `photos/{id}/set-cover` — установка обложки
+        - `photos/bulk-upload` — массовая загрузка
+        - `photos/reorder` — изменение порядка
+        - `bulk-archive` — массовое архивирование
+        - `bulk-delete` — массовое удаление
+        - `duplicate` — дублирование закупки
+        - `stats` — статистика
+        - `supplier-analysis` — анализ поставщиков
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
       summary: Удалить закупку
       parameters:
       - in: path
@@ -3127,41 +3638,125 @@ paths:
           description: Bulk delete completed
   /api/v1/purchases/import/commit/:
     post:
-      operationId: purchases_import_commit_create
-      description: Создаёт закупки и позиции построчно, группируя по (date, object,
-        supplier, invoice_number). Идемпотентность по content_hash.
-      summary: 'IMPORT: commit'
+      operationId: purchases_import_commit
+      description: "\n        Создать закупки и позиции из Excel-файла.\n        \n\
+        \        **Важно:** Перед вызовом рекомендуется выполнить dry_run для проверки\
+        \ данных.\n        \n        **Логика группировки:**\n        Строки с одинаковыми\
+        \ (date, object, supplier, invoice_number) объединяются в одну закупку.\n\
+        \        Каждая уникальная комбинация создает отдельную закупку.\n       \
+        \ \n        **Идемпотентность:**\n        Хеш файла сохраняется в комментарии\
+        \ закупки: `[import:{hash}]`.\n        Повторный импорт того же файла пропускается.\n\
+        \        \n        **Возвращает:**\n        - `created` — количество созданных\
+        \ закупок\n        - `content_hash` — хеш импортированного файла\n        "
+      summary: 'Шаг 3: Фактический импорт'
       tags:
       - Purchases • Import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel файл (.xlsx)
+                mapping:
+                  type: object
+                  description: Маппинг колонок
+              required:
+              - file
       security:
       - jwtAuth: []
       responses:
         '201':
-          description: Created
+          description: Импорт завершен
+        '200':
+          description: Файл уже был импортирован ранее
+        '400':
+          description: Файл не предоставлен или ошибка импорта
+        '401':
+          description: Не авторизован
   /api/v1/purchases/import/dry_run/:
     post:
-      operationId: purchases_import_dry_run_create
-      description: Проверяет строки согласно маппингу. Возвращает массив ошибок.
-      summary: 'IMPORT: dry-run'
+      operationId: purchases_import_dry_run
+      description: "\n        Проверить данные файла без сохранения в БД.\n      \
+        \  \n        **Требуется передать:**\n        - `file` — Excel файл (тот же\
+        \ что в prepare)\n        - `mapping` — маппинг колонок (из ответа prepare\
+        \ или скорректированный)\n        \n        **Проверки:**\n        - Корректность\
+        \ дат (форматы: YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY)\n        - Наличие обязательных\
+        \ полей (date, object, material, quantity > 0)\n        - Существование объектов\
+        \ в справочнике\n        - Существование материалов в справочнике\n      \
+        \  - Существование единиц измерения в справочнике\n        \n        **Возвращает:**\n\
+        \        - `rows_scanned` — количество проверенных строк\n        - `errors`\
+        \ — массив ошибок с указанием строки и поля\n        "
+      summary: 'Шаг 2: Проверка данных (dry-run)'
       tags:
       - Purchases • Import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel файл (.xlsx)
+                mapping:
+                  type: object
+                  description: Маппинг колонок
+              required:
+              - file
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: OK
+          description: Проверка завершена
+        '400':
+          description: Файл не предоставлен
+        '401':
+          description: Не авторизован
   /api/v1/purchases/import/prepare/:
     post:
-      operationId: purchases_import_prepare_create
-      description: Читает заголовок первого листа и предлагает авто-маппинг колонок.
-      summary: 'IMPORT: анализ шапки'
+      operationId: purchases_import_prepare
+      description: "\n        Загрузить Excel-файл и получить автоматический маппинг\
+        \ колонок.\n        \n        **Поддерживаемые форматы:** .xlsx, .xls\n  \
+        \      \n        **Распознаваемые колонки:**\n        - `date` / `дата` —\
+        \ дата закупки\n        - `object` / `объект` — название объекта\n       \
+        \ - `supplier` / `поставщик` — поставщик\n        - `invoice_number` / `накладная`\
+        \ / `чек` — номер накладной\n        - `material` / `материал` — название\
+        \ материала\n        - `unit` / `ед.` / `единица` — единица измерения\n  \
+        \      - `quantity` / `кол-во` / `количество` — количество\n        - `comment`\
+        \ / `комментарий` — комментарий\n        \n        **Возвращает:**\n     \
+        \   - `ok` — успешность анализа\n        - `sheets` — список листов в файле\n\
+        \        - `columns` — заголовки колонок\n        - `hash` — хеш файла для\
+        \ идемпотентности\n        - `auto_mapping` — предложенный маппинг колонок\n\
+        \        "
+      summary: 'Шаг 1: Анализ файла и авто-маппинг'
       tags:
       - Purchases • Import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel файл (.xlsx)
+              required:
+              - file
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: OK
+          description: Файл успешно проанализирован
+        '400':
+          description: Файл не предоставлен или поврежден
+        '401':
+          description: Не авторизован
   /api/v1/purchases/stats/:
     get:
       operationId: purchases_stats_retrieve
@@ -3701,6 +4296,33 @@ paths:
           description: ''
     post:
       operationId: stock_snapshots_create
+      description: |-
+        ViewSet для управления снапшотами остатков (Unified Ledger Model).
+
+        StockSnapshot — единая запись движения материала.
+        Положительное quantity_signed = приход, отрицательное = расход.
+
+        **Источники снапшотов (source_type):**
+        - `purchase` — из закупки (приход)
+        - `writeoff` — из списания (расход)
+        - `manual` — ручная корректировка
+        - `import` — из импорта
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **Дополнительные действия:**
+        - `balance` — текущий остаток материала
+        - `by-objects` — остатки по объектам
+        - `history` — история изменений остатка
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
       summary: Создать снапшот
       tags:
       - Stock
@@ -3742,6 +4364,33 @@ paths:
   /api/v1/stock/snapshots/{id}/:
     get:
       operationId: stock_snapshots_retrieve
+      description: |-
+        ViewSet для управления снапшотами остатков (Unified Ledger Model).
+
+        StockSnapshot — единая запись движения материала.
+        Положительное quantity_signed = приход, отрицательное = расход.
+
+        **Источники снапшотов (source_type):**
+        - `purchase` — из закупки (приход)
+        - `writeoff` — из списания (расход)
+        - `manual` — ручная корректировка
+        - `import` — из импорта
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **Дополнительные действия:**
+        - `balance` — текущий остаток материала
+        - `by-objects` — остатки по объектам
+        - `history` — история изменений остатка
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
       summary: Получить снапшот
       parameters:
       - in: path
@@ -3763,6 +4412,34 @@ paths:
           description: ''
     put:
       operationId: stock_snapshots_update
+      description: |-
+        ViewSet для управления снапшотами остатков (Unified Ledger Model).
+
+        StockSnapshot — единая запись движения материала.
+        Положительное quantity_signed = приход, отрицательное = расход.
+
+        **Источники снапшотов (source_type):**
+        - `purchase` — из закупки (приход)
+        - `writeoff` — из списания (расход)
+        - `manual` — ручная корректировка
+        - `import` — из импорта
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **Дополнительные действия:**
+        - `balance` — текущий остаток материала
+        - `by-objects` — остатки по объектам
+        - `history` — история изменений остатка
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
+      summary: Полное обновление снапшота
       parameters:
       - in: path
         name: id
@@ -3771,7 +4448,7 @@ paths:
         description: A unique integer value identifying this stock snapshot.
         required: true
       tags:
-      - stock
+      - Stock
       requestBody:
         content:
           application/json:
@@ -3795,7 +4472,34 @@ paths:
           description: ''
     patch:
       operationId: stock_snapshots_partial_update
-      summary: Изменить снапшот
+      description: |-
+        ViewSet для управления снапшотами остатков (Unified Ledger Model).
+
+        StockSnapshot — единая запись движения материала.
+        Положительное quantity_signed = приход, отрицательное = расход.
+
+        **Источники снапшотов (source_type):**
+        - `purchase` — из закупки (приход)
+        - `writeoff` — из списания (расход)
+        - `manual` — ручная корректировка
+        - `import` — из импорта
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **Дополнительные действия:**
+        - `balance` — текущий остаток материала
+        - `by-objects` — остатки по объектам
+        - `history` — история изменений остатка
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты
+      summary: Частичное обновление снапшота
       parameters:
       - in: path
         name: id
@@ -4071,8 +4775,8 @@ paths:
           description: ''
     put:
       operationId: suppliers_update
-      description: Обновить информацию о поставщике
-      summary: Обновить поставщика
+      description: Полное обновление информации о поставщике
+      summary: Полное обновление поставщика
       parameters:
       - in: path
         name: id
@@ -4105,7 +4809,8 @@ paths:
           description: ''
     patch:
       operationId: suppliers_partial_update
-      description: ViewSet для управления поставщиками
+      description: Частичное обновление информации о поставщике
+      summary: Частичное обновление поставщика
       parameters:
       - in: path
         name: id
@@ -4114,7 +4819,7 @@ paths:
         description: A unique integer value identifying this Поставщик.
         required: true
       tags:
-      - suppliers
+      - Suppliers
       requestBody:
         content:
           application/json:
@@ -4153,10 +4858,759 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/tool-issues/:
+    get:
+      operationId: tool_issues_list
+      description: Получить журнал выдач инструментов с фильтрацией
+      summary: Список выдач инструментов
+      parameters:
+      - in: query
+        name: is_returned
+        schema:
+          type: boolean
+        description: Фильтр возвращенных (true/false)
+      - in: query
+        name: issue_condition
+        schema:
+          type: string
+          enum:
+          - after_repair
+          - broken
+          - good
+          - lost
+          - needs_repair
+          - new
+        description: |-
+          Состояние при выдаче
+
+          * `new` - Новый
+          * `good` - Хорошее
+          * `after_repair` - После ремонта
+          * `needs_repair` - Требует ремонта
+          * `broken` - Сломан
+          * `lost` - Утерян
+      - in: query
+        name: issued_at_from
+        schema:
+          type: string
+        description: Дата выдачи от (YYYY-MM-DD)
+      - in: query
+        name: issued_at_to
+        schema:
+          type: string
+        description: Дата выдачи до (YYYY-MM-DD)
+      - in: query
+        name: issued_by
+        schema:
+          type: integer
+        description: Фильтр по выдавшему (ID)
+      - in: query
+        name: issued_to
+        schema:
+          type: integer
+        description: Фильтр по получателю (ID)
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: Фильтр по объекту (ID)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: issued_at|return_date (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: return_condition
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - after_repair
+          - broken
+          - good
+          - lost
+          - needs_repair
+          - new
+        description: |-
+          Состояние при возврате
+
+          * `new` - Новый
+          * `good` - Хорошее
+          * `after_repair` - После ремонта
+          * `needs_repair` - Требует ремонта
+          * `broken` - Сломан
+          * `lost` - Утерян
+      - in: query
+        name: return_date_from
+        schema:
+          type: string
+          format: date-time
+        description: Дата возврата от
+      - in: query
+        name: return_date_to
+        schema:
+          type: string
+          format: date-time
+        description: Дата возврата до
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tool
+        schema:
+          type: integer
+        description: Фильтр по инструменту (ID)
+      - in: query
+        name: tool_inventory_number
+        schema:
+          type: string
+        description: Фильтр по инвентарному номеру
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedToolIssueList'
+          description: ''
+    post:
+      operationId: tool_issues_create
+      description: Создать запись о выдаче инструмента сотруднику
+      summary: Выдать инструмент
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolIssue'
+          description: ''
+  /api/v1/tool-issues/{id}/:
+    get:
+      operationId: tool_issues_retrieve
+      description: Получить детальную информацию о выдаче инструмента
+      summary: Получить выдачу
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Выдача инструмента.
+        required: true
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolIssue'
+          description: ''
+    put:
+      operationId: tool_issues_update
+      description: Обновление выдач запрещено. Используйте action return для возврата.
+      summary: Обновить выдачу (запрещено)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Выдача инструмента.
+        required: true
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '400':
+          description: Обновление выдач запрещено
+    patch:
+      operationId: tool_issues_partial_update
+      description: Обновление выдач запрещено. Используйте action return для возврата.
+      summary: Частичное обновление выдачи (запрещено)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Выдача инструмента.
+        required: true
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedToolIssueRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedToolIssueRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedToolIssueRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '400':
+          description: Обновление выдач запрещено
+    delete:
+      operationId: tool_issues_destroy
+      description: Удаление выдач запрещено для сохранения истории
+      summary: Удалить выдачу (запрещено)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Выдача инструмента.
+        required: true
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '400':
+          description: Удаление выдач запрещено
+  /api/v1/tool-issues/{id}/return/:
+    post:
+      operationId: tool_issues_return_create
+      description: "\n        Оформить возврат инструмента на склад.\n        \n \
+        \       Обязательно указать состояние при возврате.\n        После возврата\
+        \ инструмент становится доступен для новой выдачи.\n        "
+      summary: Оформить возврат инструмента
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Выдача инструмента.
+        required: true
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolReturnRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolReturnRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolReturnRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolIssue'
+          description: ''
+        '400':
+          description: Ошибка валидации
+  /api/v1/tool-issues/active/:
+    get:
+      operationId: tool_issues_active_list
+      description: Получить список всех невозвращенных инструментов
+      summary: Список активных выдач
+      parameters:
+      - in: query
+        name: is_returned
+        schema:
+          type: boolean
+        description: Возвращен
+      - in: query
+        name: issue_condition
+        schema:
+          type: string
+          enum:
+          - after_repair
+          - broken
+          - good
+          - lost
+          - needs_repair
+          - new
+        description: |-
+          Состояние при выдаче
+
+          * `new` - Новый
+          * `good` - Хорошее
+          * `after_repair` - После ремонта
+          * `needs_repair` - Требует ремонта
+          * `broken` - Сломан
+          * `lost` - Утерян
+      - in: query
+        name: issued_at_from
+        schema:
+          type: string
+          format: date-time
+        description: Дата выдачи от
+      - in: query
+        name: issued_at_to
+        schema:
+          type: string
+          format: date-time
+        description: Дата выдачи до
+      - in: query
+        name: issued_by
+        schema:
+          type: integer
+        description: Кто выдал (ID)
+      - in: query
+        name: issued_to
+        schema:
+          type: integer
+        description: Кому выдал (ID)
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: Объект (ID)
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: return_condition
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - after_repair
+          - broken
+          - good
+          - lost
+          - needs_repair
+          - new
+        description: |-
+          Состояние при возврате
+
+          * `new` - Новый
+          * `good` - Хорошее
+          * `after_repair` - После ремонта
+          * `needs_repair` - Требует ремонта
+          * `broken` - Сломан
+          * `lost` - Утерян
+      - in: query
+        name: return_date_from
+        schema:
+          type: string
+          format: date-time
+        description: Дата возврата от
+      - in: query
+        name: return_date_to
+        schema:
+          type: string
+          format: date-time
+        description: Дата возврата до
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tool
+        schema:
+          type: integer
+        description: Инструмент (ID)
+      - in: query
+        name: tool_inventory_number
+        schema:
+          type: string
+        description: Инвентарный номер
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedToolIssueList'
+          description: ''
+  /api/v1/tools/:
+    get:
+      operationId: tools_list
+      description: Получить список всех инструментов с фильтрацией и поиском
+      summary: Список инструментов
+      parameters:
+      - in: query
+        name: brand
+        schema:
+          type: string
+        description: Фильтр по марке
+      - in: query
+        name: category
+        schema:
+          type: string
+        description: Фильтр по категории
+      - in: query
+        name: condition
+        schema:
+          type: string
+        description: Фильтр по состоянию
+      - in: query
+        name: current_holder
+        schema:
+          type: integer
+        description: Фильтр по текущему держателю (ID)
+      - in: query
+        name: current_object
+        schema:
+          type: integer
+        description: Фильтр по текущему объекту (ID)
+      - in: query
+        name: in_stock
+        schema:
+          type: boolean
+        description: Только инструменты на складе (true/false)
+      - in: query
+        name: inventory_number
+        schema:
+          type: string
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: inventory_number|name|condition (используйте ''-''
+          для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по инвентарному номеру, названию, категории, марке
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedToolList'
+          description: ''
+    post:
+      operationId: tools_create
+      description: Добавить новый инструмент в систему
+      summary: Создать инструмент
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+          description: ''
+  /api/v1/tools/{id}/:
+    get:
+      operationId: tools_retrieve
+      description: Получить детальную информацию об инструменте
+      summary: Получить инструмент
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Инструмент.
+        required: true
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+          description: ''
+    put:
+      operationId: tools_update
+      description: Полное обновление данных инструмента
+      summary: Обновить инструмент
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Инструмент.
+        required: true
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+          description: ''
+    patch:
+      operationId: tools_partial_update
+      description: Частичное обновление данных инструмента
+      summary: Частичное обновление инструмента
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Инструмент.
+        required: true
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedToolRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedToolRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedToolRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+          description: ''
+    delete:
+      operationId: tools_destroy
+      description: Удалить инструмент из системы (только если нет истории выдач)
+      summary: Удалить инструмент
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Инструмент.
+        required: true
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/tools/bulk-create/:
+    post:
+      operationId: tools_bulk_create_create
+      description: "\n        Создать несколько инструментов за один запрос.\n   \
+        \     \n        Опционально можно сразу выдать все созданные инструменты одному\
+        \ сотруднику.\n        "
+      summary: Массовое создание инструментов
+      parameters:
+      - in: query
+        name: brand
+        schema:
+          type: string
+        description: Марка
+      - in: query
+        name: category
+        schema:
+          type: string
+        description: Категория
+      - in: query
+        name: condition
+        schema:
+          type: string
+          enum:
+          - after_repair
+          - broken
+          - good
+          - lost
+          - needs_repair
+          - new
+        description: |-
+          Состояние
+
+          * `new` - Новый
+          * `good` - Хорошее
+          * `after_repair` - После ремонта
+          * `needs_repair` - Требует ремонта
+          * `broken` - Сломан
+          * `lost` - Утерян
+      - in: query
+        name: current_holder
+        schema:
+          type: integer
+        description: Текущий держатель (ID)
+      - in: query
+        name: current_object
+        schema:
+          type: integer
+        description: Текущий объект (ID)
+      - in: query
+        name: in_stock
+        schema:
+          type: boolean
+        description: На складе
+      - in: query
+        name: inventory_number
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolBulkCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolBulkCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolBulkCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedToolList'
+          description: ''
+        '400':
+          description: Ошибка валидации
+  /api/v1/tools/categories/:
+    get:
+      operationId: tools_categories_retrieve
+      description: Получить список уникальных категорий для автодополнения
+      summary: Автодополнение категорий
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Поисковый запрос (первые буквы категории)
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolCategoryAutocomplete'
+          description: ''
   /api/v1/units/:
     get:
       operationId: units_list
-      description: Пагинация, поиск и сортировка. Поиск по `code`, `name`.
+      description: Получить пагинированный список единиц измерения с поддержкой поиска
+        и сортировки. Поиск по `code`, `name`.
       summary: Список единиц измерения
       parameters:
       - in: query
@@ -4186,7 +5640,7 @@ paths:
           type: string
         description: 'Поиск: code|name'
       tags:
-      - Common
+      - Units
       security:
       - jwtAuth: []
       responses:
@@ -4196,11 +5650,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedUnitList'
           description: ''
+        '401':
+          description: Не авторизован
     post:
       operationId: units_create
-      summary: Создать единицу
+      description: Создать новую единицу измерения. Требуется роль admin или director.
+      summary: Создать единицу измерения
       tags:
-      - Common
+      - Units
       requestBody:
         content:
           application/json:
@@ -4222,10 +5679,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unit'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
   /api/v1/units/{id}/:
     get:
       operationId: units_retrieve
-      summary: Получить единицу
+      description: Получить детальную информацию о единице измерения по ID.
+      summary: Получить единицу измерения
       parameters:
       - in: path
         name: id
@@ -4234,7 +5698,7 @@ paths:
         description: A unique integer value identifying this unit.
         required: true
       tags:
-      - Common
+      - Units
       security:
       - jwtAuth: []
       responses:
@@ -4244,8 +5708,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unit'
           description: ''
+        '401':
+          description: Не авторизован
+        '404':
+          description: Единица не найдена
     put:
       operationId: units_update
+      description: Полное обновление единицы измерения. Требуется роль admin или director.
+      summary: Полное обновление единицы измерения
       parameters:
       - in: path
         name: id
@@ -4254,7 +5724,7 @@ paths:
         description: A unique integer value identifying this unit.
         required: true
       tags:
-      - units
+      - Units
       requestBody:
         content:
           application/json:
@@ -4276,9 +5746,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unit'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Единица не найдена
     patch:
       operationId: units_partial_update
-      summary: Обновить единицу
+      description: Частичное обновление единицы измерения. Требуется роль admin или
+        director.
+      summary: Частичное обновление единицы измерения
       parameters:
       - in: path
         name: id
@@ -4287,7 +5767,7 @@ paths:
         description: A unique integer value identifying this unit.
         required: true
       tags:
-      - Common
+      - Units
       requestBody:
         content:
           application/json:
@@ -4308,9 +5788,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unit'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Единица не найдена
     delete:
       operationId: units_destroy
-      summary: Удалить единицу
+      description: Удалить единицу измерения. Требуется роль admin или director.
+      summary: Удалить единицу измерения
       parameters:
       - in: path
         name: id
@@ -4319,19 +5808,30 @@ paths:
         description: A unique integer value identifying this unit.
         required: true
       tags:
-      - Common
+      - Units
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Успешно удалено
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа
+        '404':
+          description: Единица не найдена
   /api/v1/users/me:
     get:
-      operationId: users_me_retrieve
-      description: Возвращает профиль авторизованного пользователя, включая роль (RBAC).
-      summary: Текущий пользователь
+      operationId: auth_me
+      description: "\n        Возвращает профиль авторизованного пользователя с информацией\
+        \ о роли.\n        \n        **Роли в системе (RBAC):**\n        - `admin`\
+        \ — Администратор (только через Django Admin)\n        - `director` — Директор\
+        \ (полный доступ ко всем данным)\n        - `coordinator` — Координатор (координация\
+        \ между объектами)\n        - `brigadier` — Бригадир (работа с назначенными\
+        \ объектами)\n        "
+      summary: Профиль текущего пользователя
       tags:
-      - Users
+      - Auth
       security:
       - jwtAuth: []
       responses:
@@ -4341,18 +5841,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
               examples:
-                ПримерОтвета:
+                ПримерОтвета:Директор:
                   value:
                     id: 1
-                    username: admin
-                    email: admin@example.com
-                    first_name: Admin
-                    last_name: ''
+                    username: director
+                    email: director@elom.uz
+                    first_name: Иван
+                    last_name: Директоров
                     role: director
-                  summary: Пример ответа
+                    is_active: true
+                  summary: 'Пример ответа: Директор'
+                ПримерОтвета:Бригадир:
+                  value:
+                    id: 5
+                    username: brigadier1
+                    email: brigadier1@elom.uz
+                    first_name: Азиз
+                    last_name: Бригадиров
+                    role: brigadier
+                    is_active: true
+                  summary: 'Пример ответа: Бригадир'
           description: ''
         '401':
-          description: Unauthorized
+          description: Не авторизован. Требуется JWT токен.
   /api/v1/writeoffs/:
     get:
       operationId: writeoffs_list
@@ -4482,6 +5993,41 @@ paths:
           description: ''
     post:
       operationId: writeoffs_create
+      description: |-
+        ViewSet для управления списаниями материалов.
+
+        Списание — расход материала на работы.
+        При создании списания автоматически создается StockSnapshot
+        с отрицательным quantity_signed.
+
+        **Поля списания:**
+        - object — объект строительства
+        - material — материал из справочника
+        - quantity — количество (положительное число)
+        - unit — единица измерения
+        - stage — этап работ
+        - responsible — ответственный сотрудник
+        - comment — комментарий
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **SmartQuantity:**
+        В ответе возвращается smart_quantity с конвертацией
+        количества к удобной единице измерения.
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты (где он ответственный)
+
+        **Особенности для бригадира:**
+        - Может создавать списания только для своих объектов
+        - Автоматически назначается ответственным
+        - При первом списании на объект становится его ответственным
       summary: Создать списание
       tags:
       - WriteOff
@@ -4523,6 +6069,41 @@ paths:
   /api/v1/writeoffs/{id}/:
     get:
       operationId: writeoffs_retrieve
+      description: |-
+        ViewSet для управления списаниями материалов.
+
+        Списание — расход материала на работы.
+        При создании списания автоматически создается StockSnapshot
+        с отрицательным quantity_signed.
+
+        **Поля списания:**
+        - object — объект строительства
+        - material — материал из справочника
+        - quantity — количество (положительное число)
+        - unit — единица измерения
+        - stage — этап работ
+        - responsible — ответственный сотрудник
+        - comment — комментарий
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **SmartQuantity:**
+        В ответе возвращается smart_quantity с конвертацией
+        количества к удобной единице измерения.
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты (где он ответственный)
+
+        **Особенности для бригадира:**
+        - Может создавать списания только для своих объектов
+        - Автоматически назначается ответственным
+        - При первом списании на объект становится его ответственным
       summary: Получить списание
       parameters:
       - in: path
@@ -4544,6 +6125,42 @@ paths:
           description: ''
     put:
       operationId: writeoffs_update
+      description: |-
+        ViewSet для управления списаниями материалов.
+
+        Списание — расход материала на работы.
+        При создании списания автоматически создается StockSnapshot
+        с отрицательным quantity_signed.
+
+        **Поля списания:**
+        - object — объект строительства
+        - material — материал из справочника
+        - quantity — количество (положительное число)
+        - unit — единица измерения
+        - stage — этап работ
+        - responsible — ответственный сотрудник
+        - comment — комментарий
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **SmartQuantity:**
+        В ответе возвращается smart_quantity с конвертацией
+        количества к удобной единице измерения.
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты (где он ответственный)
+
+        **Особенности для бригадира:**
+        - Может создавать списания только для своих объектов
+        - Автоматически назначается ответственным
+        - При первом списании на объект становится его ответственным
+      summary: Полное обновление списания
       parameters:
       - in: path
         name: id
@@ -4552,7 +6169,7 @@ paths:
         description: A unique integer value identifying this write off.
         required: true
       tags:
-      - writeoffs
+      - WriteOff
       requestBody:
         content:
           application/json:
@@ -4576,7 +6193,42 @@ paths:
           description: ''
     patch:
       operationId: writeoffs_partial_update
-      summary: Изменить списание
+      description: |-
+        ViewSet для управления списаниями материалов.
+
+        Списание — расход материала на работы.
+        При создании списания автоматически создается StockSnapshot
+        с отрицательным quantity_signed.
+
+        **Поля списания:**
+        - object — объект строительства
+        - material — материал из справочника
+        - quantity — количество (положительное число)
+        - unit — единица измерения
+        - stage — этап работ
+        - responsible — ответственный сотрудник
+        - comment — комментарий
+
+        **Этапы работ (stage):**
+        - `acceptance` — приёмка
+        - `request` — заявка
+        - `delivery_fixed` — фиксированная доставка
+        - `post_rough` — после черновой отделки
+        - `handover` — сдача
+
+        **SmartQuantity:**
+        В ответе возвращается smart_quantity с конвертацией
+        количества к удобной единице измерения.
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — полный доступ
+        - Бригадир — только свои объекты (где он ответственный)
+
+        **Особенности для бригадира:**
+        - Может создавать списания только для своих объектов
+        - Автоматически назначается ответственным
+        - При первом списании на объект становится его ответственным
+      summary: Частичное обновление списания
       parameters:
       - in: path
         name: id
@@ -4730,6 +6382,39 @@ components:
       - user
       - user_name
       - user_role
+    BlankEnum:
+      enum:
+      - ''
+    ConditionEnum:
+      enum:
+      - new
+      - good
+      - after_repair
+      - needs_repair
+      - broken
+      - lost
+      type: string
+      description: |-
+        * `new` - Новый
+        * `good` - Хорошее
+        * `after_repair` - После ремонта
+        * `needs_repair` - Требует ремонта
+        * `broken` - Сломан
+        * `lost` - Утерян
+    CurrentStageEnum:
+      enum:
+      - acceptance
+      - request
+      - delivery_fixed
+      - post_rough
+      - handover
+      type: string
+      description: |-
+        * `acceptance` - Приемка
+        * `request` - Заявка
+        * `delivery_fixed` - Доставка
+        * `post_rough` - После черновых
+        * `handover` - Сдача
     Employee:
       type: object
       properties:
@@ -4762,6 +6447,8 @@ components:
           description: Отметьте, если пользователь должен считаться активным. Уберите
             эту отметку вместо удаления учётной записи.
         role:
+          type: string
+        phone:
           type: string
         assigned_object_ids:
           type: array
@@ -4804,6 +6491,8 @@ components:
         role:
           type: string
           minLength: 1
+        phone:
+          type: string
         assigned_object_ids:
           type: array
           items:
@@ -5121,6 +6810,9 @@ components:
       - id
       - role
       - username
+    NullEnum:
+      enum:
+      - null
     Object:
       type: object
       properties:
@@ -5159,6 +6851,27 @@ components:
         responsible_name:
           type: string
           readOnly: true
+        current_stage:
+          allOf:
+          - $ref: '#/components/schemas/CurrentStageEnum'
+          description: |-
+            Текущий этап работ на объекте
+
+            * `acceptance` - Приемка
+            * `request` - Заявка
+            * `delivery_fixed` - Доставка
+            * `post_rough` - После черновых
+            * `handover` - Сдача
+        current_stage_display:
+          type: string
+          readOnly: true
+        key_person_name:
+          type: string
+          description: Ключевое лицо (Имя прораба)
+          maxLength: 128
+        key_person_contacts:
+          type: string
+          description: Контакты ключевого лица
         date_start:
           type: string
           format: date
@@ -5179,6 +6892,7 @@ components:
           readOnly: true
       required:
       - created_at
+      - current_stage_display
       - date_start
       - id
       - name
@@ -5217,6 +6931,26 @@ components:
           type: integer
           nullable: true
           description: Ответственный (только бригадир)
+        current_stage:
+          allOf:
+          - $ref: '#/components/schemas/CurrentStageEnum'
+          description: |-
+            Текущий этап работ на объекте
+
+            * `acceptance` - Приемка
+            * `request` - Заявка
+            * `delivery_fixed` - Доставка
+            * `post_rough` - После черновых
+            * `handover` - Сдача
+        key_person_name:
+          type: string
+          minLength: 1
+          description: Ключевое лицо (Имя прораба)
+          maxLength: 128
+        key_person_contacts:
+          type: string
+          minLength: 1
+          description: Контакты ключевого лица
         date_end:
           type: string
           format: date
@@ -5477,6 +7211,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StockSnapshot'
+    PaginatedToolIssueList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolIssue'
+    PaginatedToolList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tool'
     PaginatedUnitList:
       type: object
       required:
@@ -5563,6 +7343,8 @@ components:
         role:
           type: string
           minLength: 1
+        phone:
+          type: string
         assigned_object_ids:
           type: array
           items:
@@ -5642,6 +7424,26 @@ components:
           type: integer
           nullable: true
           description: Ответственный (только бригадир)
+        current_stage:
+          allOf:
+          - $ref: '#/components/schemas/CurrentStageEnum'
+          description: |-
+            Текущий этап работ на объекте
+
+            * `acceptance` - Приемка
+            * `request` - Заявка
+            * `delivery_fixed` - Доставка
+            * `post_rough` - После черновых
+            * `handover` - Сдача
+        key_person_name:
+          type: string
+          minLength: 1
+          description: Ключевое лицо (Имя прораба)
+          maxLength: 128
+        key_person_contacts:
+          type: string
+          minLength: 1
+          description: Контакты ключевого лица
         date_end:
           type: string
           format: date
@@ -5831,6 +7633,81 @@ components:
         is_archived:
           type: boolean
           description: Архивировано
+    PatchedToolIssueRequest:
+      type: object
+      description: Сериализатор для выдачи инструмента
+      properties:
+        tool:
+          type: integer
+          description: Инструмент
+        issued_to:
+          type: integer
+          description: Кому выдал (любой сотрудник)
+        object:
+          type: integer
+          nullable: true
+          description: Объект (на какой выдали, необязательно)
+        issue_condition:
+          allOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          description: |-
+            Состояние при выдаче (обязательно)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+        issue_comment:
+          type: string
+          description: Комментарий при выдаче
+        return_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата возврата (пока пусто — инструмент выдан)
+        return_condition:
+          nullable: true
+          description: |-
+            Состояние при возврате (обязательно при возврате)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+          oneOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        return_comment:
+          type: string
+          description: Комментарий при возврате
+    PatchedToolRequest:
+      type: object
+      description: Сериализатор для инструмента
+      properties:
+        inventory_number:
+          type: string
+          minLength: 1
+          description: Инвентарный номер (уникальный)
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          description: Название инструмента
+          maxLength: 256
+        category:
+          type: string
+          description: 'Категория (можно несколько через запятую, например: Перфоратор,
+            SDS-Max)'
+          maxLength: 256
+        brand:
+          type: string
+          description: Марка/производитель (необязательно)
+          maxLength: 128
     PatchedUnitRequest:
       type: object
       properties:
@@ -5866,16 +7743,19 @@ components:
           pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
           description: Количество к списанию
         stage:
-          allOf:
-          - $ref: '#/components/schemas/StageEnum'
+          nullable: true
           description: |-
-            Этап работ
+            Этап работ (опционально, deprecated - используйте Object.current_stage)
 
             * `acceptance` - Acceptance
             * `request` - Request
             * `delivery_fixed` - Delivery Fixed
             * `post_rough` - Post Rough
             * `handover` - Handover
+          oneOf:
+          - $ref: '#/components/schemas/StageEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         responsible:
           type: integer
           description: Ответственный
@@ -5916,6 +7796,9 @@ components:
           type: string
         responsible:
           type: integer
+        responsible_name:
+          type: string
+          readOnly: true
         total_amount:
           type: string
           format: decimal
@@ -5968,6 +7851,7 @@ components:
       - object_name
       - photos
       - responsible
+      - responsible_name
       - supplier
       - supplier_name
       - total_amount
@@ -6024,11 +7908,8 @@ components:
           maxLength: 3
         comment:
           type: string
-        responsible:
-          type: integer
         purchase_no:
           type: string
-          default: ''
           description: Номер закупки (уникальный в пределах ответственного)
           maxLength: 64
         status:
@@ -6049,7 +7930,6 @@ components:
       - date
       - items
       - object
-      - responsible
       - supplier
     PurchaseDuplicateRequest:
       type: object
@@ -6132,33 +8012,6 @@ components:
             $ref: '#/components/schemas/PurchaseItemCreateRequest'
       required:
       - items
-    PurchaseItemCreate:
-      type: object
-      description: Сериализатор для создания позиции закупки
-      properties:
-        material:
-          type: integer
-          nullable: true
-        unit:
-          type: integer
-        quantity:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          description: Цена за единицу
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          readOnly: true
-      required:
-      - amount
-      - quantity
-      - unit
     PurchaseItemCreateRequest:
       type: object
       description: Сериализатор для создания позиции закупки
@@ -6166,6 +8019,12 @@ components:
         material:
           type: integer
           nullable: true
+        material_name:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Название нового материала (если материал не выбран из списка)
+          maxLength: 256
         unit:
           type: integer
         quantity:
@@ -6198,33 +8057,6 @@ components:
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           description: Цена за единицу
       required:
-      - quantity
-      - unit
-    PurchaseItemUpdate:
-      type: object
-      description: Сериализатор для обновления позиции закупки
-      properties:
-        material:
-          type: integer
-          nullable: true
-        unit:
-          type: integer
-        quantity:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          description: Цена за единицу
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          readOnly: true
-      required:
-      - amount
       - quantity
       - unit
     PurchaseItemUpdateRequest:
@@ -6566,88 +8398,6 @@ components:
           description: Активен ли поставщик
       required:
       - name
-    PurchaseUpdate:
-      type: object
-      description: Улучшенный сериализатор для обновления закупки с валидацией
-      properties:
-        date:
-          type: string
-          format: date
-        object:
-          type: integer
-        supplier:
-          type: integer
-          description: Поставщик
-        invoice_number:
-          type: string
-          maxLength: 64
-        currency:
-          type: string
-          maxLength: 3
-        comment:
-          type: string
-        responsible:
-          type: integer
-        status:
-          allOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          description: |-
-            Статус закупки
-
-            * `new` - Новая
-            * `completed` - Выполнено
-            * `cancelled` - Отмена
-        is_archived:
-          type: boolean
-      required:
-      - date
-      - object
-      - responsible
-      - supplier
-    PurchaseUpdateRequest:
-      type: object
-      description: Улучшенный сериализатор для обновления закупки с валидацией
-      properties:
-        date:
-          type: string
-          format: date
-        object:
-          type: integer
-        supplier:
-          type: integer
-          description: Поставщик
-        invoice_number:
-          type: string
-          maxLength: 64
-        currency:
-          type: string
-          minLength: 1
-          maxLength: 3
-        comment:
-          type: string
-        responsible:
-          type: integer
-        status:
-          allOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          description: |-
-            Статус закупки
-
-            * `new` - Новая
-            * `completed` - Выполнено
-            * `cancelled` - Отмена
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/PurchaseItemCreateRequest'
-          writeOnly: true
-        is_archived:
-          type: boolean
-      required:
-      - date
-      - object
-      - responsible
-      - supplier
     SourceTypeEnum:
       enum:
       - purchase_item
@@ -6897,6 +8647,365 @@ components:
           minLength: 1
       required:
       - token
+    Tool:
+      type: object
+      description: Сериализатор для инструмента
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        inventory_number:
+          type: string
+          description: Инвентарный номер (уникальный)
+          maxLength: 64
+        name:
+          type: string
+          description: Название инструмента
+          maxLength: 256
+        category:
+          type: string
+          description: 'Категория (можно несколько через запятую, например: Перфоратор,
+            SDS-Max)'
+          maxLength: 256
+        brand:
+          type: string
+          description: Марка/производитель (необязательно)
+          maxLength: 128
+        current_holder:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Сейчас у кого (если пусто — на складе)
+        current_holder_name:
+          type: string
+          readOnly: true
+        current_object:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: На каком объекте сейчас (может быть пусто)
+        current_object_name:
+          type: string
+          readOnly: true
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          readOnly: true
+          description: |-
+            Текущее состояние инструмента
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+        condition_display:
+          type: string
+          readOnly: true
+        is_in_stock:
+          type: boolean
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - condition
+      - condition_display
+      - created_at
+      - current_holder
+      - current_holder_name
+      - current_object
+      - current_object_name
+      - id
+      - inventory_number
+      - is_in_stock
+      - name
+      - status_display
+      - updated_at
+    ToolBulkCreateRequest:
+      type: object
+      description: |-
+        Сериализатор для массового добавления инструментов.
+
+        Позволяет создать несколько инструментов и опционально сразу выдать их.
+      properties:
+        tools:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          description: Список инструментов для создания
+          minItems: 1
+        auto_issue:
+          type: boolean
+          default: false
+          description: Автоматически выдать все созданные инструменты
+        issued_to:
+          type: integer
+          nullable: true
+          description: Кому выдать (если auto_issue=True)
+        object:
+          type: integer
+          nullable: true
+          description: На какой объект ID (если auto_issue=True)
+        issue_condition:
+          allOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          description: |-
+            Состояние при выдаче (одно на все или индивидуально)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+        issue_comment:
+          type: string
+          description: Комментарий при выдаче
+      required:
+      - tools
+    ToolCategoryAutocomplete:
+      type: object
+      description: Сериализатор для автодополнения категорий
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+          readOnly: true
+          description: Список уникальных категорий
+      required:
+      - categories
+    ToolIssue:
+      type: object
+      description: Сериализатор для выдачи инструмента
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        tool:
+          type: integer
+          description: Инструмент
+        tool_name:
+          type: string
+          readOnly: true
+        tool_inventory_number:
+          type: string
+          readOnly: true
+        issued_by:
+          type: integer
+          readOnly: true
+          description: Кто выдал (координатор/директор)
+        issued_by_name:
+          type: string
+          readOnly: true
+        issued_to:
+          type: integer
+          description: Кому выдал (любой сотрудник)
+        issued_to_name:
+          type: string
+          readOnly: true
+        issued_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Дата и время выдачи (автоматически)
+        object:
+          type: integer
+          nullable: true
+          description: Объект (на какой выдали, необязательно)
+        object_name:
+          type: string
+          readOnly: true
+        issue_condition:
+          allOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          description: |-
+            Состояние при выдаче (обязательно)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+        issue_condition_display:
+          type: string
+          readOnly: true
+        issue_comment:
+          type: string
+          description: Комментарий при выдаче
+        return_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата возврата (пока пусто — инструмент выдан)
+        return_condition:
+          nullable: true
+          description: |-
+            Состояние при возврате (обязательно при возврате)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+          oneOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        return_condition_display:
+          type: string
+          readOnly: true
+        return_comment:
+          type: string
+          description: Комментарий при возврате
+        is_returned:
+          type: boolean
+          readOnly: true
+        duration_days:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - duration_days
+      - id
+      - is_returned
+      - issue_condition
+      - issue_condition_display
+      - issued_at
+      - issued_by
+      - issued_by_name
+      - issued_to
+      - issued_to_name
+      - object_name
+      - return_condition_display
+      - tool
+      - tool_inventory_number
+      - tool_name
+      - updated_at
+    ToolIssueRequest:
+      type: object
+      description: Сериализатор для выдачи инструмента
+      properties:
+        tool:
+          type: integer
+          description: Инструмент
+        issued_to:
+          type: integer
+          description: Кому выдал (любой сотрудник)
+        object:
+          type: integer
+          nullable: true
+          description: Объект (на какой выдали, необязательно)
+        issue_condition:
+          allOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          description: |-
+            Состояние при выдаче (обязательно)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+        issue_comment:
+          type: string
+          description: Комментарий при выдаче
+        return_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата возврата (пока пусто — инструмент выдан)
+        return_condition:
+          nullable: true
+          description: |-
+            Состояние при возврате (обязательно при возврате)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+          oneOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        return_comment:
+          type: string
+          description: Комментарий при возврате
+      required:
+      - issue_condition
+      - issued_to
+      - tool
+    ToolRequest:
+      type: object
+      description: Сериализатор для инструмента
+      properties:
+        inventory_number:
+          type: string
+          minLength: 1
+          description: Инвентарный номер (уникальный)
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          description: Название инструмента
+          maxLength: 256
+        category:
+          type: string
+          description: 'Категория (можно несколько через запятую, например: Перфоратор,
+            SDS-Max)'
+          maxLength: 256
+        brand:
+          type: string
+          description: Марка/производитель (необязательно)
+          maxLength: 128
+      required:
+      - inventory_number
+      - name
+    ToolReturnRequest:
+      type: object
+      description: Сериализатор для возврата инструмента
+      properties:
+        return_condition:
+          allOf:
+          - $ref: '#/components/schemas/ConditionEnum'
+          description: |-
+            Состояние при возврате (обязательно)
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
+        return_comment:
+          type: string
+          description: Комментарий при возврате
+      required:
+      - return_condition
     TypeEnum:
       enum:
       - instructions
@@ -6971,16 +9080,19 @@ components:
           pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
           description: Количество к списанию
         stage:
-          allOf:
-          - $ref: '#/components/schemas/StageEnum'
+          nullable: true
           description: |-
-            Этап работ
+            Этап работ (опционально, deprecated - используйте Object.current_stage)
 
             * `acceptance` - Acceptance
             * `request` - Request
             * `delivery_fixed` - Delivery Fixed
             * `post_rough` - Post Rough
             * `handover` - Handover
+          oneOf:
+          - $ref: '#/components/schemas/StageEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         responsible:
           type: integer
           description: Ответственный
@@ -7017,7 +9129,6 @@ components:
       - quantity
       - responsible
       - smart_quantity
-      - stage
       - unit
       - unit_code
       - updated_at
@@ -7045,16 +9156,19 @@ components:
           pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
           description: Количество к списанию
         stage:
-          allOf:
-          - $ref: '#/components/schemas/StageEnum'
+          nullable: true
           description: |-
-            Этап работ
+            Этап работ (опционально, deprecated - используйте Object.current_stage)
 
             * `acceptance` - Acceptance
             * `request` - Request
             * `delivery_fixed` - Delivery Fixed
             * `post_rough` - Post Rough
             * `handover` - Handover
+          oneOf:
+          - $ref: '#/components/schemas/StageEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         responsible:
           type: integer
           description: Ответственный
@@ -7069,7 +9183,6 @@ components:
       - object
       - quantity
       - responsible
-      - stage
       - unit
     _ReopenInputRequest:
       type: object

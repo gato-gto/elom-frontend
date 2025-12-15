@@ -110,7 +110,7 @@ const emit = defineEmits<{
   'change': [supplier: PurchaseSupplier | null]
 }>()
 
-const suppliersStore = useSuppliersStore
+const suppliersStore = useSuppliersStore()
 
 // Reactive state
 const searchQuery = ref('')
@@ -149,7 +149,7 @@ const debouncedSearch = debounce(async (query: string) => {
 
   loading.value = true
   try {
-    const results = await suppliersStore.searchSuppliers(query)
+    const results = await suppliersStore.search(query)
     searchResults.value = results
     showDropdown.value = true
   } catch (error) {

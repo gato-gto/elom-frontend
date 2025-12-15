@@ -54,9 +54,10 @@ export function useMobileCardHelpers() {
       'active': 'badge-success',
       'inactive': 'badge-error',
       'admin': 'badge-primary',
-      'director': 'badge-secondary',
-      'coordinator': 'badge-accent',
-      'brigadier': 'badge-warning'
+      'manager': 'badge-secondary',
+      'warehouse': 'badge-accent',
+      'brigadier': 'badge-warning',
+      'requester': 'badge-info'
     }
     
     return statusClasses[status] || 'badge-neutral'
@@ -71,9 +72,10 @@ export function useMobileCardHelpers() {
       'active': 'Активный',
       'inactive': 'Неактивный',
       'admin': 'Администратор',
-      'director': 'Директор',
-      'coordinator': 'Координатор',
-      'brigadier': 'Бригадир',
+      'manager': 'Управляющий',
+      'warehouse': 'Склад/Цех/Проект',
+      'brigadier': 'Бригадир/Инженер',
+      'requester': 'Заявитель',
       '': 'Роль не задана'
     }
     

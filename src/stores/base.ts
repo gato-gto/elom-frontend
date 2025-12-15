@@ -1,11 +1,29 @@
+/**
+ * Базовый store с CRUD операциями для entity stores
+ * 
+ * Использование:
+ * 1. Создание store:
+ *    export const useMyStore = createBaseStore<Entity, CreateRequest, UpdateRequest>({
+ *      endpoint: endpoints.myEntity,
+ *      entityName: 'myEntity',
+ *      entityNamePlural: 'мои сущности'
+ *    })
+ * 
+ * 2. Использование в компонентах:
+ *    const myStore = useMyStore()
+ *    await myStore.fetchList()
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Ref } from 'vue'
+import type { Ref, ComputedRef } from 'vue'
 import api from '@/api/client'
-import { endpoints, buildQuery } from '@/api/endpoints'
+import { buildQuery } from '@/api/endpoints'
 import { handleApiErrorAsync } from '@/utils/errorHandler'
 
-// Базовые типы для пагинации
+// ============================================================================
+// Types
+// ============================================================================
+
 export interface PaginationState {
   count: number
   page: number
@@ -14,14 +32,12 @@ export interface PaginationState {
   previous: string | null
 }
 
-// Базовые типы для фильтров
 export interface BaseFilters {
   search: string
   ordering: string
-  [key: string]: any // Дополнительные фильтры
+  [key: string]: any
 }
 
-// Конфигурация для базового store
 export interface BaseStoreConfig<T, C, U> {
   endpoint: {
     list: string
@@ -29,14 +45,51 @@ export interface BaseStoreConfig<T, C, U> {
   }
   entityName: string
   entityNamePlural: string
+  defaultOrdering?: string
+  defaultPageSize?: number
 }
 
-// Базовый store с CRUD операциями
-export function createBaseStore<T extends Record<string, any>, C, U>(
+export interface BaseStoreState<T> {
+  items: Ref<T[]>
+  current: Ref<T | null>
+  loading: Ref<boolean>
+  error: Ref<string | null>
+  pagination: Ref<PaginationState>
+  filters: Ref<BaseFilters>
+}
+
+export interface BaseStoreGetters<T> {
+  getById: ComputedRef<(id: number) => T | undefined>
+  exists: ComputedRef<(id: number) => boolean>
+  selectOptions: ComputedRef<{ value: number; label: string }[]>
+}
+
+export interface BaseStoreActions<T, C, U> {
+  fetchList: (params?: Record<string, any>) => Promise<T[]>
+  fetchOne: (id: number) => Promise<T>
+  create: (data: C) => Promise<T>
+  update: (id: number, data: U) => Promise<T>
+  remove: (id: number) => Promise<any>
+  setCurrent: (item: T | null) => void
+  setFilters: (newFilters: Partial<BaseFilters>) => Promise<void>
+  resetFilters: () => Promise<void>
+  clearError: () => void
+  setPageSize: (size: number) => Promise<void>
+  setPage: (page: number) => Promise<void>
+  search: (query: string) => Promise<T[]>
+}
+
+// ============================================================================
+// Factory Function
+// ============================================================================
+
+export function createBaseStore<T extends { id: number; name?: string; title?: string }, C, U>(
   config: BaseStoreConfig<T, C, U>
 ) {
-  const store = defineStore(config.entityName, () => {
+  return defineStore(config.entityName, () => {
+    // ========================================================================
     // State
+    // ========================================================================
     const items = ref<T[]>([]) as Ref<T[]>
     const current = ref<T | null>(null) as Ref<T | null>
     const loading = ref(false)
@@ -44,16 +97,18 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
     const pagination = ref<PaginationState>({
       count: 0,
       page: 1,
-      pageSize: 20,
+      pageSize: config.defaultPageSize || 20,
       next: null,
       previous: null
     })
     const filters = ref<BaseFilters>({
       search: '',
-      ordering: 'id'
+      ordering: config.defaultOrdering || 'id'
     })
 
-    // Computed getters
+    // ========================================================================
+    // Getters
+    // ========================================================================
     const getById = computed(() => (id: number) => {
       return items.value.find(item => item.id === id)
     })
@@ -69,8 +124,11 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       }))
     })
 
-    // CRUD Actions
-    const fetchList = async (params?: any) => {
+    // ========================================================================
+    // Actions
+    // ========================================================================
+    
+    const fetchList = async (params?: Record<string, any>): Promise<T[]> => {
       loading.value = true
       error.value = null
 
@@ -78,13 +136,13 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
         const queryParams: Record<string, any> = {
           page: params?.page || pagination.value.page,
           page_size: params?.page_size || pagination.value.pageSize,
-          ...filters.value, // Добавляем все фильтры
-          // Переопределяем специфичные параметры если они переданы
+          ...filters.value,
           ...(params?.search !== undefined && { search: params.search }),
-          ...(params?.ordering !== undefined && { ordering: params.ordering })
+          ...(params?.ordering !== undefined && { ordering: params.ordering }),
+          ...params
         }
 
-        // Удаляем undefined значения
+        // Remove empty values
         Object.keys(queryParams).forEach(key => {
           if (queryParams[key] === undefined || queryParams[key] === '') {
             delete queryParams[key]
@@ -96,26 +154,28 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
 
         items.value = data.results || data
         pagination.value = {
-          count: data.count || data.length || 0,
+          count: data.count || (Array.isArray(data) ? data.length : 0),
           page: queryParams.page,
-          pageSize: pagination.value.pageSize,
+          pageSize: queryParams.page_size,
           next: data.next || null,
           previous: data.previous || null
         }
 
-        // Update filters
         if (params) {
           Object.assign(filters.value, params)
         }
+
+        return items.value
       } catch (err: any) {
-        await handleApiErrorAsync(err, { operation: 'dataLoading' })
+        error.value = err?.response?.data?.detail || `Ошибка загрузки ${config.entityNamePlural}`
+        await handleApiErrorAsync(err, { operation: 'dataLoading', entity: config.entityName })
         throw err
       } finally {
         loading.value = false
       }
     }
 
-    const fetchOne = async (id: number) => {
+    const fetchOne = async (id: number): Promise<T> => {
       loading.value = true
       error.value = null
 
@@ -123,7 +183,6 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
         const { data } = await api.get<T>(config.endpoint.one(id))
         current.value = data
 
-        // Update in list if exists
         const index = items.value.findIndex(item => item.id === id)
         if (index !== -1) {
           items.value[index] = data
@@ -132,126 +191,115 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
         return data
       } catch (err: any) {
         current.value = null
-        await handleApiErrorAsync(err, { operation: 'dataLoading' })
+        error.value = err?.response?.data?.detail || `Ошибка загрузки`
+        await handleApiErrorAsync(err, { operation: 'dataLoading', entity: config.entityName })
         throw err
       } finally {
         loading.value = false
       }
     }
 
-    const create = async (data: C) => {
+    const create = async (data: C): Promise<T> => {
       loading.value = true
       error.value = null
 
       try {
         const { data: newItem } = await api.post<T>(config.endpoint.list, data)
-        
-        // Add to list
         items.value.unshift(newItem)
         pagination.value.count++
-
         return newItem
       } catch (err: any) {
-        await handleApiErrorAsync(err, { operation: 'formValidation' })
+        error.value = err?.response?.data?.detail || `Ошибка создания`
+        await handleApiErrorAsync(err, { operation: 'formValidation', entity: config.entityName })
         throw err
       } finally {
         loading.value = false
       }
     }
 
-    const update = async (id: number, data: U) => {
+    const update = async (id: number, data: U): Promise<T> => {
       loading.value = true
       error.value = null
 
       try {
         const { data: updatedItem } = await api.patch<T>(config.endpoint.one(id), data)
         
-        // Update in list
         const index = items.value.findIndex(item => item.id === id)
         if (index !== -1) {
           items.value[index] = updatedItem
         }
 
-        // Update current if it's the same
         if (current.value?.id === id) {
           current.value = updatedItem
         }
 
         return updatedItem
       } catch (err: any) {
-        await handleApiErrorAsync(err, { operation: 'formValidation' })
+        error.value = err?.response?.data?.detail || `Ошибка обновления`
+        await handleApiErrorAsync(err, { operation: 'formValidation', entity: config.entityName })
         throw err
       } finally {
         loading.value = false
       }
     }
 
-    const deleteItem = async (id: number) => {
+    const remove = async (id: number): Promise<any> => {
       loading.value = true
       error.value = null
 
       try {
         const response = await api.delete(config.endpoint.one(id))
         
-        // Проверяем, был ли объект деактивирован вместо удаления
-        // (ответ 200 с action: 'deactivated')
         const wasDeactivated = response.status === 200 && response.data?.action === 'deactivated'
         
         if (wasDeactivated) {
-          // Обновляем элемент в списке (помечаем как неактивный)
           const index = items.value.findIndex(item => item.id === id)
           if (index !== -1) {
-            items.value[index] = { ...items.value[index], is_active: false }
+            (items.value[index] as any).is_active = false
           }
         } else {
-          // Удаляем из списка
           items.value = items.value.filter(item => item.id !== id)
           pagination.value.count--
         }
 
-        // Clear current if it's the same
         if (current.value?.id === id) {
           current.value = null
         }
 
-        // Возвращаем данные ответа (для обработки деактивации)
         return response.data || { action: 'deleted' }
       } catch (err: any) {
-        await handleApiErrorAsync(err, { operation: 'delete' })
+        error.value = err?.response?.data?.detail || `Ошибка удаления`
+        await handleApiErrorAsync(err, { operation: 'delete', entity: config.entityName })
         throw err
       } finally {
         loading.value = false
       }
     }
 
-    // Utility methods
     const setCurrent = (item: T | null) => {
       current.value = item
     }
 
     const setFilters = async (newFilters: Partial<BaseFilters>) => {
       Object.assign(filters.value, newFilters)
-      pagination.value.page = 1 // Сбрасываем на первую страницу при изменении фильтров
+      pagination.value.page = 1
       await fetchList()
     }
 
     const resetFilters = async () => {
-      // Сохраняем структуру фильтров, но устанавливаем значения в пустые строки
-      const keys = Object.keys(filters.value)
-      const resetFiltersObj: BaseFilters = {
+      const resetObj: BaseFilters = {
         search: '',
-        ordering: 'id'
+        ordering: config.defaultOrdering || 'id'
       }
       
-      // Устанавливаем все остальные фильтры в пустые строки
-      keys.forEach(key => {
+      Object.keys(filters.value).forEach(key => {
         if (key !== 'search' && key !== 'ordering') {
-          resetFiltersObj[key] = ''
+          resetObj[key] = ''
         }
       })
       
-      filters.value = resetFiltersObj
-      pagination.value.page = 1 // Сбрасываем на первую страницу при сбросе фильтров
+      filters.value = resetObj
+      pagination.value.page = 1
       await fetchList()
     }
 
@@ -270,40 +318,21 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       await fetchList()
     }
 
-    // Search method for autocomplete components
-    const search = async (query: string) => {
-      if (query.length < 2) {return []}
+    const search = async (query: string): Promise<T[]> => {
+      if (query.length < 2) return []
       
       try {
         const { data } = await api.get(config.endpoint.list + `?search=${encodeURIComponent(query)}&page_size=20`)
         return data.results || data
       } catch (err: any) {
-        await handleApiErrorAsync(err, { operation: 'search' })
+        await handleApiErrorAsync(err, { operation: 'search', entity: config.entityName })
         return []
       }
     }
 
-    // Alias for search (for backward compatibility)
-    const searchMaterials = search
-    const searchSuppliers = search
-
-    // Alias for delete (for backward compatibility)
-    const remove = deleteItem
-
-    // Placeholder methods for photo upload (to be implemented in specific stores)
-    const uploadPhoto = async (id: number, file: File) => {
-      throw new Error('uploadPhoto method not implemented for this store')
-    }
-
-    const deletePhoto = async (id: number) => {
-      throw new Error('deletePhoto method not implemented for this store')
-    }
-
-    // Placeholder method for object-specific materials (to be implemented in materials store)
-    const getMaterialsByObject = async (objectId: number) => {
-      throw new Error('getMaterialsByObject method not implemented for this store')
-    }
-
+    // ========================================================================
+    // Return
+    // ========================================================================
     return {
       // State
       items,
@@ -313,67 +342,24 @@ export function createBaseStore<T extends Record<string, any>, C, U>(
       pagination,
       filters,
 
-      // Computed
+      // Getters
       getById,
       exists,
       selectOptions,
 
-      // CRUD Actions
+      // Actions
       fetchList,
       fetchOne,
       create,
       update,
-      delete: deleteItem,
-
-      // Utility methods
+      remove,
       setCurrent,
       setFilters,
       resetFilters,
       clearError,
       setPageSize,
       setPage,
-
-      // Search methods
-      search,
-      searchMaterials,
-      searchSuppliers,
-
-      // Alias methods
-      remove,
-
-      // Placeholder methods
-      uploadPhoto,
-      deletePhoto,
-      getMaterialsByObject
+      search
     }
   })
-  
-  return store()
-}
-
-// Утилиты для работы с реактивностью
-export const reactivityUtils = {
-  // Создание реактивного объекта с глубоким отслеживанием
-  createReactiveObject: <T extends Record<string, any>>(obj: T) => {
-    return ref(obj)
-  },
-
-  // Оптимизированное обновление массива
-  updateArrayItem: <T extends { id: number }>(array: Ref<T[]>, updatedItem: T) => {
-    const index = array.value.findIndex(item => item.id === updatedItem.id)
-    if (index !== -1) {
-      Object.assign(array.value[index], updatedItem)
-    }
-  },
-
-  // Batch обновления для предотвращения множественных перерендеров
-  batchUpdate: (updates: (() => void)[]) => {
-    // В Vue 3 нет встроенного batch, но можно использовать nextTick
-    import('vue').then(({ nextTick }) => {
-      nextTick(() => {
-        updates.forEach(update => update())
-      })
-    })
-  },
-
 }

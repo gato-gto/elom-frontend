@@ -1,100 +1,126 @@
-# 🏢 ELOM Frontend
+# ELOM Frontend
 
-**Система управления складом и закупками для строительных объектов**
-
-[![Vue.js](https://img.shields.io/badge/Vue.js-3.4-green)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.0-purple)](https://vitejs.dev/)
-
----
-
-## 📋 О проекте
-
-ELOM Frontend - современное веб-приложение для управления:
-- 📦 **Складскими запасами** - учет материалов и остатков
-- 🛒 **Закупками** - создание закупок с фотоинструкциями
-- 🏗️ **Объектами** - управление строительными объектами
-- 📊 **Списаниями** - контроль расхода материалов
-- 👥 **Сотрудниками** - управление персоналом и ролями
-
-### Роли пользователей:
-- **Admin** - Администратор (только Django Admin)
-- **Director** - Директор (полный доступ)
-- **Coordinator** - Координатор (координация объектов)
-- **Brigadier** - Бригадир (работа с назначенными объектами)
+**Система управления закупками, остатками и инструментами**
 
 ---
 
 ## 🚀 Быстрый старт
 
 ```bash
-# Установка зависимостей
 npm install
-
-# Запуск development сервера
-npm run dev
-
-# Production build
-npm run build
-
-# Тесты
-npm run test
+npm run dev     # http://localhost:5173
 ```
 
-Приложение будет доступно: `http://localhost:5173`
+---
+
+## 📋 Возможности
+
+- **Закупки** — создание, редактирование, фото
+- **Материалы** — номенклатура с категориями
+- **Объекты** — управление строительными объектами
+- **Остатки** — автоматический расчет движений
+- **Списания** — учет расхода материалов
+- **Отчёты** — по периодам, объектам, материалам
+- **Инструменты** — учёт и выдача (только admin) 🆕
+
+---
+
+## 🏗️ Архитектура
+
+```
+src/
+├── api/           # API клиент и типы
+├── components/    # Vue компоненты (55 файлов)
+├── composables/   # Composables (13 файлов)
+├── pages/         # Страницы (38 файлов)
+├── stores/        # Pinia stores (18 файлов)
+├── router/        # Vue Router
+└── utils/         # Утилиты
+```
+
+### Технологический стек
+
+- **Vue 3** (Composition API)
+- **TypeScript**
+- **Pinia** (state management)
+- **Vue Router**
+- **Tailwind CSS** + **DaisyUI**
+- **Vite**
+
+---
+
+## 🔐 Роли
+
+| Роль | Описание |
+|------|----------|
+| `admin` | Полный доступ + инструменты |
+| `manager` | Полный доступ без учета изменений |
+| `brigadier` | Создание объекта, списание, закупка |
+| `warehouse` | Полный доступ без учета изменений |
+| `requester` | Просмотр и подача заявки на материал |
+
+---
+
+## 📁 Ключевые компоненты
+
+### Универсальные
+- `GenericForm` — универсальная форма
+- `GenericList` — универсальный список
+- `GenericSearchSelect` — поиск с автодополнением
+
+### Stores
+Все entity stores используют `createBaseStore`:
+```typescript
+const store = useMyStore()  // Вызываем как функцию!
+await store.fetchList()
+await store.create(data)
+await store.update(id, data)
+await store.remove(id)
+```
+
+---
+
+## 🧪 Тестирование
+
+```bash
+npm run test           # Unit тесты
+npm run test:e2e       # E2E тесты
+npm run test:coverage  # С покрытием
+```
 
 ---
 
 ## 📚 Документация
 
-| Документ | Описание |
-|----------|----------|
-| [docs/INDEX.md](docs/INDEX.md) | Главная документация |
-| [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | Текущий статус проекта |
-| [docs/summary/](docs/summary/) | Техническая документация |
-| [docs/manuals/](docs/manuals/) | Руководства пользователя |
+- [Архитектура](docs/summary/01-architecture.md)
+- [Компоненты](docs/summary/04-frontend-components.md)
+- [API](docs/summary/03-api-documentation.md)
+- [Stores](docs/summary/STORES_ARCHITECTURE.md)
+- [Статус проекта](docs/PROJECT_STATUS.md)
 
 ---
 
-## 🛠️ Технологии
+## 🆕 Последние изменения (27 ноября 2025)
 
-- **Vue 3** + Composition API
-- **TypeScript** - типобезопасность
-- **Pinia** - управление состоянием
-- **Tailwind CSS** + DaisyUI - стилизация
-- **Vite** - сборка
-- **Vitest** - тестирование
+### Система инструментов
+- ✅ Список инструментов (`/tools_index`)
+- ✅ Журнал выдач (`/tools_issues`)
+- ✅ Массовое добавление
+- ✅ Выдача/возврат
+- ✅ История инструмента
 
----
+### Рефакторинг Stores
+- ✅ Все stores используют `createBaseStore`
+- ✅ Вызов как функции: `useMyStore()`
+- ✅ Метод `remove` вместо `delete`
 
-## 📦 Структура проекта
-
-```
-src/
-├── api/           # API клиент и типы (19)
-├── components/    # Переиспользуемые компоненты (48)
-├── composables/   # Vue composables (13)
-├── pages/         # Страницы приложения (32)
-├── stores/        # Pinia stores (16)
-└── utils/         # Утилиты (10)
-```
+### Оптимизация ролей (декабрь 2025)
+- ✅ 5 ролей: admin, manager, brigadier, warehouse, requester
+- ✅ Роли manager и warehouse работают "без учета изменений"
+- ✅ Новая роль requester для просмотра и подачи заявок
+- ✅ Система заявок на материалы
 
 ---
 
-## 📊 Статус проекта
-
-- **Готовность:** 99%
-- **ESLint errors:** 0 ✅
-- **TypeScript errors:** 0 ✅
-- **Покрытие тестами:** ~55%
-- **Тестовые файлы:** 30
-
----
-
-## 🔗 Связанные проекты
-
-- **Backend:** [elom-backend](../elom-backend) - Django REST API
-
----
-
-*Последнее обновление: 27 ноября 2025*
+**Версия:** 3.5  
+**Статус:** ✅ Production Ready

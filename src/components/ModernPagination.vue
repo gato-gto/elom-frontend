@@ -183,11 +183,18 @@ watch(() => props.currentPage, () => {
 .modern-pagination-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 0.5rem;
+  padding: 0.75rem;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 1rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .modern-pagination-container {
+    gap: 1rem;
+    padding: 1.5rem;
+  }
 }
 
 .pagination-info {
@@ -195,7 +202,13 @@ watch(() => props.currentPage, () => {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .pagination-info {
+    gap: 1rem;
+  }
 }
 
 .pagination-stats {

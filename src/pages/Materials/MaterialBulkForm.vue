@@ -319,9 +319,9 @@ import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import type { Material, MaterialRequest } from '@/api/types'
 
-const materialsStore = useMaterialsStore
-const unitsStore = useUnitsStore
-const materialCategoriesStore = useMaterialCategoriesStore
+const materialsStore = useMaterialsStore()
+const unitsStore = useUnitsStore()
+const materialCategoriesStore = useMaterialCategoriesStore()
 const uiStore = useUiStore()
 const { handleFormError, errors, clearErrors } = useErrorHandler()
 

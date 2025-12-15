@@ -233,9 +233,10 @@ export function useRoutePermissions() {
   }
 
   const isAdmin = computed(() => hasRole('admin'))
-  const isDirector = computed(() => hasRole('director'))
-  const isCoordinator = computed(() => hasRole('coordinator'))
+  const isManager = computed(() => hasRole('manager'))
+  const isWarehouse = computed(() => hasRole('warehouse'))
   const isBrigadier = computed(() => hasRole('brigadier'))
+  const isRequester = computed(() => hasRole('requester'))
 
   return {
     canView,
@@ -247,9 +248,10 @@ export function useRoutePermissions() {
     hasAnyRole,
     hasAllRoles,
     isAdmin,
-    isDirector,
-    isCoordinator,
-    isBrigadier
+    isManager,
+    isWarehouse,
+    isBrigadier,
+    isRequester
   }
 }
 

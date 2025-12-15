@@ -99,18 +99,21 @@ export const endpoints = {
         one: (id: number) => join(`/writeoffs/${id}/`),
     },
 
-    // Archive endpoints
-    archive: {
-        list: join('/archive/'),
-        one: (id: number) => join(`/archive/${id}/`),
-        close: join('/archive/close/'),
-        reopen: join('/archive/reopen/'),
-        periods: {
-            list: join('/archive/periods/'),
-            one: (id: number) => join(`/archive/periods/${id}/`),
-            close: join('/archive/periods/close/'),
-            reopen: join('/archive/periods/reopen/'),
-        },
+    // Tools endpoints
+    tools: {
+        list: join('/tools/'),
+        one: (id: number) => join(`/tools/${id}/`),
+        categories: join('/tools/categories/'),
+        bulkCreate: join('/tools/bulk-create/'),
+    },
+
+    // Tool Issues endpoints
+    toolIssues: {
+        list: join('/tool-issues/'),
+        one: (id: number) => join(`/tool-issues/${id}/`),
+        issue: join('/tool-issues/issue/'),
+        returnTool: (id: number) => join(`/tool-issues/${id}/return/`),
+        openIssues: join('/tool-issues/open-issues/'),
     },
 
     // Reports endpoints

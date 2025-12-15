@@ -33,8 +33,8 @@ export * from './reports';
 // Import types
 export * from './import';
 
-// Archive types
-export * from './archive';
+// Tools types
+export * from './tools';
 
 // Notification types
 export * from './notifications';

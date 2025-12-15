@@ -53,7 +53,7 @@
     </div>
 
     <!-- Table/Cards -->
-    <div class="list-content" :class="{ 'relative': store.loading }">
+    <div class="list-content" :class="{ 'relative': store.loading, 'mobile-cards-wrapper': isMobile }">
       <!-- Loading Overlay -->
       <LoadingSpinner 
         v-if="store.loading && store.items.length === 0"
@@ -144,7 +144,7 @@
               <slot name="row-expanded" :item="item" />
             </template>
             <tr v-if="!store.loading && store.items.length === 0">
-              <td :colspan="config.columns.length + (config.actions ? 1 : 0)" class="text-center text-gray-500 py-8">
+              <td :colspan="config.columns.length + (config.actions ? 1 : 0)" class="text-center text-gray-500 py-4 md:py-8">
                 <div class="flex flex-col items-center gap-2">
                   <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -158,8 +158,8 @@
       </div>
       
       <!-- Mobile: Cards View -->
-      <div v-else class="mobile-cards-container mobile-only">
-        <div v-if="store.items.length > 0" class="space-y-4">
+      <template v-else>
+        <template v-if="store.items.length > 0">
           <component
             v-for="item in store.items"
             :key="item.id"
@@ -167,27 +167,28 @@
             v-bind="{[config.mobileCardProp || 'item']: item}" as any
             :actions="getCardActions(item)"
             @action="handleCardAction(item, $event)"
+            class="mobile-only"
           />
-        </div>
+        </template>
         
         <!-- Empty State для мобильных -->
-        <div v-else class="flex flex-col items-center gap-4 py-12 text-center">
-          <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
-          <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-1">{{ config.emptyTitle || 'Нет данных' }}</h3>
-            <p class="text-gray-500">{{ config.emptySubtitle || 'Создайте первый элемент для начала работы' }}</p>
-          </div>
-          <button 
-            v-if="config.showCreate && config.canCreate" 
-            class="btn btn-primary" 
-            @click="$emit('create')"
-          >
-            {{ config.createText || 'Создать' }}
-          </button>
+        <div v-else class="mobile-only flex flex-col items-center gap-2 md:gap-4 py-6 md:py-12 text-center">
+        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <div>
+          <h3 class="text-lg font-medium text-gray-900 mb-1">{{ config.emptyTitle || 'Нет данных' }}</h3>
+          <p class="text-gray-500">{{ config.emptySubtitle || 'Создайте первый элемент для начала работы' }}</p>
         </div>
+        <button 
+          v-if="config.showCreate && config.canCreate" 
+          class="btn btn-primary" 
+          @click="$emit('create')"
+        >
+          {{ config.createText || 'Создать' }}
+        </button>
       </div>
+      </template>
     </div>
 
     <!-- Pagination -->

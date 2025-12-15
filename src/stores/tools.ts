@@ -1,0 +1,342 @@
+/**
+ * Store для управления инструментами
+ */
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import api from '@/api/client'
+import { endpoints, buildQuery } from '@/api/endpoints'
+import type { Tool, ToolRequest, ToolBulkCreateRequest, ToolBulkCreateResponse, ToolCategory } from '@/api/types/tools'
+import { useNotifications } from '@/composables/useNotifications'
+import { handleApiErrorAsync } from '@/utils/errorHandler'
+
+export const useToolsStore = defineStore('tools', () => {
+  // ========================================================================
+  // State
+  // ========================================================================
+  const items = ref<Tool[]>([])
+  const current = ref<Tool | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  const categories = ref<string[]>([])
+  const pagination = ref({
+    count: 0,
+    page: 1,
+    pageSize: 20,
+    next: null as string | null,
+    previous: null as string | null
+  })
+  const filters = ref({
+    search: '',
+    ordering: 'inventory_number',
+    condition: '',
+    in_stock: '',
+    current_holder: '',
+    current_object: '',
+    category: ''
+  })
+
+  // ========================================================================
+  // Getters
+  // ========================================================================
+  const getById = computed(() => (id: number) => {
+    return items.value.find(item => item.id === id)
+  })
+
+  const exists = computed(() => (id: number) => {
+    return items.value.some(item => item.id === id)
+  })
+
+  const selectOptions = computed(() => {
+    return items.value.map(item => ({
+      value: item.id,
+      label: `${item.inventory_number} - ${item.name}`
+    }))
+  })
+
+  const inStockItems = computed(() => {
+    return items.value.filter(item => !item.current_holder)
+  })
+
+  const issuedItems = computed(() => {
+    return items.value.filter(item => item.current_holder)
+  })
+
+  // ========================================================================
+  // Actions
+  // ========================================================================
+  const fetchList = async (params?: Record<string, any>): Promise<Tool[]> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const queryParams: Record<string, any> = {
+        page: params?.page || pagination.value.page,
+        page_size: params?.page_size || pagination.value.pageSize,
+        ...filters.value,
+        ...(params?.search !== undefined && { search: params.search }),
+        ...(params?.ordering !== undefined && { ordering: params.ordering }),
+        ...params
+      }
+
+      Object.keys(queryParams).forEach(key => {
+        if (queryParams[key] === undefined || queryParams[key] === '') {
+          delete queryParams[key]
+        }
+      })
+
+      const query = buildQuery(queryParams)
+      const { data } = await api.get(endpoints.tools.list + query)
+
+      items.value = data.results || data
+      pagination.value = {
+        count: data.count || data.length || 0,
+        page: queryParams.page,
+        pageSize: queryParams.page_size,
+        next: data.next || null,
+        previous: data.previous || null
+      }
+
+      return items.value
+    } catch (err: any) {
+      error.value = err?.response?.data?.detail || 'Ошибка при загрузке инструментов'
+      await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'tools' })
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchOne = async (id: number): Promise<Tool> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data } = await api.get<Tool>(endpoints.tools.one(id))
+      current.value = data
+      
+      const index = items.value.findIndex(item => item.id === id)
+      if (index !== -1) {
+        items.value[index] = data
+      }
+      
+      return data
+    } catch (err: any) {
+      error.value = err?.response?.data?.detail || 'Ошибка при загрузке инструмента'
+      await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'tools' })
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const create = async (payload: ToolRequest): Promise<Tool> => {
+    loading.value = true
+    error.value = null
+    const { showSuccess, showError } = useNotifications()
+
+    try {
+      const { data } = await api.post<Tool>(endpoints.tools.list, payload)
+      items.value.unshift(data)
+      pagination.value.count++
+      showSuccess('Инструмент успешно добавлен')
+      return data
+    } catch (err: any) {
+      showError('Ошибка при добавлении инструмента')
+      error.value = err?.response?.data?.detail || 'Ошибка при добавлении инструмента'
+      await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const update = async (id: number, payload: Partial<ToolRequest>): Promise<Tool> => {
+    loading.value = true
+    error.value = null
+    const { showSuccess, showError } = useNotifications()
+
+    try {
+      const { data } = await api.patch<Tool>(endpoints.tools.one(id), payload)
+      const index = items.value.findIndex(item => item.id === id)
+      if (index !== -1) {
+        items.value[index] = data
+      }
+      if (current.value?.id === id) {
+        current.value = data
+      }
+      showSuccess('Инструмент успешно обновлён')
+      return data
+    } catch (err: any) {
+      showError('Ошибка при обновлении инструмента')
+      error.value = err?.response?.data?.detail || 'Ошибка при обновлении инструмента'
+      await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const remove = async (id: number): Promise<void> => {
+    loading.value = true
+    error.value = null
+    const { showSuccess, showError } = useNotifications()
+
+    try {
+      await api.delete(endpoints.tools.one(id))
+      items.value = items.value.filter(item => item.id !== id)
+      pagination.value.count--
+      if (current.value?.id === id) {
+        current.value = null
+      }
+      showSuccess('Инструмент успешно удалён')
+    } catch (err: any) {
+      showError('Ошибка при удалении инструмента')
+      error.value = err?.response?.data?.detail || 'Ошибка при удалении инструмента'
+      await handleApiErrorAsync(err, { operation: 'delete', entity: 'tools' })
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchCategories = async (): Promise<string[]> => {
+    try {
+      const { data } = await api.get<{ categories: string[] } | string[]>(endpoints.tools.categories)
+      // API может возвращать либо { categories: [...] }, либо массив напрямую
+      const categoriesArray = Array.isArray(data) ? data : (data?.categories || [])
+      categories.value = categoriesArray
+      return categories.value
+    } catch (err: any) {
+      await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'tools' })
+      return []
+    }
+  }
+
+  const bulkCreate = async (payload: ToolBulkCreateRequest): Promise<Tool[]> => {
+    loading.value = true
+    error.value = null
+    const { showSuccess, showError } = useNotifications()
+
+    try {
+      const { data } = await api.post<ToolBulkCreateResponse>(endpoints.tools.bulkCreate, payload)
+      // API возвращает { tools: [...], created_count: ..., issued_count: ... }
+      const tools = Array.isArray(data) ? data : (data?.tools || [])
+      showSuccess(`Добавлено инструментов: ${Array.isArray(data) ? data.length : data.created_count}`)
+      await fetchList()
+      return tools
+    } catch (err: any) {
+      showError('Ошибка при массовом добавлении инструментов')
+      error.value = err?.response?.data?.detail || 'Ошибка при массовом добавлении'
+      await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const setCurrent = (item: Tool | null) => {
+    current.value = item
+  }
+
+  const setFilters = async (newFilters: Partial<typeof filters.value>) => {
+    Object.assign(filters.value, newFilters)
+    pagination.value.page = 1
+    await fetchList()
+  }
+
+  const resetFilters = async () => {
+    filters.value = {
+      search: '',
+      ordering: 'inventory_number',
+      condition: '',
+      in_stock: '',
+      current_holder: '',
+      current_object: '',
+      category: ''
+    }
+    pagination.value.page = 1
+    await fetchList()
+  }
+
+  const clearError = () => {
+    error.value = null
+  }
+
+  const setPageSize = async (size: number) => {
+    pagination.value.pageSize = size
+    pagination.value.page = 1
+    await fetchList()
+  }
+
+  const setPage = async (page: number) => {
+    pagination.value.page = page
+    await fetchList()
+  }
+
+  const search = async (query: string): Promise<Tool[]> => {
+    if (query.length < 2) return []
+    
+    try {
+      const { data } = await api.get(endpoints.tools.list + `?search=${encodeURIComponent(query)}&page_size=20`)
+      return data.results || data
+    } catch (err: any) {
+      await handleApiErrorAsync(err, { operation: 'search', entity: 'tools' })
+      return []
+    }
+  }
+
+  // ========================================================================
+  // Return
+  // ========================================================================
+  return {
+    // State
+    items,
+    current,
+    loading,
+    error,
+    categories,
+    pagination,
+    filters,
+    
+    // Getters
+    getById,
+    exists,
+    selectOptions,
+    inStockItems,
+    issuedItems,
+    
+    // Actions
+    fetchList,
+    fetchOne,
+    create,
+    update,
+    remove,
+    fetchCategories,
+    bulkCreate,
+    setCurrent,
+    setFilters,
+    resetFilters,
+    clearError,
+    setPageSize,
+    setPage,
+    search
+  }
+})
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+export const getToolsStats = () => {
+  const store = useToolsStore()
+  return {
+    total: store.items.length,
+    inStock: store.inStockItems.length,
+    issued: store.issuedItems.length
+  }
+}
+
+export const getToolCategories = async () => {
+  const store = useToolsStore()
+  return await store.fetchCategories()
+}

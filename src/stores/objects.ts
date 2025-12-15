@@ -1,6 +1,8 @@
-import { computed } from 'vue'
+/**
+ * Store для управления объектами
+ */
 import { endpoints } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+import { createBaseStore } from './base'
 import type { 
   Object, 
   ObjectRequest, 
@@ -9,32 +11,40 @@ import type {
 } from '@/api/types'
 import api from '@/api/client'
 
-const objectsStore = createBaseStore<Object, ObjectRequest, PatchedObjectRequest>({
+// Создаём store
+export const useObjectsStore = createBaseStore<Object, ObjectRequest, PatchedObjectRequest>({
   endpoint: endpoints.objects,
   entityName: 'objects',
-  entityNamePlural: 'объекты'
+  entityNamePlural: 'объекты',
+  defaultOrdering: 'name'
 })
 
-export const useObjectsStore = objectsStore
+// ============================================================================
+// Custom Actions
+// ============================================================================
 
-// Custom getters for objects
-export const activeObjects = computed(() => {
-  return objectsStore.items.filter((item: Object) => item.is_active)
-})
-
-// Custom actions for objects
 export const fetchResponsibles = async (): Promise<ObjectResponsible[]> => {
-  objectsStore.loading = true
-  objectsStore.error = null
+  const store = useObjectsStore()
+  store.loading = true
+  store.error = null
 
   try {
     const response = await api.get(endpoints.objects.responsibles)
     return response.data
-  } catch (err: unknown) {
-    const error = err as any
-    objectsStore.error = error?.response?.data?.detail || 'Ошибка загрузки ответственных'
+  } catch (err: any) {
+    store.error = err?.response?.data?.detail || 'Ошибка загрузки ответственных'
     throw err
   } finally {
-    objectsStore.loading = false
+    store.loading = false
   }
 }
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+export const getActiveObjects = () => {
+  const store = useObjectsStore()
+  return store.items.filter((item: Object) => item.is_active)
+}
+

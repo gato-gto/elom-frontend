@@ -153,17 +153,17 @@
       </ul>
     </div>
 
-    <!-- Archive -->
-    <div v-if="archive.length > 0" class="mb-4">
+    <!-- Tools (только для admin) -->
+    <div v-if="tools.length > 0" class="mb-4">
       <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('archive')" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('build')" />
         </svg>
-        Архив
+        Инструменты
       </h3>
       <ul class="space-y-1">
         <li 
-          v-for="item in archive" 
+          v-for="item in tools" 
           :key="item.name"
           class="nav-item" 
           :class="{ 'active': isActive(item.path) }"
@@ -310,10 +310,10 @@ const administration = computed(() => {
   )
 })
 
-// Archive - архивные данные
-const archive = computed(() => {
+// Tools - инструменты (только для admin)
+const tools = computed(() => {
   return navigationItems.value.filter(item => 
-    ['archive'].includes(item.category || '')
+    ['tools'].includes(item.category || '')
   )
 })
 

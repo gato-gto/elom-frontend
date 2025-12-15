@@ -1,50 +1,33 @@
-import { defineStore } from 'pinia'
-import { computed } from 'vue'
+/**
+ * Store для управления закупками
+ */
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
-import { createBaseStore } from '@/stores/base'
+import { createBaseStore } from './base'
 import type { 
   Purchase, 
   PurchaseRequest, 
   PatchedPurchaseRequest,
   PurchasePhotoUploadRequest,
-  PaginatedPurchaseList,
   PurchaseListFilters 
 } from '@/api/types'
 
+// Создаём store
 export const usePurchasesStore = createBaseStore<Purchase, PurchaseRequest, PatchedPurchaseRequest>({
   endpoint: endpoints.purchases,
-  entityName: 'закупка',
-  entityNamePlural: 'закупки'
+  entityName: 'purchases',
+  entityNamePlural: 'закупки',
+  defaultOrdering: '-date'
 })
 
-// Custom getters for purchases
-export const getByObject = (objectId: number) => {
-  return usePurchasesStore.items.filter((item: Purchase) => item.object === objectId)
-}
+// ============================================================================
+// Custom Actions
+// ============================================================================
 
-export const getByResponsible = (responsibleId: number) => {
-  return usePurchasesStore.items.filter((item: Purchase) => item.responsible === responsibleId)
-}
-
-export const activePurchases = computed(() => {
-  return usePurchasesStore.items.filter((item: Purchase) => !item.is_archived)
-})
-
-export const archivedPurchases = computed(() => {
-  return usePurchasesStore.items.filter((item: Purchase) => item.is_archived)
-})
-
-export const totalAmount = computed(() => {
-  return usePurchasesStore.items.reduce((sum: number, purchase: Purchase) => {
-    return sum + parseFloat(String(purchase.total_amount || '0'))
-  }, 0)
-})
-
-// Custom actions for purchases
 export const uploadPhoto = async (id: number, data: PurchasePhotoUploadRequest) => {
-  usePurchasesStore.loading = true
-  usePurchasesStore.error = null
+  const store = usePurchasesStore()
+  store.loading = true
+  store.error = null
 
   try {
     const formData = new FormData()
@@ -64,44 +47,41 @@ export const uploadPhoto = async (id: number, data: PurchasePhotoUploadRequest) 
       }
     })
 
-    // Refresh the purchase to get updated photos
-    await usePurchasesStore.fetchOne(id)
-
+    await store.fetchOne(id)
     return true
   } catch (error: any) {
-    usePurchasesStore.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
+    store.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
     throw error
   } finally {
-    usePurchasesStore.loading = false
+    store.loading = false
   }
 }
 
 export const deletePhoto = async (id: number, photoId: number) => {
-  usePurchasesStore.loading = true
-  usePurchasesStore.error = null
+  const store = usePurchasesStore()
+  store.loading = true
+  store.error = null
 
   try {
     await api.delete(endpoints.purchases.deletePhoto(id, photoId))
-
-    // Refresh the purchase to get updated photos
-    await usePurchasesStore.fetchOne(id)
-
+    await store.fetchOne(id)
     return true
   } catch (error: any) {
-    usePurchasesStore.error = error?.response?.data?.detail || 'Ошибка удаления фото'
+    store.error = error?.response?.data?.detail || 'Ошибка удаления фото'
     throw error
   } finally {
-    usePurchasesStore.loading = false
+    store.loading = false
   }
 }
 
 export const exportToExcel = async (params?: Partial<PurchaseListFilters>) => {
-  usePurchasesStore.loading = true
-  usePurchasesStore.error = null
+  const store = usePurchasesStore()
+  store.loading = true
+  store.error = null
 
   try {
     const queryParams = {
-      ...usePurchasesStore.filters,
+      ...store.filters,
       ...params,
       export: 'xlsx' as const
     }
@@ -111,7 +91,6 @@ export const exportToExcel = async (params?: Partial<PurchaseListFilters>) => {
       responseType: 'blob'
     })
 
-    // Create download link
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
@@ -123,10 +102,40 @@ export const exportToExcel = async (params?: Partial<PurchaseListFilters>) => {
 
     return true
   } catch (error: any) {
-    usePurchasesStore.error = error?.response?.data?.detail || 'Ошибка экспорта закупок'
+    store.error = error?.response?.data?.detail || 'Ошибка экспорта закупок'
     throw error
   } finally {
-    usePurchasesStore.loading = false
+    store.loading = false
   }
 }
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+export const getByObject = (objectId: number) => {
+  const store = usePurchasesStore()
+  return store.items.filter((item: Purchase) => item.object === objectId)
+}
+
+export const getByResponsible = (responsibleId: number) => {
+  const store = usePurchasesStore()
+  return store.items.filter((item: Purchase) => item.responsible === responsibleId)
+}
+
+export const getActivePurchases = () => {
+  const store = usePurchasesStore()
+  return store.items.filter((item: Purchase) => !item.is_archived)
+}
+
+export const getArchivedPurchases = () => {
+  const store = usePurchasesStore()
+  return store.items.filter((item: Purchase) => item.is_archived)
+}
+
+export const getTotalAmount = () => {
+  const store = usePurchasesStore()
+  return store.items.reduce((sum: number, purchase: Purchase) => {
+    return sum + parseFloat(String(purchase.total_amount || '0'))
+  }, 0)
+}

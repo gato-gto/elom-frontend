@@ -10,25 +10,43 @@
     >
       <!-- Header actions -->
       <template #header-actions>
-        <button 
-          v-if="canEdit"
-          class="btn btn-primary btn-sm mr-2"
-          @click="openBulkCreate"
-        >
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Массовое добавление
-        </button>
-        <button 
-          class="btn btn-outline btn-sm"
-          @click="$router.push('/materials/categories')"
-        >
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-          Категории
-        </button>
+        <!-- Основная навигация: кнопки для всех устройств -->
+        <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+          <!-- Кнопка Категории - видна на всех устройствах -->
+          <button 
+            class="btn btn-outline hover:btn-secondary transition-all duration-300 btn-sm shadow-sm hover:shadow-md"
+            @click="$router.push('/material_categories')"
+          >
+            <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span class="text-xs md:text-sm font-medium">Категории</span>
+          </button>
+          
+          <!-- Кнопка Массовое добавление - только для desktop -->
+          <button 
+            v-if="canEdit"
+            class="hidden md:flex btn btn-primary hover:btn-primary-focus transition-all duration-300 btn-sm shadow-sm hover:shadow-md hover:scale-105"
+            @click="openBulkCreate"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="font-medium">Массовое добавление</span>
+          </button>
+          
+          <!-- Кнопка Массово - только для mobile -->
+          <button 
+            v-if="canEdit"
+            class="md:hidden btn btn-secondary btn-sm flex-1 min-w-[100px]"
+            @click="openBulkCreate"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="text-xs font-medium">Массово</span>
+          </button>
+        </div>
       </template>
       <!-- Custom column for material name with photo -->
       <template #column-name="{ item, value }">
@@ -90,8 +108,8 @@ import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
 const auth = useAuthStore()
-const materialsStore = useMaterialsStore
-const materialCategoriesStore = useMaterialCategoriesStore
+const materialsStore = useMaterialsStore()
+const materialCategoriesStore = useMaterialCategoriesStore()
 
 // Используем новый композабл для обработки ошибок
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
@@ -99,7 +117,7 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 // Computed
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'director'
+  return role === 'admin' || role === 'manager' || role === 'warehouse'
 })
 
 // Category filter options
@@ -226,7 +244,7 @@ async function handleDelete(material: Material) {
   if (!confirm(`Удалить материал "${material.name}"?`)) {return}
   
   try {
-    await materialsStore.delete(material.id)
+    await materialsStore.remove(material.id)
   } catch (error) {
     await handleDeleteError(error, 'material', material.id)
   }

@@ -66,7 +66,7 @@ import UnitForm from './UnitForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import UnitCard from '@/components/cards/UnitCard.vue'
 
-const unitsStore = useUnitsStore
+const unitsStore = useUnitsStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 
@@ -228,7 +228,7 @@ async function handleDelete(unit: Unit) {
   }
   
   try {
-    await unitsStore.delete(unit.id)
+    await unitsStore.remove(unit.id)
     ui.toast({ type: 'success', text: `Единица измерения "${unit.name}" удалена` })
   } catch (error) {
     await handleDeleteError(error, 'unit', unit.id)

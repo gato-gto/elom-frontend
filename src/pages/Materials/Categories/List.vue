@@ -82,7 +82,7 @@ import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
 const auth = useAuthStore()
-const materialCategoriesStore = useMaterialCategoriesStore
+const materialCategoriesStore = useMaterialCategoriesStore()
 
 // Используем новый композабл для обработки ошибок
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
@@ -90,7 +90,7 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 // Computed
 const canEdit = computed(() => {
   const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'director'
+  return role === 'admin' || role === 'manager' || role === 'warehouse'
 })
 
 // Parent category filter options
@@ -203,7 +203,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 async function handleAction(action: string, item: MaterialCategory) {
   switch (action) {
     case 'view':
-      router.push(`/materials/categories/${item.id}`)
+      router.push(`/material_categories/${item.id}`)
       break
     case 'edit':
       openEdit(item)

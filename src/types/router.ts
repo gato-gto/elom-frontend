@@ -51,15 +51,17 @@ export interface NavigationItem {
 }
 
 // Role hierarchy for access control
-// - admin: Администратор (только через Django Admin)
-// - director: Директор (полный доступ ко всем данным)
-// - coordinator: Координатор (координация между объектами)
-// - brigadier: Бригадир (работа с назначенными объектами)
+// - admin: Администратор (полный доступ)
+// - manager: Управляющий (полный доступ, но без учета изменений)
+// - warehouse: Склад/Цех/Проект (полный доступ без учета изменений)
+// - brigadier: Бригадир/Инженер (работа с назначенными объектами)
+// - requester: Заявитель (просмотр и подача заявок)
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   admin: 100,
-  director: 90,
-  coordinator: 80,
-  brigadier: 60
+  manager: 90,
+  warehouse: 85,
+  brigadier: 60,
+  requester: 40
 }
 
 // Helper function to check if user has required role or higher

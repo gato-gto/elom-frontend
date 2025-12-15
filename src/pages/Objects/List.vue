@@ -66,7 +66,7 @@ import ObjectCard from '@/components/cards/ObjectCard.vue'
 
 // Stores
 const router = useRouter()
-const objectsStore = useObjectsStore
+const objectsStore = useObjectsStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 
@@ -234,7 +234,7 @@ async function handleDelete(object: Object) {
   if (!confirm(confirmMessage)) {return}
   
   try {
-    const response = await objectsStore.delete(object.id)
+    const response = await objectsStore.remove(object.id)
     
     // Проверяем, был ли объект деактивирован вместо удаления
     if (response && response.action === 'deactivated') {

@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
-import { useEmployeesStore, brigadierOptions } from '@/stores/employees'
+import { useEmployeesStore, getBrigadierOptions } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import type { Object, ObjectRequest } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
@@ -32,8 +32,8 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const objectsStore = useObjectsStore
-const employeesStore = useEmployeesStore
+const objectsStore = useObjectsStore()
+const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
 const { handleFormError } = useErrorHandler()
 
@@ -215,7 +215,7 @@ const employeeOptions = computed(() => {
     ]
   }
   
-  const brigadiers = brigadierOptions.value
+  const brigadiers = getBrigadierOptions()
   const allEmployees = employeesStore.items
   const options = [...brigadiers]
   

@@ -139,14 +139,14 @@
 
         <!-- Reference Data submenu -->
         <div v-if="showReferenceDataMenu" class="mobile-reports-submenu">
-          <router-link to="/suppliers" class="mobile-submenu-item" @click="closeMoreMenu">
-            Поставщики
-          </router-link>
-          <router-link to="/employees" class="mobile-submenu-item" @click="closeMoreMenu">
-            Сотрудники
-          </router-link>
-          <router-link to="/units" class="mobile-submenu-item" @click="closeMoreMenu">
-            Единицы измерения
+          <router-link 
+            v-for="item in referenceData" 
+            :key="item.name"
+            :to="item.path" 
+            class="mobile-submenu-item" 
+            @click="closeMoreMenu"
+          >
+            {{ item.title }}
           </router-link>
         </div>
 
@@ -191,10 +191,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getIconPath } from '@/assets/icons'
+import type { NavigationItem } from '@/types/router'
+import type { UserRole } from '@/api/types/common'
 
 const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
 // Состояние меню
 const showMoreMenu = ref(false)
@@ -204,7 +209,7 @@ const showReferenceDataMenu = ref(false)
 // Проверка прав администратора
 const canManageUsers = computed(() => {
   const role = auth.role
-  return role === 'admin' || role === 'director'
+  return role === 'admin'
 })
 
 // Управление меню
@@ -234,6 +239,58 @@ const toggleReferenceDataMenu = () => {
   if (showReferenceDataMenu.value) {
     showReportsMenu.value = false
   }
+}
+
+// Build navigation from router configuration (синхронизация с desktop)
+const navigationItems = computed((): NavigationItem[] => {
+  const routes = router.getRoutes()
+  const items: NavigationItem[] = []
+  
+  routes.forEach(route => {
+    const meta = route.meta
+    
+    // Skip routes without icon (not main nav items)
+    if (!meta?.icon) {return}
+    
+    // Skip public routes
+    if (meta.public) {return}
+    
+    // Check role access
+    if (meta.roles && !hasRoleAccess(auth.role, meta.roles as UserRole[])) {return}
+    
+    const item: NavigationItem = {
+      name: route.name as string,
+      path: route.path,
+      title: meta.title as string,
+      icon: meta.icon as string,
+      description: meta.description as string,
+      category: meta.category as string,
+      order: meta.order as number || 999,
+      roles: meta.roles as UserRole[]
+    }
+    
+    items.push(item)
+  })
+  
+  // Sort by order, then by title
+  return items.sort((a, b) => {
+    if (a.order !== b.order) {
+      return (a.order || 0) - (b.order || 0)
+    }
+    return a.title.localeCompare(b.title)
+  })
+})
+
+// Reference Data - справочники (синхронизация с desktop)
+const referenceData = computed(() => {
+  return navigationItems.value.filter(item => 
+    ['reference_data'].includes(item.category || '')
+  )
+})
+
+function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
+  if (!userRole || !requiredRoles.length) {return true}
+  return requiredRoles.includes(userRole)
 }
 </script>
 

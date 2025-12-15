@@ -44,7 +44,7 @@ import EmployeeForm from './EmployeeForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import EmployeeCard from '@/components/cards/EmployeeCard.vue'
 
-const employeesStore = useEmployeesStore
+const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 
@@ -218,7 +218,7 @@ async function handleDelete(employee: Employee) {
   if (!confirm(`Удалить сотрудника "${employee.first_name} ${employee.last_name}"?`)) { return }
   
   try {
-    await employeesStore.delete(employee.id)
+    await employeesStore.remove(employee.id)
     ui.toast({ type: 'success', text: `Сотрудник "${employee.first_name} ${employee.last_name}" удален` })
   } catch (error) {
     await handleDeleteError(error, 'employee', employee.id)

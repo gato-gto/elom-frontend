@@ -407,11 +407,11 @@ import type {
   Unit
 } from '@/api/types'
 
-const writeOffsStore = useWriteOffsStore
-const objectsStore = useObjectsStore
-const materialsStore = useMaterialsStore
-const employeesStore = useEmployeesStore
-const unitsStore = useUnitsStore
+const writeOffsStore = useWriteOffsStore()
+const objectsStore = useObjectsStore()
+const materialsStore = useMaterialsStore()
+const employeesStore = useEmployeesStore()
+const unitsStore = useUnitsStore()
 const authStore = useAuthStore()
 const { handleFormError, errors, clearErrors } = useErrorHandler()
 const ui = useUiStore()

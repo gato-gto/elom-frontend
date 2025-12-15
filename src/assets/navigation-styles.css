@@ -514,11 +514,17 @@
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent);
 }
 
-/* Стили для компонентов списков */
+/* Стили для компонентов списков - оптимизированные отступы для мобильных */
 .list-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .list-container {
+    gap: 1.5rem;
+  }
 }
 
 :root.dark {
@@ -530,8 +536,6 @@
   border-radius: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(59, 130, 246, 0.1);
-  overflow: scroll;
-  -webkit-overflow-scrolling: touch;
   position: relative;
 }
 

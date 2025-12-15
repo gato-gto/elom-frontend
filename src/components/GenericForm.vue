@@ -1,5 +1,5 @@
 <template>
-  <form class="grid gap-4" autocomplete="off" @submit.prevent="submit">
+  <form class="grid gap-2 md:gap-4" autocomplete="off" @submit.prevent="submit">
     <!-- Form Sections as Cards -->
     <div v-if="config.sections && config.sections.length > 0">
       <div
@@ -11,7 +11,7 @@
           <h2 class="card-title text-lg mb-4">{{ section.title }}</h2>
           <p v-if="section.description" class="text-base-content/70 text-sm mb-4">{{ section.description }}</p>
 
-          <div class="grid md:grid-cols-2 gap-4">
+          <div class="grid md:grid-cols-2 gap-2 md:gap-4">
             <template v-for="field in getSectionFields(index)" :key="field.key">
               <!-- Проверяем условие отображения поля -->
               <template v-if="!field.condition || field.condition()">
@@ -259,7 +259,13 @@ onMounted(() => {
 .generic-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .generic-form {
+    gap: 1.5rem;
+  }
 }
 
 /* All form styles moved to template classes */
@@ -267,7 +273,13 @@ onMounted(() => {
 .form-sections {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .form-sections {
+    gap: 1.5rem;
+  }
 }
 
 /* All section styles moved to template classes */
