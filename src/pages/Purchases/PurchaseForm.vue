@@ -12,7 +12,7 @@
     >
       <!-- Custom instruction photos field -->
       <template #field-instruction_photos="{ field, value, error, disabled }">
-        <div class="bg-base-100 rounded-lg">
+        <div class=" rounded-lg">
           <div class="">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
@@ -83,7 +83,7 @@
 
       <!-- Custom report photos field -->
       <template #field-report_photos="{ field, value, error, disabled }">
-        <div class="bg-base-100 rounded-lg">
+        <div class=" rounded-lg">
           <div class="">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
@@ -160,7 +160,7 @@
 
       <!-- Custom items field -->
       <template #field-items="{ field, value, error, disabled }">
-        <div class="bg-base-100 ">
+        <div class=" ">
           <div class="">
             <div class="mb-4">
               <h2 class="text-lg font-semibold">{{ field.label }}</h2>
@@ -324,7 +324,7 @@
                       </label>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-gray-600 p-2 bg-base-100 rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-gray-600 p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
@@ -394,7 +394,7 @@
                       <label class="label">
                         <span class="label-text text-xs">Сумма</span>
                       </label>
-                      <div class="text-lg font-mono text-primary p-2 bg-base-100 rounded border">
+                      <div class="text-lg font-mono text-primary p-2  rounded border">
                         {{ formatMoney(it.total) }}
                       </div>
                     </div>

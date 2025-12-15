@@ -1,7 +1,7 @@
 <template>
   <div class="stock-snapshot-form">
     <!-- Unit Display -->
-    <div v-if="selectedMaterialUnit" class="bg-base-100 rounded-lg mb-6">
+    <div v-if="selectedMaterialUnit" class=" rounded-lg mb-6">
       <div class="">
         <div class="alert alert-info">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

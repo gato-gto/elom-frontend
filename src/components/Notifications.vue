@@ -22,7 +22,7 @@
       <!-- Dropdown с уведомлениями -->
       <div 
         v-if="showDropdown" 
-        class="absolute right-0 mt-2 w-80 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden"
+        class="absolute right-0 mt-2 w-80  border border-base-300 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden"
       >
         <!-- Header -->
         <div class="p-4 border-b border-base-300">

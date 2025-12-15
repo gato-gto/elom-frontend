@@ -23,7 +23,7 @@ FormComponent.vue
 <template>
   <div class="entity-form">
     <!-- Дополнительные блоки (опционально) -->
-    <div v-if="someCondition" class="card bg-base-100 border mb-6">
+    <div v-if="someCondition" class="card  border mb-6">
       <!-- Предпросмотр, информация и т.д. -->
     </div>
 
@@ -440,7 +440,7 @@ async function handleSubmit(formData: EntityRequest & { photo?: File }) {
 ### Предпросмотр существующего фото
 
 ```vue
-<div v-if="currentPhotoUrl" class="card bg-base-100 border mb-6">
+<div v-if="currentPhotoUrl" class="card  border mb-6">
   <div class="card-body">
     <h3 class="card-title text-lg mb-4">Текущее фото</h3>
     <div class="flex items-center gap-4">
@@ -599,7 +599,7 @@ function getFutureBalance(item) {
 ### DaisyUI классы
 
 Форма использует DaisyUI классы:
-- `card bg-base-100 border` - карточка формы
+- `card  border` - карточка формы
 - `card-body` - тело карточки
 - `input input-bordered` - поля ввода
 - `select select-bordered` - выпадающие списки

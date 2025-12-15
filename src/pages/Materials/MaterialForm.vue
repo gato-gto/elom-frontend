@@ -2,7 +2,7 @@
 <template>
   <div class="material-form">
     <!-- Current photo preview -->
-    <div v-if="currentPhotoUrl" class="bg-base-100 rounded-lg mb-6">
+    <div v-if="currentPhotoUrl" class=" rounded-lg mb-6">
       <div class="">
         <h3 class="text-lg font-semibold mb-4">Текущее фото</h3>
         <div class="flex items-center gap-4">

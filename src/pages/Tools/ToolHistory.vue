@@ -130,7 +130,7 @@
         <div 
           v-for="issue in history" 
           :key="issue.id" 
-          class="card bg-base-100 border border-base-300"
+          class="card  border border-base-300"
           :class="{ 'border-warning': !issue.is_returned }"
         >
           <div class="card-body p-4 space-y-2">

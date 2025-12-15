@@ -27,7 +27,7 @@
       <div
         v-if="showDropdown && searchResults.length > 0"
         ref="dropdown"
-        class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        class="absolute z-50 w-full mt-1  border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       >
         <div
           v-for="(item, index) in searchResults"
@@ -49,7 +49,7 @@
       <div
         v-if="showDropdown && allowCustom && searchQuery && searchResults.length === 0"
         ref="dropdown"
-        class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg"
+        class="absolute z-50 w-full mt-1  border border-base-300 rounded-lg shadow-lg"
       >
         <div
           @click="handleCustomItem"

@@ -282,7 +282,7 @@
           </div>
 
           <!-- Информация о фото -->
-          <div class="bg-base-100 rounded-lg">
+          <div class=" rounded-lg">
             <div class="">
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">

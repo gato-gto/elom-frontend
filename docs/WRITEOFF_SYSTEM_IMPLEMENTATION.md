@@ -189,7 +189,7 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
 
 ```vue
 <template>
-  <div class="card bg-base-100 shadow-xl">
+  <div class="card  shadow-xl">
     <div class="card-body">
       <h2 class="card-title">{{ writeOff.material_name }}</h2>
       <div class="grid grid-cols-2 gap-2 text-sm">

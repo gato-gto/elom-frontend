@@ -204,7 +204,7 @@
         <div
           v-for="(file, index) in fileList"
           :key="index"
-          class="bg-base-100 border-base-300 p-3"
+          class=" border-base-300 p-3"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">

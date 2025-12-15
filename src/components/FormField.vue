@@ -19,7 +19,7 @@
         { 'input-sm': size === 'sm' },
         { 'input-md': size === 'md' || !size },
         { 'input-lg': size === 'lg' },
-        { 'bg-base-100': !disabled },
+        { '': !disabled },
         { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
@@ -47,7 +47,7 @@
         { 'textarea-sm': size === 'sm' },
         { 'textarea-md': size === 'md' || !size },
         { 'textarea-lg': size === 'lg' },
-        { 'bg-base-100': !disabled },
+        { '': !disabled },
         { 'bg-base-200 cursor-not-allowed': disabled },
         // Применяем min-h только если rows не задан или >= 4, и customClass не переопределяет min-h
         { 'min-h-[100px]': (!rows || rows >= 4) && !customClass?.includes('min-h') },
@@ -74,7 +74,7 @@
         { 'select-sm': size === 'sm' },
         { 'select-md': size === 'md' || !size },
         { 'select-lg': size === 'lg' },
-        { 'bg-base-100': !disabled },
+        { '': !disabled },
         { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
@@ -108,7 +108,7 @@
         { 'file-input-sm': size === 'sm' },
         { 'file-input-md': size === 'md' || !size },
         { 'file-input-lg': size === 'lg' },
-        { 'bg-base-100': !disabled },
+        { '': !disabled },
         { 'bg-base-200 cursor-not-allowed': disabled },
         customClass
       ]"
@@ -132,7 +132,7 @@
             { 'input-sm': size === 'sm' },
             { 'input-md': size === 'md' || !size },
             { 'input-lg': size === 'lg' },
-            { 'bg-base-100': !disabled },
+            { '': !disabled },
             { 'bg-base-200 cursor-not-allowed': disabled },
             customClass
           ]"

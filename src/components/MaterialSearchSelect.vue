@@ -62,7 +62,7 @@
       <div
         v-if="showDropdown && (searchResults.length > 0 || searchQuery.length >= 2)"
         ref="dropdown"
-        class="fixed z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        class="fixed z-50  border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         :style="dropdownStyle"
       >
           <!-- No results -->

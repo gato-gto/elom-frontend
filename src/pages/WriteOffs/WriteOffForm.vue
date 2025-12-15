@@ -250,7 +250,7 @@
                       <label class="label">
                         <span class="label-text text-xs">Единица измерения</span>
                       </label>
-                      <div class="text-sm text-gray-600 p-2 bg-base-100 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div class="text-sm text-gray-600 p-2  rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(item.unit) || '—' }}
                       </div>
                       <input type="hidden" v-model.number="item.unit" />
@@ -284,10 +284,10 @@
                       <label class="label">
                         <span class="label-text text-xs">Текущий остаток</span>
                       </label>
-                      <div v-if="item.currentBalance !== null && item.material" class="text-sm font-mono p-2 bg-base-100 rounded border">
+                      <div v-if="item.currentBalance !== null && item.material" class="text-sm font-mono p-2  rounded border">
                         {{ formatNumberClean(item.currentBalance) }} {{ getUnitName(item.unit) || '' }}
                       </div>
-                      <div v-else class="text-sm text-gray-400 p-2 bg-base-100 rounded border">
+                      <div v-else class="text-sm text-gray-400 p-2  rounded border">
                         —
                       </div>
                     </div>
@@ -303,7 +303,7 @@
                         :class="{
                           'bg-error/10 border-error text-error': getFutureBalance(item) < 0,
                           'bg-warning/10 border-warning text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1,
-                          'bg-base-100': getFutureBalance(item) >= item.currentBalance * 0.1
+                          '': getFutureBalance(item) >= item.currentBalance * 0.1
                         }"
                       >
                         {{ formatNumberClean(getFutureBalance(item)) }} {{ getUnitName(item.unit) || '' }}
@@ -311,7 +311,7 @@
                           Отрицательный остаток!
                         </div>
                       </div>
-                      <div v-else class="text-sm text-gray-400 p-2 bg-base-100 rounded border">
+                      <div v-else class="text-sm text-gray-400 p-2  rounded border">
                         —
                       </div>
                     </div>

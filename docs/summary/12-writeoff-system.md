@@ -367,7 +367,7 @@ class WriteOffSerializer(serializers.ModelSerializer):
 
 ```vue
 <template>
-  <div class="card bg-base-100 shadow-xl">
+  <div class="card  shadow-xl">
     <div class="card-body">
       <h2 class="card-title">{{ writeOff.material_name }}</h2>
       

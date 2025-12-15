@@ -63,7 +63,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
-            <ul tabindex="0" class="menu menu-sm dropdown-content mb-2 z-[1] p-2 shadow-2xl bg-base-100 rounded-xl w-full border border-base-300/50">
+            <ul tabindex="0" class="menu menu-sm dropdown-content mb-2 z-[1] p-2 shadow-2xl  rounded-xl w-full border border-base-300/50">
               <li>
                 <div class="text-sm px-3 py-2 bg-primary/5 rounded-lg">
                   <div class="font-semibold text-base-content">{{ auth.me?.username }}</div>

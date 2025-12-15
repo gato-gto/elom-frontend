@@ -1,5 +1,5 @@
 <template>
-  <div class="card bg-base-100 shadow-sm border mobile-card p-4">
+  <div class="card shadow-sm border mobile-card p-4">
     <!-- Заголовок с бейджем -->
     <div class="flex items-start justify-between mb-3">
       <h3 class="card-title text-base leading-tight flex-1 min-w-0">{{ title }}</h3>
@@ -33,7 +33,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
           </svg>
         </label>
-        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+        <ul tabindex="0" class="dropdown-content menu p-2 shadow rounded-box w-52">
           <li v-for="action in dropdownActions" :key="action.key">
             <a :class="{ 'disabled': action.disabled }" @click="!action.disabled && $emit('action', action.key)">
               <component :is="action.icon" v-if="action.icon" class="w-4 h-4"/>

@@ -11,7 +11,7 @@
       <span class="md:hidden text-xs">{{ loading ? '...' : 'Экспорт' }}</span>
     </div>
     
-    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+    <ul tabindex="0" class="dropdown-content menu p-2 shadow  rounded-box w-52 z-50">
       <li>
         <button 
           class="flex items-center"

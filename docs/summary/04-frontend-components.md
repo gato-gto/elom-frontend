@@ -572,7 +572,7 @@ export const useUiStore = defineStore('ui', () => {
   <form class="grid gap-4" @submit.prevent="submit">
     <!-- Form Sections as Cards -->
     <div v-if="config.sections && config.sections.length > 0">
-      <div v-for="(section, index) in sections" :key="index" class="card bg-base-100 border">
+      <div v-for="(section, index) in sections" :key="index" class="card  border">
         <div class="card-body">
           <h2 class="card-title text-lg mb-4">{{ section.title }}</h2>
           <p v-if="section.description" class="text-base-content/70 text-sm mb-4">{{ section.description }}</p>
@@ -734,7 +734,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const containerClass = computed(() => ({
   'flex flex-col items-center justify-center p-8': true,
-  'fixed inset-0 bg-base-100/80 backdrop-blur-sm z-50': props.overlay
+  'fixed inset-0 /80 backdrop-blur-sm z-50': props.overlay
 }))
 
 const spinnerClass = computed(() => ({
@@ -778,7 +778,7 @@ const spinnerClass = computed(() => ({
 <template>
   <div class="writeoff-form">
     <!-- Unit Display -->
-    <div v-if="selectedMaterialUnit" class="card bg-base-100 border mb-6">
+    <div v-if="selectedMaterialUnit" class="card  border mb-6">
       <div class="card-body">
         <div class="alert alert-info">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -806,7 +806,7 @@ const spinnerClass = computed(() => ({
     />
 
     <!-- Информация об остатке -->
-    <div v-if="currentBalance !== null" class="card bg-base-100 border mt-6">
+    <div v-if="currentBalance !== null" class="card  border mt-6">
       <div class="card-body">
         <h2 class="card-title text-lg mb-4">Информация об остатке</h2>
         <div class="alert alert-info">
@@ -1273,7 +1273,7 @@ onMounted(async () => {
 #### FilterPanel
 ```vue
 <template>
-  <div class="card bg-base-100 border mb-6">
+  <div class="card  border mb-6">
     <div class="card-body p-4">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="grid gap-4" :class="gridClass">
@@ -1374,7 +1374,7 @@ onMounted(async () => {
 ### Базовый компонент MobileCard
 ```vue
 <template>
-  <div class="card bg-base-100 border shadow-sm hover:shadow-md transition-shadow">
+  <div class="card  border shadow-sm hover:shadow-md transition-shadow">
     <div class="card-body p-4">
       <div class="flex justify-between items-start mb-3">
         <slot name="header" />
