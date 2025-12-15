@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useWriteOffsStore, getByObject, getByMaterial, getByResponsible, getByStage } from '../writeOffs'
+import { useWriteOffsStore(), getByObject, getByMaterial, getByResponsible, getByStage } from '../writeOffs'
 import api from '@/api/client'
 
 // Mock API client
@@ -13,7 +13,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     
     expect(store.items).toEqual([])
     expect(store.current).toBeNull()
@@ -23,7 +23,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('fetches writeoffs list successfully', async () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     const mockResponse = {
       data: {
         count: 2,
@@ -63,7 +63,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('filters writeoffs by object correctly', () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     store.items = [
       { id: 1, object: 1, quantity: '10.00' } as any,
       { id: 2, object: 2, quantity: '20.00' } as any,
@@ -78,7 +78,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('filters writeoffs by material correctly', () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     store.items = [
       { id: 1, material: 1, quantity: '10.00' } as any,
       { id: 2, material: 2, quantity: '20.00' } as any,
@@ -93,7 +93,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('filters writeoffs by responsible correctly', () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     store.items = [
       { id: 1, responsible: 1, quantity: '10.00' } as any,
       { id: 2, responsible: 2, quantity: '20.00' } as any,
@@ -108,7 +108,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('filters writeoffs by stage correctly', () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     store.items = [
       { id: 1, stage: 'acceptance', quantity: '10.00' } as any,
       { id: 2, stage: 'request', quantity: '20.00' } as any,
@@ -123,7 +123,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('creates writeoff successfully', async () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     const writeoffData = {
       object: 1,
       material: 1,
@@ -152,7 +152,7 @@ describe('WriteOffs Store', () => {
   })
 
   it('handles API errors correctly', async () => {
-    const store = useWriteOffsStore
+    const store = useWriteOffsStore()
     const errorResponse = {
       response: {
         data: {
@@ -390,7 +390,7 @@ describe('WriteOff Business Logic', () => {
 
   describe('Bulk Write-off', () => {
     it('creates multiple write-offs for same object', async () => {
-      const store = useWriteOffsStore
+      const store = useWriteOffsStore()
       const items = [
         { material: 1, quantity: '10.00', unit: 1 },
         { material: 2, quantity: '20.00', unit: 2 },

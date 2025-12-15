@@ -54,7 +54,7 @@
     </div>
 
     <!-- Simple Form (no sections) as Single Card -->
-    <div v-else class="card bg-base-100">
+    <div v-else class="">
       <div class="">
         <p v-if="config.subtitle" class="text-base-content/70 text-sm mb-4">{{ config.subtitle }}</p>
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useObjectsStore } from '../objects'
+import { useObjectsStore() } from '../objects'
 import api from '@/api/client'
 
 // Mock API client
@@ -13,7 +13,7 @@ describe('Objects Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     
     expect(store.items).toEqual([])
     expect(store.current).toBeNull()
@@ -23,7 +23,7 @@ describe('Objects Store', () => {
   })
 
   it('fetches objects list successfully', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     const mockResponse = {
       data: {
         count: 2,
@@ -76,7 +76,7 @@ describe('Objects Store', () => {
   })
 
   it('creates object successfully', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     const objectData = {
       name: 'New Object',
       address: 'New Address',
@@ -110,7 +110,7 @@ describe('Objects Store', () => {
   })
 
   it('updates object successfully', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     const updateData = {
       name: 'Updated Object',
       is_active: false
@@ -146,7 +146,7 @@ describe('Objects Store', () => {
   })
 
   it('deletes object successfully', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
     
@@ -159,7 +159,7 @@ describe('Objects Store', () => {
   })
 
   it('handles API errors correctly', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     const errorResponse = {
       response: {
         data: {
@@ -182,7 +182,7 @@ describe('Objects Store', () => {
   })
 
   it('sets filters correctly', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({
@@ -195,7 +195,7 @@ describe('Objects Store', () => {
   })
 
   it('resets filters correctly', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({ search: 'test', is_active: 'true' })
@@ -226,7 +226,7 @@ describe('Objects Store', () => {
   })
 
   it('filters active objects correctly', async () => {
-    const store = useObjectsStore
+    const store = useObjectsStore()
     store.items = [
       { id: 1, name: 'Active Object', is_active: true } as any,
       { id: 2, name: 'Inactive Object', is_active: false } as any

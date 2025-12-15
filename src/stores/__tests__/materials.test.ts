@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useMaterialsStore, uploadPhoto } from '../materials'
+import { useMaterialsStore(), uploadPhoto } from '../materials'
 import api from '@/api/client'
 // import { endpoints } from '@/api/endpoints' // Не используется
 
@@ -35,7 +35,7 @@ describe('Materials Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     
     expect(store.items).toEqual([])
     expect(store.current).toBeNull()
@@ -45,7 +45,7 @@ describe('Materials Store', () => {
   })
 
   it('fetches materials list successfully', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     const mockResponse = {
       data: {
         count: 2,
@@ -87,7 +87,7 @@ describe('Materials Store', () => {
   })
 
   it('fetches single material successfully', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     const mockMaterial = {
       id: 1,
       name: 'Test Material',
@@ -108,7 +108,7 @@ describe('Materials Store', () => {
   })
 
   it('creates material successfully', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     const materialData = {
       name: 'New Material',
       sku: 'NEW001',
@@ -137,7 +137,7 @@ describe('Materials Store', () => {
   })
 
   it('updates material successfully', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     const updateData = {
       name: 'Updated Material',
       is_active: false
@@ -168,7 +168,7 @@ describe('Materials Store', () => {
   })
 
   it('deletes material successfully', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
     
@@ -197,7 +197,7 @@ describe('Materials Store', () => {
   })
 
   it('handles API errors correctly', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     const errorResponse = {
       response: {
         data: {
@@ -220,7 +220,7 @@ describe('Materials Store', () => {
   })
 
   it('sets filters correctly', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({
@@ -233,7 +233,7 @@ describe('Materials Store', () => {
   })
 
   it('resets filters correctly', async () => {
-    const store = useMaterialsStore
+    const store = useMaterialsStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     await store.setFilters({ search: 'test' })
     

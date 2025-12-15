@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { usePurchasesStore } from '../purchases'
+import { usePurchasesStore() } from '../purchases'
 import api from '@/api/client'
 
 // Mock API client
@@ -13,7 +13,7 @@ describe('Purchases Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     
     expect(store.items).toEqual([])
     expect(store.current).toBeNull()
@@ -23,7 +23,7 @@ describe('Purchases Store', () => {
   })
 
   it('fetches purchases list successfully', async () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     const mockResponse = {
       data: {
         count: 2,
@@ -72,7 +72,7 @@ describe('Purchases Store', () => {
   })
 
   it('creates purchase successfully', async () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     const purchaseData = {
       date: '2024-01-01',
       object: 1,
@@ -106,7 +106,7 @@ describe('Purchases Store', () => {
   })
 
   it('uploads photo successfully', async () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
     const mockPurchaseResponse = {
       data: {
@@ -137,7 +137,7 @@ describe('Purchases Store', () => {
   })
 
   it('handles API errors correctly', async () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     const errorResponse = {
       response: {
         data: {
@@ -160,7 +160,7 @@ describe('Purchases Store', () => {
   })
 
   it('sets filters correctly', async () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({
@@ -173,7 +173,7 @@ describe('Purchases Store', () => {
   })
 
   it('resets filters correctly', async () => {
-    const store = usePurchasesStore
+    const store = usePurchasesStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({ search: 'test', status: 'new' })

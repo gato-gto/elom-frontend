@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { usePurchasesStore } from '../purchases'
+import { usePurchasesStore() } from '../purchases'
 import api from '@/api/client'
 
 // Mock API client
@@ -232,7 +232,7 @@ describe('Purchase Status Business Logic', () => {
 
   describe('Store Integration', () => {
     it('fetches purchases list with status filter', async () => {
-      const store = usePurchasesStore
+      const store = usePurchasesStore()
       const mockResponse = {
         data: {
           count: 2,
@@ -253,7 +253,7 @@ describe('Purchase Status Business Logic', () => {
     })
 
     it('updates purchase status correctly', async () => {
-      const store = usePurchasesStore
+      const store = usePurchasesStore()
       const mockResponse = {
         data: {
           id: 1,

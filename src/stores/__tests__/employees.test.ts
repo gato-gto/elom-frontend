@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useEmployeesStore, setPassword } from '../employees'
+import { useEmployeesStore(), setPassword } from '../employees'
 import api from '@/api/client'
 
 // Mock API client
@@ -13,7 +13,7 @@ describe('Employees Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()
     
     expect(store.items).toEqual([])
     expect(store.current).toBeNull()
@@ -23,7 +23,7 @@ describe('Employees Store', () => {
   })
 
   it('fetches employees list successfully', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()
     const mockResponse = {
       data: {
         count: 2,
@@ -72,7 +72,7 @@ describe('Employees Store', () => {
   })
 
   it('creates employee successfully', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()
     const employeeData = {
       username: 'newuser',
       first_name: 'New',
@@ -105,7 +105,7 @@ describe('Employees Store', () => {
   })
 
   it('updates employee successfully', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()
     const updateData = {
       first_name: 'Updated',
       is_active: false
@@ -139,7 +139,7 @@ describe('Employees Store', () => {
   })
 
   it('deletes employee successfully', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
     
@@ -164,7 +164,7 @@ describe('Employees Store', () => {
   })
 
   it('handles API errors correctly', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()
     const errorResponse = {
       response: {
         status: 404,
@@ -188,7 +188,7 @@ describe('Employees Store', () => {
   })
 
   it('sets filters correctly', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({
@@ -201,7 +201,7 @@ describe('Employees Store', () => {
   })
 
   it('resets filters correctly', async () => {
-    const store = useEmployeesStore
+    const store = useEmployeesStore()()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({ search: 'test', role: 'brigadier' })

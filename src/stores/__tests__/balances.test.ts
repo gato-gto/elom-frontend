@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useBalancesStore, fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '../balances'
+import { useBalancesStore(), fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '../balances'
 import api from '@/api/client'
 
 // Mock API client
@@ -13,7 +13,7 @@ describe('Balances Store', () => {
   })
 
   it('initializes with empty state', () => {
-    const store = useBalancesStore
+    const store = useBalancesStore()
     
     expect(store.items).toEqual([])
     expect(store.loading).toBe(false)
@@ -48,10 +48,10 @@ describe('Balances Store', () => {
     
     await fetchBalancesList()
     
-    expect(useBalancesStore.items).toHaveLength(1)
-    expect(useBalancesStore.items[0].object_name).toBe('Object 1')
-    expect(useBalancesStore.items[0].materials).toHaveLength(1)
-    expect(useBalancesStore.items[0].materials[0].material_name).toBe('Material 1')
+    expect(useBalancesStore().items).toHaveLength(1)
+    expect(useBalancesStore().items[0].object_name).toBe('Object 1')
+    expect(useBalancesStore().items[0].materials).toHaveLength(1)
+    expect(useBalancesStore().items[0].materials[0].material_name).toBe('Material 1')
     expect(api.get).toHaveBeenCalled()
   })
 
@@ -131,8 +131,8 @@ describe('Balances Store', () => {
       expect(error).toBe(errorResponse)
     }
     
-    expect(useBalancesStore.error).toBe('Ошибка загрузки остатков')
-    expect(useBalancesStore.loading).toBe(false)
+    expect(useBalancesStore().error).toBe('Ошибка загрузки остатков')
+    expect(useBalancesStore().loading).toBe(false)
   })
 
   it('synchronizes filters with store', async () => {
@@ -146,7 +146,7 @@ describe('Balances Store', () => {
     
     await setBalancesFilters({ object: '1' })
     
-    expect(useBalancesStore.filters.object).toBe('1')
+    expect(useBalancesStore().filters.object).toBe('1')
   })
 
   describe('URL Query Parameter Support', () => {
@@ -185,7 +185,7 @@ describe('Balances Store', () => {
       // Filter can be passed as string (from URL) or number
       await setBalancesFilters({ object: '123' })
       
-      expect(useBalancesStore.filters.object).toBe('123')
+      expect(useBalancesStore().filters.object).toBe('123')
     })
   })
 
@@ -216,7 +216,7 @@ describe('Balances Store', () => {
       
       await fetchBalancesList()
       
-      const material = useBalancesStore.items[0].materials[0]
+      const material = useBalancesStore().items[0].materials[0]
       
       // current_balance = total_purchased - total_written_off
       // 120 = 150 - 30
@@ -251,7 +251,7 @@ describe('Balances Store', () => {
       
       await fetchBalancesList()
       
-      const material = useBalancesStore.items[0].materials[0]
+      const material = useBalancesStore().items[0].materials[0]
       expect(parseFloat(material.current_balance)).toBe(0)
     })
   })
@@ -284,9 +284,9 @@ describe('Balances Store', () => {
       
       await fetchBalancesList()
       
-      expect(useBalancesStore.items).toHaveLength(2)
-      expect(useBalancesStore.items[0].materials).toHaveLength(1)
-      expect(useBalancesStore.items[1].materials).toHaveLength(2)
+      expect(useBalancesStore().items).toHaveLength(2)
+      expect(useBalancesStore().items[0].materials).toHaveLength(1)
+      expect(useBalancesStore().items[1].materials).toHaveLength(2)
     })
   })
 })
