@@ -225,7 +225,7 @@ import MaterialCard from '@/components/cards/MaterialCard.vue'
 import { formatDate } from '@/utils/formatters'
 import type { MaterialCategory } from '@/api/types'
 import type { Material } from '@/api/types'
-import type { GenericListConfig } from '@/types/list'
+import type { GenericListConfig } from '@/types/generic'
 import type { Me } from '@/api/types/common'
 
 const route = useRoute()
@@ -293,7 +293,7 @@ const materialsListConfig = computed<GenericListConfig<Material>>(() => ({
 }))
 
 // Обработчик действий с материалами
-async function handleMaterialAction(item: Material, action: string) {
+async function handleMaterialAction(action: string, item: Material) {
   if (action === 'view') {
     // Перенаправляем на редактирование, так как отдельной страницы просмотра нет
     router.push(`/materials/${item.id}/edit`)

@@ -192,7 +192,7 @@ import { useToolsStore } from '@/stores/tools'
 import { useEmployeesStore } from '@/stores/employees'
 import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
-import type { ToolBulkCreateRequest, ToolBulkItem, ToolCondition } from '@/api/types/tools'
+import type { Tool, ToolBulkCreateRequest, ToolBulkItem, ToolCondition } from '@/api/types/tools'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 

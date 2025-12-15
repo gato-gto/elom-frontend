@@ -260,7 +260,10 @@ const roleTitle = computed(() => {
     admin: 'Администратор',
     director: 'Директор',
     coordinator: 'Координатор',
-    brigadier: 'Бригадир'
+    manager: 'Управляющий',
+    brigadier: 'Бригадир',
+    warehouse: 'Склад',
+    requester: 'Заявитель'
   }
   
   return authStore.role ? roleTitles[authStore.role as UserRole] : 'Роль не задана'

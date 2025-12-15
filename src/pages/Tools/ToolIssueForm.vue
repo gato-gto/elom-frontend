@@ -161,7 +161,7 @@ async function handleSubmit(formData: ToolIssueCreateRequest) {
     formData.tool = props.tool?.id || 0
     
     // Convert empty object to undefined
-    if (!formData.object || formData.object === '') {
+    if (!formData.object) {
       formData.object = undefined
     }
     

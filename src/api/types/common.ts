@@ -6,12 +6,16 @@
 // - brigadier: Бригадир/Инженер (работа с назначенными объектами)
 // - warehouse: Склад/Цех/Проект (полный доступ без учета изменений)
 // - requester: Заявитель (просмотр и подача заявок)
+// - director: Директор (высший уровень доступа)
+// - coordinator: Координатор (координация между отделами)
 export type UserRole = 
   | "admin"
   | "manager"
   | "brigadier"
   | "warehouse"
-  | "requester";
+  | "requester"
+  | "director"
+  | "coordinator";
 
 export type Stage = 
   | "acceptance"
@@ -116,3 +120,6 @@ export interface SmartQuantity {
   display_unit?: string;
   conversion_applied?: boolean;
 }
+
+// Re-export Me from employees
+export type { Me } from './employees';
