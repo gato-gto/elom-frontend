@@ -208,7 +208,7 @@ console.log('[AppSidebar] Tools items:', navigation.value.filter(item => item.ca
 
 // Business Operations - основные бизнес-операции
 const businessOperations = computed(() => {
-  const items = navigation.value.filter(item => 
+  const items = navigation.value.filter(item =>
     ['purchases', 'objects', 'writeoffs'].includes(item.category || '')
   )
   //
@@ -225,7 +225,7 @@ const businessOperations = computed(() => {
   //   })
   // }
   //
-  // return items
+  return items
 })
 
 // Inventory Management - управление складом и материалами
