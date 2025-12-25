@@ -1,5 +1,5 @@
 <template>
-  <div class="card  shadow-sm border border-base-200 mobile-card">
+  <div class="card shadow-sm border border-base-200 mobile-card">
     <div class="card-body p-3 md:p-4">
       <!-- Header -->
       <div class="flex items-start justify-between gap-2 mb-3">

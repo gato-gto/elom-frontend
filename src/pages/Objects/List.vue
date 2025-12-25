@@ -43,13 +43,13 @@
 
     <!-- Modal -->
     <Modal v-model="modalOpen" :title="modalTitle" size="lg" :closable="true">
-      <ObjectForm :initial="current" @saved="onSaved" @cancel="modalOpen=false"/>
+      <ObjectForm :initial="current" @saved="onSaved" @cancel="modalOpen=false" />
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Object, Me } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
@@ -95,8 +95,8 @@ const statusOptions = computed(() => [
   { value: 'false', label: 'Неактивные' }
 ])
 
-// State for responsibles
-const responsibles = ref<Array<{id: number, name: string, objects_count: number}>>([])
+// State for responsibles (это EmployeeProfile.id с бэка)
+const responsibles = ref<Array<{ id: number; name: string; objects_count: number }>>([])
 
 const responsibleOptions = computed(() => [
   { value: '', label: 'Все ответственные' },
@@ -169,7 +169,8 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
       label: 'Удалить',
       class: 'btn-error',
       disabled: (item: Object) => !canEdit.value || !item.is_active,
-      confirm: (item: Object) => `Удалить объект "${item.name}"? Если у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
+      confirm: (item: Object) =>
+        `Удалить объект "${item.name}"? Если у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
     }
   ],
   mobileCardComponent: ObjectCard,
@@ -230,23 +231,22 @@ async function handleAction(action: string, item: Object) {
 }
 
 async function handleDelete(object: Object) {
-  const confirmMessage = `Удалить объект "${object.name}"?\n\nЕсли у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
-  if (!confirm(confirmMessage)) {return}
-  
+  const confirmMessage =
+    `Удалить объект "${object.name}"?\n\nЕсли у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
+  if (!confirm(confirmMessage)) return
+
   try {
     const response = await objectsStore.remove(object.id)
-    
-    // Проверяем, был ли объект деактивирован вместо удаления
-    if (response && response.action === 'deactivated') {
-      ui.toast({ 
-        type: 'info', 
-        text: `Объект "${object.name}" деактивирован (имеет связанные записи)` 
+
+    if (response && (response as any).action === 'deactivated') {
+      ui.toast({
+        type: 'info',
+        text: `Объект "${object.name}" деактивирован (имеет связанные записи)`
       })
     } else {
       ui.toast({ type: 'success', text: `Объект "${object.name}" удален` })
     }
-    
-    // Обновляем список
+
     await objectsStore.fetchList()
   } catch (error) {
     await handleDeleteError(error, 'object', object.id)
@@ -262,15 +262,13 @@ async function onSaved() {
 // Lifecycle
 onMounted(async () => {
   try {
-    // Загружаем ответственных за объекты
+    // ВАЖНО: это правильные id (EmployeeProfile.id), а не User.id
     responsibles.value = await fetchResponsibles()
-    // Загружаем объекты
     await objectsStore.fetchList()
   } catch (error) {
     await handleLoadingError(error, 'objects')
   }
 })
-
 </script>
 
 <style scoped>

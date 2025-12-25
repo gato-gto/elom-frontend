@@ -53,14 +53,25 @@ import PurchaseForm from './PurchaseForm.vue'
 import PurchaseInfo from './PurchaseInfo.vue'
 import GenericList from '@/components/GenericList.vue'
 import PurchaseCard from '@/components/cards/PurchaseCard.vue'
-import { usePurchasesStore } from '@/stores/purchases'
+import { usePurchasesStore, approvePurchase, rejectPurchase } from '@/stores/purchases'
 import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore } from '@/stores/employees'
+import { useAuthStore } from '@/stores/auth'
+import { useNotifications } from '@/composables/useNotifications'
 
 // Stores
 const purchasesStore = usePurchasesStore()
 const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
+const authStore = useAuthStore()
+const { showSuccess, showError } = useNotifications()
+
+// Check if requester
+const isRequester = computed(() => authStore.me?.role === 'requester')
+const canApprove = computed(() => {
+  const role = authStore.me?.role
+  return role === 'admin' || role === 'manager' || role === 'warehouse'
+})
 
 // Error handling
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
@@ -73,6 +84,9 @@ const viewingPurchase = ref<Purchase | null>(null)
 
 // Computed properties
 const modalTitle = computed(() => {
+  if (isRequester.value) {
+    return editingPurchase.value ? 'Редактировать заявку' : 'Новая заявка'
+  }
   return editingPurchase.value ? 'Редактировать закупку' : 'Новая закупка'
 })
 
@@ -94,12 +108,14 @@ const statusOptions = computed(() => [
 ])
 
 // GenericList configuration
-const listConfig = computed<GenericListConfig<Purchase>>(() => ({
-  title: 'Закупки',
-  subtitle: 'Управление закупками материалов и поставщиками',
+const listConfig = computed(() => ({
+  title: isRequester.value ? 'Мои заявки' : 'Закупки',
+  subtitle: isRequester.value 
+    ? 'Создание и управление заявками на материалы'
+    : 'Управление закупками материалов и поставщиками',
   icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
   showCreate: true,
-  createText: 'Новая закупка',
+  createText: isRequester.value ? 'Новая заявка' : 'Новая закупка',
   canCreate: true,
   showStats: true,
   exportable: true,
@@ -112,43 +128,59 @@ const listConfig = computed<GenericListConfig<Purchase>>(() => ({
   filterColumns: 4,
   columns: [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
+    { key: 'date', label: 'Дата', sortable: true, formatter: (value: any) => formatDate(value) },
     { key: 'purchase_no', label: '№ закупки', sortable: true },
     { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name
     { key: 'supplier__name', label: 'Поставщик', sortable: true, displayKey: 'supplier_name' }, // Используем supplier__name для сортировки, но отображаем supplier_name
     { key: 'responsible__id', label: 'Ответственный', sortable: true, displayKey: 'responsible_name' }, // Используем responsible__id для сортировки, но отображаем responsible_name
-    { key: 'items', label: 'Позиций', sortable: false, formatter: (value) => value?.length ?? 0 }
+    { key: 'items', label: 'Позиций', sortable: false, formatter: (value: any) => value?.length ?? 0 }
   ],
   filters: [
     {
       key: 'date_after',
-      type: 'date',
+      type: 'date' as const,
       label: 'Дата с'
     },
     {
       key: 'date_before',
-      type: 'date',
+      type: 'date' as const,
       label: 'Дата по'
     },
     {
       key: 'object',
-      type: 'select',
+      type: 'select' as const,
       label: 'Объект',
       options: objectOptions.value
     },
-    {
-      key: 'responsible',
-      type: 'select',
-      label: 'Ответственный',
-      options: employeeOptions.value
-    },
-    {
-      key: 'is_archived',
-      type: 'select',
-      label: 'Статус',
-      options: statusOptions.value
-    }
-  ],
+    ...(isRequester.value ? [] : [
+      {
+        key: 'responsible',
+        type: 'select' as const,
+        label: 'Ответственный',
+        options: employeeOptions.value
+      },
+      {
+        key: 'is_archived',
+        type: 'select' as const,
+        label: 'Статус',
+        options: statusOptions.value
+      }
+    ]),
+    ...(isRequester.value ? [] : [
+      {
+        key: 'status',
+        type: 'select' as const,
+        label: 'Статус закупки',
+        options: [
+          { value: '', label: 'Все статусы' },
+          { value: 'new', label: 'Новая (заявка)' },
+          { value: 'completed', label: 'Выполнено' },
+          { value: 'cancelled', label: 'Отменена' }
+        ]
+      }
+    ])
+  ] as any,
+  defaultFilters: isRequester.value ? { status: 'new' } : {},
   actions: [
     {
       key: 'view',
@@ -158,15 +190,42 @@ const listConfig = computed<GenericListConfig<Purchase>>(() => ({
     },
     {
       key: 'edit',
-      label: 'Редактировать',
+      label: isRequester.value ? 'Редактировать заявку' : 'Редактировать',
       class: 'btn-primary btn-sm',
-      shortLabel: '✏️'
-    }
+      shortLabel: '✏️',
+      show: (item: Purchase) => {
+        // Requester может редактировать только свои заявки со статусом 'new'
+        if (isRequester.value) {
+          return item.status === 'new' && item.responsible === authStore.me?.id
+        }
+        return true
+      }
+    },
+    ...(canApprove.value ? [
+      {
+        key: 'approve',
+        label: 'Одобрить',
+        class: 'btn-success btn-sm',
+        shortLabel: '✅',
+        show: (item: Purchase) => item.status === 'new',
+        requireConfirm: true,
+        confirmMessage: 'Вы уверены, что хотите одобрить эту заявку?'
+      },
+      {
+        key: 'reject',
+        label: 'Отклонить',
+        class: 'btn-error btn-sm',
+        shortLabel: '❌',
+        show: (item: Purchase) => item.status === 'new',
+        requireConfirm: true,
+        confirmMessage: 'Вы уверены, что хотите отклонить эту заявку?'
+      }
+    ] : [])
   ],
   mobileCardComponent: PurchaseCard,
   mobileCardProp: 'purchase',
   defaultSort: 'date',
-  defaultSortOrder: 'desc'
+  defaultSortOrder: 'desc' as const
 }))
 
 // Methods
@@ -228,6 +287,33 @@ async function handleAction(action: string, item: Purchase) {
     case 'delete':
       await handleDelete(item)
       break
+    case 'approve':
+      await handleApprove(item)
+      break
+    case 'reject':
+      await handleReject(item)
+      break
+  }
+}
+
+async function handleApprove(purchase: Purchase) {
+  try {
+    await approvePurchase(purchase.id)
+    showSuccess('Заявка успешно одобрена')
+    await purchasesStore.fetchList()
+  } catch (error: any) {
+    showError(error?.response?.data?.detail || 'Ошибка одобрения заявки')
+  }
+}
+
+async function handleReject(purchase: Purchase) {
+  const reason = prompt('Причина отклонения (необязательно):')
+  try {
+    await rejectPurchase(purchase.id, reason || undefined)
+    showSuccess('Заявка успешно отклонена')
+    await purchasesStore.fetchList()
+  } catch (error: any) {
+    showError(error?.response?.data?.detail || 'Ошибка отклонения заявки')
   }
 }
 

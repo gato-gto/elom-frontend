@@ -173,7 +173,7 @@ const stageOptions = [
 // Initial form data
 const initialFormData = computed<ObjectRequest>(() => {
   const currentUserId = auth.me?.id
-  
+
   if (props.initial) {
     return {
       name: props.initial.name,
@@ -189,7 +189,7 @@ const initialFormData = computed<ObjectRequest>(() => {
       date_end: props.initial.date_end
     }
   }
-  
+
   // Для новых объектов: если текущий пользователь - бригадир, автоматически назначаем его ответственным
   return {
     name: '',
@@ -214,11 +214,11 @@ const employeeOptions = computed(() => {
       { value: auth.me.id, label: currentUserName }
     ]
   }
-  
+
   const brigadiers = getBrigadierOptions()
   const allEmployees = employeesStore.items
   const options = [...brigadiers]
-  
+
   // Добавляем пользователя, указанного в значении "Ответственный", если он есть
   if (props.initial?.responsible) {
     const responsibleEmployee = allEmployees.find(emp => emp.id === props.initial?.responsible)
@@ -227,7 +227,7 @@ const employeeOptions = computed(() => {
         value: responsibleEmployee.id,
         label: `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`.trim() || responsibleEmployee.username
       }
-      
+
       // Проверяем, что ответственный еще не в списке
       const isAlreadyInList = options.some(option => option.value === responsibleEmployee.id)
       if (!isAlreadyInList) {
@@ -235,7 +235,7 @@ const employeeOptions = computed(() => {
       }
     }
   }
-  
+
   return options
 })
 
@@ -247,7 +247,7 @@ async function handleSubmit(formData: ObjectRequest) {
     } else {
       await objectsStore.create(formData)
     }
-    
+
     emit('saved')
   } catch (error) {
     await handleFormError(error, 'object')

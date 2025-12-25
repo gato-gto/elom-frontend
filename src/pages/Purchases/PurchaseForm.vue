@@ -703,8 +703,20 @@ const objects = computed(() => objectsStore.items)
 const employees = computed(() => employeesStore.items)
 const suppliers = computed(() => suppliersStore.items)
 
+const isRequester = computed(() => auth.me?.role === 'requester')
+
 const objectOptions = computed(() => {
-  // Если у пользователя есть список назначенных объектов, показываем только их
+  // Для requester показываем только назначенные объекты
+  if (isRequester.value) {
+    const assignedIds = auth.me?.assigned_object_ids || []
+    const list = objects.value.filter((obj: any) => assignedIds.includes(obj.id) && obj.is_active)
+    return list.map((obj: any) => ({
+      value: obj.id,
+      label: obj.name
+    }))
+  }
+  
+  // Для остальных ролей: если у пользователя есть список назначенных объектов, показываем только их
   const assignedIds = auth.me?.assigned_object_ids || []
   const list = assignedIds.length > 0
     ? objects.value.filter((obj: any) => assignedIds.includes(obj.id) && obj.is_active)
@@ -765,8 +777,12 @@ const statusOptions = [
 
 // GenericForm configuration
 const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
-  title: isEdit.value ? 'Редактировать закупку' : 'Новая закупка',
-  subtitle: 'Управление закупками материалов и поставщиками',
+  title: isRequester.value 
+    ? (isEdit.value ? 'Редактировать заявку' : 'Новая заявка')
+    : (isEdit.value ? 'Редактировать закупку' : 'Новая закупка'),
+  subtitle: isRequester.value 
+    ? 'Создание заявки на материалы'
+    : 'Управление закупками материалов и поставщиками',
   sections: [  ],
   fields: [
     {
@@ -814,15 +830,17 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       order: 6,
       width: 'half'
     },
-    {
-      key: 'status',
-      type: 'select',
-      label: 'Статус',
-      placeholder: '— выберите статус —',
-      options: statusOptions,
-      order: 7,
-      width: 'half'
-    },
+    ...(isRequester.value ? [] : [
+      {
+        key: 'status',
+        type: 'select',
+        label: 'Статус',
+        placeholder: '— выберите статус —',
+        options: statusOptions,
+        order: 7,
+        width: 'half'
+      }
+    ]),
     {
       key: 'currency',
       type: 'select',
@@ -886,7 +904,7 @@ const initialData = computed(() => {
       supplier: props.initial.supplier,
       invoice_number: props.initial.invoice_number || '',
       purchase_no: props.initial.purchase_no || '',
-      status: props.initial.status || 'new',
+      status: isRequester.value ? 'new' : (props.initial.status || 'new'), // Для requester всегда 'new'
       currency: props.initial.currency || 'UZS',
       comment: props.initial.comment || '',
       items: props.initial.items || []
@@ -899,7 +917,7 @@ const initialData = computed(() => {
     supplier: 0,
     invoice_number: '',
     purchase_no: '',
-    status: 'new',
+    status: 'new', // Для requester всегда 'new'
     currency: 'UZS',
     comment: '',
     items: []
@@ -1054,6 +1072,12 @@ async function createOrUpdatePurchase(purchaseData: PurchaseRequest): Promise<nu
 async function onSaved(data: PurchaseRequest) {
   saving.value = true
   Object.keys(errors).forEach(key => delete errors[key])
+  
+  // Для requester автоматически устанавливаем status='new' и responsible
+  if (isRequester.value) {
+    data.status = 'new'
+    // responsible устанавливается автоматически на backend из текущего пользователя
+  }
   
   // 1. Валидация позиций
   const validationErrors = validatePurchaseItems()

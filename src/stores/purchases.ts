@@ -139,3 +139,46 @@ export const getTotalAmount = () => {
     return sum + parseFloat(String(purchase.total_amount || '0'))
   }, 0)
 }
+
+// ============================================================================
+// Request Approval Actions
+// ============================================================================
+
+export const approvePurchase = async (id: number): Promise<Purchase> => {
+  const store = usePurchasesStore()
+  store.loading = true
+  store.error = null
+
+  try {
+    const response = await api.post<Purchase>(`${endpoints.purchases.one(id)}approve/`)
+    // Обновить в store
+    store.updateItem(response.data)
+    return response.data
+  } catch (error: any) {
+    store.error = error?.response?.data?.detail || 'Ошибка одобрения заявки'
+    throw error
+  } finally {
+    store.loading = false
+  }
+}
+
+export const rejectPurchase = async (id: number, reason?: string): Promise<Purchase> => {
+  const store = usePurchasesStore()
+  store.loading = true
+  store.error = null
+
+  try {
+    const response = await api.post<Purchase>(
+      `${endpoints.purchases.one(id)}reject/`,
+      reason ? { rejection_reason: reason } : {}
+    )
+    // Обновить в store
+    store.updateItem(response.data)
+    return response.data
+  } catch (error: any) {
+    store.error = error?.response?.data?.detail || 'Ошибка отклонения заявки'
+    throw error
+  } finally {
+    store.loading = false
+  }
+}

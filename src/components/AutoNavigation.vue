@@ -240,7 +240,8 @@ import type { UserRole } from '@/api/types/common'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
+const auth = authStore
 
 // Build navigation from router configuration
 const navigationItems = computed((): NavigationItem[] => {
@@ -284,9 +285,24 @@ const navigationItems = computed((): NavigationItem[] => {
 
 // Business Operations - основные бизнес-операции
 const businessOperations = computed(() => {
-  return navigationItems.value.filter(item => 
+  const items = navigationItems.value.filter(item => 
     ['purchases', 'objects', 'writeoffs'].includes(item.category || '')
   )
+  
+  // Для requester изменяем название "Закупки" на "Заявки"
+  if (authStore.me?.role === 'requester') {
+    return items.map(item => {
+      if (item.name === 'purchases') {
+        return {
+          ...item,
+          title: 'Заявки'
+        }
+      }
+      return item
+    })
+  }
+  
+  return items
 })
 
 // Inventory Management - управление складом и материалами

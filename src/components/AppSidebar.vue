@@ -208,9 +208,24 @@ console.log('[AppSidebar] Tools items:', navigation.value.filter(item => item.ca
 
 // Business Operations - основные бизнес-операции
 const businessOperations = computed(() => {
-  return navigation.value.filter(item => 
+  const items = navigation.value.filter(item => 
     ['purchases', 'objects', 'writeoffs'].includes(item.category || '')
   )
+  //
+  // // Для requester изменяем название "Закупки" на "Заявки"
+  // if (authStore.me?.role === 'requester') {
+  //   return items.map(item => {
+  //     if (item.name === 'purchases') {
+  //       return {
+  //         ...item,
+  //         title: 'Заявки'
+  //       }
+  //     }
+  //     return item
+  //   })
+  // }
+  //
+  // return items
 })
 
 // Inventory Management - управление складом и материалами

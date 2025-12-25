@@ -32,7 +32,7 @@
             </svg>
             <div v-if="$route.path.startsWith('/purchases')" class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
           </div>
-          <span class="mobile-nav-label">Закупки</span>
+          <span class="mobile-nav-label">{{ isRequester ? 'Заявки' : 'Закупки' }}</span>
         </router-link>
 
         <!-- Objects -->
@@ -197,7 +197,9 @@ import { getIconPath } from '@/assets/icons'
 import type { NavigationItem } from '@/types/router'
 import type { UserRole } from '@/api/types/common'
 
-const auth = useAuthStore()
+const authStore = useAuthStore()
+const isRequester = computed(() => authStore.me?.role === 'requester')
+const auth = authStore
 const route = useRoute()
 const router = useRouter()
 
