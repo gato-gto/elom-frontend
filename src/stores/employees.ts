@@ -59,7 +59,7 @@ export const getBrigadierOptions = () => {
   return store.items
     .filter((item: Employee) => item.is_active && item.role === 'brigadier')
     .map((emp: Employee) => ({
-      value: emp.id,
+      value: emp.profile_id, // ✅ ВАЖНО: теперь profile_id, не emp.id
       label: `${emp.first_name} ${emp.last_name}`.trim() || emp.username
     }))
 }

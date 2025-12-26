@@ -1,27 +1,26 @@
 <!-- src/pages/Objects/ObjectForm.vue -->
 <template>
   <div>
-    <!-- Generic Form -->
     <GenericForm
-      :config="formConfig"
-      :initial-data="initialFormData"
-      :on-submit="handleSubmit"
-      :on-cancel="handleCancel"
-      :validate-on-change="true"
-      :reset-on-submit="false"
+        :config="formConfig"
+        :initial-data="initialFormData"
+        :on-submit="handleSubmit"
+        :on-cancel="handleCancel"
+        :validate-on-change="true"
+        :reset-on-submit="false"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useObjectsStore } from '@/stores/objects'
-import { useEmployeesStore, getBrigadierOptions } from '@/stores/employees'
-import { useAuthStore } from '@/stores/auth'
-import type { Object, ObjectRequest } from '@/api/types'
-import type { GenericFormConfig } from '@/types/generic'
+import {computed, onMounted} from 'vue'
+import {useObjectsStore} from '@/stores/objects'
+import {useEmployeesStore, getBrigadierOptions} from '@/stores/employees'
+import {useAuthStore} from '@/stores/auth'
+import type {Object, ObjectRequest} from '@/api/types'
+import type {GenericFormConfig} from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
-import { useErrorHandler } from '@/composables/useErrorHandler'
+import {useErrorHandler} from '@/composables/useErrorHandler'
 
 const props = defineProps<{
   initial?: Object | null
@@ -35,18 +34,66 @@ const emit = defineEmits<{
 const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
-const { handleFormError } = useErrorHandler()
+const {handleFormError} = useErrorHandler()
 
 // Проверка, является ли текущий пользователь бригадиром
 const isBrigadier = computed(() => auth.me?.role === 'brigadier')
+
+// ВАЖНО: backend ждёт EmployeeProfile.id, а не User.id
+const currentUserProfileId = computed<number | undefined>(() => auth.me?.profile_id)
+
+// Stage options
+const stageOptions = [
+  {value: 'acceptance', label: 'Приемка'},
+  {value: 'request', label: 'Заявка'},
+  {value: 'delivery_fixed', label: 'Доставка'},
+  {value: 'post_rough', label: 'После черновых'},
+  {value: 'handover', label: 'Сдача'}
+]
+
+// Computed options (responsible options должны содержать profile_id)
+const employeeOptions = computed(() => {
+  // Для бригадира показываем только его самого (profile_id)
+  if (isBrigadier.value && auth.me) {
+    const currentUserName =
+        `${auth.me.first_name || ''} ${auth.me.last_name || ''}`.trim() || auth.me.username
+
+    return [{value: auth.me.profile_id, label: currentUserName}]
+  }
+
+  // getBrigadierOptions() уже должен отдавать value = emp.profile_id
+  const options = [...getBrigadierOptions()]
+
+  // Если редактируем объект — добавим текущего responsible (profile_id) в options, если его там нет
+  const responsibleProfileId = props.initial?.responsible
+  if (responsibleProfileId) {
+    const exists = options.some(o => o.value === responsibleProfileId)
+    if (!exists) {
+      // Пытаемся найти сотрудника по profile_id
+      const emp = employeesStore.items.find((e: any) => e.profile_id === responsibleProfileId)
+      if (emp) {
+        options.push({
+          value: emp.profile_id,
+          label: `${emp.first_name} ${emp.last_name}`.trim() || emp.username
+        })
+      } else {
+        // Фолбэк: хотя бы показываем ID, чтобы селект не был пустым
+        options.push({
+          value: responsibleProfileId,
+          label: `ID: ${responsibleProfileId}`
+        })
+      }
+    }
+  }
+
+  return options
+})
 
 // Form configuration
 const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
   title: props.initial ? 'Редактировать объект' : 'Новый объект',
   subtitle: 'Заполните информацию об объекте',
-  sections: [
-
-  ],
+  sections: [],
   fields: [
     {
       key: 'name',
@@ -67,6 +114,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       label: 'Ответственный',
       placeholder: '— выберите ответственного —',
       options: employeeOptions.value,
+      required: true,
       order: 2,
       width: 'half',
       // Для бригадиров поле заблокировано - они всегда ответственные за свои объекты
@@ -93,7 +141,9 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       placeholder: 'Введите имя ключевого лица (прораба)',
       order: 4,
       width: 'half',
+      required: true, // ✅ чтобы не уходило пустым
       validation: {
+        minLength: 1,
         maxLength: 128
       },
       help: 'Имя прораба или другого ключевого лица на объекте'
@@ -116,7 +166,9 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       placeholder: 'Введите контакты ключевого лица (телефон, email и т.д.)',
       order: 6,
       width: 'full',
+      required: true, // ✅ чтобы не уходило пустым
       validation: {
+        minLength: 1,
         maxLength: 500
       },
       help: 'Контактная информация ключевого лица'
@@ -161,91 +213,68 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
   showCancel: true
 }))
 
-// Stage options
-const stageOptions = [
-  { value: 'acceptance', label: 'Приемка' },
-  { value: 'request', label: 'Заявка' },
-  { value: 'delivery_fixed', label: 'Доставка' },
-  { value: 'post_rough', label: 'После черновых' },
-  { value: 'handover', label: 'Сдача' }
-]
-
 // Initial form data
 const initialFormData = computed<ObjectRequest>(() => {
-  const currentUserId = auth.me?.id
+  const myProfileId = currentUserProfileId.value
+
+  const safeName = (s?: string | null) => (s && s.trim() ? s.trim() : 'Не указано')
+  const safeContacts = (s?: string | null) => (s && s.trim() ? s.trim() : 'Не указано')
 
   if (props.initial) {
     return {
       name: props.initial.name,
       address: props.initial.address || '',
       is_active: props.initial.is_active,
-      location_url: props.initial.location_url,
-      // Для бригадиров ответственный всегда они сами
-      responsible: isBrigadier.value ? currentUserId : props.initial.responsible,
+      location_url: props.initial.location_url || '',
+      // ✅ Для бригадиров ответственный всегда они сами (profile_id)
+      responsible: isBrigadier.value ? myProfileId : props.initial.responsible,
       current_stage: props.initial.current_stage || 'acceptance',
-      key_person_name: props.initial.key_person_name || '',
-      key_person_contacts: props.initial.key_person_contacts || '',
+      // ✅ не пусто
+      key_person_name: safeName(props.initial.key_person_name),
+      key_person_contacts: safeContacts(props.initial.key_person_contacts),
       date_start: props.initial.date_start,
       date_end: props.initial.date_end
     }
   }
 
-  // Для новых объектов: если текущий пользователь - бригадир, автоматически назначаем его ответственным
   return {
     name: '',
     address: '',
     is_active: true,
-    location_url: undefined,
-    responsible: isBrigadier.value ? currentUserId : undefined,
+    location_url: '',
+    // ✅ Для новых объектов: если бригадир — ставим profile_id
+    responsible: isBrigadier.value ? myProfileId : undefined,
     current_stage: 'acceptance',
-    key_person_name: '',
-    key_person_contacts: '',
+    // ✅ чтобы не ловить "не может быть пустым"
+    key_person_name: 'Не указано',
+    key_person_contacts: 'Не указано',
     date_start: undefined,
     date_end: undefined
   }
 })
 
-// Computed options
-const employeeOptions = computed(() => {
-  // Для бригадиров показываем только их самих
-  if (isBrigadier.value && auth.me) {
-    const currentUserName = `${auth.me.first_name || ''} ${auth.me.last_name || ''}`.trim() || auth.me.username
-    return [
-      { value: auth.me.id, label: currentUserName }
-    ]
-  }
-
-  const brigadiers = getBrigadierOptions()
-  const allEmployees = employeesStore.items
-  const options = [...brigadiers]
-
-  // Добавляем пользователя, указанного в значении "Ответственный", если он есть
-  if (props.initial?.responsible) {
-    const responsibleEmployee = allEmployees.find(emp => emp.id === props.initial?.responsible)
-    if (responsibleEmployee) {
-      const responsibleOption = {
-        value: responsibleEmployee.id,
-        label: `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`.trim() || responsibleEmployee.username
-      }
-
-      // Проверяем, что ответственный еще не в списке
-      const isAlreadyInList = options.some(option => option.value === responsibleEmployee.id)
-      if (!isAlreadyInList) {
-        options.push(responsibleOption)
-      }
-    }
-  }
-
-  return options
-})
-
 // Methods
 async function handleSubmit(formData: ObjectRequest) {
   try {
+    // ✅ Нормализуем данные перед отправкой
+    const payload: ObjectRequest = {
+      ...formData,
+      // backend ждёт строки непустые
+      key_person_name: (formData.key_person_name || '').trim() || 'Не указано',
+      key_person_contacts: (formData.key_person_contacts || '').trim() || 'Не указано',
+      // location_url пусть будет строкой, но без пробелов
+      location_url: (formData.location_url || '').trim()
+    }
+
+    // Для бригадира на всякий случай принудительно профиль
+    if (isBrigadier.value) {
+      payload.responsible = currentUserProfileId.value
+    }
+
     if (props.initial) {
-      await objectsStore.update(props.initial.id, formData)
+      await objectsStore.update(props.initial.id, payload)
     } else {
-      await objectsStore.create(formData)
+      await objectsStore.create(payload)
     }
 
     emit('saved')
@@ -261,9 +290,8 @@ function handleCancel() {
 
 // Load data on mount
 onMounted(async () => {
-  // Load all employees if not already loaded
   if (employeesStore.items.length === 0) {
-    await employeesStore.fetchList({ ordering: 'username' })
+    await employeesStore.fetchList({ordering: 'username'})
   }
 })
 </script>
