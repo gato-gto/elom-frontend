@@ -777,13 +777,17 @@ const statusOptions = [
 
 // GenericForm configuration
 const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
-  title: isRequester.value 
+  title: isRequester.value
     ? (isEdit.value ? 'Редактировать заявку' : 'Новая заявка')
     : (isEdit.value ? 'Редактировать закупку' : 'Новая закупка'),
-  subtitle: isRequester.value 
+
+  subtitle: isRequester.value
     ? 'Создание заявки на материалы'
     : 'Управление закупками материалов и поставщиками',
-  sections: [  ],
+
+  // ✅ важно: не "[]", иначе будет never[]
+  sections: [] as any[],
+
   fields: [
     {
       key: 'date',
@@ -830,17 +834,19 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       order: 6,
       width: 'half'
     },
-    ...(isRequester.value ? [] : [
-      {
-        key: 'status',
-        type: 'select',
-        label: 'Статус',
-        placeholder: '— выберите статус —',
-        options: statusOptions,
-        order: 7,
-        width: 'half'
-      }
-    ]),
+
+    // ✅ вместо ...(isRequester ? [] : [ ... ])
+    {
+      key: 'status',
+      type: 'select',
+      label: 'Статус',
+      placeholder: '— выберите статус —',
+      options: statusOptions,
+      order: 7,
+      width: 'half',
+      condition: () => !isRequester.value
+    },
+
     {
       key: 'currency',
       type: 'select',
@@ -861,37 +867,40 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
     },
     {
       key: 'items',
-          type: 'custom',
+      type: 'custom',
       label: 'Позиции',
       required: true,
-          order: 10,
-          width: 'full'
-        },
-        {
-          key: 'instruction_photos',
-          type: 'custom',
-          label: 'Фотоинструкции',
-          help: 'Необязательные фото с инструкциями по закупке',
-          order: 11,
+      order: 10,
       width: 'full'
-          // Убрали condition - поле видно всегда
-        },
-        {
-          key: 'report_photos',
-          type: 'custom',
-          label: 'Фотоотчеты',
-          help: 'Обязательные фото отчета при завершении закупки',
-          order: 12,
-          width: 'full',
-          condition: () => isEdit.value && formData.value.status === 'completed' // Показывать только при редактировании и статусе "Выполнено"
+    },
+    {
+      key: 'instruction_photos',
+      type: 'custom',
+      label: 'Фотоинструкции',
+      help: 'Необязательные фото с инструкциями по закупке',
+      order: 11,
+      width: 'full'
+      // поле видно всегда
+    },
+    {
+      key: 'report_photos',
+      type: 'custom',
+      label: 'Фотоотчеты',
+      help: 'Обязательные фото отчета при завершении закупки',
+      order: 12,
+      width: 'full',
+      condition: () => isEdit.value && formData.value.status === 'completed'
     }
   ],
+
   submitText: 'Сохранить',
   cancelText: 'Отмена',
   showCancel: true,
   validateOnChange: true,
-  resetOnSubmit: false,
-  mode: isEdit.value ? 'edit' : 'create'
+  resetOnSubmit: false
+
+  // ✅ важно: mode удалить полностью
+  // mode: isEdit.value ? 'edit' : 'create'
 }))
 
 // Initial data for form
