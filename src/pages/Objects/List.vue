@@ -233,7 +233,7 @@ async function handleAction(action: string, item: Object) {
 async function handleDelete(object: Object) {
   const confirmMessage =
     `Удалить объект "${object.name}"?\n\nЕсли у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
-  if (!confirm(confirmMessage)) return
+  if (!confirm(confirmMessage)) {return}
 
   try {
     const response = await objectsStore.remove(object.id)

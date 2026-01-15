@@ -132,7 +132,7 @@
         <!-- Actual Data -->
         <tbody v-else>
           <tr v-for="r in rows" :key="r.period" >
-            <td>{{ formatDate(r.period) }}</td>
+            <td>{{ formatDateFn(r.period) }}</td>
             <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
             <td class="text-right">{{ r.purchases ?? '—' }}</td>
             <td class="text-right">{{ r.avg_amount ? formatCurrency(r.avg_amount) : '—' }}</td>
@@ -178,7 +178,10 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import api from '@/api/client'
 import endpoints, { buildQuery } from '@/api/endpoints'
-import { formatCurrency, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
+import { formatCurrency, formatDate, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
+
+// Expose formatDate to template
+const formatDateFn = formatDate
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createLineChartConfig, getColor, getChartHeight, formatCurrencyTooltip } from '@/utils/chartUtils'
@@ -275,7 +278,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 
     const headers = ['Месяц', 'Сумма', 'Кол-во закупок', 'Средняя сумма', 'Объектов']
     const formattedData = data.map(item => ({
-      'Месяц': formatDate(item.period),
+      'Месяц': formatDateFn(item.period),
       'Сумма': item.total_amount,
       'Кол-во закупок': item.purchases || 0,
       'Средняя сумма': item.avg_amount || 0,

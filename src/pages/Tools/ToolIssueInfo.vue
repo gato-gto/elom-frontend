@@ -76,7 +76,7 @@ defineEmits<{
 
 // Helper functions
 function formatDateTime(dateStr: string | null): string {
-  if (!dateStr) return '—'
+  if (!dateStr) {return '—'}
   const date = new Date(dateStr)
   return `${formatDateUtil(dateStr)} ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
 }
@@ -106,16 +106,16 @@ function getConditionBadgeClass(condition: string): string {
 }
 
 function calculateDuration(): string {
-  if (!props.issue?.issued_at || !props.issue?.return_date) return '—'
+  if (!props.issue?.issued_at || !props.issue?.return_date) {return '—'}
   
   const issued = new Date(props.issue.issued_at)
   const returned = new Date(props.issue.return_date)
   const diffMs = returned.getTime() - issued.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
-  if (diffDays === 0) return 'Менее суток'
-  if (diffDays === 1) return '1 день'
-  if (diffDays < 5) return `${diffDays} дня`
+  if (diffDays === 0) {return 'Менее суток'}
+  if (diffDays === 1) {return '1 день'}
+  if (diffDays < 5) {return `${diffDays} дня`}
   return `${diffDays} дней`
 }
 </script>

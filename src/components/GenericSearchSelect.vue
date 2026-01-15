@@ -180,7 +180,7 @@ function handleCustomItem() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (!showDropdown.value) return
+  if (!showDropdown.value) {return}
   
   switch (event.key) {
     case 'ArrowDown':

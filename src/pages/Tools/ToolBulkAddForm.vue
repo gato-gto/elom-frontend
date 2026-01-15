@@ -262,14 +262,14 @@ const objectOptions = computed(() =>
 )
 
 const filteredCategories = computed(() => {
-  if (!categorySearch.value) return categories.value
+  if (!categorySearch.value) {return categories.value}
   const search = categorySearch.value.toLowerCase()
   return categories.value.filter(cat => cat.toLowerCase().includes(search))
 })
 
 // Validation
 const isValid = computed(() => {
-  if (tools.value.length === 0) return false
+  if (tools.value.length === 0) {return false}
   
   // Check all tools have required fields
   for (const tool of tools.value) {
@@ -312,7 +312,7 @@ function onCategoryInput(event: Event, index: number) {
 }
 
 async function handleSubmit() {
-  if (!isValid.value) return
+  if (!isValid.value) {return}
   
   loading.value = true
   

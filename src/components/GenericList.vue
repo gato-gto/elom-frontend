@@ -161,13 +161,15 @@
       <template v-else>
         <template v-if="store.items.length > 0">
           <component
-            v-for="item in store.items"
+            v-for="(item, index) in store.items"
             :key="item.id"
+            :ref="(el: any) => setCardRef(index, el)"
             :is="config.mobileCardComponent"
             v-bind="{[config.mobileCardProp || 'item']: item}" as any
             :actions="getCardActions(item)"
             @action="handleCardAction(item, $event)"
             class="mobile-only"
+            v-show="isCardVisible(index)"
           />
         </template>
         
@@ -204,10 +206,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useResponsiveTable } from '@/composables/useResponsiveTable'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
+import { isMobileDevice } from '@/utils/device'
 import type { 
   GenericListConfig, 
   ColumnConfig, 
@@ -248,6 +251,79 @@ const { handleLoadingError, handleExportError } = useErrorHandler()
 // State
 const sortBy = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
+
+// Lazy loading для мобильных карточек
+const visibleCards = ref<Set<number>>(new Set())
+const cardRefs = ref<Map<number, HTMLElement>>(new Map())
+let cardObserver: IntersectionObserver | null = null
+
+// Инициализация lazy loading для карточек
+const initCardLazyLoad = () => {
+  // На десктопе не используем lazy loading
+  if (!isMobileDevice()) {
+    // Помечаем все карточки как видимые
+    props.store.items.forEach((_: any, index: number) => {
+      visibleCards.value.add(index)
+    })
+    return
+  }
+
+  // Создаем Intersection Observer для мобильных
+  cardObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const index = parseInt(entry.target.getAttribute('data-card-index') || '-1', 10)
+        if (index >= 0 && entry.isIntersecting) {
+          visibleCards.value.add(index)
+          // Отключаем observer для этого элемента после первого появления
+          if (cardObserver) {
+            cardObserver.unobserve(entry.target)
+          }
+        }
+      })
+    },
+    {
+      rootMargin: '100px', // Предзагрузка за 100px до появления
+      threshold: 0.1
+    }
+  )
+
+  // Наблюдаем за всеми карточками
+  cardRefs.value.forEach((element, index) => {
+    element.setAttribute('data-card-index', index.toString())
+    cardObserver?.observe(element)
+  })
+}
+
+const setCardRef = (index: number, el: any) => {
+  if (el && el.$el) {
+    const element = el.$el as HTMLElement
+    cardRefs.value.set(index, element)
+    element.setAttribute('data-card-index', index.toString())
+    if (cardObserver) {
+      cardObserver.observe(element)
+    }
+  } else if (el) {
+    // Если это уже HTMLElement
+    cardRefs.value.set(index, el as HTMLElement)
+    el.setAttribute('data-card-index', index.toString())
+    if (cardObserver) {
+      cardObserver.observe(el)
+    }
+  }
+}
+
+const isCardVisible = (index: number): boolean => {
+  // На десктопе всегда видимые
+  if (!isMobileDevice()) {
+    return true
+  }
+  // Первые 3 карточки всегда видимые для быстрой загрузки
+  if (index < 3) {
+    return true
+  }
+  return visibleCards.value.has(index)
+}
 
 // Methods
 function getColumnValue(item: any, column: ColumnConfig) {
@@ -359,6 +435,41 @@ async function handleResetFilters() {
 
 // Убрали watch на filters, так как setFilters и resetFilters уже вызывают fetchList()
 // Это предотвращает двойную загрузку данных при изменении фильтров
+
+// Инициализация lazy loading при монтировании
+onMounted(() => {
+  // Небольшая задержка для обеспечения готовности DOM
+  setTimeout(() => {
+    initCardLazyLoad()
+  }, 100)
+  
+  // Обновляем observer при изменении списка
+  watch(() => props.store.items, () => {
+    if (cardObserver) {
+      // Очищаем старые наблюдения
+      cardRefs.value.forEach((element) => {
+        cardObserver?.unobserve(element)
+      })
+      cardRefs.value.clear()
+      visibleCards.value.clear()
+      
+      // Пересоздаем observer для новых элементов
+      setTimeout(() => {
+        initCardLazyLoad()
+      }, 100)
+    }
+  }, { deep: true })
+})
+
+// Очистка observer при размонтировании
+onUnmounted(() => {
+  if (cardObserver) {
+    cardRefs.value.forEach((element) => {
+      cardObserver?.unobserve(element)
+    })
+    cardObserver = null
+  }
+})
 
 
 

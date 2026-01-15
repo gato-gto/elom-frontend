@@ -20,6 +20,7 @@ import api from '@/api/client'
 import { buildQuery } from '@/api/endpoints'
 import { handleApiErrorAsync } from '@/utils/errorHandler'
 import { findById } from '@/utils/arrayHelpers'
+import { getOptimalPageSize } from '@/utils/device'
 
 // ============================================================================
 // Types
@@ -95,10 +96,12 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
     const current = ref<T | null>(null) as Ref<T | null>
     const loading = ref(false)
     const error = ref<string | null>(null)
+    // Используем адаптивный размер страницы для мобильных устройств
+    const initialPageSize = config.defaultPageSize || 20
     const pagination = ref<PaginationState>({
       count: 0,
       page: 1,
-      pageSize: config.defaultPageSize || 20,
+      pageSize: getOptimalPageSize(initialPageSize),
       next: null,
       previous: null
     })
@@ -320,10 +323,12 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
     }
 
     const search = async (query: string): Promise<T[]> => {
-      if (query.length < 2) return []
+      if (query.length < 2) {return []}
       
       try {
-        const { data } = await api.get(config.endpoint.list + `?search=${encodeURIComponent(query)}&page_size=20`)
+        // На мобильных используем меньше результатов для поиска
+        const searchPageSize = getOptimalPageSize(15)
+        const { data } = await api.get(config.endpoint.list + `?search=${encodeURIComponent(query)}&page_size=${searchPageSize}`)
         return data.results || data
       } catch (err: any) {
         await handleApiErrorAsync(err, { operation: 'search', entity: config.entityName })

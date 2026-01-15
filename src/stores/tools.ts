@@ -9,6 +9,7 @@ import type { Tool, ToolRequest, ToolBulkCreateRequest, ToolBulkCreateResponse, 
 import { useNotifications } from '@/composables/useNotifications'
 import { handleApiErrorAsync } from '@/utils/errorHandler'
 import { findById } from '@/utils/arrayHelpers'
+import { getOptimalPageSize } from '@/utils/device'
 
 export const useToolsStore = defineStore('tools', () => {
   // ========================================================================
@@ -275,10 +276,12 @@ export const useToolsStore = defineStore('tools', () => {
   }
 
   const search = async (query: string): Promise<Tool[]> => {
-    if (query.length < 2) return []
+    if (query.length < 2) {return []}
     
     try {
-      const { data } = await api.get(endpoints.tools.list + `?search=${encodeURIComponent(query)}&page_size=20`)
+      // На мобильных используем меньше результатов для поиска
+      const searchPageSize = getOptimalPageSize(15)
+      const { data } = await api.get(endpoints.tools.list + `?search=${encodeURIComponent(query)}&page_size=${searchPageSize}`)
       return data.results || data
     } catch (err: any) {
       await handleApiErrorAsync(err, { operation: 'search', entity: 'tools' })

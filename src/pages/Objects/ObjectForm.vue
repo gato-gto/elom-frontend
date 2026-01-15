@@ -116,7 +116,9 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       placeholder: 'Введите контакты ключевого лица (телефон, email и т.д.)',
       order: 6,
       width: 'full',
+      required: true,
       validation: {
+        minLength: 1,
         maxLength: 500
       },
       help: 'Контактная информация ключевого лица'
@@ -213,8 +215,8 @@ const employeeOptions = computed(() => {
       `${auth.me.first_name || ''} ${auth.me.last_name || ''}`.trim() || auth.me.username
 
     return [
-      // ✅ value должен быть profile_id
-      { value: auth.me.profile_id, label: currentUserName }
+      // ✅ value должен быть profile_id (число)
+      { value: Number(auth.me.profile_id), label: currentUserName }
     ]
   }
 
@@ -223,26 +225,26 @@ const employeeOptions = computed(() => {
   const options = allEmployees
     .filter((emp: any) => emp.is_active && (emp.role === 'brigadier' || emp.role === 'admin'))
     .map((emp: any) => ({
-      value: emp.profile_id,
+      value: Number(emp.profile_id), // Убеждаемся, что это число
       label: `${emp.first_name} ${emp.last_name}`.trim() || emp.username
     }))
 
   if (props.initial?.responsible) {
     const responsibleProfileId = props.initial.responsible
 
-    const hasAlready = options.some(o => o.value === responsibleProfileId)
+    const hasAlready = options.some(o => o.value === Number(responsibleProfileId))
     if (!hasAlready) {
       const responsibleEmployee = allEmployees.find((emp: any) => emp.profile_id === responsibleProfileId)
       if (responsibleEmployee) {
         options.push({
-          value: responsibleEmployee.profile_id,
+          value: Number(responsibleEmployee.profile_id),
           label:
             `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`.trim() ||
             responsibleEmployee.username
         })
       } else {
         // fallback чтобы select не ломался
-        options.push({ value: responsibleProfileId, label: `ID профиля: ${responsibleProfileId}` })
+        options.push({ value: Number(responsibleProfileId), label: `ID профиля: ${responsibleProfileId}` })
       }
     }
   }
@@ -254,10 +256,26 @@ const employeeOptions = computed(() => {
 // Methods
 async function handleSubmit(formData: ObjectRequest) {
   try {
+    // Подготовка данных для отправки
+    const submitData: ObjectRequest = {
+      ...formData,
+      // Конвертируем responsible в число, если это строка
+      responsible: formData.responsible 
+        ? (typeof formData.responsible === 'string' 
+          ? parseInt(formData.responsible, 10) 
+          : Number(formData.responsible))
+        : undefined,
+      // Убеждаемся, что key_person_contacts не пустое (т.к. поле обязательное)
+      // Если поле пустое, валидация формы должна была его отклонить
+      key_person_contacts: formData.key_person_contacts?.trim() || '',
+      // Не отправляем location_url, если оно пустое
+      location_url: formData.location_url?.trim() || undefined
+    }
+
     if (props.initial) {
-      await objectsStore.update(props.initial.id, formData)
+      await objectsStore.update(props.initial.id, submitData)
     } else {
-      await objectsStore.create(formData)
+      await objectsStore.create(submitData)
     }
 
     emit('saved')

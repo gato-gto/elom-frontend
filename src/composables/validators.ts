@@ -25,7 +25,7 @@ export type Validator = (value: any, field: FieldConfig) => string | null
  * Валидатор обязательного поля
  */
 export const requiredValidator: Validator = (value, field) => {
-  if (!field.required) return null
+  if (!field.required) {return null}
   
   if (value === null || value === undefined) {
     return `${field.label} обязательно для заполнения`
@@ -46,8 +46,8 @@ export const requiredValidator: Validator = (value, field) => {
  * Валидатор минимальной длины строки
  */
 export const minLengthValidator: Validator = (value, field) => {
-  if (!field.validation?.minLength) return null
-  if (typeof value !== 'string') return null
+  if (!field.validation?.minLength) {return null}
+  if (typeof value !== 'string') {return null}
   
   if (value.length < field.validation.minLength) {
     return `${field.label} должно содержать минимум ${field.validation.minLength} символов`
@@ -60,8 +60,8 @@ export const minLengthValidator: Validator = (value, field) => {
  * Валидатор максимальной длины строки
  */
 export const maxLengthValidator: Validator = (value, field) => {
-  if (!field.validation?.maxLength) return null
-  if (typeof value !== 'string') return null
+  if (!field.validation?.maxLength) {return null}
+  if (typeof value !== 'string') {return null}
   
   if (value.length > field.validation.maxLength) {
     return `${field.label} должно содержать максимум ${field.validation.maxLength} символов`
@@ -74,8 +74,8 @@ export const maxLengthValidator: Validator = (value, field) => {
  * Валидатор минимального значения числа
  */
 export const minValueValidator: Validator = (value, field) => {
-  if (field.validation?.min === undefined) return null
-  if (typeof value !== 'number') return null
+  if (field.validation?.min === undefined) {return null}
+  if (typeof value !== 'number') {return null}
   
   if (value < field.validation.min) {
     return `${field.label} должно быть не менее ${field.validation.min}`
@@ -88,8 +88,8 @@ export const minValueValidator: Validator = (value, field) => {
  * Валидатор максимального значения числа
  */
 export const maxValueValidator: Validator = (value, field) => {
-  if (field.validation?.max === undefined) return null
-  if (typeof value !== 'number') return null
+  if (field.validation?.max === undefined) {return null}
+  if (typeof value !== 'number') {return null}
   
   if (value > field.validation.max) {
     return `${field.label} должно быть не более ${field.validation.max}`
@@ -102,9 +102,9 @@ export const maxValueValidator: Validator = (value, field) => {
  * Валидатор регулярного выражения
  */
 export const patternValidator: Validator = (value, field) => {
-  if (!field.validation?.pattern) return null
-  if (typeof value !== 'string') return null
-  if (!value) return null // Пустые значения проверяются requiredValidator
+  if (!field.validation?.pattern) {return null}
+  if (typeof value !== 'string') {return null}
+  if (!value) {return null} // Пустые значения проверяются requiredValidator
   
   if (!field.validation.pattern.test(value)) {
     return `${field.label} имеет неверный формат`
@@ -117,8 +117,8 @@ export const patternValidator: Validator = (value, field) => {
  * Валидатор email
  */
 export const emailValidator: Validator = (value, field) => {
-  if (typeof value !== 'string') return null
-  if (!value) return null
+  if (typeof value !== 'string') {return null}
+  if (!value) {return null}
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(value)) {
@@ -132,8 +132,8 @@ export const emailValidator: Validator = (value, field) => {
  * Валидатор URL
  */
 export const urlValidator: Validator = (value, field) => {
-  if (typeof value !== 'string') return null
-  if (!value) return null
+  if (typeof value !== 'string') {return null}
+  if (!value) {return null}
   
   try {
     new URL(value)
@@ -147,7 +147,7 @@ export const urlValidator: Validator = (value, field) => {
  * Валидатор кастомной функции
  */
 export const customValidator: Validator = (value, field) => {
-  if (!field.validation?.custom) return null
+  if (!field.validation?.custom) {return null}
   
   return field.validation.custom(value)
 }

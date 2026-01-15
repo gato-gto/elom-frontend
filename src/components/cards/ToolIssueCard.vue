@@ -84,7 +84,7 @@ defineEmits<{
 }>()
 
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—'
+  if (!dateStr) {return '—'}
   return formatDateUtil(dateStr)
 }
 

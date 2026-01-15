@@ -18,6 +18,7 @@ const MaterialCategoryInfo = () => import(/* webpackChunkName: "materials" */ '@
 // Purchases
 const PurchasesList = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/List.vue')
 const PurchaseForm = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/PurchaseForm.vue')
+const PurchasePrint = () => import(/* webpackChunkName: "purchases" */ '@/pages/Purchases/PurchasePrint.vue')
 
 // Objects
 const ObjectsList = () => import(/* webpackChunkName: "objects" */ '@/pages/Objects/List.vue')
@@ -201,6 +202,18 @@ const routes = [
       title: 'Редактировать закупку',
       breadcrumb: 'Закупки / Редактировать',
       description: 'Редактирование существующей закупки',
+      category: 'purchases',
+      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+    }
+  },
+  {
+    path: '/purchases/:id/print',
+    name: 'PurchasePrint',
+    component: PurchasePrint,
+    meta: { 
+      title: 'Печать накладной',
+      breadcrumb: 'Закупки / Печать накладной',
+      description: 'Отдельная страница для печати накладной',
       category: 'purchases',
       roles: ['admin', 'manager', 'warehouse', 'brigadier']
     }

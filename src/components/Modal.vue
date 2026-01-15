@@ -1,8 +1,8 @@
 <template>
   <div v-if="modelValue" class="modal modal-open">
     <div class="modal-box w-full max-w-none mx-4 my-4" :class="sizeClass">
-      <div v-if="title || $slots.header" class="flex items-center justify-between mb-4">
-        <h3 v-if="title" class="font-bold text-lg">{{ title }}</h3>
+      <div v-if="title || $slots.header" class="modal-header flex items-center justify-between mb-4 no-print">
+        <h3 v-if="title" class="font-bold text-lg modal-title">{{ title }}</h3>
         <slot name="header" />
         <button
           v-if="closable"
@@ -94,3 +94,84 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+@media print {
+  /* КРИТИЧНО: Показываем модальное окно с максимальной специфичностью */
+  html body .modal,
+  html body .modal.modal-open,
+  body #app .modal,
+  body #app .modal.modal-open,
+  #app .modal,
+  #app .modal.modal-open,
+  body .modal,
+  body .modal.modal-open,
+  .modal.modal-open,
+  .modal {
+    position: static !important;
+    background: transparent !important;
+    display: block !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    inset: auto !important;
+    z-index: auto !important;
+    opacity: 1 !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  /* Показываем modal-box с максимальной специфичностью */
+  html body .modal .modal-box,
+  html body .modal.modal-open .modal-box,
+  body #app .modal .modal-box,
+  body #app .modal.modal-open .modal-box,
+  #app .modal .modal-box,
+  #app .modal.modal-open .modal-box,
+  body .modal .modal-box,
+  body .modal.modal-open .modal-box,
+  .modal.modal-open .modal-box,
+  .modal .modal-box,
+  .modal-box {
+    position: static !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Показываем modal-content с максимальной специфичностью */
+  html body .modal .modal-box .modal-content,
+  html body .modal.modal-open .modal-box .modal-content,
+  body #app .modal .modal-box .modal-content,
+  body #app .modal.modal-open .modal-box .modal-content,
+  #app .modal .modal-box .modal-content,
+  #app .modal.modal-open .modal-box .modal-content,
+  body .modal .modal-box .modal-content,
+  body .modal.modal-open .modal-box .modal-content,
+  .modal.modal-open .modal-box .modal-content,
+  .modal .modal-box .modal-content,
+  .modal-box .modal-content,
+  .modal-content {
+    display: block !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+</style>

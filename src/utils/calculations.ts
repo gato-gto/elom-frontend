@@ -27,7 +27,7 @@ export function calculatePurchaseTotal(items: Array<{ quantity: number | string;
 /**
  * Форматирует число как валюту
  */
-export function formatCurrency(amount: number, currency: string = 'RUB'): string {
+export function formatCurrency(amount: number, currency: string = 'UZS'): string {
   return formatCurrencyWithCode(amount, currency, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

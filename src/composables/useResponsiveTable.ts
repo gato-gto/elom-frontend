@@ -1,6 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { formatAmountWithCurrency, formatDate as formatDateValue } from '@/utils/formatters'
 import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
+import { throttle } from '@/utils/debounce'
 
 /**
  * Композабл для определения мобильного режима отображения таблиц
@@ -14,15 +15,18 @@ export function useResponsiveTable() {
     isMobile.value = window.innerWidth < 768 // md breakpoint в Tailwind
   }
   
+  // Throttled версия для оптимизации производительности на мобильных
+  const throttledCheckMobile = throttle(checkMobile, 150)
+  
   // Инициализация и подписка на изменения размера окна
   onMounted(() => {
     checkMobile()
-    window.addEventListener('resize', checkMobile)
+    window.addEventListener('resize', throttledCheckMobile, { passive: true })
   })
   
   // Очистка слушателя при размонтировании
   onUnmounted(() => {
-    window.removeEventListener('resize', checkMobile)
+    window.removeEventListener('resize', throttledCheckMobile)
   })
   
   return {

@@ -172,12 +172,12 @@ const listConfig = computed<GenericListConfig<ToolIssue>>(() => ({
 
 // Helper functions
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—'
+  if (!dateStr) {return '—'}
   return formatDateUtil(dateStr)
 }
 
 function formatTime(dateStr: string | null): string {
-  if (!dateStr) return ''
+  if (!dateStr) {return ''}
   return new Date(dateStr).toLocaleTimeString('ru-RU', { 
     hour: '2-digit', 
     minute: '2-digit' 

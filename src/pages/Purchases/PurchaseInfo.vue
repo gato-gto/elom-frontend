@@ -1,141 +1,127 @@
 <template>
-  <div class="purchase-info" v-if="purchase">
-    <!-- Единый блок для всех устройств -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <!-- Заголовок -->
-      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-xl font-semibold text-gray-900">
-              {{ purchase.purchase_no || '#' + purchase.id }}
-            </h1>
-            <p class="text-sm text-gray-600 mt-1">{{ formatDate(purchase.date) }}</p>
+  <div class="invoice-container" v-if="purchase" id="purchase-invoice">
+    <!-- Кнопки действий (скрываются при печати) -->
+    <div class="no-print actions-bar mb-4 flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Накладная №{{ purchase.purchase_no || purchase.id }}</h2>
+      <div class="flex gap-2">
+        <button class="btn btn-primary btn-sm" @click="handlePrint">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          Печать
+        </button>
+      </div>
+    </div>
+
+    <!-- Накладная -->
+    <div class="invoice-paper">
+      <!-- Шапка накладной -->
+      <div class="invoice-header">
+        <div class="invoice-header-left">
+          <h1 class="invoice-title">НАКЛАДНАЯ</h1>
+          <div class="invoice-number">
+            <span class="label">№</span>
+            <span class="value">{{ purchase.purchase_no || purchase.id }}</span>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" :class="statusClass">{{ statusLabel }}</span>
-            <span class="text-lg font-semibold text-gray-900">{{ formatCurrency(purchase.total_amount) }}</span>
+        </div>
+        <div class="invoice-header-right">
+          <div class="invoice-date">
+            <span class="label">Дата:</span>
+            <span class="value">{{ formatDate(purchase.date) }}</span>
+          </div>
+          <div class="invoice-status" :class="statusClass">
+            {{ statusLabel }}
           </div>
         </div>
       </div>
 
-      <!-- Основной контент -->
-      <div class="p-6">
-        <!-- Информация о закупке -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div class="space-y-1">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Объект</p>
-            <p class="text-sm text-gray-900">{{ purchase.object_name || '—' }}</p>
+      <!-- Основная информация -->
+      <div class="invoice-info">
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Объект:</span>
+            <span class="info-value">{{ purchase.object_name || '—' }}</span>
           </div>
-          <div class="space-y-1">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Поставщик</p>
-            <p class="text-sm text-gray-900">{{ purchase.supplier_name || '—' }}</p>
-          </div>
-          <div class="space-y-1">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ответственный</p>
-            <p class="text-sm text-gray-900">{{ responsibleName(purchase.responsible) || '—' }}</p>
-          </div>
-          <div class="space-y-1">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Валюта</p>
-            <p class="text-sm text-gray-900">{{ purchase.currency || 'UZS' }}</p>
-          </div>
-          <div class="space-y-1" v-if="purchase.invoice_number">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Номер счета</p>
-            <p class="text-sm text-gray-900">{{ purchase.invoice_number }}</p>
-          </div>
-          <div class="space-y-1">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Позиций</p>
-            <p class="text-sm text-gray-900">{{ purchase.items?.length || 0 }}</p>
+          <div class="info-item">
+            <span class="info-label">Поставщик:</span>
+            <span class="info-value">{{ purchase.supplier_name || '—' }}</span>
           </div>
         </div>
-
-        <!-- Комментарий -->
-        <div v-if="purchase.comment" class="mb-8">
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Комментарий</p>
-          <div class="bg-gray-50 rounded-lg p-4">
-            <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ purchase.comment }}</p>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Ответственный:</span>
+            <span class="info-value">{{ responsibleName(purchase.responsible) || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Валюта:</span>
+            <span class="info-value">{{ purchase.currency || 'UZS' }}</span>
           </div>
         </div>
-
-        <!-- Позиции закупки -->
-        <div class="mb-8">
-          <h3 class="text-sm font-medium text-gray-900 mb-4">Позиции закупки</h3>
-          <div v-if="purchase.items && purchase.items.length > 0">
-            <!-- Desktop: Таблица -->
-            <div class="hidden md:block overflow-hidden rounded-lg border border-gray-200">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Материал</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Единица</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Количество</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Цена</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Сумма</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="item in purchase.items" :key="item.id" class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ item.material_name || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-500">{{ item.unit_code || '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono">{{ formatNumberClean(item.quantity) }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono">{{ formatCurrency(item.price) }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">{{ formatCurrency(item.amount) }}</td>
-                  </tr>
-                </tbody>
-                <tfoot class="bg-gray-50">
-                  <tr>
-                    <td colspan="4" class="px-4 py-3 text-right text-sm font-medium text-gray-900">Итого:</td>
-                    <td class="px-4 py-3 text-right text-sm font-bold text-gray-900">{{ formatCurrency(purchase.total_amount) }}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            <!-- Mobile: Карточки -->
-            <div class="md:hidden space-y-3">
-              <div v-for="item in purchase.items" :key="item.id" class="bg-gray-50 rounded-lg p-4">
-                <div class="space-y-3">
-                  <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Материал</p>
-                    <p class="text-sm text-gray-900 mt-1">{{ item.material_name || '—' }}</p>
-                  </div>
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Единица</p>
-                      <p class="text-sm text-gray-900 mt-1">{{ item.unit_code || '—' }}</p>
-                    </div>
-                    <div>
-                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Количество</p>
-                      <p class="text-sm text-gray-900 mt-1 font-mono">{{ formatNumberClean(item.quantity) }}</p>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Цена</p>
-                      <p class="text-sm text-gray-900 mt-1 font-mono">{{ formatCurrency(item.price) }}</p>
-                    </div>
-                    <div>
-                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Сумма</p>
-                      <p class="text-sm text-gray-900 mt-1 font-mono font-bold">{{ formatCurrency(item.amount) }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="text-center py-8">
-            <p class="text-sm text-gray-500">Нет позиций</p>
+        <div class="info-row" v-if="purchase.invoice_number">
+          <div class="info-item">
+            <span class="info-label">Номер счета:</span>
+            <span class="info-value">{{ purchase.invoice_number }}</span>
           </div>
         </div>
+      </div>
 
-        <!-- Фотографии -->
-        <div v-if="hasPhotos">
-          <h3 class="text-sm font-medium text-gray-900 mb-4">Фотографии ({{ allPhotos.length }})</h3>
-          <div class="text-xs text-gray-500 mb-2">
-            DEBUG: activePhotoType={{ activePhotoType }}, photoTypes={{ photoTypes }}, photosByType={{ getPhotosByType(activePhotoType).length }}
-          </div>
-          
-          <!-- Табы для типов фото -->
-          <div class="tabs tabs-boxed mb-4">
+      <!-- Таблица позиций -->
+      <div class="invoice-items">
+        <table class="invoice-table">
+          <thead>
+            <tr>
+              <th class="col-number">№</th>
+              <th class="col-material">Наименование материала</th>
+              <th class="col-unit">Ед.</th>
+              <th class="col-quantity">Кол-во</th>
+              <th class="col-price">Цена</th>
+              <th class="col-amount">Сумма</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in purchase.items" :key="item.id">
+              <td class="col-number">{{ index + 1 }}</td>
+              <td class="col-material">{{ item.material_name || '—' }}</td>
+              <td class="col-unit">{{ item.unit_code || '—' }}</td>
+              <td class="col-quantity">{{ formatNumberClean(item.quantity) }}</td>
+              <td class="col-price">{{ formatCurrency(item.price) }}</td>
+              <td class="col-amount">{{ formatCurrency(item.amount) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="3" class="total-label">ИТОГО:</td>
+              <td class="total-quantity">{{ formatNumberClean(totalQuantity) }}</td>
+              <td class="total-price">—</td>
+              <td class="total-amount">{{ formatCurrency(purchase.total_amount) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Комментарий -->
+      <div class="invoice-comment" v-if="purchase.comment">
+        <div class="comment-label">Комментарий:</div>
+        <div class="comment-text">{{ purchase.comment }}</div>
+      </div>
+
+      <!-- Подписи -->
+      <div class="invoice-signatures">
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <div class="signature-label">Ответственный</div>
+        </div>
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <div class="signature-label">Получил</div>
+        </div>
+      </div>
+
+      <!-- Фотографии (только для просмотра, не для печати) -->
+      <div class="no-print invoice-photos" v-if="hasPhotos">
+        <div class="photos-header">
+          <h3 class="photos-title">Фотографии ({{ allPhotos.length }})</h3>
+          <div class="tabs tabs-boxed">
             <button 
               v-for="type in photoTypes" 
               :key="type"
@@ -146,72 +132,30 @@
               {{ getPhotoTypeLabel(type) }} ({{ getPhotosByType(type).length }})
             </button>
           </div>
-
-          <!-- Фотографии по типам -->
-          <div v-if="getPhotosByType(activePhotoType).length > 0">
-            <!-- Desktop: Карусель -->
-            <div class="hidden md:block">
-              <div class="carousel carousel-center w-full space-x-4 bg-base-200 p-4 rounded-lg">
-                <div 
-                  v-for="(photo, index) in getPhotosByType(activePhotoType)" 
-                  :key="photo.id"
-                  class="carousel-item relative group"
-                >
-                  <img
-                    :src="photo.url"
-                    :alt="`Фото ${index + 1}`"
-                    class="w-64 h-48 object-cover rounded-lg border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200"
-                    @click.stop="console.log('DEBUG: Photo clicked!', photo, index); openPhotoModal(photo, index)"
-                  />
-                  <div class="absolute top-2 right-2">
-                    <span class="badge badge-sm" :class="getPhotoTypeClass(photo.type)">
-                      {{ getPhotoTypeLabel(photo.type) }}
-                    </span>
-                  </div>
-                  <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-lg pointer-events-none"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Mobile: Сетка -->
-            <div class="md:hidden grid grid-cols-2 gap-3">
-              <div 
-                v-for="(photo, index) in getPhotosByType(activePhotoType)" 
-                :key="photo.id"
-                class="relative group"
-              >
-                <img
-                  :src="photo.url"
-                  :alt="`Фото ${index + 1}`"
-                  class="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:shadow-md transition-all duration-200"
-                  @click.stop="console.log('DEBUG: Mobile photo clicked!', photo, index); openPhotoModal(photo, index)"
-                />
-                <div class="absolute top-1 right-1">
-                  <span class="badge badge-xs" :class="getPhotoTypeClass(photo.type)">
-                    {{ getPhotoTypeLabel(photo.type) }}
-                  </span>
-                </div>
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-lg pointer-events-none"></div>
-              </div>
-            </div>
-          </div>
-          
-          <div v-else class="text-center py-8 text-gray-500">
-            <p>Нет фотографий типа "{{ getPhotoTypeLabel(activePhotoType) }}"</p>
-          </div>
         </div>
-        
-        <div v-else class="text-center py-8 text-gray-500">
-          <p>Нет фотографий для этой закупки</p>
-          <div class="text-xs mt-2">
-            DEBUG: purchase={{ props.purchase?.id }}, photos={{ props.purchase?.photos?.length || 0 }}
+
+        <div v-if="getPhotosByType(activePhotoType).length > 0" class="photos-grid">
+          <div 
+            v-for="(photo, index) in getPhotosByType(activePhotoType)" 
+            :key="photo.id"
+            class="photo-item"
+            @click="openPhotoModal(photo, index)"
+          >
+            <img
+              :src="photo.url"
+              :alt="`Фото ${index + 1}`"
+              class="photo-thumbnail"
+            />
+            <div class="photo-badge" :class="getPhotoTypeClass(photo.type)">
+              {{ getPhotoTypeLabel(photo.type) }}
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Photo Modal -->
-    <div v-if="photoModalOpen" class="modal modal-open">
+    <div v-if="photoModalOpen" class="modal modal-open no-print">
       <div class="modal-box max-w-6xl w-full h-full max-h-screen">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold">
@@ -225,7 +169,6 @@
         </div>
 
         <div v-if="selectedPhoto" class="relative h-full">
-          <!-- Навигация по фото -->
           <div v-if="currentPhotoList.length > 1" class="flex justify-between items-center mb-4">
             <button 
               class="btn btn-circle btn-outline"
@@ -253,7 +196,6 @@
             </button>
           </div>
 
-          <!-- Основное фото -->
           <div class="text-center bg-base-200 rounded-lg p-4 mb-4">
             <img
               :src="selectedPhoto.url"
@@ -262,7 +204,6 @@
             />
           </div>
 
-          <!-- Миниатюры (только если больше 1 фото) -->
           <div v-if="currentPhotoList.length > 1" class="mb-4">
             <div class="carousel carousel-center w-full space-x-2 bg-base-200 p-2 rounded-lg">
               <div 
@@ -280,45 +221,19 @@
               </div>
             </div>
           </div>
-
-          <!-- Информация о фото -->
-          <div class=" rounded-lg">
-            <div class="">
-              <div class="flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                  <span class="badge" :class="getPhotoTypeClass(selectedPhoto.type)">
-                    {{ getPhotoTypeLabel(selectedPhoto.type) }}
-                  </span>
-                  <span v-if="selectedPhoto.size_bytes" class="text-sm text-base-content/70">
-                    Размер: {{ formatFileSize(selectedPhoto.size_bytes) }}
-                  </span>
-                </div>
-                <div class="text-sm text-base-content/70">
-                  ID: {{ selectedPhoto.id }}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
       <div class="modal-backdrop" @click="photoModalOpen = false"></div>
-    </div>
-
-    <!-- Actions -->
-    <div class="flex justify-end gap-2 mt-6">
-      <button class="btn btn-outline" @click="$emit('close')">
-        Закрыть
-      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
 import { formatDate, formatCurrency, formatNumberClean } from '@/utils/formatters'
 import { useEmployeesStore } from '@/stores/employees'
-import Modal from '@/components/Modal.vue'
 
 interface Props {
   purchase: Purchase | null
@@ -329,6 +244,10 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
 }>()
+
+// Router
+const router = useRouter()
+const route = useRoute()
 
 // Stores
 const employeesStore = useEmployeesStore()
@@ -354,19 +273,23 @@ const statusLabel = computed(() => {
 const statusClass = computed(() => {
   if (!props.purchase) {return ''}
   switch (props.purchase.status) {
-    case 'new': return 'bg-blue-100 text-blue-800'
-    case 'completed': return 'bg-green-100 text-green-800'
-    case 'cancelled': return 'bg-red-100 text-red-800'
-    default: return 'bg-gray-100 text-gray-800'
+    case 'new': return 'status-new'
+    case 'completed': return 'status-completed'
+    case 'cancelled': return 'status-cancelled'
+    default: return 'status-default'
   }
 })
 
+const totalQuantity = computed(() => {
+  if (!props.purchase?.items) {return 0}
+  return props.purchase.items.reduce((sum, item) => {
+    const qty = typeof item.quantity === 'number' ? item.quantity : parseFloat(String(item.quantity || 0))
+    return sum + (isNaN(qty) ? 0 : qty)
+  }, 0)
+})
+
 const allPhotos = computed(() => {
-  if (!props.purchase?.photos) {
-    console.log('DEBUG: no photos in purchase', props.purchase)
-    return []
-  }
-  console.log('DEBUG: allPhotos', props.purchase.photos)
+  if (!props.purchase?.photos) {return []}
   return props.purchase.photos
 })
 
@@ -383,9 +306,7 @@ const photoTypes = computed(() => {
 })
 
 const getPhotosByType = (type: string) => {
-  const filtered = allPhotos.value.filter(photo => photo.type === type)
-  console.log('DEBUG: getPhotosByType', type, filtered)
-  return filtered
+  return allPhotos.value.filter(photo => photo.type === type)
 }
 
 // Инициализация активного типа фото
@@ -418,13 +339,10 @@ function getPhotoTypeClass(type?: string): string {
 }
 
 function openPhotoModal(photo: PurchasePhoto, index: number = 0) {
-  console.log('DEBUG: openPhotoModal called', { photo, index })
   selectedPhoto.value = photo
   currentPhotoIndex.value = index
   currentPhotoList.value = getPhotosByType(photo.type || 'instructions')
-  console.log('DEBUG: currentPhotoList', currentPhotoList.value)
   photoModalOpen.value = true
-  console.log('DEBUG: photoModalOpen set to true')
 }
 
 function nextPhoto() {
@@ -446,12 +364,17 @@ function selectPhoto(index: number) {
   selectedPhoto.value = currentPhotoList.value[index]
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) {return '0 Bytes'}
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+function handlePrint() {
+  if (!props.purchase) {return}
+  
+  // Если уже на странице печати - вызываем печать
+  if (route.name === 'PurchasePrint') {
+    window.print()
+    return
+  }
+  
+  // Иначе переходим на страницу печати
+  router.push({ name: 'PurchasePrint', params: { id: props.purchase.id } })
 }
 
 // Клавиатурная навигация
@@ -484,12 +407,413 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.purchase-info {
-  max-height: 80vh;
+/* Основные стили */
+.invoice-container {
+  max-width: 100%;
+  /* Убираем скролл при просмотре, но оставляем возможность прокрутки если нужно */
   overflow-y: auto;
+  max-height: calc(100vh - 4rem);
 }
 
-textarea.textarea[rows="1"],textarea.textarea[rows="2"] {
-    min-height: auto !important;
+.actions-bar {
+  padding: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  color: #000;
+}
+
+.actions-bar h2 {
+  color: #000 !important;
+}
+
+.invoice-paper {
+  background: white;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  /* Черный цвет текста для накладной (документ всегда на белом фоне) */
+  color: #000 !important;
+}
+
+/* Принудительно черный текст для всех элементов накладной */
+.invoice-paper *,
+.invoice-paper h1,
+.invoice-paper h2,
+.invoice-paper h3,
+.invoice-paper p,
+.invoice-paper span,
+.invoice-paper td,
+.invoice-paper th,
+.invoice-paper div {
+  color: #000 !important;
+}
+
+/* Исключение для статусов - они имеют свои цвета */
+.invoice-paper .status-new {
+  color: #1e40af !important;
+}
+
+.invoice-paper .status-completed {
+  color: #065f46 !important;
+}
+
+.invoice-paper .status-cancelled {
+  color: #991b1b !important;
+}
+
+/* Серый цвет для меток */
+.invoice-paper .label,
+.invoice-paper .info-label,
+.invoice-paper .comment-label,
+.invoice-paper .signature-label {
+  color: #666 !important;
+}
+
+/* Шапка накладной */
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #000;
+}
+
+.invoice-header-left {
+  flex: 1;
+}
+
+.invoice-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.invoice-number {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.invoice-number .label {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.invoice-number .value {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.invoice-header-right {
+  text-align: right;
+}
+
+.invoice-date {
+  margin-bottom: 0.5rem;
+}
+
+.invoice-date .label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-right: 0.5rem;
+}
+
+.invoice-date .value {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.invoice-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-new {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-default {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* Информация о закупке */
+.invoice-info {
+  margin-bottom: 1.5rem;
+}
+
+.info-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.info-item {
+  flex: 1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #666;
+  min-width: 120px;
+}
+
+.info-value {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* Таблица позиций */
+.invoice-items {
+  margin-bottom: 1.5rem;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.invoice-table thead {
+  background-color: #f3f4f6;
+}
+
+.invoice-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #d1d5db;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.invoice-table td {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+.invoice-table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.col-number {
+  width: 3%;
+  text-align: center;
+}
+
+.col-material {
+  width: 45%;
+}
+
+.col-unit {
+  width: 8%;
+  text-align: center;
+}
+
+.col-quantity {
+  width: 12%;
+  text-align: right;
+}
+
+.col-price {
+  width: 16%;
+  text-align: right;
+}
+
+.col-amount {
+  width: 16%;
+  text-align: right;
+  font-weight: 600;
+}
+
+.total-row {
+  background-color: #f3f4f6;
+  font-weight: bold;
+}
+
+.total-label {
+  text-align: right;
+  padding-right: 1rem;
+}
+
+.total-quantity,
+.total-price,
+.total-amount {
+  text-align: right;
+  font-size: 1rem;
+}
+
+/* Комментарий */
+.invoice-comment {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-left: 3px solid #d1d5db;
+  border-radius: 0.25rem;
+}
+
+.comment-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.comment-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+/* Подписи */
+.invoice-signatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #d1d5db;
+}
+
+.signature-block {
+  flex: 1;
+  max-width: 300px;
+}
+
+.signature-line {
+  height: 1px;
+  background-color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.signature-label {
+  font-size: 0.875rem;
+  color: #666;
+  text-align: center;
+}
+
+/* Фотографии */
+.invoice-photos {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.photos-header {
+  margin-bottom: 1rem;
+}
+
+.photos-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.photo-item {
+  position: relative;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.photo-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.photo-thumbnail {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Стили для печати - основные стили в components.css */
+@media print {
+  /* Дополнительные стили специфичные для накладной */
+  .invoice-container {
+    overflow: visible !important;
+    max-height: none !important;
   }
+  
+  .invoice-paper {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .invoice-paper {
+    padding: 1rem;
+  }
+
+  .invoice-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .invoice-header-right {
+    text-align: left;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .invoice-table {
+    font-size: 0.75rem;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    padding: 0.5rem;
+  }
+
+  .invoice-signatures {
+    flex-direction: column;
+    gap: 2rem;
+  }
+}
 </style>

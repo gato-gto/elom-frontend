@@ -81,7 +81,7 @@ export function formatNumber(value: number | string | null | undefined): string 
  */
 export function formatCurrencyWithCode(
   value: number | string | null | undefined,
-  currency: string = 'RUB',
+  currency: string = 'UZS',
   options: Intl.NumberFormatOptions = {}
 ): string {
   return formatNumberWithOptions(value, {
@@ -97,7 +97,7 @@ export function formatCurrencyWithCode(
  * Форматирует валюту
  */
 export function formatCurrency(value: number | string | null | undefined): string {
-  return formatCurrencyWithCode(value, 'RUB')
+  return formatCurrencyWithCode(value, 'UZS')
 }
 
 /**

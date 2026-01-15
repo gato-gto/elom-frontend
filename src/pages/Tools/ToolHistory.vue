@@ -221,12 +221,12 @@ const history = ref<ToolIssue[]>([])
 
 // Helper functions
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—'
+  if (!dateStr) {return '—'}
   return formatDateUtil(dateStr)
 }
 
 function formatTime(dateStr: string | null): string {
-  if (!dateStr) return ''
+  if (!dateStr) {return ''}
   return new Date(dateStr).toLocaleTimeString('ru-RU', { 
     hour: '2-digit', 
     minute: '2-digit' 
@@ -258,10 +258,10 @@ function getConditionBadgeClass(condition: string): string {
 }
 
 function formatDuration(days: number | null | undefined): string {
-  if (days === null || days === undefined) return '—'
-  if (days === 0) return 'Менее суток'
-  if (days === 1) return '1 день'
-  if (days < 5) return `${days} дня`
+  if (days === null || days === undefined) {return '—'}
+  if (days === 0) {return 'Менее суток'}
+  if (days === 1) {return '1 день'}
+  if (days < 5) {return `${days} дня`}
   return `${days} дней`
 }
 
@@ -271,15 +271,15 @@ function calculateDaysAgo(dateStr: string): string {
   const diffMs = now.getTime() - issued.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
-  if (diffDays === 0) return 'Выдан сегодня'
-  if (diffDays === 1) return 'Выдан вчера'
-  if (diffDays < 5) return `Выдан ${diffDays} дня назад`
+  if (diffDays === 0) {return 'Выдан сегодня'}
+  if (diffDays === 1) {return 'Выдан вчера'}
+  if (diffDays < 5) {return `Выдан ${diffDays} дня назад`}
   return `Выдан ${diffDays} дней назад`
 }
 
 // Fetch history
 async function fetchHistory() {
-  if (!props.tool) return
+  if (!props.tool) {return}
   
   loading.value = true
   try {
