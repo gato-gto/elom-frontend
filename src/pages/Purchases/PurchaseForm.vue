@@ -735,8 +735,8 @@ const supplierOptions = computed(() =>
 )
 
 const employeeOptions = computed(() => {
-  // Получаем только бригадиров
-  const brigadiers = employees.value.filter((emp: Employee) => emp.role === 'brigadier' && emp.is_active)
+  // Получаем бригадиров и администраторов
+  const brigadiers = employees.value.filter((emp: Employee) => (emp.role === 'brigadier' || emp.role === 'admin') && emp.is_active)
   
   // Добавляем текущего пользователя, если он не бригадир
   if (auth.me && auth.me.role !== 'brigadier') {

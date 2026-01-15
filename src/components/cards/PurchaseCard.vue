@@ -1,7 +1,7 @@
 <template>
   <MobileCard
     :title="`Закупка ${purchase.purchase_no || '#' + purchase.id}`"
-    :badge="getStatusLabel(purchase.status)"
+    :badge="statusLabel(purchase.status)"
     :badge-class="getStatusBadgeClass(purchase.status)"
     :actions="actions"
     @action="$emit('action', $event)"
@@ -76,6 +76,7 @@ import { Purchase } from '@/api/types/purchases'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'
+import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
 
 interface Props {
   purchase: Purchase
@@ -99,21 +100,6 @@ defineEmits<Emits>()
 
 const { truncateText } = useMobileCardHelpers()
 
-const getStatusLabel = (status: string) => {
-  const statusMap: Record<string, string> = {
-    'new': 'Новая',
-    'completed': 'Завершена',
-    'cancelled': 'Отменена'
-  }
-  return statusMap[status] || status
-}
-
-const getStatusBadgeClass = (status: string) => {
-  const classMap: Record<string, string> = {
-    'new': 'badge-info',
-    'completed': 'badge-success',
-    'cancelled': 'badge-error'
-  }
-  return classMap[status] || 'badge-neutral'
-}
+const statusLabel = (status: string) =>
+  getStatusLabel(status, { completed: 'Завершена' })
 </script>

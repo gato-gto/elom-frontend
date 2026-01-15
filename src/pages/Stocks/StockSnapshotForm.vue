@@ -92,10 +92,12 @@ const materialOptions = computed(() => [
 ])
 
 const employeeOptions = computed(() => [
-  ...employeesStore.items.map((e: Employee) => ({ 
-    value: e.id, 
-    label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
-  }))
+  ...employeesStore.items
+    .filter((e: Employee) => e.is_active && (e.role === 'brigadier' || e.role === 'admin'))
+    .map((e: Employee) => ({ 
+      value: e.id, 
+      label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
+    }))
 ])
 
 const unitOptions = computed(() => [

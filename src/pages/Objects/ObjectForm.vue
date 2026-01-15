@@ -221,7 +221,7 @@ const employeeOptions = computed(() => {
   const allEmployees = employeesStore.items
 
   const options = allEmployees
-    .filter((emp: any) => emp.is_active && emp.role === 'brigadier')
+    .filter((emp: any) => emp.is_active && (emp.role === 'brigadier' || emp.role === 'admin'))
     .map((emp: any) => ({
       value: emp.profile_id,
       label: `${emp.first_name} ${emp.last_name}`.trim() || emp.username

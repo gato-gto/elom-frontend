@@ -8,6 +8,7 @@ import { endpoints, buildQuery } from '@/api/endpoints'
 import type { Tool, ToolRequest, ToolBulkCreateRequest, ToolBulkCreateResponse, ToolCategory } from '@/api/types/tools'
 import { useNotifications } from '@/composables/useNotifications'
 import { handleApiErrorAsync } from '@/utils/errorHandler'
+import { findById } from '@/utils/arrayHelpers'
 
 export const useToolsStore = defineStore('tools', () => {
   // ========================================================================
@@ -39,7 +40,7 @@ export const useToolsStore = defineStore('tools', () => {
   // Getters
   // ========================================================================
   const getById = computed(() => (id: number) => {
-    return items.value.find(item => item.id === id)
+    return findById(items.value, id)
   })
 
   const exists = computed(() => (id: number) => {

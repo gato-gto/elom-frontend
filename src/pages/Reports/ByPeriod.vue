@@ -178,7 +178,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import api from '@/api/client'
 import endpoints, { buildQuery } from '@/api/endpoints'
-import { formatDate, formatCurrency } from '@/utils/formatters'
+import { formatCurrency, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createLineChartConfig, getColor, getChartHeight, formatCurrencyTooltip } from '@/utils/chartUtils'
@@ -384,8 +384,8 @@ function updateChart() {
   const labels = rows.value.map(row => {
     const date = new Date(row.period)
     return period.value === 'month' 
-      ? date.toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' })
-      : date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+      ? formatDateWithOptions(date, { month: 'short', year: 'numeric' })
+      : formatDateWithOptions(date, { day: 'numeric', month: 'short' })
   })
 
   const amounts = rows.value.map(row => Number(row.total_amount) || 0)
@@ -438,7 +438,7 @@ function updateChart() {
           drawOnChartArea: false,
         },
         ticks: {
-          callback: (value: any) => new Intl.NumberFormat('ru-RU').format(Number(value))
+          callback: (value: any) => formatNumberWithOptions(Number(value))
         }
       }
     }

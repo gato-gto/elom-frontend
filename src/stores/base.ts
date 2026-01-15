@@ -19,6 +19,7 @@ import type { Ref, ComputedRef } from 'vue'
 import api from '@/api/client'
 import { buildQuery } from '@/api/endpoints'
 import { handleApiErrorAsync } from '@/utils/errorHandler'
+import { findById } from '@/utils/arrayHelpers'
 
 // ============================================================================
 // Types
@@ -110,7 +111,7 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
     // Getters
     // ========================================================================
     const getById = computed(() => (id: number) => {
-      return items.value.find(item => item.id === id)
+      return findById(items.value, id)
     })
 
     const exists = computed(() => (id: number) => {

@@ -1,4 +1,5 @@
 // Утилиты для экспорта данных
+import { formatCurrencyWithCode, formatDate, formatDateTime, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
 
 export function downloadFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType })
@@ -174,7 +175,7 @@ export function exportToPDF<T extends Record<string, any>>(
     </head>
     <body>
       <h1>${filename}</h1>
-      <p>Дата экспорта: ${new Date().toLocaleDateString('ru-RU')}</p>
+      <p>Дата экспорта: ${formatDateWithOptions(new Date(), { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
       <p>Количество записей: ${data.length}</p>
       <table>
         <thead>
@@ -213,7 +214,7 @@ export function formatDataForExport<T extends Record<string, any>>(
       if (formatter) {
         formattedRow[key] = formatter(value)
       } else if (value instanceof Date) {
-        formattedRow[key] = value.toLocaleDateString('ru-RU')
+        formattedRow[key] = formatDate(value)
       } else if (typeof value === 'boolean') {
         formattedRow[key] = value ? 'Да' : 'Нет'
       } else {
@@ -227,26 +228,15 @@ export function formatDataForExport<T extends Record<string, any>>(
 
 // Предустановленные форматтеры для разных типов данных
 export const defaultFormatters = {
-  date: (value: any) => {
-    if (!value) {return ''}
-    const date = new Date(value)
-    return date.toLocaleDateString('ru-RU')
-  },
-  datetime: (value: any) => {
-    if (!value) {return ''}
-    const date = new Date(value)
-    return date.toLocaleString('ru-RU')
-  },
+  date: (value: any) => (value ? formatDate(value) : ''),
+  datetime: (value: any) => (value ? formatDateTime(value) : ''),
   boolean: (value: any) => value ? 'Да' : 'Нет',
   currency: (value: any) => {
-    if (typeof value !== 'number') {return value}
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB'
-    }).format(value)
+    if (value === null || value === undefined || value === '') {return value}
+    return formatCurrencyWithCode(value, 'RUB')
   },
   number: (value: any) => {
-    if (typeof value !== 'number') {return value}
-    return new Intl.NumberFormat('ru-RU').format(value)
+    if (value === null || value === undefined || value === '') {return value}
+    return formatNumberWithOptions(value)
   }
 }

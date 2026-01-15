@@ -3,59 +3,74 @@
  */
 
 /**
+ * Нормализует входную дату
+ */
+function toValidDate(value: string | Date | number | null | undefined): Date | null {
+  if (!value) { return null }
+  const date = value instanceof Date ? value : new Date(value)
+  return isNaN(date.getTime()) ? null : date
+}
+
+/**
+ * Форматирует дату с настраиваемыми опциями
+ */
+export function formatDateWithOptions(
+  value: string | Date | number | null | undefined,
+  options: Intl.DateTimeFormatOptions,
+  locale: string = 'ru-RU'
+): string {
+  const date = toValidDate(value)
+  if (!date) { return '—' }
+  return date.toLocaleDateString(locale, options)
+}
+
+/**
  * Форматирует дату в читаемый вид
  */
-export function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) { return '—' }
-  
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) {
-      return '—'
-    }
-    return date.toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    })
-  } catch {
-    return '—'
-  }
+export function formatDate(dateString: string | Date | number | null | undefined): string {
+  return formatDateWithOptions(dateString, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
 }
 
 /**
  * Форматирует дату и время в читаемый вид
  */
-export function formatDateTime(dateString: string | null | undefined): string {
-  if (!dateString) { return '—' }
-  
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) {
-      return '—'
-    }
-    return date.toLocaleString('ru-RU', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch {
-    return '—'
-  }
+export function formatDateTime(dateString: string | Date | number | null | undefined): string {
+  const date = toValidDate(dateString)
+  if (!date) { return '—' }
+  return date.toLocaleString('ru-RU', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+/**
+ * Форматирует число с разделителями тысяч
+ */
+export function formatNumberWithOptions(
+  value: number | string | null | undefined,
+  options: Intl.NumberFormatOptions = {},
+  locale: string = 'ru-RU'
+): string {
+  if (value === null || value === undefined || value === '') { return '—' }
+
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) { return '—' }
+
+  return new Intl.NumberFormat(locale, options).format(num)
 }
 
 /**
  * Форматирует число с разделителями тысяч
  */
 export function formatNumber(value: number | string | null | undefined): string {
-  if (value === null || value === undefined || value === '') { return '—' }
-  
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) { return '—' }
-  
-  return num.toLocaleString('ru-RU', {
+  return formatNumberWithOptions(value, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   })
@@ -64,18 +79,37 @@ export function formatNumber(value: number | string | null | undefined): string 
 /**
  * Форматирует валюту
  */
-export function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined || value === '') { return '—' }
-  
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) { return '—' }
-  
-  return num.toLocaleString('ru-RU', {
+export function formatCurrencyWithCode(
+  value: number | string | null | undefined,
+  currency: string = 'RUB',
+  options: Intl.NumberFormatOptions = {}
+): string {
+  return formatNumberWithOptions(value, {
     style: 'currency',
-    currency: 'RUB',
+    currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
+    ...options
   })
+}
+
+/**
+ * Форматирует валюту
+ */
+export function formatCurrency(value: number | string | null | undefined): string {
+  return formatCurrencyWithCode(value, 'RUB')
+}
+
+/**
+ * Форматирует сумму с валютным кодом рядом
+ */
+export function formatAmountWithCurrency(
+  value: number | string | null | undefined,
+  currency: string = 'UZS'
+): string {
+  const formatted = formatNumberWithOptions(value)
+  if (formatted === '—') { return '—' }
+  return `${formatted} ${currency}`
 }
 
 /**

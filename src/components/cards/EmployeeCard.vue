@@ -1,8 +1,8 @@
 <template>
   <MobileCard
     :title="getEmployeeFullName()"
-    :badge="getStatusLabel(employee.role)"
-    :badge-class="getStatusBadgeClass(employee.role)"
+    :badge="getStatusLabelLocal(employee.role)"
+    :badge-class="getStatusBadgeClassLocal(employee.role)"
     :actions="actions"
     @action="$emit('action', $event)"
   >
@@ -26,8 +26,8 @@
         <div>
           <span class="text-gray-500">Роль:</span>
           <span class="font-medium ml-2">
-            <span class="badge badge-sm" :class="getStatusBadgeClass(employee.role)">
-              {{ getStatusLabel(employee.role) }}
+            <span class="badge badge-sm" :class="getStatusBadgeClassLocal(employee.role)">
+              {{ getStatusLabelLocal(employee.role) }}
             </span>
           </span>
         </div>
@@ -100,6 +100,7 @@ import { User } from '@/api/types/employees'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'
+import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
 
 interface Props {
   employee: User & {
@@ -135,23 +136,20 @@ const getEmployeeFullName = () => {
   return parts.length > 0 ? parts.join(' ') : props.employee.username
 }
 
-const getStatusLabel = (role: string) => {
-  const roleMap: Record<string, string> = {
-    'admin': 'Администратор',
-    'director': 'Директор',
-    'manager': 'Менеджер',
-    'employee': 'Сотрудник'
-  }
-  return roleMap[role] || role
+const roleLabelOverrides: Record<string, string> = {
+  admin: 'Администратор',
+  director: 'Директор',
+  manager: 'Менеджер',
+  employee: 'Сотрудник'
 }
 
-const getStatusBadgeClass = (role: string) => {
-  const classMap: Record<string, string> = {
-    'admin': 'badge-error',
-    'director': 'badge-warning',
-    'manager': 'badge-info',
-    'employee': 'badge-success'
-  }
-  return classMap[role] || 'badge-neutral'
+const roleClassOverrides: Record<string, string> = {
+  admin: 'badge-error',
+  director: 'badge-warning',
+  manager: 'badge-info',
+  employee: 'badge-success'
 }
+
+const getStatusLabelLocal = (role: string) => getStatusLabel(role, roleLabelOverrides)
+const getStatusBadgeClassLocal = (role: string) => getStatusBadgeClass(role, roleClassOverrides)
 </script>

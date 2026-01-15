@@ -1,4 +1,5 @@
 import type { ChartConfiguration, ChartOptions } from 'chart.js'
+import { formatCurrencyWithCode, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
 
 // DaisyUI color palette
 export const DAISY_COLORS = [
@@ -78,23 +79,20 @@ export function generateGradientColors(
 
 // Format currency for tooltips
 export function formatCurrencyTooltip(value: number): string {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'UZS',
+  return formatCurrencyWithCode(value, 'UZS', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(value)
+  })
 }
 
 // Format number for tooltips
 export function formatNumberTooltip(value: number): string {
-  return new Intl.NumberFormat('ru-RU').format(value)
+  return formatNumberWithOptions(value)
 }
 
 // Format date for tooltips
 export function formatDateTooltip(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ru-RU', {
+  return formatDateWithOptions(dateString, {
     year: 'numeric',
     month: 'short',
     day: 'numeric'

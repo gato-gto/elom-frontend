@@ -627,7 +627,7 @@ const loadEmployeesByObject = async (objectId: number) => {
     const responsibleList = [
       { value: 0, label: '— выберите ответственного —' },
       ...employeesStore.items
-        .filter((emp: any) => emp.role === 'brigadier')
+        .filter((emp: any) => emp.is_active && (emp.role === 'brigadier' || emp.role === 'admin'))
         .map((emp: any) => ({ value: emp.id, label: emp.username }))
     ]
 
@@ -669,7 +669,7 @@ const loadEmployeesByObject = async (objectId: number) => {
     
     // Получаем всех сотрудников объекта
     const objectEmployees = getByObject(objectId)
-    const brigadiers = objectEmployees.filter((emp: any) => emp.role === 'brigadier')
+    const brigadiers = objectEmployees.filter((emp: any) => emp.role === 'brigadier' || emp.role === 'admin')
 
     // Автозаполнение ответственного, если не изменен пользователем
     if (!userModifiedFields.value.responsible) {

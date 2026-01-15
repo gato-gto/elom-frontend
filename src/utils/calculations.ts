@@ -1,4 +1,5 @@
 // Utility functions for client-side calculations
+import { formatCurrencyWithCode, formatNumberWithOptions } from '@/utils/formatters'
 
 /**
  * Вычисляет сумму позиции закупки
@@ -27,21 +28,19 @@ export function calculatePurchaseTotal(items: Array<{ quantity: number | string;
  * Форматирует число как валюту
  */
 export function formatCurrency(amount: number, currency: string = 'RUB'): string {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: currency,
+  return formatCurrencyWithCode(amount, currency, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  })
 }
 
 /**
  * Форматирует число с заданным количеством знаков после запятой
  */
 export function formatNumber(value: number, decimals: number = 2): string {
-  return new Intl.NumberFormat('ru-RU', {
+  return formatNumberWithOptions(value, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(value);
+  })
 }
 

@@ -1,4 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
+import { formatAmountWithCurrency, formatDate as formatDateValue } from '@/utils/formatters'
+import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
 
 /**
  * Композабл для определения мобильного режима отображения таблиц
@@ -34,52 +36,22 @@ export function useResponsiveTable() {
 export function useMobileCardHelpers() {
   // Форматирование суммы
   const formatAmount = (amount: string | number, currency = 'UZS') => {
-    if (!amount) {return '0'}
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount
-    return new Intl.NumberFormat('ru-RU').format(num) + ` ${currency}`
+    return formatAmountWithCurrency(amount, currency)
   }
   
   // Форматирование даты
   const formatDate = (date: string | null) => {
-    if (!date) {return '—'}
-    return new Date(date).toLocaleDateString('ru-RU')
+    return date ? formatDateValue(date) : '—'
   }
   
   // Получение класса для бейджа статуса
-  const getStatusBadgeClass = (status: string) => {
-    const statusClasses: Record<string, string> = {
-      'new': 'badge-info',
-      'completed': 'badge-success', 
-      'cancelled': 'badge-error',
-      'active': 'badge-success',
-      'inactive': 'badge-error',
-      'admin': 'badge-primary',
-      'manager': 'badge-secondary',
-      'warehouse': 'badge-accent',
-      'brigadier': 'badge-warning',
-      'requester': 'badge-info'
-    }
-    
-    return statusClasses[status] || 'badge-neutral'
+  const getStatusBadgeClassLocal = (status: string) => {
+    return getStatusBadgeClass(status)
   }
   
   // Получение текста статуса
-  const getStatusLabel = (status: string) => {
-    const statusLabels: Record<string, string> = {
-      'new': 'Новая',
-      'completed': 'Выполнено',
-      'cancelled': 'Отмена',
-      'active': 'Активный',
-      'inactive': 'Неактивный',
-      'admin': 'Администратор',
-      'manager': 'Управляющий',
-      'warehouse': 'Склад/Цех/Проект',
-      'brigadier': 'Бригадир/Инженер',
-      'requester': 'Заявитель',
-      '': 'Роль не задана'
-    }
-    
-    return statusLabels[status] || status
+  const getStatusLabelLocal = (status: string) => {
+    return getStatusLabel(status)
   }
   
   // Усечение длинного текста
@@ -91,8 +63,8 @@ export function useMobileCardHelpers() {
   return {
     formatAmount,
     formatDate,
-    getStatusBadgeClass,
-    getStatusLabel,
+    getStatusBadgeClass: getStatusBadgeClassLocal,
+    getStatusLabel: getStatusLabelLocal,
     truncateText
   }
 }
