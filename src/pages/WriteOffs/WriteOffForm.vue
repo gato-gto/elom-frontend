@@ -40,7 +40,7 @@
             class="select select-bordered w-full"
             :class="{ 'select-error': errors.object }"
           >
-            <option v-if="!hasSingleObject" value="0" disabled>— выберите объект —</option>
+            <option v-if="!hasSingleObject" value="" disabled>— выберите объект —</option>
             <option
               v-for="object in objectOptions"
               :key="object.value"
@@ -67,9 +67,9 @@
             required
             class="select select-bordered w-full"
             :class="{ 'select-error': errors.responsible }"
-            :disabled="isBrigadier"
+            :disabled="isLimitedAccess"
           >
-            <option value="0" disabled>— выберите ответственного —</option>
+            <option value="" disabled>— выберите ответственного —</option>
             <option
               v-for="responsible in responsibleOptions"
               :key="responsible.value"
@@ -108,7 +108,7 @@
         <div class="space-y-6">
      
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Позици
+          Позиции
         </h2>
             <!-- Desktop table view -->
             <div class="hidden md:block overflow-auto">
@@ -389,9 +389,10 @@ import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { useWriteOffsStore } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
-import { useEmployeesStore, getByObject } from '@/stores/employees'
+import { useEmployeesStore, getByObject, getResponsibleEmployees, canBeResponsible } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useUiStore } from '@/stores/ui'
 import { formatNumberClean } from '@/utils/formatters'
@@ -416,8 +417,10 @@ const authStore = useAuthStore()
 const { handleFormError, errors, clearErrors } = useErrorHandler()
 const ui = useUiStore()
 
-// Проверяем, является ли текущий пользователь бригадиром
-const isBrigadier = computed(() => authStore.me?.role === 'brigadier')
+// ✅ RBAC: проверяем ограниченный доступ через permissions
+const { canCreateRequests } = usePermissions()
+// Пользователь с ограниченным доступом (как requester/brigadier) - может только себе назначать
+const isLimitedAccess = computed(() => canCreateRequests.value)
 const currentUserId = computed(() => authStore.me?.id)
 
 const props = defineProps<{
@@ -608,7 +611,7 @@ const loadEmployeesByObject = async (objectId: number) => {
   employeesLoading.value = true
   try {
     // Для бригадира: он автоматически становится ответственным
-    if (isBrigadier.value && currentUserId.value) {
+    if (isLimitedAccess.value && currentUserId.value) {
       const currentUser = employeesStore.items.find((emp: any) => emp.id === currentUserId.value)
       const userName = currentUser 
         ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.username
@@ -623,11 +626,10 @@ const loadEmployeesByObject = async (objectId: number) => {
       return
     }
     
-    // Для других ролей: стандартная логика
+    // Для других ролей: стандартная логика (используем централизованную функцию)
     const responsibleList = [
       { value: 0, label: '— выберите ответственного —' },
-      ...employeesStore.items
-        .filter((emp: any) => emp.is_active && (emp.role === 'brigadier' || emp.role === 'admin'))
+      ...getResponsibleEmployees()
         .map((emp: any) => ({ value: emp.id, label: emp.username }))
     ]
 
@@ -667,9 +669,9 @@ const loadEmployeesByObject = async (objectId: number) => {
     
     responsibleOptions.value = responsibleList
     
-    // Получаем всех сотрудников объекта
+    // Получаем всех сотрудников объекта, которые могут быть ответственными
     const objectEmployees = getByObject(objectId)
-    const brigadiers = objectEmployees.filter((emp: any) => emp.role === 'brigadier' || emp.role === 'admin')
+    const brigadiers = objectEmployees.filter((emp: any) => canBeResponsible(emp))
 
     // Автозаполнение ответственного, если не изменен пользователем
     if (!userModifiedFields.value.responsible) {
@@ -696,7 +698,7 @@ const onObjectChange = async () => {
   
   // Сбрасываем ответственного, если не изменен пользователем
   if (!userModifiedFields.value.responsible) {
-    formData.value.responsible = 0
+    formData.value.responsible = null
   }
 
   // Загружаем материалы и сотрудников для выбранного объекта
@@ -907,7 +909,7 @@ const initializeForm = async () => {
     }
   } else {
     // Для бригадира сразу устанавливаем его как ответственного
-    const defaultResponsible = isBrigadier.value && currentUserId.value ? currentUserId.value : 0
+    const defaultResponsible = isLimitedAccess.value && currentUserId.value ? currentUserId.value : 0
     
     // Если только один объект - выбираем его автоматически
     const objects = objectsStore.items as SiteObject[]
@@ -922,7 +924,7 @@ const initializeForm = async () => {
     items.value = []
     
     // Для бригадира сразу заполняем опции ответственного
-    if (isBrigadier.value && currentUserId.value) {
+    if (isLimitedAccess.value && currentUserId.value) {
       const currentUser = employeesStore.items.find((emp: any) => emp.id === currentUserId.value)
       const userName = currentUser 
         ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.username
@@ -947,7 +949,7 @@ const initializeForm = async () => {
   }
   
   userModifiedFields.value = {
-    responsible: isBrigadier.value // Для бригадира считаем, что поле уже заполнено
+    responsible: isLimitedAccess.value // Для бригадира считаем, что поле уже заполнено
   }
 }
 

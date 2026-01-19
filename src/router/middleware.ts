@@ -1,6 +1,6 @@
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import type { UserRole } from '@/api/types/common'
+// UserRole больше не используется - все проверки через RBAC permissions
 
 // Middleware types
 export type MiddlewareFunction = (
@@ -12,7 +12,7 @@ export type MiddlewareFunction = (
 export interface MiddlewareConfig {
   auth?: boolean
   guest?: boolean
-  roles?: UserRole[]
+  // ⚠️ DEPRECATED: roles удалено - используйте permissions в RouteMeta
   redirect?: string
 }
 
@@ -65,36 +65,7 @@ export const middleware = {
     next()
   },
 
-  // Require specific roles
-  roles: (requiredRoles: UserRole[]) => {
-    return async (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
-      const auth = useAuthStore()
-      
-      // Wait for auth store to be initialized
-      if (!auth.initialized) {
-        try {
-          await auth.tryHydrate()
-        } catch (error) {
-          console.error('Auth hydration failed in roles middleware:', error)
-          next('/login')
-          return
-        }
-      }
-      
-      if (!auth.isAuthenticated) {
-        const redirect = encodeURIComponent(to.fullPath)
-        next(`/login?redirect=${redirect}`)
-        return
-      }
-      
-      if (!auth.role || !requiredRoles.includes(auth.role)) {
-        next('/purchases')
-        return
-      }
-      
-      next()
-    }
-  },
+  // ⚠️ DEPRECATED: middleware.roles удален - используйте meta.permissions в маршрутах
 
   // Redirect to specific route
   redirect: (path: string) => {
@@ -118,10 +89,8 @@ export function getRouteMiddleware(to: RouteLocationNormalized): MiddlewareFunct
   // Protected routes - require auth
   middlewares.push(middleware.auth)
 
-  // Role-based access
-  if (meta.roles && Array.isArray(meta.roles) && meta.roles.length > 0) {
-    middlewares.push(middleware.roles(meta.roles))
-  }
+  // ⚠️ DEPRECATED: meta.roles больше не поддерживается
+  // Используйте meta.permissions - проверка выполняется в router guard (index.ts)
 
   // If no middleware, add a simple pass-through
   if (middlewares.length === 0) {
@@ -197,19 +166,4 @@ export function applyMiddleware(
   runNext()
 }
 
-// Helper function to check if user has required role
-export function hasRequiredRole(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) {return false}
-  return requiredRoles.includes(userRole)
-}
-
-// Helper function to get accessible routes for user
-export function getAccessibleRoutes(routes: any[], userRole: UserRole | null): any[] {
-  return routes.filter(route => {
-    if (route.meta?.public) {return true}
-    if (!route.meta?.roles) {return true}
-    if (!userRole) {return false}
-    
-    return hasRequiredRole(userRole, route.meta.roles)
-  })
-}
+// ⚠️ DEPRECATED функции удалены - используйте RBAC permissions через usePermissions() composable

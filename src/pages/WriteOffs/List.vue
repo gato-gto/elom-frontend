@@ -74,6 +74,11 @@ import WriteOffForm from './WriteOffForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import WriteOffCard from '@/components/cards/WriteOffCard.vue'
+import { usePermissions } from '@/composables/usePermissions'
+
+// ✅ RBAC: проверка через permissions
+const { can, canExportReports } = usePermissions()
+const canCreate = computed(() => can('writeoffs', 'create'))
 
 // Stores
 const writeOffsStore = useWriteOffsStore()
@@ -162,9 +167,9 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
   icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
   showCreate: true,
   createText: 'Новое списание',
-  canCreate: true,
+  canCreate: canCreate.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'writeoffs',
   exportUrl: '/api/v1/stock/writeoffs/',
   loadingText: 'Загрузка списаний...',

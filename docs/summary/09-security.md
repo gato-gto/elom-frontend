@@ -203,9 +203,87 @@ export function validatePassword(password: string): PasswordValidationResult {
 
 ## Авторизация
 
-### Ролевая модель доступа
+### Ролевая модель доступа (RBAC)
 
-#### Определение ролей и разрешений
+ELOM использует полноценную RBAC систему с управлением через permissions, а не через имена ролей.
+
+#### Backend: RBAC система
+
+**Модели:**
+- `Permission` - разрешения (codename: `materials.create`)
+- `Role` - роли с набором разрешений
+- `UserRole` - связь пользователя с ролью
+- `UserPermissionOverride` - персональные переопределения прав
+
+**API:**
+- `GET /rbac/my-permissions/` - получить все разрешения пользователя
+- `GET /rbac/roles/` - список ролей
+- `GET /rbac/permissions/` - список всех разрешений
+
+**PermissionChecker сервис:**
+```python
+from rbac.services import PermissionChecker
+
+checker = PermissionChecker(user)
+if checker.has_permission('materials.create'):
+    # Разрешено создавать материалы
+    pass
+```
+
+#### Frontend: Управление UI на основе прав
+
+**usePermissions composable:**
+```typescript
+const { hasPermission, can, hasAnyPermission } = usePermissions()
+
+// Проверка одного разрешения
+if (hasPermission('materials.create')) {
+  // Показать кнопку создания
+}
+
+// Проверка через resource + action
+if (can('purchases', 'approve')) {
+  // Показать кнопку одобрения
+}
+```
+
+**Компоненты для условного отображения:**
+```vue
+<!-- PermissionGuard - условный рендеринг -->
+<PermissionGuard permission="materials.create">
+  <button>Создать</button>
+</PermissionGuard>
+
+<!-- PermissionButton - кнопка с проверкой прав -->
+<PermissionButton 
+  permission="purchases.approve"
+  label="Одобрить"
+  @click="handleApprove"
+/>
+
+<!-- PermissionSection - секция с проверкой прав -->
+<PermissionSection permission="reports.view" title="Отчеты">
+  <ReportList />
+</PermissionSection>
+```
+
+**Утилиты для создания действий:**
+```typescript
+import { createListActions } from '@/utils/permissionActions'
+
+const actions = createListActions([
+  {
+    key: 'edit',
+    label: 'Редактировать',
+    permission: 'materials.edit',
+    show: (item) => item.status !== 'archived'
+  }
+], usePermissions())
+```
+
+📚 **Полная документация:** [PERMISSION_COMPONENTS.md](../../src/docs/PERMISSION_COMPONENTS.md)
+
+#### Старая система (для справки)
 ```python
 # users/permissions.py
 from rest_framework.permissions import BasePermission

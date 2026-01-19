@@ -81,6 +81,7 @@ import { useToolIssuesStore } from '@/stores/toolIssues'
 import { useToolsStore } from '@/stores/tools'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { usePermissions } from '@/composables/usePermissions'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { formatDate as formatDateUtil } from '@/utils/formatters'
 import type { ToolIssue } from '@/api/types/tools'
@@ -98,6 +99,9 @@ const ui = useUiStore()
 
 // Error handling
 const { handleLoadingError } = useErrorHandler()
+
+// ✅ RBAC: проверка экспорта через permissions
+const { canExportReports } = usePermissions()
 
 // Modal state
 const returnModalOpen = ref(false)
@@ -119,7 +123,7 @@ const listConfig = computed<GenericListConfig<ToolIssue>>(() => ({
   icon: 'assignment',
   showCreate: false,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'tool_issues',
   exportUrl: '/api/v1/tool-issues/',
   loadingText: 'Загрузка выдач...',

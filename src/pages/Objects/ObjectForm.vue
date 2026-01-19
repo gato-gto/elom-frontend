@@ -16,8 +16,9 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
-import { useEmployeesStore, getBrigadierOptions } from '@/stores/employees'
+import { useEmployeesStore, getBrigadierOptions, getResponsibleEmployees } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import type { Object, ObjectRequest } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
@@ -36,9 +37,10 @@ const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
 const { handleFormError } = useErrorHandler()
+const { canCreateRequests } = usePermissions()
 
-// Проверка, является ли текущий пользователь бригадиром
-const isBrigadier = computed(() => auth.me?.role === 'brigadier')
+// Проверка: ограниченный доступ (как requester - может только себе назначать)
+const isLimitedAccess = computed(() => canCreateRequests.value)
 
 // Form configuration
 const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
@@ -70,8 +72,8 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       order: 2,
       width: 'half',
       // Для бригадиров поле заблокировано - они всегда ответственные за свои объекты
-      disabled: isBrigadier.value,
-      help: isBrigadier.value ? 'Вы автоматически назначены ответственным за этот объект' : undefined
+      disabled: isLimitedAccess.value,
+      help: isLimitedAccess.value ? 'Вы автоматически назначены ответственным за этот объект' : undefined
     },
     {
       key: 'address',
@@ -183,7 +185,7 @@ const initialFormData = computed<ObjectRequest>(() => {
       is_active: props.initial.is_active,
       location_url: props.initial.location_url,
       // Для бригадиров ответственный всегда они сами
-      responsible: isBrigadier.value ? currentUserProfileId : props.initial.responsible,
+      responsible: isLimitedAccess.value ? currentUserProfileId : props.initial.responsible,
       current_stage: props.initial.current_stage || 'acceptance',
       key_person_name: props.initial.key_person_name || '',
       key_person_contacts: props.initial.key_person_contacts || '',
@@ -198,7 +200,7 @@ const initialFormData = computed<ObjectRequest>(() => {
     address: '',
     is_active: true,
     location_url: undefined,
-    responsible: isBrigadier.value ? currentUserProfileId : undefined,
+    responsible: isLimitedAccess.value ? currentUserProfileId : undefined,
     current_stage: 'acceptance',
     key_person_name: '',
     key_person_contacts: '',
@@ -210,7 +212,7 @@ const initialFormData = computed<ObjectRequest>(() => {
 // Computed options
 const employeeOptions = computed(() => {
   // Для бригадиров показываем только их самих
-  if (isBrigadier.value && auth.me) {
+  if (isLimitedAccess.value && auth.me) {
     const currentUserName =
       `${auth.me.first_name || ''} ${auth.me.last_name || ''}`.trim() || auth.me.username
 
@@ -222,10 +224,10 @@ const employeeOptions = computed(() => {
 
   const allEmployees = employeesStore.items
 
-  const options = allEmployees
-    .filter((emp: any) => emp.is_active && (emp.role === 'brigadier' || emp.role === 'admin'))
+  // Используем централизованную функцию для получения ответственных
+  const options = getResponsibleEmployees()
     .map((emp: any) => ({
-      value: Number(emp.profile_id), // Убеждаемся, что это число
+      value: Number(emp.profile_id),
       label: `${emp.first_name} ${emp.last_name}`.trim() || emp.username
     }))
 

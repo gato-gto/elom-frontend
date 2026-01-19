@@ -236,14 +236,16 @@
 }
 
 /* Стили для dropdown меню */
-.dropdown-menu {
-  background: rgba(255, 255, 255, 0.95);
+.dropdown-menu,
+.dropdown-content {
+  background: rgba(255, 255, 255, 0.95) !important;
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   border-radius: 0.75rem;
   overflow: hidden;
+  opacity: 1 !important;
 }
 
 .dropdown-item {
@@ -331,9 +333,11 @@
     color: #f1f5f9;
   }
   
-  .dropdown-menu {
-    background: rgba(15, 23, 42, 0.95);
+  .dropdown-menu,
+  .dropdown-content {
+    background: rgba(15, 23, 42, 0.95) !important;
     border-color: rgba(255, 255, 255, 0.1);
+    opacity: 1 !important;
   }
 }
 

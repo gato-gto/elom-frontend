@@ -195,7 +195,7 @@ describe('Error Handler Utils', () => {
       expect(mockShowError).toHaveBeenCalledWith('Specific error occurred')
     })
 
-    it('should handle validation errors', async () => {
+    it('should handle validation errors and show specific message', async () => {
       const error = {
         response: {
           status: 400,
@@ -216,7 +216,32 @@ describe('Error Handler Utils', () => {
       
       await handleApiErrorAsync(error, context)
       
-      expect(mockShowError).toHaveBeenCalledWith('Ошибка валидации данных')
+      // Должно показываться конкретное сообщение из errors, а не общее "Validation error"
+      expect(mockShowError).toHaveBeenCalledWith('Это поле обязательно')
+    })
+
+    it('should handle validation errors with items array', async () => {
+      const error = {
+        response: {
+          status: 400,
+          data: {
+            detail: 'Validation error',
+            errors: {
+              items: ['Закупка должна содержать хотя бы одну позицию']
+            }
+          }
+        }
+      }
+      
+      const context = {
+        operation: 'formValidation' as const,
+        entity: 'purchases'
+      }
+      
+      await handleApiErrorAsync(error, context)
+      
+      // Должно показываться конкретное сообщение из errors.items
+      expect(mockShowError).toHaveBeenCalledWith('Закупка должна содержать хотя бы одну позицию')
     })
 
     it('should handle 401 unauthorized', async () => {
@@ -356,7 +381,7 @@ describe('Error Handler Utils', () => {
         }
       }
       
-      // Test different operations
+      // Test different operations - для не-generic сообщений показываем как есть
       const operations = [
         { operation: 'dataLoading' as const, expectedMessage: 'Bad request' },
         { operation: 'create' as const, expectedMessage: 'Bad request' },
@@ -376,10 +401,39 @@ describe('Error Handler Utils', () => {
         expect(mockShowError).toHaveBeenCalledWith(expectedMessage)
       }
     })
+
+    it('should extract first error from nested structures', async () => {
+      const error = {
+        response: {
+          status: 400,
+          data: {
+            detail: 'Validation error',
+            errors: {
+              items: [
+                {
+                  material: ['Недопустимый первичный ключ "0" - объект не существует.'],
+                  quantity: ['Убедитесь, что это значение больше либо равно 0.001.']
+                }
+              ]
+            }
+          }
+        }
+      }
+      
+      const context = {
+        operation: 'formValidation' as const,
+        entity: 'purchases'
+      }
+      
+      await handleApiErrorAsync(error, context)
+      
+      // Должно показываться первое конкретное сообщение из вложенной структуры
+      expect(mockShowError).toHaveBeenCalledWith('Недопустимый первичный ключ "0" - объект не существует.')
+    })
   })
 
   describe('handleFormError', () => {
-    it('should handle form validation errors', async () => {
+    it('should handle form validation errors and show specific message', async () => {
       const error = {
         response: {
           status: 400,
@@ -395,7 +449,8 @@ describe('Error Handler Utils', () => {
       
       await handleFormError(error, 'material')
       
-      expect(mockShowError).toHaveBeenCalledWith('Ошибка валидации формы')
+      // Должно показываться конкретное сообщение из errors, а не общее "Validation error"
+      expect(mockShowError).toHaveBeenCalledWith('Это поле обязательно')
     })
 
     it('should handle form errors without validation details', async () => {

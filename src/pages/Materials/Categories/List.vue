@@ -69,10 +69,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { MaterialCategory, Me } from '@/api/types'
+import type { MaterialCategory } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import CategoryForm from './CategoryForm.vue'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import Modal from '@/components/Modal.vue'
 import GenericList from '@/components/GenericList.vue'
@@ -81,17 +81,15 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
-const auth = useAuthStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 
 // Используем новый композабл для обработки ошибок
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
 // Computed
-const canEdit = computed(() => {
-  const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'manager' || role === 'warehouse'
-})
+// ✅ RBAC: используем permissions
+const { can, canExportReports } = usePermissions()
+const canEdit = computed(() => can('material_categories', 'edit'))
 
 // Parent category filter options
 const parentFilterOptions = computed(() => [
@@ -109,7 +107,7 @@ const listConfig = computed<GenericListConfig<MaterialCategory>>(() => ({
   createText: 'Добавить категорию',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'material-categories',
   exportUrl: '/api/v1/material-categories/',
   loadingText: 'Загрузка категорий...',

@@ -7,7 +7,7 @@ import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import type { ToolIssue, ToolIssueCreateRequest, ToolIssueReturnRequest } from '@/api/types/tools'
 import { useNotifications } from '@/composables/useNotifications'
-import { handleApiErrorAsync } from '@/utils/errorHandler'
+import { handleApiErrorAsync, parseApiError } from '@/utils/errorHandler'
 import { findById } from '@/utils/arrayHelpers'
 import { getOptimalPageSize } from '@/utils/device'
 import { useToolsStore } from './tools'
@@ -93,7 +93,8 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
 
       return items.value
     } catch (err: any) {
-      error.value = err?.response?.data?.detail || 'Ошибка при загрузке выдач инструментов'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'toolIssues' })
       throw err
     } finally {
@@ -116,7 +117,8 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
       
       return data
     } catch (err: any) {
-      error.value = err?.response?.data?.detail || 'Ошибка при загрузке выдачи'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'toolIssues' })
       throw err
     } finally {
@@ -133,7 +135,8 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
       items.value = data.results || data
       return items.value
     } catch (err: any) {
-      error.value = err?.response?.data?.detail || 'Ошибка при загрузке активных выдач'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'toolIssues' })
       throw err
     } finally {
@@ -159,7 +162,8 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
       return data
     } catch (err: any) {
       showError('Ошибка при выдаче инструмента')
-      error.value = err?.response?.data?.detail || 'Ошибка при выдаче инструмента'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'toolIssues' })
       throw err
     } finally {
@@ -191,7 +195,8 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
       return data
     } catch (err: any) {
       showError('Ошибка при возврате инструмента')
-      error.value = err?.response?.data?.detail || 'Ошибка при возврате инструмента'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'toolIssues' })
       throw err
     } finally {

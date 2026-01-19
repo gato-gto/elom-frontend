@@ -232,16 +232,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissionsStore } from '@/stores/permissions'
+import { usePermissions } from '@/composables/usePermissions'
 import type { NavigationItem } from '@/types/router'
-import type { UserRole } from '@/api/types/common'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const auth = authStore
+const permissionsStore = usePermissionsStore()
+const { canCreateRequests, hasAnyPermission } = usePermissions()
+
+// Загружаем permissions при монтировании
+onMounted(() => {
+  permissionsStore.fetchPermissions()
+})
 
 // Build navigation from router configuration
 const navigationItems = computed((): NavigationItem[] => {
@@ -257,8 +265,10 @@ const navigationItems = computed((): NavigationItem[] => {
     // Skip public routes
     if (meta.public) {return}
     
-    // Check role access
-    if (meta.roles && !hasRoleAccess(auth.role, meta.roles as UserRole[])) {return}
+    // Check permissions access (RBAC)
+    if (meta.permissions && Array.isArray(meta.permissions) && meta.permissions.length > 0) {
+      if (!permissionsStore.hasAnyPermission(...meta.permissions as string[])) {return}
+    }
     
     const item: NavigationItem = {
       name: route.name as string,
@@ -268,7 +278,6 @@ const navigationItems = computed((): NavigationItem[] => {
       description: meta.description as string,
       category: meta.category as string,
       order: meta.order as number || 999,
-      roles: meta.roles as UserRole[]
     }
     
     items.push(item)
@@ -289,8 +298,8 @@ const businessOperations = computed(() => {
     ['purchases', 'objects', 'writeoffs'].includes(item.category || '')
   )
   
-  // Для requester изменяем название "Закупки" на "Заявки"
-  if (authStore.me?.role === 'requester') {
+  // ✅ RBAC: Для requester изменяем название "Закупки" на "Заявки"
+  if (canCreateRequests.value) {
     return items.map(item => {
       if (item.name === 'purchases') {
         return {
@@ -341,11 +350,6 @@ const referenceData = computed(() => {
 })
 
 import { getIconPath } from '@/assets/icons'
-
-function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) {return true}
-  return requiredRoles.includes(userRole)
-}
 
 function isActive(path: string): boolean {
   return route.path.startsWith(path)

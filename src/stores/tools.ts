@@ -7,7 +7,7 @@ import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import type { Tool, ToolRequest, ToolBulkCreateRequest, ToolBulkCreateResponse, ToolCategory } from '@/api/types/tools'
 import { useNotifications } from '@/composables/useNotifications'
-import { handleApiErrorAsync } from '@/utils/errorHandler'
+import { handleApiErrorAsync, parseApiError } from '@/utils/errorHandler'
 import { findById } from '@/utils/arrayHelpers'
 import { getOptimalPageSize } from '@/utils/device'
 
@@ -100,7 +100,8 @@ export const useToolsStore = defineStore('tools', () => {
 
       return items.value
     } catch (err: any) {
-      error.value = err?.response?.data?.detail || 'Ошибка при загрузке инструментов'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'tools' })
       throw err
     } finally {
@@ -123,7 +124,8 @@ export const useToolsStore = defineStore('tools', () => {
       
       return data
     } catch (err: any) {
-      error.value = err?.response?.data?.detail || 'Ошибка при загрузке инструмента'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'tools' })
       throw err
     } finally {
@@ -144,7 +146,8 @@ export const useToolsStore = defineStore('tools', () => {
       return data
     } catch (err: any) {
       showError('Ошибка при добавлении инструмента')
-      error.value = err?.response?.data?.detail || 'Ошибка при добавлении инструмента'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
       throw err
     } finally {
@@ -170,7 +173,8 @@ export const useToolsStore = defineStore('tools', () => {
       return data
     } catch (err: any) {
       showError('Ошибка при обновлении инструмента')
-      error.value = err?.response?.data?.detail || 'Ошибка при обновлении инструмента'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
       throw err
     } finally {
@@ -193,7 +197,8 @@ export const useToolsStore = defineStore('tools', () => {
       showSuccess('Инструмент успешно удалён')
     } catch (err: any) {
       showError('Ошибка при удалении инструмента')
-      error.value = err?.response?.data?.detail || 'Ошибка при удалении инструмента'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'delete', entity: 'tools' })
       throw err
     } finally {
@@ -228,7 +233,8 @@ export const useToolsStore = defineStore('tools', () => {
       return tools
     } catch (err: any) {
       showError('Ошибка при массовом добавлении инструментов')
-      error.value = err?.response?.data?.detail || 'Ошибка при массовом добавлении'
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
       throw err
     } finally {

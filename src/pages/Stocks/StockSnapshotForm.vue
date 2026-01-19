@@ -35,7 +35,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useStockSnapshotsStore } from '@/stores/stockSnapshots'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
-import { useEmployeesStore } from '@/stores/employees'
+import { useEmployeesStore, getResponsibleEmployees } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
 import { useUiStore } from '@/stores/ui'
 import type { 
@@ -91,13 +91,12 @@ const materialOptions = computed(() => [
   ...materialsStore.items.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
+// Используем централизованную функцию для получения ответственных
 const employeeOptions = computed(() => [
-  ...employeesStore.items
-    .filter((e: Employee) => e.is_active && (e.role === 'brigadier' || e.role === 'admin'))
-    .map((e: Employee) => ({ 
-      value: e.id, 
-      label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
-    }))
+  ...getResponsibleEmployees().map((e: Employee) => ({ 
+    value: e.id, 
+    label: `${e.first_name || e.username} ${e.last_name || ''}`.trim()
+  }))
 ])
 
 const unitOptions = computed(() => [

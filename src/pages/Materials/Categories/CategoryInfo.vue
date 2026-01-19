@@ -219,20 +219,17 @@ import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import { useMaterialsStore } from '@/stores/materials'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import GenericList from '@/components/GenericList.vue'
 import MaterialCard from '@/components/cards/MaterialCard.vue'
 import { formatDate } from '@/utils/formatters'
 import type { MaterialCategory } from '@/api/types'
 import type { Material } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
-import type { Me } from '@/api/types/common'
-
 const route = useRoute()
 const router = useRouter()
 const materialCategoriesStore = useMaterialCategoriesStore()
 const materialsStore = useMaterialsStore()
-const auth = useAuthStore()
 
 const categoryId = computed(() => Number(route.params.id))
 const category = computed(() => materialCategoriesStore.items.find(c => c.id === categoryId.value))
@@ -243,10 +240,9 @@ const childCategories = computed(() =>
 )
 
 // Права доступа
-const canEdit = computed(() => {
-  const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'manager' || role === 'warehouse'
-})
+// ✅ RBAC: используем permissions
+const { can } = usePermissions()
+const canEdit = computed(() => can('material_categories', 'edit'))
 
 // Конфигурация списка материалов - показываем только материалы категории без фильтров
 const materialsListConfig = computed<GenericListConfig<Material>>(() => ({

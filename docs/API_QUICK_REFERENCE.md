@@ -207,6 +207,22 @@ GET    /tool-issues/active/                # List active issues
 
 > Note: Roles updated in December 2025. Manager and warehouse work "without accounting" - operations don't create StockSnapshot records.
 
+## Employee Profile Settings
+
+### Accounting Mode
+Controls whether operations create StockSnapshot records:
+
+```typescript
+{
+  "accounting_mode": "full" | "no_accounting"
+}
+```
+
+- `full` - Full accounting (default): Operations create StockSnapshot records
+- `no_accounting` - No accounting: Operations don't create StockSnapshot records (for planning/documentation)
+
+**Note:** The `accounting_mode` field is checked in `should_create_stock_snapshot()` function. If not set, falls back to legacy `role` field check (manager/warehouse = no_accounting).
+
 ## Error Responses
 ```typescript
 // 400 Bad Request

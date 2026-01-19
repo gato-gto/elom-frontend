@@ -67,12 +67,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import type { PurchaseSupplier, Me } from '@/api/types'
+import type { PurchaseSupplier } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import SupplierForm from './SupplierForm.vue'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
@@ -81,7 +81,6 @@ import SupplierCard from '@/components/cards/SupplierCard.vue'
 
 // Stores
 const suppliersStore = useSuppliersStore()
-const auth = useAuthStore()
 const ui = useUiStore()
 
 // Error handling
@@ -94,9 +93,10 @@ const showDeleteModal = ref(false)
 const deletingSupplier = ref<PurchaseSupplier | null>(null)
 const deleting = ref(false)
 
-// Computed
-const canEdit = computed(() => true) // TODO: Implement proper permissions
-const canDelete = computed(() => true) // TODO: Implement proper permissions
+// ✅ RBAC: проверка через permissions
+const { can, canExportReports } = usePermissions()
+const canEdit = computed(() => can('suppliers', 'edit'))
+const canDelete = computed(() => can('suppliers', 'delete'))
 
 // Filter options
 const statusFilterOptions = [
@@ -122,7 +122,7 @@ const listConfig = computed<GenericListConfig<PurchaseSupplier>>(() => ({
   createText: 'Добавить поставщика',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'suppliers',
   exportUrl: '/api/v1/purchases/suppliers/',
   loadingText: 'Загрузка поставщиков...',

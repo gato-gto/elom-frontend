@@ -84,66 +84,8 @@ describe('Router Middleware', () => {
     })
   })
 
-  describe('roles middleware', () => {
-    it('allows access for users with required role', () => {
-      const mockTo = {
-        meta: { roles: ['admin'] }
-      } as any
-
-      const mockFrom = {} as any
-      const mockNext = vi.fn()
-
-      // Mock auth store with admin role
-      vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: true,
-        role: 'admin'
-      } as any)
-
-      const rolesMiddleware = middleware.roles(['admin'])
-      rolesMiddleware(mockTo, mockFrom, mockNext)
-
-      expect(mockNext).toHaveBeenCalled()
-    })
-
-    it('denies access for users without required role', async () => {
-      const mockTo = {
-        meta: { roles: ['admin'] }
-      } as any
-
-      const mockFrom = {} as any
-      const mockNext = vi.fn()
-
-      // Mock auth store with user role
-      vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: true,
-        role: 'user',
-        initialized: true,
-        tryHydrate: vi.fn().mockResolvedValue(undefined)
-      } as any)
-
-      const rolesMiddleware = middleware.roles(['admin'])
-      await rolesMiddleware(mockTo, mockFrom, mockNext)
-
-      expect(mockNext).toHaveBeenCalledWith('/purchases')
-    })
-
-    it('allows access when no roles are required', () => {
-      const mockTo = {} as any
-      const mockFrom = {} as any
-      const mockNext = vi.fn()
-
-      // Mock auth store
-      vi.mocked(useAuthStore).mockReturnValue({
-        isAuthenticated: true,
-        role: 'user'
-      } as any)
-
-      const rolesMiddleware = middleware.roles([])
-      rolesMiddleware(mockTo, mockFrom, mockNext)
-
-      expect(mockNext).toHaveBeenCalled()
-    })
-  })
+  // ⚠️ DEPRECATED: Тесты для roles middleware удалены
+  // Roles middleware больше не используется - все проверки через RBAC permissions
 
   describe('applyMiddleware', () => {
     it('applies middleware in correct order', async () => {
@@ -157,7 +99,7 @@ describe('Router Middleware', () => {
         role: 'admin'
       } as any)
 
-      const middlewares = [middleware.auth, middleware.roles(['admin'])]
+      const middlewares = [middleware.auth]
       
       applyMiddleware(mockTo, mockFrom, mockNext, middlewares)
 
@@ -176,7 +118,7 @@ describe('Router Middleware', () => {
         tryHydrate: vi.fn().mockResolvedValue(undefined)
       } as any)
 
-      const middlewares = [middleware.auth, middleware.roles(['admin'])]
+      const middlewares = [middleware.auth]
       
       applyMiddleware(mockTo, mockFrom, mockNext, middlewares)
       
@@ -210,7 +152,7 @@ describe('Router Middleware', () => {
   describe('getRouteMiddleware', () => {
     it('returns correct middleware for route', () => {
       const mockTo = {
-        meta: { roles: ['admin'] }
+        meta: { permissions: ['materials.view'] }
       } as any
 
       const result = getRouteMiddleware(mockTo)

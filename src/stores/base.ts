@@ -18,7 +18,7 @@ import { ref, computed } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import api from '@/api/client'
 import { buildQuery } from '@/api/endpoints'
-import { handleApiErrorAsync } from '@/utils/errorHandler'
+import { handleApiErrorAsync, parseApiError } from '@/utils/errorHandler'
 import { findById } from '@/utils/arrayHelpers'
 import { getOptimalPageSize } from '@/utils/device'
 
@@ -171,7 +171,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
 
         return items.value
       } catch (err: any) {
-        error.value = err?.response?.data?.detail || `Ошибка загрузки ${config.entityNamePlural}`
+        const parsedError = parseApiError(err)
+        error.value = parsedError.detail
         await handleApiErrorAsync(err, { operation: 'dataLoading', entity: config.entityName })
         throw err
       } finally {
@@ -195,7 +196,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         return data
       } catch (err: any) {
         current.value = null
-        error.value = err?.response?.data?.detail || `Ошибка загрузки`
+        const parsedError = parseApiError(err)
+        error.value = parsedError.detail
         await handleApiErrorAsync(err, { operation: 'dataLoading', entity: config.entityName })
         throw err
       } finally {
@@ -213,7 +215,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         pagination.value.count++
         return newItem
       } catch (err: any) {
-        error.value = err?.response?.data?.detail || `Ошибка создания`
+        const parsedError = parseApiError(err)
+        error.value = parsedError.detail
         await handleApiErrorAsync(err, { operation: 'formValidation', entity: config.entityName })
         throw err
       } finally {
@@ -239,7 +242,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
 
         return updatedItem
       } catch (err: any) {
-        error.value = err?.response?.data?.detail || `Ошибка обновления`
+        const parsedError = parseApiError(err)
+        error.value = parsedError.detail
         await handleApiErrorAsync(err, { operation: 'formValidation', entity: config.entityName })
         throw err
       } finally {
@@ -272,7 +276,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
 
         return response.data || { action: 'deleted' }
       } catch (err: any) {
-        error.value = err?.response?.data?.detail || `Ошибка удаления`
+        const parsedError = parseApiError(err)
+        error.value = parsedError.detail
         await handleApiErrorAsync(err, { operation: 'delete', entity: config.entityName })
         throw err
       } finally {

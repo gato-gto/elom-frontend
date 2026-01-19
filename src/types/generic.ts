@@ -34,6 +34,22 @@ export interface ActionConfig<T = any> {
   disabled?: (item: T) => boolean
   visible?: (item: T) => boolean
   confirm?: string | ((item: T) => string)
+  /**
+   * ✅ RBAC: Разрешение для этого действия
+   * Если указано, действие будет скрыто, если у пользователя нет этого разрешения
+   * Пример: 'materials.edit', 'purchases.delete', 'employees.view'
+   */
+  permission?: string
+  /**
+   * ✅ RBAC: Массив разрешений (для сложных проверок)
+   * Если указано, действие будет показано, если есть хотя бы одно из разрешений
+   */
+  anyPermission?: string[]
+  /**
+   * ✅ RBAC: Все разрешения должны быть (AND логика)
+   * Если указано, действие будет показано только если есть все разрешения
+   */
+  allPermissions?: string[]
 }
 
 export interface GenericListConfig<T = any> {
@@ -59,6 +75,38 @@ export interface GenericListConfig<T = any> {
   mobileCardProp?: string
   defaultSort?: string
   defaultSortOrder?: 'asc' | 'desc'
+  /**
+   * ✅ RBAC: Ресурс для автоматического определения permissions
+   * Если указано, стандартные действия (view, edit, delete, export) будут
+   * автоматически проверяться по permissions: {resource}.view, {resource}.edit, и т.д.
+   * Пример: 'materials', 'purchases', 'employees', 'stock'
+   */
+  resource?: string
+  /**
+   * ✅ RBAC: Разрешение для просмотра (View)
+   * Если не указано, будет использовано {resource}.view
+   */
+  viewPermission?: string
+  /**
+   * ✅ RBAC: Разрешение для создания (Create)
+   * Если не указано, будет использовано {resource}.create
+   */
+  createPermission?: string
+  /**
+   * ✅ RBAC: Разрешение для редактирования (Edit)
+   * Если не указано, будет использовано {resource}.edit
+   */
+  editPermission?: string
+  /**
+   * ✅ RBAC: Разрешение для удаления (Delete)
+   * Если не указано, будет использовано {resource}.delete
+   */
+  deletePermission?: string
+  /**
+   * ✅ RBAC: Разрешение для экспорта (Export)
+   * Если не указано, будет использовано reports.export или {resource}.export
+   */
+  exportPermission?: string
 }
 
 // GenericForm types

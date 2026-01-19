@@ -1,8 +1,8 @@
 <template>
   <MobileCard
     :title="getEmployeeFullName()"
-    :badge="getStatusLabelLocal(employee.role)"
-    :badge-class="getStatusBadgeClassLocal(employee.role)"
+    :badge="getRoleDisplayName()"
+    :badge-class="getRoleBadgeClass()"
     :actions="actions"
     @action="$emit('action', $event)"
   >
@@ -23,12 +23,22 @@
           <span class="font-medium ml-2">{{ employee.phone }}</span>
         </div>
         
-        <div>
+        <div v-if="employee.roles && employee.roles.length > 0">
+          <span class="text-gray-500">Роли:</span>
+          <span class="font-medium ml-2">
+            <span
+              v-for="role in employee.roles"
+              :key="role.id"
+              class="badge badge-sm badge-primary mr-1"
+            >
+              {{ role.display_name }}
+            </span>
+          </span>
+        </div>
+        <div v-else>
           <span class="text-gray-500">Роль:</span>
           <span class="font-medium ml-2">
-            <span class="badge badge-sm" :class="getStatusBadgeClassLocal(employee.role)">
-              {{ getStatusLabelLocal(employee.role) }}
-            </span>
+            <span class="badge badge-sm badge-ghost">Нет роли</span>
           </span>
         </div>
         
@@ -136,20 +146,18 @@ const getEmployeeFullName = () => {
   return parts.length > 0 ? parts.join(' ') : props.employee.username
 }
 
-const roleLabelOverrides: Record<string, string> = {
-  admin: 'Администратор',
-  director: 'Директор',
-  manager: 'Менеджер',
-  employee: 'Сотрудник'
+// ✅ RBAC: Используем роли из RBAC
+const getRoleDisplayName = (): string => {
+  if (props.employee.roles && props.employee.roles.length > 0) {
+    return props.employee.roles.map(r => r.display_name).join(', ')
+  }
+  return 'Нет роли'
 }
 
-const roleClassOverrides: Record<string, string> = {
-  admin: 'badge-error',
-  director: 'badge-warning',
-  manager: 'badge-info',
-  employee: 'badge-success'
+const getRoleBadgeClass = (): string => {
+  if (props.employee.roles && props.employee.roles.length > 0) {
+    return 'badge-primary'
+  }
+  return 'badge-ghost'
 }
-
-const getStatusLabelLocal = (role: string) => getStatusLabel(role, roleLabelOverrides)
-const getStatusBadgeClassLocal = (role: string) => getStatusBadgeClass(role, roleClassOverrides)
 </script>

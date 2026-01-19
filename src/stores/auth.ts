@@ -2,6 +2,7 @@
 import {defineStore} from 'pinia'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
+import { parseApiError } from '@/utils/errorHandler'
 import type { Me } from '@/api/types/employees'
 
 type Tokens = { access: string; refresh: string }
@@ -64,7 +65,8 @@ export const useAuthStore = defineStore('auth', {
                 await this.fetchMe()
                 return true
             } catch (e: any) {
-                this.error = e?.response?.data?.detail || 'Ошибка авторизации'
+                const parsedError = parseApiError(e)
+                this.error = parsedError.detail
                 this.clearTokens()
                 return false
             } finally {
@@ -75,6 +77,10 @@ export const useAuthStore = defineStore('auth', {
         async fetchMe() {
             const {data} = await api.get<Me>(endpoints.users.me)
             this.me = data
+            // Загружаем разрешения после получения данных пользователя
+            const { usePermissionsStore } = await import('@/stores/permissions')
+            const permissionsStore = usePermissionsStore()
+            await permissionsStore.fetchPermissions()
         },
 
         async refreshTokens(): Promise<string | null> {

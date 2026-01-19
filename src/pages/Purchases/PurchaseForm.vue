@@ -486,11 +486,12 @@ import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
 import { useObjectsStore } from '@/stores/objects'
-import { useEmployeesStore } from '@/stores/employees'
+import { useEmployeesStore, getResponsibleEmployees } from '@/stores/employees'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { useUiStore } from '@/stores/ui'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import GenericForm from '@/components/GenericForm.vue'
 import Modal from '@/components/Modal.vue'
@@ -614,37 +615,11 @@ async function uploadPurchasePhoto(purchaseId: number, file: File, type: 'instru
     console.error('Error response:', error?.response)
     console.error('Error response data:', error?.response?.data)
     
-    // Более детальная обработка ошибок
-    let errorMessage = 'Ошибка загрузки фото'
-    if (error?.response?.data) {
-      if (error.response.data.detail) {
-        errorMessage = error.response.data.detail
-      } else if (error.response.data.file) {
-        errorMessage = Array.isArray(error.response.data.file) 
-          ? error.response.data.file[0] 
-          : error.response.data.file
-      } else if (error.response.data.type) {
-        errorMessage = Array.isArray(error.response.data.type) 
-          ? error.response.data.type[0] 
-          : error.response.data.type
-      } else if (error.response.data.purchase) {
-        errorMessage = Array.isArray(error.response.data.purchase) 
-          ? error.response.data.purchase[0] 
-          : error.response.data.purchase
-      } else if (typeof error.response.data === 'string') {
-        errorMessage = error.response.data
-      } else {
-        // Показываем все ошибки валидации
-        const errors = Object.entries(error.response.data)
-          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
-          .join(', ')
-        errorMessage = errors || errorMessage
-      }
-    } else if (error?.message) {
-      errorMessage = error.message
-    }
+    // Используем улучшенную обработку ошибок
+    const { parseApiError } = await import('@/utils/errorHandler')
+    const parsedError = parseApiError(error)
     
-    ui.toast({ type: 'error', text: errorMessage })
+    ui.toast({ type: 'error', text: parsedError.detail })
     throw error
   }
 }
@@ -703,7 +678,10 @@ const objects = computed(() => objectsStore.items)
 const employees = computed(() => employeesStore.items)
 const suppliers = computed(() => suppliersStore.items)
 
-const isRequester = computed(() => auth.me?.role === 'requester')
+// ✅ RBAC: проверяем разрешения вместо роли
+const { canCreateRequests } = usePermissions()
+// isRequester = пользователь который может создавать заявки, но не одобрять
+const isRequester = computed(() => canCreateRequests.value)
 
 const objectOptions = computed(() => {
   // Для requester показываем только назначенные объекты
@@ -735,25 +713,20 @@ const supplierOptions = computed(() =>
 )
 
 const employeeOptions = computed(() => {
-  // Получаем бригадиров и администраторов
-  const brigadiers = employees.value.filter((emp: Employee) => (emp.role === 'brigadier' || emp.role === 'admin') && emp.is_active)
+  // Используем централизованную функцию для получения ответственных
+  const brigadiers = [...getResponsibleEmployees()]
   
-  // Добавляем текущего пользователя, если он не бригадир
-  if (auth.me && auth.me.role !== 'brigadier') {
+  // Добавляем текущего пользователя, если он еще не в списке
+  if (auth.me && !brigadiers.some((emp: any) => emp.id === auth.me!.id)) {
     const currentUser = {
       id: auth.me.id,
+      profile_id: auth.me.profile_id || auth.me.id,
       first_name: auth.me.first_name,
       last_name: auth.me.last_name,
       username: auth.me.username,
-      role: auth.me.role,
       is_active: true
     } as Employee
-    
-    // Проверяем, что текущий пользователь еще не в списке
-    const isAlreadyInList = brigadiers.some((emp: any) => emp.id === auth.me!.id)
-    if (!isAlreadyInList) {
-      brigadiers.unshift(currentUser)
-    }
+    brigadiers.unshift(currentUser)
   }
   
   // Сортируем так, чтобы текущий пользователь был первым

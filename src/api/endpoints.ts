@@ -19,6 +19,28 @@ export const endpoints = {
         me: join('/users/me'),
     },
 
+    // RBAC endpoints
+    rbac: {
+        myPermissions: join('/rbac/my-permissions/'),
+        permissions: {
+            list: join('/rbac/permissions/'),
+            one: (id: number) => join(`/rbac/permissions/${id}/`),
+        },
+        roles: {
+            list: join('/rbac/roles/'),
+            one: (id: number) => join(`/rbac/roles/${id}/`),
+            create: join('/rbac/roles/'),
+            update: (id: number) => join(`/rbac/roles/${id}/`),
+            delete: (id: number) => join(`/rbac/roles/${id}/`),
+        },
+        userRoles: {
+            list: join('/rbac/user-roles/'),
+            one: (id: number) => join(`/rbac/user-roles/${id}/`),
+            create: join('/rbac/user-roles/'),
+            delete: (id: number) => join(`/rbac/user-roles/${id}/`),
+        },
+    },
+
     // Employee endpoints
     employees: {
         list: join('/employees/'),

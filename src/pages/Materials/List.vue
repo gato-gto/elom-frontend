@@ -93,11 +93,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Material, Me } from '@/api/types'
+import type { Material } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import MaterialForm from './MaterialForm.vue'
 import MaterialBulkForm from './MaterialBulkForm.vue'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useMaterialsStore } from '@/stores/materials'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import Modal from '@/components/Modal.vue'
@@ -107,7 +107,6 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
-const auth = useAuthStore()
 const materialsStore = useMaterialsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 
@@ -115,10 +114,9 @@ const materialCategoriesStore = useMaterialCategoriesStore()
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
 // Computed
-const canEdit = computed(() => {
-  const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'manager' || role === 'warehouse'
-})
+// ✅ RBAC: используем permissions
+const { can, canExportReports } = usePermissions()
+const canEdit = computed(() => can('materials', 'edit'))
 
 // Category filter options
 const categoryFilterOptions = computed(() => [
@@ -135,7 +133,7 @@ const listConfig = computed<GenericListConfig<Material>>(() => ({
   createText: 'Добавить материал',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'materials',
   exportUrl: '/api/v1/materials/',
   loadingText: 'Загрузка материалов...',

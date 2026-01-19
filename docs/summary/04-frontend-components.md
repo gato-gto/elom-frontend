@@ -67,6 +67,10 @@ src/
 │   ├── LoadingSpinner.vue # Спиннер загрузки
 │   ├── AutoNavigation.vue # Автоматическая навигация
 │   ├── AutoMobileNavigation.vue # Мобильная навигация
+│   ├── PermissionGuard.vue # Условный рендеринг на основе прав
+│   ├── PermissionButton.vue # Кнопки с проверкой прав
+│   ├── PermissionSection.vue # Секции UI с проверкой прав
+│   ├── PermissionFilter.vue # Фильтры с проверкой прав
 │   └── ...               # Другие UI компоненты
 ├── composables/          # Vue композаблы (13 файлов)
 │   ├── useGenericForm.ts # Универсальные формы
@@ -117,8 +121,10 @@ src/
 │   ├── ui.ts             # UI состояние (defineStore)
 │   ├── theme.ts          # Темы (defineStore)
 │   └── notifications.ts  # Уведомления (defineStore)
-├── utils/                # Утилиты (11 файлов)
-│   ├── errorHandler.ts   # Обработка ошибок
+├── utils/                # Утилиты (13 файлов)
+│   ├── errorHandler.ts   # Обработка ошибок (улучшена)
+│   ├── permissionActions.ts # Утилиты для создания конфигураций действий с правами
+│   ├── types.ts          # Общие типы (PermissionChecker)
 │   ├── formatters.ts     # Форматирование
 │   ├── export.ts         # Экспорт данных
 │   ├── chartUtils.ts     # Утилиты для графиков
@@ -655,6 +661,164 @@ export const useUiStore = defineStore('ui', () => {
 - ✅ Поддержка слотов для кастомизации ячеек
 - ✅ Интеграция с `useResponsiveTable` composable
 - ✅ Автоматические действия для карточек
+
+### Компоненты управления правами доступа (RBAC)
+
+Система предоставляет универсальные компоненты для динамического управления видимостью и доступностью UI-элементов на основе прав доступа пользователя.
+
+#### PermissionGuard - Условный рендеринг на основе прав
+```vue
+<template>
+  <!-- Простая проверка одного разрешения -->
+  <PermissionGuard permission="materials.create">
+    <button>Создать материал</button>
+  </PermissionGuard>
+
+  <!-- Проверка любого из разрешений -->
+  <PermissionGuard :any="['materials.create', 'materials.edit']">
+    <button>Действие</button>
+  </PermissionGuard>
+
+  <!-- Проверка всех разрешений -->
+  <PermissionGuard :all="['materials.create', 'materials.delete']">
+    <button>Действие (требует оба права)</button>
+  </PermissionGuard>
+
+  <!-- С дополнительной проверкой через show функцию -->
+  <PermissionGuard 
+    permission="purchases.edit" 
+    :item="purchase"
+    :show="item => item.status !== 'archived'"
+  >
+    <button>Редактировать</button>
+  </PermissionGuard>
+</template>
+```
+
+**Особенности PermissionGuard:**
+- ✅ Поддержка `permission`, `any`, `all`, `resource`+`action`
+- ✅ Дополнительная проверка через функцию `show`
+- ✅ Автоматическая загрузка разрешений при монтировании
+
+#### PermissionButton - Кнопка с проверкой прав
+```vue
+<template>
+  <!-- Простая кнопка с проверкой прав -->
+  <PermissionButton 
+    permission="materials.create"
+    label="Создать материал"
+    @click="handleCreate"
+  />
+
+  <!-- Кнопка с иконкой и вариантом стиля -->
+  <PermissionButton 
+    resource="purchases"
+    action="approve"
+    label="Одобрить"
+    variant="success"
+    size="sm"
+    @click="handleApprove"
+  />
+
+  <!-- Кнопка-ссылка -->
+  <PermissionButton 
+    permission="reports.view"
+    label="Отчеты"
+    tag="router-link"
+    to="/reports"
+  />
+</template>
+```
+
+**Особенности PermissionButton:**
+- ✅ Автоматическое скрытие при отсутствии прав
+- ✅ Поддержка всех вариантов стилей (primary, success, error, etc.)
+- ✅ Поддержка размеров (xs, sm, md, lg)
+- ✅ Поддержка router-link и обычных ссылок
+- ✅ Состояния loading и disabled
+
+#### PermissionSection - Секция UI с проверкой прав
+```vue
+<template>
+  <PermissionSection 
+    permission="reports.view"
+    title="Отчеты"
+    bordered
+    background
+  >
+    <ReportList />
+  </PermissionSection>
+</template>
+```
+
+**Особенности PermissionSection:**
+- ✅ Условное отображение целых секций UI
+- ✅ Поддержка заголовков и кастомных слотов
+- ✅ Настройка границ и фона
+
+#### PermissionFilter - Фильтр с проверкой прав
+```vue
+<template>
+  <PermissionFilter
+    permission="purchases.view_all"
+    type="select"
+    label="Ответственный"
+    :options="employeeOptions"
+    :model-value="filters.responsible"
+    @update:model-value="updateFilter('responsible', $event)"
+  />
+</template>
+```
+
+**Особенности PermissionFilter:**
+- ✅ Условное отображение фильтров
+- ✅ Интеграция с FilterField
+- ✅ Поддержка всех типов полей
+
+#### Утилиты для создания конфигураций действий
+
+```typescript
+import { createListActions } from '@/utils/permissionActions'
+import { usePermissions } from '@/composables/usePermissions'
+
+const { hasPermission, hasAnyPermission, hasAllPermissions, can } = usePermissions()
+
+// Создание конфигурации действий для GenericList
+const listActions = createListActions([
+  {
+    key: 'view',
+    label: 'Просмотр',
+    permission: 'purchases.view',
+    variant: 'outline',
+    size: 'sm'
+  },
+  {
+    key: 'edit',
+    label: 'Редактировать',
+    permission: 'purchases.edit',
+    variant: 'primary',
+    size: 'sm',
+    show: (item: Purchase) => item.status !== 'archived'
+  },
+  {
+    key: 'approve',
+    label: 'Одобрить',
+    permission: 'purchases.approve',
+    variant: 'success',
+    size: 'sm',
+    show: (item: Purchase) => item.status === 'new',
+    requireConfirm: true
+  }
+], { hasPermission, hasAnyPermission, hasAllPermissions, can })
+```
+
+**Особенности permissionActions:**
+- ✅ `createActionConfig` - создание конфигурации одного действия
+- ✅ `createActionsConfig` - создание конфигурации нескольких действий
+- ✅ `createListActions` - создание действий для GenericList
+- ✅ Поддержка сложных условий через функции `show` и `disabled`
+
+📚 **Полная документация:** [PERMISSION_COMPONENTS.md](../../src/docs/PERMISSION_COMPONENTS.md)
 
 ### Базовые компоненты
 
@@ -2075,7 +2239,63 @@ export function usePagination(pagination: PaginationState, config: PaginationCon
 
 ## Утилиты
 
-### errorHandler.ts - Обработка ошибок
+### errorHandler.ts - Улучшенная обработка ошибок
+
+Система обработки ошибок автоматически извлекает конкретные сообщения об ошибках из структуры ответа backend, заменяя общие сообщения типа "Validation error" на детальные.
+
+```typescript
+// Автоматическое извлечение конкретных сообщений
+export function parseApiError(error: any): ParsedApiError {
+  // Если detail это общее сообщение, заменяем на конкретное из errors
+  if (detail === 'Validation error' && errors.items) {
+    detail = errors.items[0] // "Закупка должна содержать хотя бы одну позицию"
+  }
+  // ...
+}
+```
+
+**Особенности:**
+- ✅ Автоматическое извлечение конкретных сообщений из `errors.items`, `errors.field`
+- ✅ Поддержка вложенных ошибок валидации (items[0].material)
+- ✅ Обработка `non_field_errors` и `__all__`
+- ✅ Интеграция со всеми stores и компонентами
+
+**Пример использования:**
+```typescript
+// Backend возвращает:
+{
+  "detail": "Validation error",
+  "errors": {
+    "items": ["Закупка должна содержать хотя бы одну позицию"]
+  }
+}
+
+// Frontend показывает: "Закупка должна содержать хотя бы одну позицию"
+// вместо общего "Validation error"
+```
+
+### permissionActions.ts - Утилиты для управления действиями с правами
+
+```typescript
+import { createListActions, createActionConfig } from '@/utils/permissionActions'
+
+// Создание конфигурации действий для GenericList
+const actions = createListActions([
+  {
+    key: 'edit',
+    label: 'Редактировать',
+    permission: 'materials.edit',
+    show: (item) => item.status !== 'archived'
+  }
+], permissionChecker)
+```
+
+**Функции:**
+- ✅ `createActionConfig` - создание конфигурации одного действия
+- ✅ `createActionsConfig` - создание конфигурации нескольких действий
+- ✅ `createListActions` - создание действий для GenericList с автоматической фильтрацией
+
+### Старая версия errorHandler (для справки)
 ```typescript
 export class ErrorHandlers {
   static formValidation(error: any): {

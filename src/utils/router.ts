@@ -1,11 +1,30 @@
 import type { RouteRecordNormalized } from 'vue-router'
-import type { UserRole } from '@/api/types/common'
 import type { NavigationItem, AppRouteRecordRaw } from '@/types/router'
+import { usePermissionsStore } from '@/stores/permissions'
+import { useAuthStore } from '@/stores/auth'
+
+/**
+ * Проверка доступа к маршруту через RBAC permissions
+ */
+function hasPermissionAccess(permissions: string[] | undefined): boolean {
+  if (!permissions || permissions.length === 0) {
+    return true // Нет ограничений по permissions
+  }
+  
+  const permissionsStore = usePermissionsStore()
+  return permissionsStore.hasAnyPermission(...permissions)
+}
 
 /**
  * Generate navigation menu from routes
+ * ✅ RBAC: Использует permissions для проверки доступа
+ * ⚠️ DEPRECATED: userRole параметр сохранен для обратной совместимости, но не используется
  */
-export function generateNavigation(routes: RouteRecordNormalized[], userRole: UserRole | null): NavigationItem[] {
+/**
+ * ✅ RBAC: Генерирует навигацию на основе permissions
+ * @param routes - Список маршрутов
+ */
+export function generateNavigation(routes: RouteRecordNormalized[]): NavigationItem[] {
   const navigation: NavigationItem[] = []
   
   // Filter routes that should appear in navigation
@@ -17,15 +36,18 @@ export function generateNavigation(routes: RouteRecordNormalized[], userRole: Us
     const skipRoutes = ['Login', 'NotFound', 'MaterialCreate', 'MaterialEdit', 'ObjectCreate', 'ObjectEdit', 'UnitCreate', 'UnitEdit', 'EmployeeCreate', 'EmployeeEdit', 'SupplierCreate', 'SupplierEdit', 'StockCreate', 'StockEdit', 'WriteOffCreate', 'WriteOffEdit', 'PurchaseCreate', 'PurchaseEdit']
     if (skipRoutes.includes(route.name as string)) {return false}
     
-    // Check role access
-    // Если у роута указаны roles, проверяем что текущая роль есть в списке
-    if (route.meta.roles && Array.isArray(route.meta.roles)) {
-      // Если роль пользователя не определена - скрываем защищённые роуты
-      if (!userRole) {return false}
-      // Если роль не входит в список разрешённых - скрываем
-      if (!(route.meta.roles as UserRole[]).includes(userRole)) {
+    // ✅ RBAC: Проверка через permissions
+    const routePermissions = route.meta.permissions as string[] | undefined
+    if (routePermissions && routePermissions.length > 0) {
+      if (!hasPermissionAccess(routePermissions)) {
         return false
       }
+    }
+    // ⚠️ DEPRECATED: meta.roles больше не поддерживается
+    // Если маршрут использует только meta.roles без permissions, он не будет показан
+    else if (route.meta.roles && Array.isArray(route.meta.roles)) {
+      console.warn(`[RBAC] Route ${route.path} uses deprecated meta.roles. Migrate to meta.permissions.`)
+        return false
     }
     
     return true
@@ -50,7 +72,6 @@ export function generateNavigation(routes: RouteRecordNormalized[], userRole: Us
       description: route.meta.description as string,
       category: category,
       order: order,
-      roles: route.meta.roles as UserRole[]
     })
   })
   
@@ -148,23 +169,38 @@ export function getBreadcrumbs(route: RouteRecordNormalized): Array<{ title: str
 
 /**
  * Check if user has access to route
+ * ✅ RBAC: Использует permissions для проверки доступа
+ * ⚠️ DEPRECATED: userRole параметр сохранен для обратной совместимости
  */
-export function hasRouteAccess(route: RouteRecordNormalized, userRole: UserRole | null): boolean {
+/**
+ * ✅ RBAC: Проверяет доступ к маршруту через permissions
+ * @param route - Маршрут для проверки
+ */
+export function hasRouteAccess(route: RouteRecordNormalized): boolean {
   // Public routes are always accessible
   if (route.meta.public) {return true}
   
-  // If no role required, accessible to authenticated users
-  if (!route.meta.roles) {return true}
+  // ✅ RBAC: Проверка через permissions
+  const routePermissions = route.meta.permissions as string[] | undefined
+  if (routePermissions && routePermissions.length > 0) {
+    return hasPermissionAccess(routePermissions)
+  }
   
-  // Check if user role is in required roles
-  return userRole ? (route.meta.roles as UserRole[]).includes(userRole) : false
+  // ⚠️ DEPRECATED: meta.roles больше не поддерживается
+  // Если маршрут использует только meta.roles без permissions, доступ запрещен
+  if (route.meta.roles && Array.isArray(route.meta.roles)) {
+    console.warn(`[RBAC] Route ${route.path} uses deprecated meta.roles. Migrate to meta.permissions.`)
+      return false
+  }
+  
+  return true // Нет ограничений
 }
 
 /**
- * Get accessible routes for user
+ * ✅ RBAC: Получает доступные маршруты на основе permissions
  */
-export function getAccessibleRoutes(routes: RouteRecordNormalized[], userRole: UserRole | null): RouteRecordNormalized[] {
-  return routes.filter(route => hasRouteAccess(route, userRole))
+export function getAccessibleRoutes(routes: RouteRecordNormalized[]): RouteRecordNormalized[] {
+  return routes.filter(route => hasRouteAccess(route))
 }
 
 /**
@@ -198,8 +234,14 @@ export function getCategoryIcon(category: string): string {
 
 /**
  * Get route permissions for current user
+ * ✅ RBAC: Использует permissions для проверки доступа
+ * ⚠️ DEPRECATED: userRole параметр сохранен для обратной совместимости
  */
-export function getRoutePermissions(route: RouteRecordNormalized, userRole: UserRole | null): {
+/**
+ * ✅ RBAC: Получает permissions для маршрута
+ * @param route - Маршрут
+ */
+export function getRoutePermissions(route: RouteRecordNormalized): {
   canView: boolean
   canCreate: boolean
   canEdit: boolean

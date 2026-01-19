@@ -51,13 +51,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Object, Me } from '@/api/types'
+import type { Object } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useObjectsStore, fetchResponsibles } from '@/stores/objects'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
 import ObjectForm from './ObjectForm.vue'
@@ -67,7 +67,6 @@ import ObjectCard from '@/components/cards/ObjectCard.vue'
 // Stores
 const router = useRouter()
 const objectsStore = useObjectsStore()
-const auth = useAuthStore()
 const ui = useUiStore()
 
 // Error handling
@@ -77,12 +76,11 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 const modalOpen = ref(false)
 const current = ref<Object | null>(null)
 
+// ✅ RBAC: используем permissions
+const { can, canExportReports } = usePermissions()
+
 // Computed
-const canEdit = computed(() => {
-  const role = auth.role as Me['role'] | undefined
-  // Бригадиры могут создавать и редактировать объекты
-  return role === 'admin' || role === 'director' || role === 'brigadier'
-})
+const canEdit = computed(() => can('objects', 'edit'))
 
 const modalTitle = computed(() => {
   return current.value ? 'Редактировать объект' : 'Добавить объект'
@@ -115,7 +113,7 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
   createText: 'Добавить объект',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'objects',
   exportUrl: '/api/v1/common/objects/',
   loadingText: 'Загрузка объектов...',

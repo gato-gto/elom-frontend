@@ -299,6 +299,7 @@ import { getByObject as getPurchasesByObject } from '@/stores/purchases'
 import { useWriteOffsStore } from '@/stores/writeOffs'
 import { getByObject as getWriteOffsByObject } from '@/stores/writeOffs'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { formatDate } from '@/utils/formatters'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -312,6 +313,7 @@ const objectsStore = useObjectsStore()
 const purchasesStore = usePurchasesStore()
 const writeOffsStore = useWriteOffsStore()
 const authStore = useAuthStore()
+const { can } = usePermissions()
 const { handleLoadingError } = useErrorHandler()
 
 const loading = ref(true)
@@ -332,10 +334,8 @@ const stageDictionary: Record<
   handover: { label: 'Сдача', description: 'Этап подготовки к передаче' }
 }
 
-const canEdit = computed(() => {
-  const role = authStore.role
-  return role === 'admin' || role === 'director' || role === 'coordinator'
-})
+// ✅ RBAC: проверка через permissions вместо хардкода ролей
+const canEdit = computed(() => can('objects', 'edit'))
 
 const statusLabel = computed(() => (object.value?.is_active ? 'Активный объект' : 'Неактивный объект'))
 const statusBadgeClass = computed(() => (object.value?.is_active ? 'badge-success' : 'badge-error'))

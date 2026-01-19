@@ -5,9 +5,9 @@
       :title="config.title"
       :subtitle="config.subtitle"
       :icon="config.icon"
-      :show-create="config.showCreate"
+      :show-create="config.showCreate && canCreate"
       :create-text="config.createText"
-      :can-create="config.canCreate"
+      :can-create="canCreate"
       :loading="store.loading"
       :show-stats="config.showStats"
       :total-count="store.pagination?.count || 0"
@@ -15,8 +15,9 @@
       @create="$emit('create')"
     >
       <template #actions>
+        <!-- ✅ RBAC: Проверка разрешения на экспорт -->
         <ExportButton 
-          v-if="config.exportable"
+          v-if="config.exportable && canExport"
           :data="store.items"
           :filename="config.exportFilename"
           :loading="store.loading"
@@ -92,7 +93,7 @@
                   {{ sortOrder === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th v-if="config.actions && config.actions.length > 0" class="text-right">Действия</th>
+              <th v-if="visibleActions.length > 0" class="text-right">Действия</th>
             </tr>
           </thead>
           
@@ -100,7 +101,7 @@
           <TableSkeleton 
             v-if="store.loading && store.items.length === 0"
             :rows="store.pagination.pageSize"
-            :columns="config.columns.length + (config.actions ? 1 : 0)"
+            :columns="config.columns.length + (visibleActions.length > 0 ? 1 : 0)"
           />
           
           <!-- Actual Data -->
@@ -122,21 +123,25 @@
                         <span v-else>{{ formatColumnValue(getColumnValue(item, column), column, item) }}</span>
                   </slot>
                 </td>
-                <td v-if="config.actions && config.actions.length > 0" class="text-right">
+                <td v-if="visibleActions.length > 0" class="text-right">
                   <div class="flex gap-1 justify-end">
-                    <button 
-                      v-for="action in config.actions"
+                    <template 
+                      v-for="action in visibleActions"
                       :key="action.key"
-                      :class="[
-                        'btn btn-xs',
-                        action.class || 'btn-outline',
-                        action.disabled && action.disabled(item) ? 'btn-disabled' : ''
-                      ]"
-                      :disabled="action.disabled && action.disabled(item)"
-                      @click="handleAction(action.key, item)"
                     >
-                      {{ action.label }}
-                    </button>
+                      <button 
+                        v-if="canPerformActionOnItem(action, item, config, permissions)"
+                        :class="[
+                          'btn btn-xs',
+                          action.class || 'btn-outline',
+                          action.disabled && action.disabled(item) ? 'btn-disabled' : ''
+                        ]"
+                        :disabled="action.disabled && action.disabled(item)"
+                        @click="handleAction(action.key, item)"
+                      >
+                        {{ action.label }}
+                      </button>
+                    </template>
                   </div>
                 </td>
               </tr>
@@ -144,7 +149,7 @@
               <slot name="row-expanded" :item="item" />
             </template>
             <tr v-if="!store.loading && store.items.length === 0">
-              <td :colspan="config.columns.length + (config.actions ? 1 : 0)" class="text-center text-gray-500 py-4 md:py-8">
+              <td :colspan="config.columns.length + (visibleActions.length > 0 ? 1 : 0)" class="text-center text-gray-500 py-4 md:py-8">
                 <div class="flex flex-col items-center gap-2">
                   <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -209,8 +214,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useResponsiveTable } from '@/composables/useResponsiveTable'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { usePermissions } from '@/composables/usePermissions'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
+import { filterActionsByPermissions, getListPermissions, canPerformActionOnItem } from '@/utils/permissions'
 import type { 
   GenericListConfig, 
   ColumnConfig, 
@@ -247,10 +254,40 @@ const emit = defineEmits<{
 // Composables
 const { isMobile } = useResponsiveTable()
 const { handleLoadingError, handleExportError } = useErrorHandler()
+const permissions = usePermissions()
+
+// ✅ RBAC: Фильтрованные действия на основе permissions
+const visibleActions = computed(() => {
+  if (!props.config.actions || props.config.actions.length === 0) {
+    return []
+  }
+  
+  return filterActionsByPermissions(props.config.actions, props.config, permissions)
+})
 
 // State
 const sortBy = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
+
+// ✅ RBAC: Проверка разрешения на экспорт
+const canExport = computed(() => {
+  const listPermissions = getListPermissions(props.config)
+  if (listPermissions.export) {
+    return permissions.hasPermission(listPermissions.export)
+  }
+  // Если нет явного разрешения, проверяем общее разрешение на экспорт
+  return permissions.canExportReports.value
+})
+
+// ✅ RBAC: Проверка разрешения на создание
+const canCreate = computed(() => {
+  const listPermissions = getListPermissions(props.config)
+  if (listPermissions.create) {
+    return permissions.hasPermission(listPermissions.create)
+  }
+  // Если нет явного разрешения, используем config.canCreate
+  return props.config.canCreate ?? false
+})
 
 // Lazy loading для мобильных карточек
 const visibleCards = ref<Set<number>>(new Set())
@@ -370,15 +407,20 @@ function handleAction(action: string, item: any) {
 }
 
 function getCardActions(item: any) {
-  if (!props.config.actions) {return []}
+  if (visibleActions.value.length === 0) { return [] }
   
-  return props.config.actions.map(action => ({
-    key: action.key,
-    label: action.label,
-    shortLabel: action.label.substring(0, 4),
-    class: action.class || 'btn-outline',
-    disabled: action.disabled ? action.disabled(item) : false
-  }))
+  return visibleActions.value
+    .filter(action => {
+      // ✅ RBAC: Проверка прав на конкретный элемент (с учетом scope-based permissions)
+      return canPerformActionOnItem(action, item, props.config, permissions)
+    })
+    .map(action => ({
+      key: action.key,
+      label: action.label,
+      shortLabel: action.label.substring(0, 4),
+      class: action.class || 'btn-outline',
+      disabled: action.disabled ? action.disabled(item) : false
+    }))
 }
 
 function handleCardAction(item: any, action: string) {

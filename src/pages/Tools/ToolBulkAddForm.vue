@@ -192,6 +192,7 @@ import { useToolsStore } from '@/stores/tools'
 import { useEmployeesStore } from '@/stores/employees'
 import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
+import { parseApiError } from '@/utils/errorHandler'
 import type { Tool, ToolBulkCreateRequest, ToolBulkItem, ToolCondition } from '@/api/types/tools'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
@@ -345,8 +346,8 @@ async function handleSubmit() {
     
     emit('saved')
   } catch (error: any) {
-    const message = error?.response?.data?.detail || 'Ошибка при создании инструментов'
-    ui.toast({ type: 'error', text: message })
+    const parsedError = parseApiError(error)
+    ui.toast({ type: 'error', text: parsedError.detail })
   } finally {
     loading.value = false
   }

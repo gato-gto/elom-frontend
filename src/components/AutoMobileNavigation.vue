@@ -115,21 +115,17 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { usePermissionsStore } from '@/stores/permissions'
 import { getIconPath } from '@/assets/icons'
 import type { NavigationItem } from '@/types/router'
-import type { UserRole } from '@/api/types/common'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const theme = useThemeStore()
+const permissionsStore = usePermissionsStore()
 
 const showMoreContent = ref(false)
-
-function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) {return true}
-  return requiredRoles.includes(userRole)
-}
 
 function isActive(path: string): boolean {
   return route.path.startsWith(path)
@@ -150,8 +146,10 @@ const allNavigationItems = computed((): NavigationItem[] => {
     // Skip public routes
     if (meta.public) {return}
     
-    // Check role access
-    if (meta.roles && !hasRoleAccess(auth.role, meta.roles as UserRole[])) {return}
+    // Check permissions access (RBAC)
+    if (meta.permissions && Array.isArray(meta.permissions) && meta.permissions.length > 0) {
+      if (!permissionsStore.hasAnyPermission(...meta.permissions as string[])) {return}
+    }
     
     const item: NavigationItem = {
       name: route.name as string,
@@ -161,7 +159,6 @@ const allNavigationItems = computed((): NavigationItem[] => {
       description: meta.description as string,
       category: meta.category as string,
       order: meta.order as number || 999,
-      roles: meta.roles as UserRole[]
     }
     
     items.push(item)
@@ -195,13 +192,11 @@ const userInitials = computed(() => {
 })
 
 const roleDisplayName = computed(() => {
-  const roleNames: Record<string, string> = {
-    admin: 'Администратор',
-    director: 'Директор',
-    coordinator: 'Координатор',
-    brigadier: 'Бригадир'
+  // Используем RBAC роли для отображения
+  if (permissionsStore.roles.length > 0) {
+    return permissionsStore.roles.map(r => r.display_name).join(', ')
   }
-  return roleNames[auth.role || ''] || 'Роль не задана'
+  return 'Роль не задана'
 })
 
 const isDark = computed(() => theme.isDark)

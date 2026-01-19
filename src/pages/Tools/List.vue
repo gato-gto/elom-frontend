@@ -113,6 +113,11 @@ import GenericList from '@/components/GenericList.vue'
 import ToolCard from '@/components/cards/ToolCard.vue'
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
+import { usePermissions } from '@/composables/usePermissions'
+
+// ✅ RBAC: проверка через permissions
+const { can, canExportReports } = usePermissions()
+const canEdit = computed(() => can('tools', 'edit'))
 
 // Stores
 const toolsStore = useToolsStore()
@@ -184,9 +189,9 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
   icon: 'build',
   showCreate: true,
   createText: 'Добавить инструмент',
-  canCreate: true,
+  canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'tools',
   exportUrl: '/api/v1/tools/',
   loadingText: 'Загрузка инструментов...',

@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import type { StockSnapshot, SiteObject, Material, Employee, Me } from '@/api/types'
+import type { StockSnapshot, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -88,7 +88,7 @@ import { useStockSnapshotsStore } from '@/stores/stockSnapshots'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
 import StockForm from './StockForm.vue'
@@ -102,7 +102,6 @@ const stockSnapshotsStore = useStockSnapshotsStore()
 const objectsStore = useObjectsStore()
 const materialsStore = useMaterialsStore()
 const employeesStore = useEmployeesStore()
-const auth = useAuthStore()
 const ui = useUiStore()
 
 // Error handling
@@ -117,10 +116,9 @@ const modalTitle = computed(() => {
   return editingStockSnapshot.value ? 'Редактировать внесение остатков' : 'Внести остатки'
 })
 
-const canEdit = computed(() => {
-  const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'director'
-})
+// ✅ RBAC: используем permissions
+const { can, canExportReports } = usePermissions()
+const canEdit = computed(() => can('stock', 'edit'))
 
 // Computed для справочников
 const objects = computed(() => objectsStore.items)
@@ -207,7 +205,7 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
   createText: 'Внести остатки',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'stocks',
   exportUrl: '/api/v1/stock/snapshots/',
   loadingText: 'Загрузка остатков...',

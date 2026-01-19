@@ -193,26 +193,27 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissionsStore } from '@/stores/permissions'
+import { usePermissions } from '@/composables/usePermissions'
 import { getIconPath } from '@/assets/icons'
 import type { NavigationItem } from '@/types/router'
-import type { UserRole } from '@/api/types/common'
 
 const authStore = useAuthStore()
-const isRequester = computed(() => authStore.me?.role === 'requester')
-const auth = authStore
 const route = useRoute()
 const router = useRouter()
+const permissionsStore = usePermissionsStore()
+
+// ✅ RBAC: используем permissions
+const { canCreateRequests, can } = usePermissions()
+const isRequester = computed(() => canCreateRequests.value)
 
 // Состояние меню
 const showMoreMenu = ref(false)
 const showReportsMenu = ref(false)
 const showReferenceDataMenu = ref(false)
 
-// Проверка прав администратора
-const canManageUsers = computed(() => {
-  const role = auth.role
-  return role === 'admin'
-})
+// ✅ RBAC: проверка через permissions
+const canManageUsers = computed(() => can('employees', 'edit'))
 
 // Управление меню
 const toggleMoreMenu = () => {
@@ -257,8 +258,10 @@ const navigationItems = computed((): NavigationItem[] => {
     // Skip public routes
     if (meta.public) {return}
     
-    // Check role access
-    if (meta.roles && !hasRoleAccess(auth.role, meta.roles as UserRole[])) {return}
+    // Check permissions access (RBAC)
+    if (meta.permissions && Array.isArray(meta.permissions) && meta.permissions.length > 0) {
+      if (!permissionsStore.hasAnyPermission(...meta.permissions as string[])) {return}
+    }
     
     const item: NavigationItem = {
       name: route.name as string,
@@ -268,7 +271,6 @@ const navigationItems = computed((): NavigationItem[] => {
       description: meta.description as string,
       category: meta.category as string,
       order: meta.order as number || 999,
-      roles: meta.roles as UserRole[]
     }
     
     items.push(item)
@@ -290,10 +292,6 @@ const referenceData = computed(() => {
   )
 })
 
-function hasRoleAccess(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) {return true}
-  return requiredRoles.includes(userRole)
-}
 </script>
 
 <style scoped>

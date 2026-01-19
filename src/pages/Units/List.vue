@@ -55,11 +55,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useUnitsStore } from '@/stores/units'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
-import type { Unit, Me } from '@/api/types'
+import type { Unit } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import Modal from '@/components/Modal.vue'
 import UnitForm from './UnitForm.vue'
@@ -67,16 +67,14 @@ import GenericList from '@/components/GenericList.vue'
 import UnitCard from '@/components/cards/UnitCard.vue'
 
 const unitsStore = useUnitsStore()
-const auth = useAuthStore()
 const ui = useUiStore()
 
 // Error handling
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
-const canEdit = computed(() => {
-  const role = auth.role as Me['role'] | undefined
-  return role === 'admin' || role === 'director'
-})
+// ✅ RBAC: используем permissions
+const { can, canExportReports } = usePermissions()
+const canEdit = computed(() => can('units', 'edit'))
 
 const modalOpen = ref(false)
 const current = ref<Unit | null>(null)
@@ -94,7 +92,7 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
   createText: 'Добавить единицу',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'units',
   exportUrl: '/api/v1/common/units/',
   loadingText: 'Загрузка единиц измерения...',

@@ -4,6 +4,7 @@
 import api from '@/api/client'
 import {endpoints, buildQuery} from '@/api/endpoints'
 import {createBaseStore} from './base'
+import { parseApiError } from '@/utils/errorHandler'
 import type {
     Purchase,
     PurchaseRequest,
@@ -50,7 +51,8 @@ export const uploadPhoto = async (id: number, data: PurchasePhotoUploadRequest) 
         await store.fetchOne(id)
         return true
     } catch (error: any) {
-        store.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
+        const parsedError = parseApiError(error)
+        store.error = parsedError.detail
         throw error
     } finally {
         store.loading = false
@@ -102,7 +104,8 @@ export const exportToExcel = async (params?: Partial<PurchaseListFilters>) => {
 
         return true
     } catch (error: any) {
-        store.error = error?.response?.data?.detail || 'Ошибка экспорта закупок'
+        const parsedError = parseApiError(error)
+        store.error = parsedError.detail
         throw error
     } finally {
         store.loading = false
@@ -155,7 +158,8 @@ export const approvePurchase = async (id: number): Promise<Purchase> => {
         await store.fetchOne(response.data.id)
         return response.data
     } catch (error: any) {
-        store.error = error?.response?.data?.detail || 'Ошибка одобрения заявки'
+        const parsedError = parseApiError(error)
+        store.error = parsedError.detail
         throw error
     } finally {
         store.loading = false
@@ -176,7 +180,8 @@ export const rejectPurchase = async (id: number, reason?: string): Promise<Purch
         await store.fetchOne(response.data.id)
         return response.data
     } catch (error: any) {
-        store.error = error?.response?.data?.detail || 'Ошибка отклонения заявки'
+        const parsedError = parseApiError(error)
+        store.error = parsedError.detail
         throw error
     } finally {
         store.loading = false

@@ -94,9 +94,10 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissionsStore } from '@/stores/permissions'
+import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
-import type { UserRole } from '@/api/types/common'
 import AutoNavigation from '@/components/AutoNavigation.vue'
 import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
 
@@ -104,6 +105,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const ui = useUiStore()
+const permissionsStore = usePermissionsStore()
 
 // Computed properties
 const pageTitle = computed(() => {
@@ -126,25 +128,17 @@ const userInitials = computed(() => {
   return (first + last).toUpperCase()
 })
 
-// Role display name
+// Role display name - ✅ RBAC: используем permissionsStore
 const roleDisplayName = computed(() => {
-  const roleNames: Record<UserRole, string> = {
-    admin: 'Администратор',
-    director: 'Директор',
-    coordinator: 'Координатор',
-    manager: 'Управляющий',
-    brigadier: 'Бригадир',
-    warehouse: 'Склад',
-    requester: 'Заявитель'
+  if (permissionsStore.roles.length > 0) {
+    return permissionsStore.roles.map(r => r.display_name).join(', ')
   }
-  return roleNames[auth.role as UserRole] || 'Роль не задана'
+  return 'Роль не задана'
 })
 
-// Check if user can manage users (admin/director)
-const canManageUsers = computed(() => {
-  const role = auth.role
-  return role === 'admin' || role === 'director'
-})
+// ✅ RBAC: проверка через permissions
+const { can } = usePermissions()
+const canManageUsers = computed(() => can('employees', 'edit'))
 
 // Theme state
 const isDark = computed(() => theme.isDark)

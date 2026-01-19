@@ -58,6 +58,7 @@ import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
+import { usePermissions } from '@/composables/usePermissions'
 
 // Stores
 const purchasesStore = usePurchasesStore()
@@ -66,12 +67,13 @@ const employeesStore = useEmployeesStore()
 const authStore = useAuthStore()
 const { showSuccess, showError } = useNotifications()
 
-// Check if requester
-const isRequester = computed(() => authStore.me?.role === 'requester')
-const canApprove = computed(() => {
-  const role = authStore.me?.role
-  return role === 'admin' || role === 'manager' || role === 'warehouse'
-})
+// ✅ RBAC: проверяем разрешения вместо ролей
+const { canCreateRequests, canApprovePurchases, canExportReports } = usePermissions()
+
+// isRequester = может создавать заявки, но не одобрять
+const isRequester = computed(() => canCreateRequests.value)
+// canApprove = может одобрять закупки
+const canApprove = computed(() => canApprovePurchases.value)
 
 // Error handling
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
@@ -116,9 +118,9 @@ const listConfig = computed(() => ({
   icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
   showCreate: true,
   createText: isRequester.value ? 'Новая заявка' : 'Новая закупка',
-  canCreate: true,
+  canCreate: canCreateRequests.value || canApprovePurchases.value, // может создавать заявки или закупки
   showStats: true,
-  exportable: true,
+  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'purchases',
   exportUrl: '/api/v1/purchases/',
   loadingText: 'Загрузка закупок...',
@@ -181,23 +183,30 @@ const listConfig = computed(() => ({
     ])
   ] as any,
   defaultFilters: isRequester.value ? { status: 'new' } : {},
+  // ✅ RBAC: Указываем ресурс для автоматического определения permissions
+  resource: 'purchases',
   actions: [
     {
       key: 'view',
       label: 'Просмотр',
       class: 'btn-outline btn-sm',
       shortLabel: '👁️'
+      // ✅ RBAC: Permission определяется автоматически как 'purchases.view'
     },
     {
       key: 'edit',
       label: isRequester.value ? 'Редактировать заявку' : 'Редактировать',
       class: 'btn-primary btn-sm',
       shortLabel: '✏️',
-      show: (item: Purchase) => {
+      // ✅ RBAC: Permission определяется автоматически как 'purchases.edit'
+      // Проверка scope-based (purchases.edit_own) выполняется автоматически
+      visible: (item: Purchase) => {
         // Requester может редактировать только свои заявки со статусом 'new'
         if (isRequester.value) {
           return item.status === 'new' && item.responsible === authStore.me?.id
         }
+        // Для остальных: проверка прав выполняется автоматически через permissions
+        // (purchases.edit или purchases.edit_own + принадлежность объекта)
         return true
       }
     },
@@ -207,18 +216,16 @@ const listConfig = computed(() => ({
         label: 'Одобрить',
         class: 'btn-success btn-sm',
         shortLabel: '✅',
-        show: (item: Purchase) => item.status === 'new',
-        requireConfirm: true,
-        confirmMessage: 'Вы уверены, что хотите одобрить эту заявку?'
+        permission: 'purchases.approve', // ✅ RBAC: Явное указание permission
+        visible: (item: Purchase) => item.status === 'new'
       },
       {
         key: 'reject',
         label: 'Отклонить',
         class: 'btn-error btn-sm',
         shortLabel: '❌',
-        show: (item: Purchase) => item.status === 'new',
-        requireConfirm: true,
-        confirmMessage: 'Вы уверены, что хотите отклонить эту заявку?'
+        permission: 'purchases.reject', // ✅ RBAC: Явное указание permission
+        visible: (item: Purchase) => item.status === 'new'
       }
     ] : [])
   ],
@@ -302,7 +309,9 @@ async function handleApprove(purchase: Purchase) {
     showSuccess('Заявка успешно одобрена')
     await purchasesStore.fetchList()
   } catch (error: any) {
-    showError(error?.response?.data?.detail || 'Ошибка одобрения заявки')
+    const { parseApiError } = await import('@/utils/errorHandler')
+    const parsedError = parseApiError(error)
+    showError(parsedError.detail)
   }
 }
 
@@ -313,7 +322,9 @@ async function handleReject(purchase: Purchase) {
     showSuccess('Заявка успешно отклонена')
     await purchasesStore.fetchList()
   } catch (error: any) {
-    showError(error?.response?.data?.detail || 'Ошибка отклонения заявки')
+    const { parseApiError } = await import('@/utils/errorHandler')
+    const parsedError = parseApiError(error)
+    showError(parsedError.detail)
   }
 }
 

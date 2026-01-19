@@ -1,0 +1,125 @@
+// src/stores/permissions.ts
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import api from '@/api/client'
+import { endpoints } from '@/api/endpoints'
+import { parseApiError } from '@/utils/errorHandler'
+import type { Permission, Role, UserPermissionsResponse } from '@/api/types/rbac'
+
+/**
+ * Store для управления разрешениями пользователя
+ * 
+ * ВАЖНО: Роли хранятся только для отображения в UI.
+ * Логика доступа основана на permissions, а не на именах ролей!
+ */
+export const usePermissionsStore = defineStore('permissions', () => {
+  const permissions = ref<Permission[]>([])
+  const roles = ref<Role[]>([])  // Только для отображения в UI!
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  const lastFetch = ref<Date | null>(null)
+  
+  // Время кэширования разрешений (5 минут)
+  const CACHE_TIME = 5 * 60 * 1000
+  
+  /**
+   * Загрузить разрешения пользователя из API
+   * 
+   * @param force - Принудительное обновление (игнорировать кэш)
+   */
+  const fetchPermissions = async (force = false): Promise<void> => {
+    // Проверка кэша
+    if (!force && lastFetch.value) {
+      const cacheAge = Date.now() - lastFetch.value.getTime()
+      if (cacheAge < CACHE_TIME) {
+        return  // Используем кэш
+      }
+    }
+    
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { data } = await api.get<UserPermissionsResponse>(
+        endpoints.rbac.myPermissions
+      )
+      
+      permissions.value = data.permissions || []
+      roles.value = data.roles || []  // Сохраняем для UI, но не используем для логики!
+      lastFetch.value = new Date()
+    } catch (err: any) {
+      const parsedError = parseApiError(err)
+      error.value = parsedError.detail
+      console.error('Failed to fetch permissions:', err)
+      // При ошибке не очищаем кэш - используем старые данные
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  /**
+   * Проверить, есть ли у пользователя разрешение
+   * 
+   * @param codename - Код разрешения (например: 'materials.create')
+   */
+  const hasPermission = computed(() => (codename: string): boolean => {
+    return permissions.value.some(p => p.codename === codename)
+  })
+  
+  /**
+   * Проверить, есть ли хотя бы одно из разрешений
+   * 
+   * @param codenames - Массив кодов разрешений
+   */
+  const hasAnyPermission = computed(() => (...codenames: string[]): boolean => {
+    const permissionCodenames = new Set(permissions.value.map(p => p.codename))
+    return codenames.some(codename => permissionCodenames.has(codename))
+  })
+  
+  /**
+   * Проверить, есть ли все указанные разрешения
+   * 
+   * @param codenames - Массив кодов разрешений
+   */
+  const hasAllPermissions = computed(() => (...codenames: string[]): boolean => {
+    const permissionCodenames = new Set(permissions.value.map(p => p.codename))
+    return codenames.every(codename => permissionCodenames.has(codename))
+  })
+  
+  /**
+   * Проверить доступ к ресурсу с действием
+   * 
+   * @param resource - Ресурс (например: 'materials')
+   * @param action - Действие (например: 'create')
+   */
+  const can = computed(() => (resource: string, action: string): boolean => {
+    return hasPermission.value(`${resource}.${action}`)
+  })
+  
+  /**
+   * Очистить кэш разрешений
+   */
+  const clearCache = (): void => {
+    permissions.value = []
+    roles.value = []
+    lastFetch.value = null
+  }
+  
+  return {
+    // State
+    permissions,
+    roles,  // Только для отображения в UI!
+    loading,
+    error,
+    
+    // Actions
+    fetchPermissions,
+    clearCache,
+    
+    // Getters (computed)
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    can,
+  }
+})

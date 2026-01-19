@@ -193,39 +193,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAppRouter } from '@/composables/useRouter'
 import { useAuthStore } from '@/stores/auth'
-import type { UserRole } from '@/api/types/common'
+import { usePermissionsStore } from '@/stores/permissions'
 
 const { navigation, isRouteActive } = useAppRouter()
 const authStore = useAuthStore()
+const permissionsStore = usePermissionsStore()
 
-// Debug: проверка навигации и роли
-console.log('[AppSidebar] Current role:', authStore.role)
-console.log('[AppSidebar] Navigation items:', navigation.value)
-console.log('[AppSidebar] Tools items:', navigation.value.filter(item => item.category === 'tools'))
+// Загружаем разрешения при монтировании
+onMounted(() => {
+  permissionsStore.fetchPermissions()
+})
 
 // Business Operations - основные бизнес-операции
 const businessOperations = computed(() => {
-  const items = navigation.value.filter(item =>
+  return navigation.value.filter(item =>
     ['purchases', 'objects', 'writeoffs'].includes(item.category || '')
   )
-  //
-  // // Для requester изменяем название "Закупки" на "Заявки"
-  // if (authStore.me?.role === 'requester') {
-  //   return items.map(item => {
-  //     if (item.name === 'purchases') {
-  //       return {
-  //         ...item,
-  //         title: 'Заявки'
-  //       }
-  //     }
-  //     return item
-  //   })
-  // }
-  //
-  return items
 })
 
 // Inventory Management - управление складом и материалами
@@ -245,7 +231,7 @@ const analyticsReports = computed(() => {
 // Administration - администрирование системы
 const administration = computed(() => {
   return navigation.value.filter(item => 
-    ['users', 'settings'].includes(item.category || '')
+    ['users', 'settings', 'administration'].includes(item.category || '')
   )
 })
 
@@ -270,18 +256,12 @@ const userInitials = computed(() => {
   return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase()
 })
 
+// ✅ RBAC: Отображаем роли из RBAC
 const roleTitle = computed(() => {
-  const roleTitles: Record<UserRole, string> = {
-    admin: 'Администратор',
-    director: 'Директор',
-    coordinator: 'Координатор',
-    manager: 'Управляющий',
-    brigadier: 'Бригадир',
-    warehouse: 'Склад',
-    requester: 'Заявитель'
+  if (permissionsStore.roles.length > 0) {
+    return permissionsStore.roles.map(r => r.display_name).join(', ')
   }
-  
-  return authStore.role ? roleTitles[authStore.role as UserRole] : 'Роль не задана'
+  return 'Роль не задана'
 })
 
 // Функция больше не нужна, так как используем фиксированные разделы

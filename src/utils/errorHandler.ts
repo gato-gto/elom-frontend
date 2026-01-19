@@ -48,6 +48,56 @@ export function parseNestedErrors(errors: any): Record<string, string[]> {
 }
 
 /**
+ * Извлекает первое конкретное сообщение об ошибке из объекта errors
+ * Используется для замены общего "Validation error" на конкретное сообщение
+ */
+function extractFirstErrorMessage(errors: any): string | null {
+  if (!errors || typeof errors !== 'object') {
+    return null
+  }
+
+  // Сначала проверяем non_field_errors и __all__
+  if (Array.isArray(errors.non_field_errors) && errors.non_field_errors.length > 0) {
+    return errors.non_field_errors[0]
+  }
+  if (Array.isArray(errors.__all__) && errors.__all__.length > 0) {
+    return errors.__all__[0]
+  }
+
+  // Затем проверяем все остальные поля
+  for (const [key, value] of Object.entries(errors)) {
+    if (key === 'non_field_errors' || key === '__all__') {
+      continue
+    }
+
+    if (Array.isArray(value) && value.length > 0) {
+      // Если это массив строк - берем первую
+      if (typeof value[0] === 'string') {
+        return value[0]
+      }
+      // Если это массив объектов - рекурсивно ищем
+      if (typeof value[0] === 'object' && value[0] !== null) {
+        const nested = extractFirstErrorMessage(value[0])
+        if (nested) {
+          return nested
+        }
+      }
+    } else if (typeof value === 'string' && value.trim()) {
+      // Простая строка
+      return value
+    } else if (typeof value === 'object' && value !== null) {
+      // Вложенный объект - рекурсивно ищем
+      const nested = extractFirstErrorMessage(value)
+      if (nested) {
+        return nested
+      }
+    }
+  }
+
+  return null
+}
+
+/**
  * Парсит ошибку API и возвращает структурированную информацию
  */
 export function parseApiError(error: any, context?: ErrorContext): ParsedApiError {
@@ -61,9 +111,12 @@ export function parseApiError(error: any, context?: ErrorContext): ParsedApiErro
   const data = error?.response?.data || {}
   
   // Парсим детали ошибки
-  const detail = data?.detail || error?.message || 'Произошла неизвестная ошибка'
-  const fieldErrors = parseNestedErrors(data?.errors || {})
-  const nonFieldErrors = data?.non_field_errors || []
+  let detail = data?.detail || error?.message || 'Произошла неизвестная ошибка'
+  const rawErrors = data?.errors || {}
+  const fieldErrors = parseNestedErrors(rawErrors)
+  
+  // Извлекаем non_field_errors из разных мест
+  const nonFieldErrors = data?.errors?.non_field_errors || data?.non_field_errors || []
   const allErrors = data?.errors?.__all__ || []
   
   // Добавляем non_field_errors и __all__ к fieldErrors для отображения
@@ -76,6 +129,36 @@ export function parseApiError(error: any, context?: ErrorContext): ParsedApiErro
       fieldErrors['non_field_errors'] = []
     }
     fieldErrors['non_field_errors'].push(...allErrors)
+  }
+
+  // Если detail это общее сообщение типа "Validation error", заменяем на конкретное
+  const genericMessages = [
+    'Validation error',
+    'Ошибка валидации',
+    'Bad request',
+    'Invalid request'
+  ]
+  
+  if (genericMessages.some(msg => detail.toLowerCase().includes(msg.toLowerCase()))) {
+    // Сначала проверяем non_field_errors (приоритет)
+    if (nonFieldErrors.length > 0) {
+      detail = nonFieldErrors[0]
+    } else if (allErrors.length > 0) {
+      detail = allErrors[0]
+    } else {
+      // Затем ищем в других полях
+      const firstError = extractFirstErrorMessage(rawErrors)
+      if (firstError) {
+        detail = firstError
+      } else if (Object.keys(fieldErrors).length > 0) {
+        // Берем первое сообщение из первого поля
+        const firstField = Object.keys(fieldErrors)[0]
+        const firstFieldErrors = fieldErrors[firstField]
+        if (Array.isArray(firstFieldErrors) && firstFieldErrors.length > 0) {
+          detail = firstFieldErrors[0]
+        }
+      }
+    }
   }
 
   // Создаем конфигурацию отображения

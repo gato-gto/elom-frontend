@@ -33,6 +33,10 @@ const UnitForm = () => import(/* webpackChunkName: "units" */ '@/pages/Units/Uni
 const EmployeesList = () => import(/* webpackChunkName: "employees" */ '@/pages/Employees/List.vue')
 const EmployeeForm = () => import(/* webpackChunkName: "employees" */ '@/pages/Employees/EmployeeForm.vue')
 
+// RBAC
+const RBACList = () => import(/* webpackChunkName: "rbac" */ '@/pages/RBAC/List.vue')
+const RBACRoleForm = () => import(/* webpackChunkName: "rbac" */ '@/pages/RBAC/RoleForm.vue')
+
 // Stocks
 const StocksList = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/List.vue')
 const StockBalances = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/Balances.vue')
@@ -87,7 +91,7 @@ const routes = [
       description: 'Управление материалами и номенклатурой',
       category: 'inventory',
       order: 2,
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['materials.view']  // RBAC
     }
   },
   {
@@ -98,8 +102,8 @@ const routes = [
       title: 'Новый материал',
       breadcrumb: 'Материалы / Новый',
       description: 'Создание нового материала',
-      category: 'inventory',
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['materials.create'],  // RBAC
+      category: 'inventory'
     }
   },
   {
@@ -111,7 +115,7 @@ const routes = [
       breadcrumb: 'Материалы / Редактировать',
       description: 'Редактирование существующего материала',
       category: 'inventory',
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['materials.edit']
     }
   },
   
@@ -127,7 +131,7 @@ const routes = [
       description: 'Управление категориями материалов',
       category: 'reference_data',
       order: 9,
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['material_categories.view']
     }
   },
   {
@@ -139,7 +143,7 @@ const routes = [
       breadcrumb: 'Категории материалов / Новая',
       description: 'Создание новой категории материалов',
       category: 'reference_data',
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['material_categories.create']
     }
   },
   {
@@ -151,7 +155,7 @@ const routes = [
       breadcrumb: 'Категории материалов / Просмотр',
       description: 'Просмотр информации о категории материалов',
       category: 'reference_data',
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['material_categories.view']
     }
   },
   {
@@ -163,7 +167,7 @@ const routes = [
       breadcrumb: 'Категории материалов / Редактировать',
       description: 'Редактирование категории материалов',
       category: 'reference_data',
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['material_categories.edit']
     }
   },
   
@@ -179,7 +183,7 @@ const routes = [
       description: 'Управление закупками и поставками',
       category: 'purchases',
       order: 3,
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['purchases.view']  // RBAC
     }
   },
   {
@@ -191,7 +195,7 @@ const routes = [
       breadcrumb: 'Закупки / Новая',
       description: 'Создание новой закупки',
       category: 'purchases',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['purchases.create']  // RBAC
     }
   },
   {
@@ -203,7 +207,7 @@ const routes = [
       breadcrumb: 'Закупки / Редактировать',
       description: 'Редактирование существующей закупки',
       category: 'purchases',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['purchases.edit']
     }
   },
   {
@@ -215,7 +219,7 @@ const routes = [
       breadcrumb: 'Закупки / Печать накладной',
       description: 'Отдельная страница для печати накладной',
       category: 'purchases',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['purchases.view']
     }
   },
   
@@ -231,7 +235,7 @@ const routes = [
       description: 'Управление объектами строительства',
       category: 'objects',
       order: 4,
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['objects.view']
     }
   },
   {
@@ -243,7 +247,7 @@ const routes = [
       breadcrumb: 'Объекты / Новый',
       description: 'Создание нового объекта',
       category: 'objects',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['objects.create']
     }
   },
   {
@@ -255,7 +259,7 @@ const routes = [
       breadcrumb: 'Объекты / Просмотр',
       description: 'Просмотр статуса объекта, контактов и связанных данных',
       category: 'objects',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['objects.view']
     }
   },
   
@@ -271,7 +275,7 @@ const routes = [
       description: 'Управление единицами измерения',
       category: 'reference_data',
       order: 8,
-      roles: ['admin']
+      permissions: ['units.view']
     }
   },
   {
@@ -283,7 +287,7 @@ const routes = [
       breadcrumb: 'Единицы / Новая',
       description: 'Создание новой единицы измерения',
       category: 'reference_data',
-      roles: ['admin']
+      permissions: ['units.create']
     }
   },
   {
@@ -295,7 +299,7 @@ const routes = [
       breadcrumb: 'Единицы / Редактировать',
       description: 'Редактирование существующей единицы измерения',
       category: 'reference_data',
-      roles: ['admin']
+      permissions: ['units.edit']
     }
   },
   
@@ -311,7 +315,7 @@ const routes = [
       description: 'Управление сотрудниками и пользователями',
       category: 'reference_data',
       order: 7,
-      roles: ['admin']
+      permissions: ['employees.view']
     }
   },
   {
@@ -323,7 +327,7 @@ const routes = [
       breadcrumb: 'Сотрудники / Новый',
       description: 'Создание нового сотрудника',
       category: 'reference_data',
-      roles: ['admin']
+      permissions: ['employees.create']
     }
   },
   {
@@ -335,7 +339,7 @@ const routes = [
       breadcrumb: 'Сотрудники / Редактировать',
       description: 'Редактирование существующего сотрудника',
       category: 'reference_data',
-      roles: ['admin']
+      permissions: ['employees.edit']
     }
   },
 
@@ -351,7 +355,7 @@ const routes = [
       description: 'Управление поставщиками',
       category: 'reference_data',
       order: 5,
-      roles: ['admin']
+      permissions: ['suppliers.view']
     }
   },
   {
@@ -363,7 +367,7 @@ const routes = [
       breadcrumb: 'Поставщики / Новый',
       description: 'Создание нового поставщика',
       category: 'reference_data',
-      roles: ['admin']
+      permissions: ['suppliers.create']
     }
   },
   {
@@ -375,7 +379,7 @@ const routes = [
       breadcrumb: 'Поставщики / Редактировать',
       description: 'Редактирование существующего поставщика',
       category: 'reference_data',
-      roles: ['admin']
+      permissions: ['suppliers.edit']
     }
   },
   
@@ -391,7 +395,7 @@ const routes = [
       description: 'Журнал движений материалов',
       category: 'inventory',
       order: 6,
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['stock.view']
     }
   },
   {
@@ -405,7 +409,7 @@ const routes = [
       description: 'Текущие остатки материалов по объектам',
       category: 'inventory',
       order: 7,
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['stock.view']
     }
   },
 
@@ -421,7 +425,7 @@ const routes = [
       description: 'Управление списаниями материалов',
       category: 'writeoffs',
       order: 3,
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['writeoffs.view']
     }
   },
   {
@@ -433,7 +437,7 @@ const routes = [
       breadcrumb: 'Списания / Новое',
       description: 'Создание нового списания',
       category: 'writeoffs',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['writeoffs.create']
     }
   },
   {
@@ -445,7 +449,7 @@ const routes = [
       breadcrumb: 'Списания / Редактировать',
       description: 'Редактирование существующего списания',
       category: 'writeoffs',
-      roles: ['admin', 'manager', 'warehouse', 'brigadier']
+      permissions: ['writeoffs.edit']
     }
   },
   
@@ -460,7 +464,7 @@ const routes = [
       description: 'Отчеты по периодам времени',
       category: 'reports',
       order: 11,
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['reports.view']
     }
   },
   {
@@ -473,7 +477,7 @@ const routes = [
       description: 'Отчеты по объектам строительства',
       category: 'reports',
       order: 12,
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['reports.view']
     }
   },
   {
@@ -486,7 +490,7 @@ const routes = [
       description: 'Отчеты по материалам и номенклатуре',
       category: 'reports',
       order: 13,
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['reports.view']
     }
   },
   {
@@ -499,11 +503,51 @@ const routes = [
       description: 'Отчеты по ответственным лицам',
       category: 'reports',
       order: 14,
-      roles: ['admin', 'manager', 'warehouse']
+      permissions: ['reports.view']
     }
   },
   
-  // Tools routes (только для admin)
+  // RBAC routes
+  {
+    path: '/rbac/roles',
+    name: 'RBACList',
+    component: RBACList,
+    meta: { 
+      title: 'Управление ролями',
+      icon: 'shield',
+      breadcrumb: 'Управление ролями',
+      description: 'Создание и редактирование ролей с назначением разрешений',
+      category: 'administration',
+      order: 20,
+      permissions: ['rbac.manage_roles']
+    }
+  },
+  {
+    path: '/rbac/roles/create',
+    name: 'RBACRoleCreate',
+    component: RBACRoleForm,
+    meta: { 
+      title: 'Создать роль',
+      breadcrumb: 'Управление ролями / Создать',
+      description: 'Создание новой роли с назначением разрешений',
+      category: 'administration',
+      permissions: ['rbac.manage_roles']
+    }
+  },
+  {
+    path: '/rbac/roles/:id/edit',
+    name: 'RBACRoleEdit',
+    component: RBACRoleForm,
+    meta: { 
+      title: 'Редактировать роль',
+      breadcrumb: 'Управление ролями / Редактировать',
+      description: 'Редактирование роли и её разрешений',
+      category: 'administration',
+      permissions: ['rbac.manage_roles']
+    }
+  },
+
+  // Tools routes
   {
     path: '/tools_index',
     name: 'ToolsList',
@@ -515,7 +559,7 @@ const routes = [
       description: 'Учёт и управление инструментами',
       category: 'tools',
       order: 15,
-      roles: ['admin']
+      permissions: ['tools.view']
     }
   },
   {
@@ -529,7 +573,7 @@ const routes = [
       description: 'Журнал выдач и возвратов инструментов',
       category: 'tools',
       order: 16,
-      roles: ['admin']
+      permissions: ['tools.view']
     }
   },
   
@@ -557,7 +601,7 @@ const router = createRouter({
   }
 })
 
-// Simple auth guard
+// Simple auth guard with RBAC support
 router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore()
     
@@ -587,23 +631,36 @@ router.beforeEach(async (to, from, next) => {
     return
   }
   
-  // Check role-based access
-  if (to.meta.roles && Array.isArray(to.meta.roles) && to.meta.roles.length > 0) {
-    if (!auth.role || !to.meta.roles.includes(auth.role)) {
+  // ✅ RBAC: Проверка через permissions (приоритет)
+  const requiredPermissions = to.meta.permissions as string[] | undefined
+  if (requiredPermissions && requiredPermissions.length > 0) {
+    const { usePermissionsStore } = await import('@/stores/permissions')
+    const permissionsStore = usePermissionsStore()
+    
+    // Загружаем разрешения, если еще не загружены
+    if (permissionsStore.permissions.length === 0) {
+      await permissionsStore.fetchPermissions()
+    }
+    
+    // Проверяем, есть ли хотя бы одно из требуемых разрешений
+    const hasAccess = permissionsStore.hasAnyPermission(...requiredPermissions)
+    if (!hasAccess) {
+      console.warn(`[RBAC] Access denied to ${to.path}. Required permissions:`, requiredPermissions)
       next('/purchases')
       return
     }
   }
+  // ⚠️ DEPRECATED: meta.roles больше не поддерживается
+  // Все маршруты должны использовать meta.permissions
+  // Если маршрут использует meta.roles, доступ запрещен до миграции на permissions
+  if (to.meta.roles && Array.isArray(to.meta.roles) && to.meta.roles.length > 0) {
+    console.error(`[RBAC] Route ${to.path} uses deprecated meta.roles. Migrate to meta.permissions.`)
+    next('/purchases')
+    return
+  }
   
   next()
 })
-
-// Helper function for role-based access
-function hasRequiredRole(userRole: UserRole | null, requiredRoles: UserRole[]): boolean {
-  if (!userRole || !requiredRoles.length) {return false}
-  
-  return requiredRoles.includes(userRole)
-}
 
 // Set page title and meta
 router.afterEach((to) => {

@@ -1,8 +1,8 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { generateNavigation, getBreadcrumbs, hasRouteAccess, getRoutePermissions } from '@/utils/router'
-import type { UserRole } from '@/api/types/common'
 import type { NavigationItem } from '@/types/router'
 
 /**
@@ -23,7 +23,8 @@ export function useAppRouter() {
 
   // Navigation
   const navigation = computed(() => {
-    return generateNavigation(router.getRoutes(), authStore.role)
+    // ✅ RBAC: userRole больше не используется, проверка через permissions
+    return generateNavigation(router.getRoutes())
   })
 
   // Breadcrumbs
@@ -35,12 +36,14 @@ export function useAppRouter() {
   // Route access
   const hasAccess = computed(() => {
     const routeRecord = router.getRoutes().find(r => r.name === route.name)
-    return routeRecord ? hasRouteAccess(routeRecord, authStore.role) : false
+    // ✅ RBAC: userRole больше не используется, проверка через permissions
+    return routeRecord ? hasRouteAccess(routeRecord) : false
   })
 
   const permissions = computed(() => {
     const routeRecord = router.getRoutes().find(r => r.name === route.name)
-    return routeRecord ? getRoutePermissions(routeRecord, authStore.role) : {
+    // ✅ RBAC: userRole больше не используется, проверка через permissions
+    return routeRecord ? getRoutePermissions(routeRecord) : {
       canView: false,
       canCreate: false,
       canEdit: false,
@@ -210,33 +213,23 @@ export function useAppRouter() {
 
 /**
  * Composable for route-based permissions
+ * ✅ RBAC: использует permissions вместо хардкода ролей
  */
 export function useRoutePermissions() {
-  const { currentRoute, permissions, hasAccess } = useAppRouter()
-  const authStore = useAuthStore()
+  const { currentRoute, permissions: routePermissions, hasAccess } = useAppRouter()
+  const { can, hasPermission, hasAnyPermission } = usePermissions()
 
-  const canView = computed(() => permissions.value.canView)
-  const canCreate = computed(() => permissions.value.canCreate)
-  const canEdit = computed(() => permissions.value.canEdit)
-  const canDelete = computed(() => permissions.value.canDelete)
+  // ✅ RBAC: проверка через permissions
+  const canView = computed(() => routePermissions.value.canView)
+  const canCreate = computed(() => routePermissions.value.canCreate)
+  const canEdit = computed(() => routePermissions.value.canEdit)
+  const canDelete = computed(() => routePermissions.value.canDelete)
 
-  const hasRole = (role: UserRole) => {
-    return authStore.role === role
-  }
-
-  const hasAnyRole = (roles: UserRole[]) => {
-    return authStore.role ? roles.includes(authStore.role) : false
-  }
-
-  const hasAllRoles = (roles: UserRole[]) => {
-    return authStore.role ? roles.includes(authStore.role) : false
-  }
-
-  const isAdmin = computed(() => hasRole('admin'))
-  const isManager = computed(() => hasRole('manager'))
-  const isWarehouse = computed(() => hasRole('warehouse'))
-  const isBrigadier = computed(() => hasRole('brigadier'))
-  const isRequester = computed(() => hasRole('requester'))
+  // ✅ RBAC: универсальные проверки через permissions
+  const canManageUsers = computed(() => hasPermission('employees.edit'))
+  const canManageRoles = computed(() => hasPermission('rbac.manage_roles'))
+  const canExportReports = computed(() => hasPermission('reports.export'))
+  const canViewAllObjects = computed(() => hasPermission('objects.view_all'))
 
   return {
     canView,
@@ -244,14 +237,15 @@ export function useRoutePermissions() {
     canEdit,
     canDelete,
     hasAccess,
-    hasRole,
-    hasAnyRole,
-    hasAllRoles,
-    isAdmin,
-    isManager,
-    isWarehouse,
-    isBrigadier,
-    isRequester
+    // ✅ RBAC методы
+    can,
+    hasPermission,
+    hasAnyPermission,
+    // Специфичные проверки
+    canManageUsers,
+    canManageRoles,
+    canExportReports,
+    canViewAllObjects
   }
 }
 

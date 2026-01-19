@@ -4,6 +4,7 @@
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import { createBaseStore } from './base'
+import { parseApiError } from '@/utils/errorHandler'
 import type { 
   Material, 
   MaterialRequest, 
@@ -70,7 +71,8 @@ export const uploadPhoto = async (id: number, photo: File) => {
 
     return data.photo_url
   } catch (error: any) {
-    store.error = error?.response?.data?.detail || 'Ошибка загрузки фото'
+    const parsedError = parseApiError(error)
+    store.error = parsedError.detail
     throw error
   } finally {
     store.loading = false
@@ -96,7 +98,8 @@ export const deletePhoto = async (id: number) => {
 
     return true
   } catch (error: any) {
-    store.error = error?.response?.data?.detail || 'Ошибка удаления фото'
+    const parsedError = parseApiError(error)
+    store.error = parsedError.detail
     throw error
   } finally {
     store.loading = false

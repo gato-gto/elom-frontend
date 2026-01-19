@@ -3,6 +3,7 @@
  */
 import { endpoints } from '@/api/endpoints'
 import { createBaseStore } from './base'
+import { parseApiError } from '@/utils/errorHandler'
 import type { 
   Object, 
   ObjectRequest, 
@@ -32,7 +33,8 @@ export const fetchResponsibles = async (): Promise<ObjectResponsible[]> => {
     const response = await api.get(endpoints.objects.responsibles)
     return response.data
   } catch (err: any) {
-    store.error = err?.response?.data?.detail || 'Ошибка загрузки ответственных'
+    const parsedError = parseApiError(err)
+    store.error = parsedError.detail
     throw err
   } finally {
     store.loading = false

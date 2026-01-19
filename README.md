@@ -49,8 +49,11 @@ src/
 
 ---
 
-## 🔐 Роли
+## 🔐 Роли и права доступа (RBAC)
 
+Система использует RBAC (Role-Based Access Control) с управлением через **permissions**, а не через имена ролей.
+
+### Основные роли:
 | Роль | Описание |
 |------|----------|
 | `admin` | Полный доступ + инструменты |
@@ -58,6 +61,23 @@ src/
 | `brigadier` | Создание объекта, списание, закупка |
 | `warehouse` | Полный доступ без учета изменений |
 | `requester` | Просмотр и подача заявки на материал |
+
+### Управление UI на основе прав:
+```vue
+<!-- Кнопка с проверкой прав -->
+<PermissionButton 
+  permission="materials.create"
+  label="Создать"
+  @click="handleCreate"
+/>
+
+<!-- Секция с проверкой прав -->
+<PermissionSection permission="reports.view" title="Отчеты">
+  <ReportList />
+</PermissionSection>
+```
+
+📚 [Полная документация по компонентам прав доступа](src/docs/PERMISSION_COMPONENTS.md)
 
 ---
 
@@ -100,7 +120,15 @@ npm run test:coverage  # С покрытием
 
 ---
 
-## 🆕 Последние изменения (27 ноября 2025)
+## 🆕 Последние изменения (Январь 2026)
+
+### Универсальная система управления UI на основе прав (Январь 2026):
+- ✅ PermissionButton, PermissionSection, PermissionFilter компоненты
+- ✅ Улучшенный PermissionGuard с поддержкой сложных условий
+- ✅ Утилиты для создания конфигураций действий с проверкой прав
+- ✅ Детальная обработка ошибок с конкретными сообщениями
+
+### Система инструментов (27 ноября 2025):
 
 ### Система инструментов
 - ✅ Список инструментов (`/tools_index`)
@@ -119,8 +147,11 @@ npm run test:coverage  # С покрытием
 - ✅ Роли manager и warehouse работают "без учета изменений"
 - ✅ Новая роль requester для просмотра и подачи заявок
 - ✅ Система заявок на материалы
+- 📚 [Подробная документация по ролям и задачам](../elom-backend/ROLES_AND_TASKS.md)
 
 ---
 
-**Версия:** 3.5  
-**Статус:** ✅ Production Ready
+**Версия:** 3.7  
+**Статус:** ✅ Production Ready  
+**Документация RBAC:** [RBAC_FINAL.md](../elom-backend/RBAC_FINAL.md)  
+**Компоненты прав доступа:** [PERMISSION_COMPONENTS.md](src/docs/PERMISSION_COMPONENTS.md)
