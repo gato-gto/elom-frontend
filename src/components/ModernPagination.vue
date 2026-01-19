@@ -83,6 +83,7 @@ interface Props {
   totalPages: number
   totalItems: number
   pageSize: number
+  actualItemsCount?: number // Фактическое количество элементов на текущей странице
   maxVisible?: number
   showPageSizeSelector?: boolean
   showJumpToPage?: boolean
@@ -109,6 +110,12 @@ const startItem = computed(() => {
 })
 
 const endItem = computed(() => {
+  // Если указано фактическое количество элементов, используем его
+  if (props.actualItemsCount !== undefined) {
+    const calculatedEnd = (props.currentPage - 1) * props.pageSize + props.actualItemsCount
+    return Math.min(calculatedEnd, props.totalItems)
+  }
+  // Иначе используем расчетное значение
   return Math.min(props.currentPage * props.pageSize, props.totalItems)
 })
 
@@ -188,6 +195,14 @@ watch(() => props.currentPage, () => {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 1rem 1rem;
+  /* Отступ снизу для мобильной навигации */
+  margin-bottom: 6rem;
+}
+
+@media (min-width: 1024px) {
+  .modern-pagination-container {
+    margin-bottom: 0;
+  }
 }
 
 @media (min-width: 768px) {

@@ -201,9 +201,10 @@
     <!-- Pagination -->
     <ModernPagination
       :current-page="store.pagination.page"
-      :total-pages="Math.ceil(store.pagination.count / store.pagination.pageSize)"
+      :total-pages="calculateTotalPages()"
       :total-items="store.pagination.count"
       :page-size="store.pagination.pageSize"
+      :actual-items-count="store.items.length"
       @page-change="handlePageChange"
       @page-size-change="handlePageSizeChange"
     />
@@ -305,7 +306,13 @@ const initCardLazyLoad = () => {
     return
   }
 
-  // Создаем Intersection Observer для мобильных
+  // На мобильных: сначала помечаем все элементы как видимые для корректного отображения
+  // Lazy loading используется только для оптимизации прокрутки
+  props.store.items.forEach((_: any, index: number) => {
+    visibleCards.value.add(index)
+  })
+
+  // Создаем Intersection Observer для оптимизации (предзагрузка)
   cardObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -355,11 +362,9 @@ const isCardVisible = (index: number): boolean => {
   if (!isMobileDevice()) {
     return true
   }
-  // Первые 3 карточки всегда видимые для быстрой загрузки
-  if (index < 3) {
-    return true
-  }
-  return visibleCards.value.has(index)
+  // На мобильных: показываем все элементы, которые есть в списке
+  // visibleCards заполняется при инициализации всеми элементами
+  return visibleCards.value.has(index) || index < props.store.items.length
 }
 
 // Methods
@@ -392,6 +397,20 @@ async function handleSort(key: string) {
   
   const ordering = sortOrder.value === 'desc' ? `-${key}` : key
   await props.store.setFilters({ ordering })
+}
+
+// Расчет общего количества страниц с учетом фактического количества элементов
+function calculateTotalPages(): number {
+  const { count, pageSize } = props.store.pagination
+  const actualItemsCount = props.store.items.length
+  
+  // Если все элементы помещаются на одной странице, возвращаем 1
+  if (actualItemsCount >= count) {
+    return 1
+  }
+  
+  // Иначе используем стандартный расчет
+  return Math.ceil(count / pageSize)
 }
 
 async function handlePageChange(page: number) {
@@ -487,15 +506,26 @@ onMounted(() => {
   
   // Обновляем observer при изменении списка
   watch(() => props.store.items, () => {
+    // Сразу помечаем все элементы как видимые
+    if (isMobileDevice()) {
+      props.store.items.forEach((_: any, index: number) => {
+        visibleCards.value.add(index)
+      })
+    }
+    
     if (cardObserver) {
       // Очищаем старые наблюдения
       cardRefs.value.forEach((element) => {
         cardObserver?.unobserve(element)
       })
       cardRefs.value.clear()
-      visibleCards.value.clear()
       
       // Пересоздаем observer для новых элементов
+      setTimeout(() => {
+        initCardLazyLoad()
+      }, 100)
+    } else {
+      // Если observer еще не создан, инициализируем его
       setTimeout(() => {
         initCardLazyLoad()
       }, 100)

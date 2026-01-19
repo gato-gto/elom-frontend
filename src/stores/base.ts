@@ -172,6 +172,63 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         return items.value
       } catch (err: any) {
         const parsedError = parseApiError(err)
+        
+        // ✅ Обработка ошибки 404 для несуществующей страницы пагинации
+        if (err?.response?.status === 404) {
+          const errorDetail = parsedError.detail?.toLowerCase() || ''
+          const isInvalidPage = errorDetail.includes('неправильная страница') || 
+                                errorDetail.includes('invalid page') ||
+                                errorDetail.includes('page') && errorDetail.includes('not found')
+          
+          if (isInvalidPage && pagination.value.page > 1) {
+            // Автоматически перенаправляем на первую страницу
+            pagination.value.page = 1
+            // Повторяем запрос с первой страницей
+            try {
+              const queryParams: Record<string, any> = {
+                page: 1,
+                page_size: pagination.value.pageSize,
+                ...filters.value
+              }
+              
+              // Remove empty values
+              Object.keys(queryParams).forEach(key => {
+                if (queryParams[key] === undefined || queryParams[key] === '') {
+                  delete queryParams[key]
+                }
+              })
+              
+              const query = buildQuery(queryParams)
+              const { data } = await api.get(config.endpoint.list + query)
+              
+              items.value = data.results || data
+              pagination.value = {
+                count: data.count || (Array.isArray(data) ? data.length : 0),
+                page: 1,
+                pageSize: queryParams.page_size,
+                next: data.next || null,
+                previous: data.previous || null
+              }
+              
+              // Обновляем URL без параметра page или с page=1
+              if (typeof window !== 'undefined' && window.history) {
+                const url = new URL(window.location.href)
+                url.searchParams.set('page', '1')
+                window.history.replaceState({}, '', url.toString())
+              }
+              
+              error.value = null
+              return items.value
+            } catch (retryErr: any) {
+              // Если повторный запрос тоже не удался, показываем ошибку
+              const retryParsedError = parseApiError(retryErr)
+              error.value = retryParsedError.detail
+              await handleApiErrorAsync(retryErr, { operation: 'dataLoading', entity: config.entityName })
+              throw retryErr
+            }
+          }
+        }
+        
         error.value = parsedError.detail
         await handleApiErrorAsync(err, { operation: 'dataLoading', entity: config.entityName })
         throw err
