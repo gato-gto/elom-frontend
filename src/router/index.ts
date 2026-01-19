@@ -546,7 +546,7 @@ const routes = [
       permissions: ['rbac.manage_roles']
     }
   },
-
+  
   // Tools routes
   {
     path: '/tools_index',
@@ -655,8 +655,8 @@ router.beforeEach(async (to, from, next) => {
   // Если маршрут использует meta.roles, доступ запрещен до миграции на permissions
   if (to.meta.roles && Array.isArray(to.meta.roles) && to.meta.roles.length > 0) {
     console.error(`[RBAC] Route ${to.path} uses deprecated meta.roles. Migrate to meta.permissions.`)
-    next('/purchases')
-    return
+      next('/purchases')
+      return
   }
   
   next()

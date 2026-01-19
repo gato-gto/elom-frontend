@@ -125,6 +125,57 @@
           <span>Архив</span>
         </router-link>
 
+        <!-- Tools Section -->
+        <div v-if="tools.length > 0" class="mobile-more-divider"></div>
+        <div v-if="tools.length > 0" class="mobile-more-item mobile-more-submenu" @click="toggleToolsMenu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('build')" />
+          </svg>
+          <span>Инструменты</span>
+          <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': showToolsMenu }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        <!-- Tools submenu -->
+        <div v-if="showToolsMenu && tools.length > 0" class="mobile-reports-submenu">
+          <router-link 
+            v-for="item in tools" 
+            :key="item.name"
+            :to="item.path" 
+            class="mobile-submenu-item" 
+            @click="closeMoreMenu"
+          >
+            {{ item.title }}
+          </router-link>
+        </div>
+
+        <!-- Administration Section -->
+        <div v-if="administration.length > 0" class="mobile-more-divider"></div>
+        <div v-if="administration.length > 0" class="mobile-more-item mobile-more-submenu" @click="toggleAdministrationMenu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>Администрирование</span>
+          <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': showAdministrationMenu }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        <!-- Administration submenu -->
+        <div v-if="showAdministrationMenu && administration.length > 0" class="mobile-reports-submenu">
+          <router-link 
+            v-for="item in administration" 
+            :key="item.name"
+            :to="item.path" 
+            class="mobile-submenu-item" 
+            @click="closeMoreMenu"
+          >
+            {{ item.title }}
+          </router-link>
+        </div>
+
         <!-- Reference Data Section -->
         <div class="mobile-more-divider"></div>
         <div class="mobile-more-item mobile-more-submenu" @click="toggleReferenceDataMenu">
@@ -211,6 +262,8 @@ const isRequester = computed(() => canCreateRequests.value)
 const showMoreMenu = ref(false)
 const showReportsMenu = ref(false)
 const showReferenceDataMenu = ref(false)
+const showToolsMenu = ref(false)
+const showAdministrationMenu = ref(false)
 
 // ✅ RBAC: проверка через permissions
 const canManageUsers = computed(() => can('employees', 'edit'))
@@ -221,6 +274,8 @@ const toggleMoreMenu = () => {
   if (!showMoreMenu.value) {
     showReportsMenu.value = false
     showReferenceDataMenu.value = false
+    showToolsMenu.value = false
+    showAdministrationMenu.value = false
   }
 }
 
@@ -228,12 +283,16 @@ const closeMoreMenu = () => {
   showMoreMenu.value = false
   showReportsMenu.value = false
   showReferenceDataMenu.value = false
+  showToolsMenu.value = false
+  showAdministrationMenu.value = false
 }
 
 const toggleReportsMenu = () => {
   showReportsMenu.value = !showReportsMenu.value
   if (showReportsMenu.value) {
     showReferenceDataMenu.value = false
+    showToolsMenu.value = false
+    showAdministrationMenu.value = false
   }
 }
 
@@ -241,6 +300,26 @@ const toggleReferenceDataMenu = () => {
   showReferenceDataMenu.value = !showReferenceDataMenu.value
   if (showReferenceDataMenu.value) {
     showReportsMenu.value = false
+    showToolsMenu.value = false
+    showAdministrationMenu.value = false
+  }
+}
+
+const toggleToolsMenu = () => {
+  showToolsMenu.value = !showToolsMenu.value
+  if (showToolsMenu.value) {
+    showReportsMenu.value = false
+    showReferenceDataMenu.value = false
+    showAdministrationMenu.value = false
+  }
+}
+
+const toggleAdministrationMenu = () => {
+  showAdministrationMenu.value = !showAdministrationMenu.value
+  if (showAdministrationMenu.value) {
+    showReportsMenu.value = false
+    showReferenceDataMenu.value = false
+    showToolsMenu.value = false
   }
 }
 
@@ -283,6 +362,20 @@ const navigationItems = computed((): NavigationItem[] => {
     }
     return a.title.localeCompare(b.title)
   })
+})
+
+// Tools - инструменты (синхронизация с desktop)
+const tools = computed(() => {
+  return navigationItems.value.filter(item => 
+    ['tools'].includes(item.category || '')
+  )
+})
+
+// Administration - администрирование системы (синхронизация с desktop)
+const administration = computed(() => {
+  return navigationItems.value.filter(item => 
+    ['users', 'settings', 'administration'].includes(item.category || '')
+  )
 })
 
 // Reference Data - справочники (синхронизация с desktop)
