@@ -99,12 +99,12 @@ const formConfig = computed(() => ({
   fields: [
     {
       key: 'name',
-      type: 'input',
+      type: 'input' as const,
       label: 'Имя роли (код)',
       placeholder: 'admin, manager, warehouse',
       required: true,
       order: 1,
-      width: 'half',
+      width: 'half' as const,
       help: 'Уникальное имя роли на английском языке (используется в системе)',
       validation: {
         pattern: /^[a-z][a-z0-9_]*$/,
@@ -113,32 +113,32 @@ const formConfig = computed(() => ({
     },
     {
       key: 'display_name',
-      type: 'input',
+      type: 'input' as const,
       label: 'Отображаемое название',
       placeholder: 'Администратор, Управляющий',
       required: true,
       order: 2,
-      width: 'half',
+      width: 'half' as const,
       help: 'Название роли, которое будет отображаться пользователям'
     },
     {
       key: 'description',
-      type: 'textarea',
+      type: 'textarea' as const,
       label: 'Описание',
       placeholder: 'Описание роли и её назначения',
       required: false,
       order: 3,
-      width: 'full',
+      width: 'full' as const,
       rows: 3,
       help: 'Подробное описание роли и её назначения в системе'
     },
     {
       key: 'permissions',
-      type: 'custom',
+      type: 'custom' as const,
       label: 'Разрешения',
       required: false,
       order: 4,
-      width: 'full'
+      width: 'full' as const
     }
   ],
   submitText: props.initial ? 'Сохранить изменения' : 'Создать роль',

@@ -83,11 +83,11 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
   fields: [
     {
       key: 'first_name',
-      type: 'input',
+      type: 'input' as const,
       label: 'Имя',
       placeholder: 'Введите имя',
       order: 1,
-      width: 'half',
+      width: 'half' as const,
       autocomplete: 'nope',
       validation: {
         maxLength: 50
@@ -95,11 +95,11 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     {
       key: 'last_name',
-      type: 'input',
+      type: 'input' as const,
       label: 'Фамилия',
       placeholder: 'Введите фамилию',
       order: 2,
-      width: 'half',
+      width: 'half' as const,
       autocomplete: 'nope',
       validation: {
         maxLength: 50
@@ -107,11 +107,11 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     {
       key: 'email',
-      type: 'input',
+      type: 'input' as const,
       label: 'Email',
       placeholder: 'Введите email',
       order: 3,
-      width: 'half',
+      width: 'half' as const,
       autocomplete: 'nope',
       validation: {
         pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -120,12 +120,12 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     {
       key: 'username',
-      type: 'input',
+      type: 'input' as const,
       label: 'Имя пользователя',
       placeholder: 'Введите имя пользователя',
       required: true,
       order: 4,
-      width: 'half',
+      width: 'half' as const,
       autocomplete: 'nope',
       validation: {
         minLength: 3,
@@ -135,11 +135,11 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     {
       key: 'phone',
-      type: 'input',
+      type: 'input' as const,
       label: 'Телефон',
       placeholder: '+998 XX XXX XX XX',
       order: 5,
-      width: 'half',
+      width: 'half' as const,
       autocomplete: 'nope',
       validation: {
         maxLength: 32
@@ -155,12 +155,12 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     }] : []) as FieldConfig[],
     {
       key: 'password',
-      type: 'password',
+      type: 'password' as const,
       label: 'Пароль',
       placeholder: 'Введите пароль',
       required: !props.initial,
       order: 7,
-      width: 'half',
+      width: 'half' as const,
       autocomplete: 'new-password',
       validation: props.initial ? {} : {
         minLength: 6,
@@ -169,11 +169,11 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     {
       key: 'is_active',
-      type: 'checkbox',
+      type: 'checkbox' as const,
       label: 'Статус',
       checkboxLabel: 'Активен',
       order: 8,
-      width: 'half'
+      width: 'half' as const
     }
   ],
   submitText: props.initial ? 'Обновить' : 'Создать',

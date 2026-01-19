@@ -697,8 +697,9 @@ const onObjectChange = async () => {
   items.value = []
   
   // Сбрасываем ответственного, если не изменен пользователем
+  // Ответственный будет установлен автоматически в loadEmployeesByObject
   if (!userModifiedFields.value.responsible) {
-    formData.value.responsible = undefined
+    formData.value.responsible = 0
   }
 
   // Загружаем материалы и сотрудников для выбранного объекта
