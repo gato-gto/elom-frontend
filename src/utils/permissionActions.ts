@@ -24,10 +24,7 @@
  *   ], can)
  */
 
-import type { PermissionChecker } from './types'
-
-// Re-export для удобства
-export type { PermissionChecker }
+// Тип PermissionChecker определен ниже в этом файле
 
 /**
  * Конфигурация одного действия

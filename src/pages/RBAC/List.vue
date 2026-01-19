@@ -263,11 +263,20 @@ const viewingRolePermissions = computed(() => {
 })
 
 const getRolePermissionsCount = (roleId: number): number => {
+  // Проверяем кэш деталей роли
   const roleDetails = rbacStore.roleDetails[roleId]
   if (roleDetails && roleDetails.permissions) {
     return roleDetails.permissions.length
   }
-  // Если детали не загружены, возвращаем 0
+  
+  // Если детали не загружены, пытаемся найти роль в списке
+  // (API может возвращать роли с permissions в некоторых случаях)
+  const role = rbacStore.getRoleById(roleId)
+  if (role && 'permissions' in role && Array.isArray((role as any).permissions)) {
+    return (role as any).permissions.length
+  }
+  
+  // Если ничего не найдено, возвращаем 0
   return 0
 }
 

@@ -18,7 +18,7 @@
     <span v-if="$slots.default || label">
       <slot>{{ label }}</slot>
     </span>
-    <LoadingSpinner v-if="loading" size="xs" class="ml-2" />
+    <LoadingSpinner v-if="loading" size="sm" class="ml-2" />
   </component>
 </template>
 

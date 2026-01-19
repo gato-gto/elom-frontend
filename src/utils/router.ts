@@ -87,9 +87,10 @@ const categoryOrder = {
       'users': 6,
       'tools': 7,
       'settings': 8,
-      'archive': 9,
-      'reports': 10,
-      'import': 11,
+      'administration': 9,  // ✅ Добавлена категория для RBAC управления ролями
+      'archive': 10,
+      'reports': 11,
+      'import': 12,
       'other': 999
     }
       return (categoryOrder[a as keyof typeof categoryOrder] || 999) - (categoryOrder[b as keyof typeof categoryOrder] || 999)
@@ -130,6 +131,7 @@ function getCategoryTitle(category: string): string {
     'users': 'Пользователи',
     'tools': 'Инструменты',
     'settings': 'Настройки',
+    'administration': 'Администрирование',  // ✅ Добавлена категория для RBAC управления ролями
     'archive': 'Архив',
     'reports': 'Отчеты',
     'import': 'Импорт',
@@ -247,7 +249,7 @@ export function getRoutePermissions(route: RouteRecordNormalized): {
   canEdit: boolean
   canDelete: boolean
 } {
-  const canView = hasRouteAccess(route, userRole)
+  const canView = hasRouteAccess(route)
   
   // For now, same permissions for all operations
   // In the future, this could be more granular based on route meta

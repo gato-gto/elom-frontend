@@ -34,7 +34,7 @@ import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
 import type { Employee, EmployeeRequest } from '@/api/types'
-import type { GenericFormConfig } from '@/types/generic'
+import type { GenericFormConfig, FieldConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import RoleAssignment from '@/components/RoleAssignment.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -147,12 +147,12 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     ...(canManageUserRoles.value ? [{
       key: 'roles',
-      type: 'custom',
+      type: 'custom' as const,
       label: 'Роли',
       required: false,
       order: 6,
-      width: 'full'
-    }] : []),
+      width: 'full' as const
+    }] : []) as FieldConfig[],
     {
       key: 'password',
       type: 'password',

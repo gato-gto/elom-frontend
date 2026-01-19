@@ -22,7 +22,14 @@ export const useAuthStore = defineStore('auth', {
     }),
     getters: {
         isAuthenticated: (s) => Boolean(s.accessToken && s.refreshToken),
-        role: (s) => s.me?.role ?? null,
+        role: (s) => {
+            // ✅ RBAC: Возвращаем первую роль из массива roles для обратной совместимости
+            // Используется только как fallback, основной доступ через permissions
+            if (s.me?.roles && s.me.roles.length > 0) {
+                return s.me.roles[0].name
+            }
+            return null
+        },
     },
     actions: {
         async tryHydrate() {

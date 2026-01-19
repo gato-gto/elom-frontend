@@ -698,7 +698,7 @@ const onObjectChange = async () => {
   
   // Сбрасываем ответственного, если не изменен пользователем
   if (!userModifiedFields.value.responsible) {
-    formData.value.responsible = null
+    formData.value.responsible = undefined
   }
 
   // Загружаем материалы и сотрудников для выбранного объекта

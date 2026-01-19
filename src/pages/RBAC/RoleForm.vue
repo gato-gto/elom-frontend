@@ -82,12 +82,7 @@ onMounted(async () => {
 })
 
 // Form configuration
-const formConfig = computed<GenericFormConfig<{
-  name: string
-  display_name: string
-  description?: string
-  permission_ids?: number[]
-}>>(() => ({
+const formConfig = computed(() => ({
   title: props.initial ? 'Редактировать роль' : 'Создать роль',
   sections: [
     {
@@ -112,7 +107,7 @@ const formConfig = computed<GenericFormConfig<{
       width: 'half',
       help: 'Уникальное имя роли на английском языке (используется в системе)',
       validation: {
-        pattern: '^[a-z][a-z0-9_]*$',
+        pattern: /^[a-z][a-z0-9_]*$/,
         message: 'Имя роли должно начинаться с буквы и содержать только строчные буквы, цифры и подчеркивания'
       }
     },
