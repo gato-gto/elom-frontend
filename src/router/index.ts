@@ -313,8 +313,8 @@ const routes = [
       icon: 'people',
       breadcrumb: 'Сотрудники',
       description: 'Управление сотрудниками и пользователями',
-      category: 'reference_data',
-      order: 7,
+      category: 'administration',
+      order: 10,
       permissions: ['employees.view']
     }
   },
@@ -326,7 +326,7 @@ const routes = [
       title: 'Новый сотрудник',
       breadcrumb: 'Сотрудники / Новый',
       description: 'Создание нового сотрудника',
-      category: 'reference_data',
+      category: 'administration',
       permissions: ['employees.create']
     }
   },
@@ -338,7 +338,7 @@ const routes = [
       title: 'Редактировать сотрудника',
       breadcrumb: 'Сотрудники / Редактировать',
       description: 'Редактирование существующего сотрудника',
-      category: 'reference_data',
+      category: 'administration',
       permissions: ['employees.edit']
     }
   },

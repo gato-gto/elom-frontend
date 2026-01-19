@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
+import { usePermissionsStore } from '@/stores/permissions'
 import { generateNavigation, getBreadcrumbs, hasRouteAccess, getRoutePermissions } from '@/utils/router'
 import type { NavigationItem } from '@/types/router'
 
@@ -12,6 +13,7 @@ export function useAppRouter() {
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
+  const permissionsStore = usePermissionsStore()
 
   // Current route info
   const currentRoute = computed(() => route)
@@ -22,8 +24,11 @@ export function useAppRouter() {
   const currentBreadcrumb = computed(() => route.meta.breadcrumb as string)
 
   // Navigation
+  // ✅ RBAC: Добавлена зависимость от permissions, чтобы навигация обновлялась при загрузке разрешений
   const navigation = computed(() => {
-    // ✅ RBAC: userRole больше не используется, проверка через permissions
+    // Доступ к permissions заставляет computed пересчитываться при изменении разрешений
+    // Это важно, так как generateNavigation использует hasPermissionAccess, который проверяет разрешения
+    const _ = permissionsStore.permissions // Зависимость от разрешений для реактивности
     return generateNavigation(router.getRoutes())
   })
 

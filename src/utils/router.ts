@@ -12,7 +12,16 @@ function hasPermissionAccess(permissions: string[] | undefined): boolean {
   }
   
   const permissionsStore = usePermissionsStore()
-  return permissionsStore.hasAnyPermission(...permissions)
+  const authStore = useAuthStore()
+  
+  // Суперпользователь имеет все права
+  if (authStore.me?.is_superuser) {
+    return true
+  }
+  
+  // ✅ Используем прямой доступ к permissions вместо computed функции для надежности
+  const permissionCodenames = new Set(permissionsStore.permissions.map(p => p.codename))
+  return permissions.some(codename => permissionCodenames.has(codename))
 }
 
 /**
@@ -27,6 +36,20 @@ function hasPermissionAccess(permissions: string[] | undefined): boolean {
 export function generateNavigation(routes: RouteRecordNormalized[]): NavigationItem[] {
   const navigation: NavigationItem[] = []
   
+  // Отладка: проверить все маршруты administration (можно удалить после проверки)
+  const allAdminRoutes = routes.filter(r => r.meta?.category === 'administration')
+  if (allAdminRoutes.length > 0) {
+    console.log('[Router] Все маршруты с категорией administration:', allAdminRoutes.map(r => ({ 
+      path: r.path, 
+      name: r.name, 
+      permissions: r.meta.permissions,
+      public: r.meta.public 
+    })))
+  } else {
+    console.log('[Router] Нет маршрутов с категорией administration в router.getRoutes()')
+    console.log('[Router] Все маршруты:', routes.map(r => ({ path: r.path, name: r.name, category: r.meta?.category })))
+  }
+  
   // Filter routes that should appear in navigation
   const navRoutes = routes.filter(route => {
     // Skip routes without meta or with public: true
@@ -39,7 +62,19 @@ export function generateNavigation(routes: RouteRecordNormalized[]): NavigationI
     // ✅ RBAC: Проверка через permissions
     const routePermissions = route.meta.permissions as string[] | undefined
     if (routePermissions && routePermissions.length > 0) {
-      if (!hasPermissionAccess(routePermissions)) {
+      const hasAccess = hasPermissionAccess(routePermissions)
+      // Отладка для маршрутов administration (можно удалить после проверки)
+      if (route.meta.category === 'administration' && !hasAccess) {
+        const permissionsStore = usePermissionsStore()
+        console.log(`[Router] Маршрут ${route.path} отфильтрован:`, {
+          route: route.path,
+          category: route.meta.category,
+          requiredPermissions: routePermissions,
+          userPermissions: permissionsStore.permissions.map(p => p.codename),
+          hasAccess
+        })
+      }
+      if (!hasAccess) {
         return false
       }
     }
@@ -55,6 +90,12 @@ export function generateNavigation(routes: RouteRecordNormalized[]): NavigationI
   
   // Group routes by category
   const categories = new Map<string, NavigationItem[]>()
+  
+  // Отладка: проверить маршруты administration (можно удалить после проверки)
+  const adminRoutes = navRoutes.filter(r => r.meta.category === 'administration')
+  if (adminRoutes.length > 0) {
+    console.log('[Router] Маршруты administration прошли фильтрацию:', adminRoutes.map(r => ({ path: r.path, name: r.name, permissions: r.meta.permissions })))
+  }
   
   navRoutes.forEach(route => {
     const category = (route.meta.category as string) || 'other'
@@ -75,6 +116,11 @@ export function generateNavigation(routes: RouteRecordNormalized[]): NavigationI
     })
   })
   
+  // Отладка: проверить что попало в categories (можно удалить после проверки)
+  if (categories.has('administration')) {
+    console.log('[Router] Маршруты administration в categories:', categories.get('administration')?.map(i => ({ name: i.name, path: i.path })))
+  }
+  
   // Sort categories and items within categories
   const sortedCategories = Array.from(categories.entries())
     .sort(([a], [b]) => {
@@ -86,11 +132,12 @@ const categoryOrder = {
       'suppliers': 5,
       'users': 6,
       'tools': 7,
-      'settings': 8,
-      'administration': 9,  // ✅ Добавлена категория для RBAC управления ролями
-      'archive': 10,
-      'reports': 11,
-      'import': 12,
+      'administration': 8,  // ✅ Администрирование: между Инструменты и Справочники
+      'reference_data': 9,  // ✅ Справочники: после Администрирования
+      'settings': 10,
+      'archive': 11,
+      'reports': 12,
+      'import': 13,
       'other': 999
     }
       return (categoryOrder[a as keyof typeof categoryOrder] || 999) - (categoryOrder[b as keyof typeof categoryOrder] || 999)
@@ -115,6 +162,15 @@ const categoryOrder = {
     navigation.push(...items)
   })
   
+  // Отладка: проверить итоговую навигацию (можно удалить после проверки)
+  const adminNavItems = navigation.filter(i => i.category === 'administration')
+  if (adminNavItems.length > 0) {
+    console.log('[Router] Итоговые элементы administration в navigation:', adminNavItems.map(i => ({ name: i.name, path: i.path, title: i.title })))
+  } else {
+    console.log('[Router] В итоговой navigation нет элементов administration')
+    console.log('[Router] Все категории в navigation:', [...new Set(navigation.map(i => i.category))])
+  }
+  
   return navigation
 }
 
@@ -130,8 +186,9 @@ function getCategoryTitle(category: string): string {
     'suppliers': 'Поставщики',
     'users': 'Пользователи',
     'tools': 'Инструменты',
+    'administration': 'Администрирование',  // ✅ Администрирование: между Инструменты и Справочники
+    'reference_data': 'Справочники',  // ✅ Справочники: после Администрирования
     'settings': 'Настройки',
-    'administration': 'Администрирование',  // ✅ Добавлена категория для RBAC управления ролями
     'archive': 'Архив',
     'reports': 'Отчеты',
     'import': 'Импорт',

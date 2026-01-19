@@ -24,6 +24,7 @@
         <button
           v-for="resource in availableResources"
           :key="resource"
+          type="button"
           @click="toggleResourceFilter(resource)"
           class="btn btn-xs"
           :class="resourceFilter === resource ? 'btn-primary' : 'btn-outline'"
@@ -32,6 +33,7 @@
         </button>
         <button
           v-if="resourceFilter"
+          type="button"
           @click="resourceFilter = null"
           class="btn btn-xs btn-ghost"
         >
@@ -55,7 +57,7 @@
         <div class="font-semibold">Ошибка загрузки разрешений</div>
         <div class="text-sm">{{ error }}</div>
       </div>
-      <button @click="handleRefreshPermissions" class="btn btn-sm btn-ghost">Повторить</button>
+      <button type="button" @click="handleRefreshPermissions" class="btn btn-sm btn-ghost">Повторить</button>
     </div>
 
     <!-- Permissions grouped by resource -->
@@ -75,6 +77,7 @@
                   {{ getSelectedCountForResource(resource) }} / {{ getResourcePermissions(resource).length }}
                 </span>
                 <button
+                  type="button"
                   @click="toggleResourceAll(resource)"
                   class="btn btn-xs btn-ghost"
                   :disabled="!canManage"
@@ -283,6 +286,8 @@ const getResourceDisplayName = (resource: string): string => {
     rbac: 'RBAC',
     units: 'Единицы измерения',
     material_categories: 'Категории материалов',
+    material_requests: 'Закупка',
+
   }
   return resourceNames[resource] || resource
 }

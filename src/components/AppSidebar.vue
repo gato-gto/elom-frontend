@@ -90,14 +90,14 @@
         </ul>
       </div>
 
-      <!-- Administration -->
-      <div v-if="administration.length > 0" class="mb-6">
+      <!-- Tools -->
+      <div v-if="tools.length > 0" class="mb-6">
         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center">
-          <i class="material-icons mr-2 text-sm">admin_panel_settings</i>
-          Администрирование
+          <i class="material-icons mr-2 text-sm">build</i>
+          Инструменты
         </h3>
         <ul class="space-y-1">
-          <li v-for="item in administration" :key="item.name">
+          <li v-for="item in tools" :key="item.name">
             <router-link
               :to="item.path"
               :class="[
@@ -116,14 +116,14 @@
         </ul>
       </div>
 
-      <!-- Tools -->
-      <div v-if="tools.length > 0" class="mb-6">
+      <!-- Administration -->
+      <div v-if="administration.length > 0" class="mb-6">
         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center">
-          <i class="material-icons mr-2 text-sm">build</i>
-          Инструменты
+          <i class="material-icons mr-2 text-sm">admin_panel_settings</i>
+          Администрирование
         </h3>
         <ul class="space-y-1">
-          <li v-for="item in tools" :key="item.name">
+          <li v-for="item in administration" :key="item.name">
             <router-link
               :to="item.path"
               :class="[
@@ -230,9 +230,21 @@ const analyticsReports = computed(() => {
 
 // Administration - администрирование системы
 const administration = computed(() => {
-  return navigation.value.filter(item => 
+  // ✅ Добавлена зависимость от permissions для реактивности
+  const _ = permissionsStore.permissions.length
+  const items = navigation.value.filter(item => 
     ['users', 'settings', 'administration'].includes(item.category || '')
   )
+  // Отладка (можно удалить после проверки)
+  if (items.length === 0 && permissionsStore.permissions.length > 0) {
+    console.log('[AppSidebar] Debug: Раздел "Администрирование" пуст')
+    console.log('[AppSidebar] Всего маршрутов в навигации:', navigation.value.length)
+    console.log('[AppSidebar] Маршруты с категорией administration:', navigation.value.filter(i => i.category === 'administration'))
+    console.log('[AppSidebar] Разрешения:', permissionsStore.permissions.map(p => p.codename))
+    console.log('[AppSidebar] Есть employees.view:', permissionsStore.hasPermission('employees.view'))
+    console.log('[AppSidebar] Есть rbac.manage_roles:', permissionsStore.hasPermission('rbac.manage_roles'))
+  }
+  return items
 })
 
 // Tools - инструменты
