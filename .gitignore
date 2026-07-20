@@ -10,7 +10,7 @@ dist/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
-package-lock.json
+# package-lock.json MUST be committed for reproducible installs (F-002)
 pnpm-lock.yaml
 yarn.lock
 bun.lockb
