@@ -4,9 +4,6 @@ const join = (path: string) =>
     path.startsWith('/') ? `${API_PREFIX}${path}` : `${API_PREFIX}/${path}`;
 
 export const endpoints = {
-    // Health check (если есть)
-    health: join('/health'),
-
     // Auth endpoints
     auth: {
         token: join('/auth/token/'),
@@ -94,9 +91,10 @@ export const endpoints = {
         setCoverPhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/set-cover/`),
         reorderPhotos: (id: number) => join(`/purchases/${id}/photos/reorder/`),
         import: {
-            prepare: join('/purchases/import/prepare'),
-            dryRun: join('/purchases/import/dry_run'),
-            commit: join('/purchases/import/commit'),
+            // trailing slashes required — POST to a slash-less path breaks (F-055)
+            prepare: join('/purchases/import/prepare/'),
+            dryRun: join('/purchases/import/dry_run/'),
+            commit: join('/purchases/import/commit/'),
         },
     },
 
@@ -135,7 +133,8 @@ export const endpoints = {
         one: (id: number) => join(`/tool-issues/${id}/`),
         issue: join('/tool-issues/issue/'),
         returnTool: (id: number) => join(`/tool-issues/${id}/return/`),
-        openIssues: join('/tool-issues/open-issues/'),
+        // backend action is `active`, not `open-issues` (F-055)
+        openIssues: join('/tool-issues/active/'),
     },
 
     // Reports endpoints

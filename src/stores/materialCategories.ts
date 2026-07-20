@@ -20,7 +20,8 @@ export const useMaterialCategoriesStore = createBaseStore<MaterialCategory, any,
 
 export const fetchLite = async (): Promise<MaterialCategoryLite[]> => {
   try {
-    const { data } = await api.get<MaterialCategoryLite[] | { results: MaterialCategoryLite[] }>(endpoints.materialCategories.list + 'lite/')
+    // material-categories has no `lite` action; the plain list is already lightweight (F-055)
+    const { data } = await api.get<MaterialCategoryLite[] | { results: MaterialCategoryLite[] }>(endpoints.materialCategories.list)
     // API может возвращать либо массив, либо объект с results
     return Array.isArray(data) ? data : (data?.results || [])
   } catch (error: any) {
