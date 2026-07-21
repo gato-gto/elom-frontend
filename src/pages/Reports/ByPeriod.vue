@@ -319,6 +319,7 @@ function resetFilters() {
   dateFrom.value = undefined
   dateTo.value = undefined
   period.value = 'month'
+  currentPage.value = 1  // F-073: сброс на первую страницу
 }
 
 function handlePageChange(newPage: number) {
@@ -340,6 +341,7 @@ function handleSort(key: string) {
     sortOrder.value = 'asc'
   }
   
+  currentPage.value = 1  // F-073: смена сортировки → на первую страницу
   // Сортировка происходит на сервере
   load()
 }
@@ -351,6 +353,7 @@ const debouncedLoad = debounce(() => {
 
 // Watcher для автоматического поиска при изменении фильтров
 watch([dateFrom, dateTo, period], () => {
+  currentPage.value = 1  // F-073: смена фильтров → на первую страницу
   debouncedLoad()
 })
 

@@ -270,6 +270,7 @@ function downloadFile(content: string, filename: string, mimeType: string) {
 function resetFilters() {
   dateFrom.value = undefined
   dateTo.value = undefined
+  currentPage.value = 1  // F-073
 }
 
 function handlePageChange(newPage: number) {
@@ -291,6 +292,7 @@ function handleSort(key: string) {
     sortOrder.value = 'asc'
   }
   
+  currentPage.value = 1  // F-073
   // Сортировка происходит на сервере
   load()
 }
@@ -302,6 +304,7 @@ const debouncedLoad = debounce(() => {
 
 // Watcher для автоматического поиска при изменении фильтров
 watch([dateFrom, dateTo], () => {
+  currentPage.value = 1  // F-073
   debouncedLoad()
 })
 

@@ -308,6 +308,7 @@ function resetFilters() {
   dateFrom.value = undefined
   dateTo.value = undefined
   objectId.value = undefined
+  currentPage.value = 1  // F-073
 }
 
 function handleSort(key: string) {
@@ -318,6 +319,7 @@ function handleSort(key: string) {
     sortOrder.value = 'asc'
   }
   
+  currentPage.value = 1  // F-073
   // Сортировка происходит на сервере
   load()
 }
@@ -340,6 +342,7 @@ const debouncedLoad = debounce(() => {
 
 // Watcher для автоматического поиска при изменении фильтров
 watch([dateFrom, dateTo, objectId], () => {
+  currentPage.value = 1  // F-073
   debouncedLoad()
 })
 
