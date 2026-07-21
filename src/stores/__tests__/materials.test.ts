@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useMaterialsStore(), uploadPhoto } from '../materials'
+import { useMaterialsStore, uploadPhoto } from '../materials'
 import api from '@/api/client'
 // import { endpoints } from '@/api/endpoints' // Не используется
 

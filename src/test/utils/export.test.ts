@@ -384,7 +384,7 @@ describe('Export Utils', () => {
       )?.[1]
       
       // Should not contain unsafe characters
-      expect(downloadAttribute).not.toMatch(/[\/\\:*?"<>|]/)
+      expect(downloadAttribute).not.toMatch(/[/\\:*?"<>|]/)
     })
 
     it('should add timestamp to filename if requested', () => {

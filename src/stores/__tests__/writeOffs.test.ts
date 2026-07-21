@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useWriteOffsStore(), getByObject, getByMaterial, getByResponsible, getByStage } from '../writeOffs'
+import { useWriteOffsStore, getByObject, getByMaterial, getByResponsible, getByStage } from '../writeOffs'
 import api from '@/api/client'
 
 // Mock API client

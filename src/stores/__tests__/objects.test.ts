@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useObjectsStore() } from '../objects'
+import { useObjectsStore } from '../objects'
 import api from '@/api/client'
 
 // Mock API client

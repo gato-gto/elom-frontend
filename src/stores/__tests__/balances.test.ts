@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useBalancesStore(), fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '../balances'
+import { useBalancesStore, fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '../balances'
 import api from '@/api/client'
 
 // Mock API client

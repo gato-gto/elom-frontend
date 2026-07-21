@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { usePurchasesStore() } from '../purchases'
+import { usePurchasesStore } from '../purchases'
 import api from '@/api/client'
 
 // Mock API client

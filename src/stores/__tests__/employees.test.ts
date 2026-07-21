@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useEmployeesStore(), setPassword } from '../employees'
+import { useEmployeesStore, setPassword } from '../employees'
 import api from '@/api/client'
 
 // Mock API client
