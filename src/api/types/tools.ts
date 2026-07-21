@@ -142,12 +142,12 @@ export interface ToolIssueListQuery {
   issued_by?: number;
   issued_to?: number;
   object?: number;
-  issued_condition?: ToolCondition;
-  returned_condition?: ToolCondition;
-  issued_at_after?: string;
-  issued_at_before?: string;
-  return_date_after?: string;
-  return_date_before?: string;
+  issue_condition?: ToolCondition;
+  return_condition?: ToolCondition;
+  issued_at_from?: string;
+  issued_at_to?: string;
+  return_date_from?: string;
+  return_date_to?: string;
   is_open?: boolean | string;
   ordering?: string;
   page?: number;

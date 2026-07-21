@@ -104,9 +104,9 @@
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('purchases')" class="cursor-pointer hover:bg-gray-50 text-right">
-              Кол-во закупок
-              <span v-if="sortBy === 'purchases'" class="ml-1">
+            <th @click="handleSort('rows')" class="cursor-pointer hover:bg-gray-50 text-right">
+              Позиций
+              <span v-if="sortBy === 'rows'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
@@ -141,7 +141,7 @@
         </tbody>
         <tfoot v-if="total">
         <tr>
-          <th>Итого</th>
+          <th>Итого (стр.)</th>
           <th/>
           <th class="text-right">{{ formatCurrency(total) }}</th>
           <th/>

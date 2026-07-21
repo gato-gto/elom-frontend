@@ -51,17 +51,6 @@ export interface PatchedObjectRequest {
   date_end?: string;
 }
 
-export interface ObjectFormData {
-  name: string;
-  address: string;
-  is_active: boolean;
-  lat?: string; // decimal as string
-  lng?: string; // decimal as string
-  responsible?: number;
-  date_start?: string;
-  date_end?: string;
-}
-
 // Filter parameters
 export interface ObjectFilterParams extends PaginationParams, SearchParams, OrderingParams {
   is_active?: boolean;

@@ -9,7 +9,6 @@ export interface PurchaseSupplier {
   phone?: string;
   email?: string;
   address?: string;
-  comment?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -21,7 +20,6 @@ export interface PurchaseSupplierCreateRequest {
   phone?: string;
   email?: string;
   address?: string;
-  comment?: string;
   is_active?: boolean;
 }
 
@@ -31,7 +29,6 @@ export interface PurchaseSupplierUpdateRequest {
   phone?: string;
   email?: string;
   address?: string;
-  comment?: string;
   is_active?: boolean;
 }
 

@@ -78,7 +78,7 @@ const formConfig = computed<GenericFormConfig<ToolRequest>>(() => ({
       width: 'half',
       validation: {
         minLength: 1,
-        maxLength: 128
+        maxLength: 64  // F-222: match BE Tool.inventory_number max_length=64
       }
     },
     {

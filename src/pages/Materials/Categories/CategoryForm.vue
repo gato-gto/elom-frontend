@@ -3,8 +3,8 @@
     <GenericForm
       :config="formConfig"
       :initial-data="initialData"
-      @submit="handleSubmit"
-      @cancel="handleCancel"
+      :on-submit="handleSubmit"
+      :on-cancel="handleCancel"
     />
   </div>
 </template>

@@ -127,7 +127,7 @@
         </tbody>
         <tfoot v-if="total">
         <tr>
-          <th>Итого</th>
+          <th>Итого (стр.)</th>
           <th class="text-right">{{ formatCurrency(total) }}</th>
           <th/>
         </tr>

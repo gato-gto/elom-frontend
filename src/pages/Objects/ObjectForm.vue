@@ -60,7 +60,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       width: 'half',
       validation: {
         minLength: 2,
-        maxLength: 200
+        maxLength: 128  // F-221: match BE Object.name max_length=128
       }
     },
     {
@@ -84,7 +84,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       width: 'full',
       rows: 2,
       validation: {
-        maxLength: 500
+        maxLength: 256  // F-221: match BE Object.address max_length=256
       },
       customClass: 'min-h-0'
     },
@@ -135,7 +135,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       help: 'Укажите ссылку на Яндекс.Карты или Google Maps для точного местоположения объекта',
       validation: {
         pattern: /^https?:\/\/.+/,
-        maxLength: 500
+        maxLength: 256  // F-221: match BE Object.location_url max_length=256
       }
     },
     {

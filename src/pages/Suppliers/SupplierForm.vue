@@ -94,7 +94,7 @@ const formConfig = computed<GenericFormConfig<PurchaseSupplierCreateRequest>>(()
       order: 4,
       width: 'half',
       validation: {
-        pattern: /^[+]?[0-9\s\-()]+$/,
+        pattern: /^\+?[1-9][\d\s\-()]{6,}$/,
         maxLength: 20
       }
     },

@@ -95,7 +95,6 @@ const listConfig = computed<GenericListConfig<Employee>>(() => ({
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'employees',
-  exportUrl: '/api/v1/users/',
   loadingText: 'Загрузка сотрудников...',
   emptyText: 'Нет сотрудников',
   emptyTitle: 'Нет сотрудников',

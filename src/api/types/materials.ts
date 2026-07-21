@@ -17,9 +17,9 @@ export interface Material {
   is_active: boolean;
   created_date?: string;
   purchases_count: number;
-  total_purchased_amount: string; // decimal as string
+  total_purchased_amount: number;  // F-247: DRF returns number
   last_purchase_date?: string;
-  current_stock: string; // decimal as string
+  current_stock: number;  // F-247
   created_at: string;
   updated_at: string;
 }

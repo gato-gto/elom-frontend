@@ -26,10 +26,12 @@ vi.mock('@/composables/useErrorHandler', () => ({
 
 import CategoryForm from '@/pages/Materials/Categories/CategoryForm.vue'
 
+// F-244: GenericForm consumes submission via the `onSubmit` PROP (not a `submit` emit). The old
+// stub lied (emitted 'submit'), hiding that CategoryForm wired @submit — which never fires. This
+// stub uses the real contract, so it fails if CategoryForm goes back to @submit.
 const GenericFormStub = {
-  props: ['config', 'initialData'],
-  emits: ['submit', 'cancel'],
-  template: '<div class="gf" :data-submit="config.submitText" :data-name="initialData.name" @click="$emit(\'submit\', { name: initialData.name })"></div>',
+  props: ['config', 'initialData', 'onSubmit', 'onCancel'],
+  template: '<div class="gf" :data-submit="config.submitText" :data-name="initialData.name" @click="onSubmit && onSubmit({ name: initialData.name, parent: initialData.parent })"></div>',
 }
 
 const mountForm = (props: Record<string, unknown>) =>

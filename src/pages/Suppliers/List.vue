@@ -43,7 +43,7 @@
           <strong>{{ deletingSupplier?.name }}</strong>?
         </p>
         <p class="text-sm text-base-content/60 mb-6">
-          Это действие нельзя отменить. Все связанные закупки останутся без поставщика.
+          Это действие нельзя отменить. Удалить можно только поставщика без связанных закупок.
         </p>
         <div class="flex justify-end gap-3">
           <button class="btn btn-ghost" @click="showDeleteModal = false">
@@ -124,7 +124,6 @@ const listConfig = computed<GenericListConfig<PurchaseSupplier>>(() => ({
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'suppliers',
-  exportUrl: '/api/v1/purchases/suppliers/',
   loadingText: 'Загрузка поставщиков...',
   emptyText: 'Нет поставщиков',
   emptyTitle: 'Нет поставщиков',

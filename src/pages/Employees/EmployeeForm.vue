@@ -141,6 +141,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       order: 5,
       width: 'half' as const,
       autocomplete: 'nope',
+      required: !props.initial,  // F-233: BE requires phone on create (new user has no roles yet)
       validation: {
         maxLength: 32
       }

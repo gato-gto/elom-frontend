@@ -94,7 +94,7 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'units',
-  exportUrl: '/api/v1/common/units/',
+  exportUrl: '/api/v1/units/',
   loadingText: 'Загрузка единиц измерения...',
   emptyText: 'Нет единиц измерения',
   emptyTitle: 'Нет единиц измерения',
