@@ -159,7 +159,11 @@ async function handleSubmit(formData: ToolIssueCreateRequest) {
   try {
     // Ensure tool ID is set
     formData.tool = props.tool?.id || 0
-    
+    // F-265: без конкретного инструмента POST /tool-issues/issue/ уйдёт с tool=0 и 400.
+    if (!formData.tool || formData.tool <= 0) {
+      throw new Error('Инструмент не выбран — выдача невозможна')
+    }
+
     // Convert empty object to undefined
     if (!formData.object) {
       formData.object = undefined

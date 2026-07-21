@@ -805,7 +805,10 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       label: '№ закупки',
       placeholder: 'P0001',
       order: 6,
-      width: 'half'
+      width: 'half',
+      // F-264: PurchaseUpdateSerializer не принимает purchase_no — на редактировании поле
+      // игнорируется бэкендом. Блокируем ввод при редактировании, чтобы UI не обещал сохранение.
+      disabled: isEdit.value
     },
 
     // ✅ вместо ...(isRequester ? [] : [ ... ])

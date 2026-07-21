@@ -74,7 +74,7 @@ const formConfig = computed<GenericFormConfig<UnitRequest>>(() => ({
       width: 'full',
       validation: {
         minLength: 2,
-        maxLength: 100
+        maxLength: 64  // F-257: зеркалим Unit.name max_length=64 (было 100 → 400 на 65–100 симв.)
       }
     },
     {

@@ -102,7 +102,10 @@ const formConfig = computed<GenericFormConfig<ToolRequest>>(() => ({
       order: 3,
       width: 'half',
       help: 'Можно указать несколько через запятую',
-      datalist: categories.value
+      datalist: categories.value,
+      validation: {
+        maxLength: 256  // F-259: зеркалим Tool.category max_length=256
+      }
     },
     {
       key: 'brand',

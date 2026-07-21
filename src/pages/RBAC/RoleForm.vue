@@ -108,6 +108,7 @@ const formConfig = computed(() => ({
       help: 'Уникальное имя роли на английском языке (используется в системе)',
       validation: {
         pattern: /^[a-z][a-z0-9_]*$/,
+        maxLength: 50,  // F-258: зеркалим Role.name max_length=50
         message: 'Имя роли должно начинаться с буквы и содержать только строчные буквы, цифры и подчеркивания'
       }
     },
@@ -119,7 +120,10 @@ const formConfig = computed(() => ({
       required: true,
       order: 2,
       width: 'half' as const,
-      help: 'Название роли, которое будет отображаться пользователям'
+      help: 'Название роли, которое будет отображаться пользователям',
+      validation: {
+        maxLength: 100  // F-258: зеркалим Role.display_name max_length=100
+      }
     },
     {
       key: 'description',
