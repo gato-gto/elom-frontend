@@ -800,7 +800,16 @@ const handleSubmit = async () => {
       isSubmitting.value = false
       return
     }
-    
+
+    // F-261: responsible=0 (плейсхолдер «— выберите ответственного —») — не валидный User PK.
+    // Для full-access пользователя автозаполнение может не сработать (объект без ответственного,
+    // нет доступных бригадиров) → сервер вернёт 400. Ловим на клиенте с понятной ошибкой.
+    if (!formData.value.responsible || Number(formData.value.responsible) <= 0) {
+      errors.value.responsible = ['Выберите ответственного']
+      isSubmitting.value = false
+      return
+    }
+
     if (props.initial) {
       // F-072: списание — это одна строка (объект+материал+кол-во). Раньше при
       // редактировании сохранялась ТОЛЬКО items[0], остальные позиции молча

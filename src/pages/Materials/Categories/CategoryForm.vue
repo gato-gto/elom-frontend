@@ -99,7 +99,9 @@ async function handleSubmit(data: { name: string; parent?: number | string }) {
   try {
     const categoryData = {
       name: data.name,
-      parent: data.parent ? Number(data.parent) : undefined,
+      // F-260: очищенный родитель шлём как null (не undefined), иначе axios вырезает
+      // ключ из PATCH и открепление категории молча теряется. Сериализатор принимает null.
+      parent: data.parent ? Number(data.parent) : null,
     }
     if (isEdit.value && categoryId.value) {
       await materialCategoriesStore.update(categoryId.value, categoryData)

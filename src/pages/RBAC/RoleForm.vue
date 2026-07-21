@@ -169,7 +169,9 @@ async function handleSubmit(formData: any) {
     const roleData = {
       name: formData.name,
       display_name: formData.display_name,
-      description: formData.description || undefined,
+      // F-258: очищенное описание шлём как '' (не undefined), иначе PATCH его пропускает
+      // и снять описание невозможно; сериализатор допускает allow_blank.
+      description: formData.description ?? '',
       permission_ids: localPermissionIds.value
     }
 

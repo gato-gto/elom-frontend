@@ -23,9 +23,11 @@ import type {
 import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useUiStore } from '@/stores/ui'
 
 const suppliersStore = useSuppliersStore()
 const { handleFormError } = useErrorHandler()
+const ui = useUiStore()
 
 const props = defineProps<{
   initial?: PurchaseSupplier | null
@@ -94,8 +96,16 @@ const formConfig = computed<GenericFormConfig<PurchaseSupplierCreateRequest>>(()
       order: 4,
       width: 'half',
       validation: {
-        pattern: /^\+?[1-9][\d\s\-()]{6,}$/,
-        maxLength: 20
+        maxLength: 20,
+        // F-234: выравниваем с бэкендом (^\+?[1-9]\d{7,14}$ по цифрам) — 8–15 цифр,
+        // не начинается с 0; форматирующие символы допускаются.
+        custom: (v: any) => {
+          if (!v || !String(v).trim()) return null
+          const digits = String(v).replace(/\D/g, '')
+          if (digits.length < 8 || digits.length > 15) return 'Телефон должен содержать 8–15 цифр'
+          if (!/^[1-9]/.test(digits)) return 'Номер не может начинаться с 0'
+          return null
+        }
       }
     },
     {
@@ -152,6 +162,14 @@ const initialFormData = computed<PurchaseSupplierCreateRequest>(() => {
 
 // Methods
 async function handleSubmit(formData: PurchaseSupplierCreateRequest) {
+  // F-266: бэкенд требует хотя бы один способ связи (контактное лицо / телефон / email);
+  // раньше форма помечала обязательным только name → name-only create падал на 400.
+  const hasContact = [formData.contact_person, formData.phone, formData.email]
+    .some(v => v && String(v).trim())
+  if (!hasContact) {
+    ui.toast({ type: 'error', text: 'Укажите хотя бы один способ связи: контактное лицо, телефон или email.' })
+    throw new Error('supplier: at least one contact method required')
+  }
   try {
     if (props.initial) {
       const updateData: PurchaseSupplierUpdateRequest = { ...formData }
