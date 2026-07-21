@@ -1,31 +1,29 @@
 // Утилиты для экспорта данных
 import { formatCurrencyWithCode, formatDate, formatDateTime, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
 
+function _triggerDownload(url: string, filename: string) {
+  // Ошибку click() гасим, чтобы сбой скачивания не ронял приложение/тесты (F-064).
+  try {
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (e) {
+    console.error('Download failed:', e)
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 export function downloadFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  
-  URL.revokeObjectURL(url)
+  _triggerDownload(URL.createObjectURL(blob), filename)
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  
-  URL.revokeObjectURL(url)
+  _triggerDownload(URL.createObjectURL(blob), filename)
 }
 
 // Экспорт через backend API
@@ -128,19 +126,10 @@ export function exportToExcel<T extends Record<string, any>>(
   filename: string,
   options?: ExportOptions | string[]
 ) {
-  // Для простоты экспортируем как CSV с расширением .xlsx
-  // В реальном приложении можно использовать библиотеку xlsx
+  // Без xlsx-библиотеки экспортируем данные как CSV (единый файл).
+  // Раньше здесь через setTimeout скачивался ещё и ПУСТОЙ .xlsx (0 байт),
+  // что ломало экспорт и роняло тесты (uncaught в таймере) — убрано (F-064).
   exportToCSV(data, filename, options)
-  
-  // Переименовываем файл
-  setTimeout(() => {
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(new Blob([], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
-    link.download = `${filename}.xlsx`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }, 100)
   return true
 }
 
