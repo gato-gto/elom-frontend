@@ -210,12 +210,8 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
     { key: 'total_balance', label: 'Общий остаток', sortable: false }
   ],
   filters: [
-    {
-      key: 'search',
-      type: 'text',
-      label: 'Поиск',
-      placeholder: 'Поиск по материалам, объектам...'
-    },
+    // F-220: removed the dead 'search' text filter — the by-objects aggregate endpoint only accepts
+    // object_id + date, so search was never sent and typing did nothing.
     {
       key: 'object',
       type: 'select',

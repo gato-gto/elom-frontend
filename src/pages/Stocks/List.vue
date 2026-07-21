@@ -214,15 +214,15 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
   emptySubtitle: 'Внесите первые остатки для начала работы',
   filterColumns: 4,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
+    { key: 'id', label: 'ID', sortable: false },
     { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
-    { key: 'object', label: 'Объект', sortable: true },
-    { key: 'material', label: 'Материал', sortable: true },
-    { key: 'quantity_signed', label: 'Количество', sortable: true },
+    { key: 'object', label: 'Объект', sortable: false },
+    { key: 'material', label: 'Материал', sortable: false },
+    { key: 'quantity_signed', label: 'Количество', sortable: false },
     { key: 'type', label: 'Тип', sortable: false },
-    { key: 'stage', label: 'Этап', sortable: true },
+    { key: 'stage', label: 'Этап', sortable: false },
     { key: 'source', label: 'Источник', sortable: false },
-    { key: 'responsible', label: 'Ответственный', sortable: true }
+    { key: 'responsible', label: 'Ответственный', sortable: false }
   ],
   filters: [
     {

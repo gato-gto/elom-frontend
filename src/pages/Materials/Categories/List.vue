@@ -118,9 +118,9 @@ const listConfig = computed<GenericListConfig<MaterialCategory>>(() => ({
   columns: [
     { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
-    { key: 'parent_name', label: 'Родительская категория', sortable: true },
-    { key: 'materials_count', label: 'Материалов', sortable: true },
-    { key: 'children_count', label: 'Подкатегорий', sortable: true },
+    { key: 'parent_name', label: 'Родительская категория', sortable: false },
+    { key: 'materials_count', label: 'Материалов', sortable: false },
+    { key: 'children_count', label: 'Подкатегорий', sortable: false },
     { key: 'created_at', label: 'Создано', sortable: true }
   ],
   filters: [

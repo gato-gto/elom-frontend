@@ -86,10 +86,10 @@
                   'cursor-pointer hover:bg-gray-50',
                   column.sortable !== false ? '' : 'cursor-default'
                 ]"
-                @click="column.sortable !== false ? handleSort(column.key) : null"
+                @click="column.sortable !== false ? handleSort(column.sortKey || column.key) : null"
               >
                 {{ column.label }}
-                <span v-if="column.sortable !== false && sortBy === column.key" class="ml-1">
+                <span v-if="column.sortable !== false && sortBy === (column.sortKey || column.key)" class="ml-1">
                   {{ sortOrder === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>

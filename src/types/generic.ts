@@ -4,6 +4,7 @@ export interface ColumnConfig<T = any> {
   key: string
   label: string
   sortable?: boolean
+  sortKey?: string  // F-224: backend ?ordering= key when it differs from the column key (e.g. tool__inventory_number)
   component?: any
   formatter?: (value: any, item: T) => string
   path?: string // для вложенных свойств типа 'user.name'

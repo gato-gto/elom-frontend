@@ -145,7 +145,7 @@ const listConfig = computed<GenericListConfig<Material>>(() => ({
     { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'sku', label: 'SKU', sortable: true },
-    { key: 'category_name', label: 'Категория', sortable: true }
+    { key: 'category_name', label: 'Категория', sortable: false }
   ],
   filters: [
     {

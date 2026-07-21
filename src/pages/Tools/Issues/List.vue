@@ -133,8 +133,8 @@ const listConfig = computed<GenericListConfig<ToolIssue>>(() => ({
   filterColumns: 3,
   columns: [
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'tool_inventory_number', label: 'Название', sortable: true },
-    { key: 'issued_to_name', label: 'Кому', sortable: true },
+    { key: 'tool_inventory_number', label: 'Название', sortable: true, sortKey: 'tool__inventory_number' },
+    { key: 'issued_to_name', label: 'Кому', sortable: true, sortKey: 'issued_to' },
     { key: 'issued_at', label: 'Дата выдачи', sortable: true },
     { key: 'return_date', label: 'Дата возврата', sortable: true },
     { key: 'issue_condition', label: 'Состояние (выдача)', sortable: true },
