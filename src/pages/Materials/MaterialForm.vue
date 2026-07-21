@@ -152,7 +152,12 @@ const formConfig = computed<GenericFormConfig<MaterialRequest & { photo?: File }
       required: true,
       order: 8,
       width: 'full',
-      help: 'Базовая единица будет использоваться для автоматического округления значений (например, 1000г → 1кг).'
+      help: 'Базовая единица будет использоваться для автоматического округления значений (например, 1000г → 1кг).',
+      // F-250: раньше форма подставляла жёстко default_unit:1 — если единицы с id=1 нет,
+      // create падал на 400, а если есть — навязывался произвольный неверный дефолт.
+      validation: {
+        custom: (v: any) => (!v || v === 0) ? 'Выберите базовую единицу измерения' : null
+      }
     },
     {
       key: 'photo',
@@ -189,7 +194,7 @@ const initialFormData = computed<MaterialRequest & { photo?: File }>(() => {
     name: '',
     sku: '',
     category: undefined,
-    default_unit: 1,
+    default_unit: 0,  // F-250: пусто → пользователь обязан выбрать (см. validation.custom выше)
     created_date: new Date().toISOString().split('T')[0],
     description: '',
     manufacturer: '',
