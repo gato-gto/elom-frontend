@@ -5,6 +5,7 @@ import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { parseApiError } from '@/utils/errorHandler'
 import type { Permission, Role, UserPermissionsResponse } from '@/api/types/rbac'
+import { useAuthStore } from './auth'
 
 /**
  * Store для управления разрешениями пользователя
@@ -21,6 +22,17 @@ export const usePermissionsStore = defineStore('permissions', () => {
   
   // Время кэширования разрешений (5 минут)
   const CACHE_TIME = 5 * 60 * 1000
+
+  // F-074: суперпользователь Django имеет все права, даже без RBAC-роли.
+  // Раньше nav/guard/кнопки проверяли только permissions → чистый суперпользователь
+  // (без роли) получал пустую навигацию и его выкидывало со всех маршрутов.
+  const isSuperuser = computed<boolean>(() => {
+    try {
+      return !!useAuthStore().me?.is_superuser
+    } catch {
+      return false
+    }
+  })
   
   /**
    * Загрузить разрешения пользователя из API
@@ -28,6 +40,10 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * @param force - Принудительное обновление (игнорировать кэш)
    */
   const fetchPermissions = async (force = false): Promise<void> => {
+    // F-069: без токена не запрашиваем my-permissions (иначе 401 на странице логина)
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem('elom_access')) {
+      return
+    }
     // Проверка кэша
     if (!force && lastFetch.value) {
       const cacheAge = Date.now() - lastFetch.value.getTime()
@@ -63,6 +79,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * @param codename - Код разрешения (например: 'materials.create')
    */
   const hasPermission = computed(() => (codename: string): boolean => {
+    if (isSuperuser.value) { return true }
     return permissions.value.some(p => p.codename === codename)
   })
   
@@ -72,6 +89,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * @param codenames - Массив кодов разрешений
    */
   const hasAnyPermission = computed(() => (...codenames: string[]): boolean => {
+    if (isSuperuser.value) { return true }
     const permissionCodenames = new Set(permissions.value.map(p => p.codename))
     return codenames.some(codename => permissionCodenames.has(codename))
   })
@@ -82,6 +100,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * @param codenames - Массив кодов разрешений
    */
   const hasAllPermissions = computed(() => (...codenames: string[]): boolean => {
+    if (isSuperuser.value) { return true }
     const permissionCodenames = new Set(permissions.value.map(p => p.codename))
     return codenames.every(codename => permissionCodenames.has(codename))
   })
