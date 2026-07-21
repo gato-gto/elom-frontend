@@ -78,27 +78,10 @@ Object.defineProperty(window, 'open', {
   }))
 })
 
-// Mock File constructor
-global.File = vi.fn().mockImplementation((content, name, options) => ({
-  name,
-  size: content.length,
-  type: options?.type || 'text/plain',
-  lastModified: Date.now(),
-  content
-}))
-
-// Mock FormData
-global.FormData = vi.fn().mockImplementation(() => ({
-  append: vi.fn(),
-  delete: vi.fn(),
-  get: vi.fn(),
-  getAll: vi.fn(),
-  has: vi.fn(),
-  set: vi.fn(),
-  entries: vi.fn(),
-  keys: vi.fn(),
-  values: vi.fn(),
-}))
+// NOTE: File and FormData are provided natively by the jsdom environment and must NOT be
+// mocked here — the previous vi.fn() File mock used an arrow implementation that throws when
+// invoked with `new File(...)` (arrow functions are not constructors), breaking every
+// multipart upload test. jsdom's real File/FormData are correct and constructable.
 
 // Mock fetch
 global.fetch = vi.fn()

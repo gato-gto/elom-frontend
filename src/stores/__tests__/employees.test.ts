@@ -142,9 +142,9 @@ describe('Employees Store', () => {
     const store = useEmployeesStore()
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
-    
-    await store.delete(1)
-    
+
+    await store.remove(1)
+
     // Проверяем, что был вызван правильный endpoint
     expect(api.delete).toHaveBeenCalled()
     const callArgs = vi.mocked(api.delete).mock.calls[0][0]
@@ -188,7 +188,7 @@ describe('Employees Store', () => {
   })
 
   it('sets filters correctly', async () => {
-    const store = useEmployeesStore()()
+    const store = useEmployeesStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({
@@ -201,7 +201,7 @@ describe('Employees Store', () => {
   })
 
   it('resets filters correctly', async () => {
-    const store = useEmployeesStore()()
+    const store = useEmployeesStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
     
     await store.setFilters({ search: 'test', role: 'brigadier' })

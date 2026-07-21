@@ -172,7 +172,7 @@ describe('Materials Store', () => {
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
     
-    await store.delete(1)
+    await store.remove(1)
     
     expect(api.delete).toHaveBeenCalledWith('/api/v1/materials/1/')
   })
@@ -235,10 +235,11 @@ describe('Materials Store', () => {
   it('resets filters correctly', async () => {
     const store = useMaterialsStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
-    await store.setFilters({ search: 'test' })
-    
+    // Apply BOTH a search and a category filter, then verify reset clears them.
+    await store.setFilters({ search: 'test', category: '5' })
+
     await store.resetFilters()
-    
+
     expect(store.filters.search).toBe('')
     expect(store.filters.category).toBe('')
   })

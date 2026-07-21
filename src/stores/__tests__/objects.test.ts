@@ -149,8 +149,8 @@ describe('Objects Store', () => {
     const store = useObjectsStore()
     
     vi.mocked(api.delete).mockResolvedValue({ data: null })
-    
-    await store.delete(1)
+
+    await store.remove(1)
     
     // Проверяем, что был вызван правильный endpoint
     expect(api.delete).toHaveBeenCalled()
@@ -232,9 +232,11 @@ describe('Objects Store', () => {
       { id: 2, name: 'Inactive Object', is_active: false } as any
     ]
     
-    const { activeObjects } = await import('../objects')
-    expect(activeObjects.value).toHaveLength(1)
-    expect(activeObjects.value[0].name).toBe('Active Object')
+    // objects store exposes getActiveObjects() (a helper), not an activeObjects ref.
+    const { getActiveObjects } = await import('../objects')
+    const active = getActiveObjects()
+    expect(active).toHaveLength(1)
+    expect(active[0].name).toBe('Active Object')
   })
 })
 
