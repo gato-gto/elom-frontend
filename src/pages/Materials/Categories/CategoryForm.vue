@@ -15,24 +15,31 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMaterialCategoriesStore } from '@/stores/materialCategories'
 import GenericForm from '@/components/GenericForm.vue'
 import type { GenericFormConfig } from '@/types/generic'
-import type { MaterialCategoryLite } from '@/api/types'
+import type { MaterialCategory } from '@/api/types'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+
+// FE-CRITICAL (F-067): форма используется И в модалке (List передаёт :initial и
+// слушает @saved/@cancel), И по маршруту. Раньше режим определялся ТОЛЬКО по
+// route.params.id, поэтому редактирование из модалки шло как СОЗДАНИЕ → дубликаты.
+const props = defineProps<{ initial?: MaterialCategory | null }>()
+const emit = defineEmits<{ (e: 'saved', value?: unknown): void; (e: 'cancel'): void }>()
 
 const router = useRouter()
 const route = useRoute()
 const materialCategoriesStore = useMaterialCategoriesStore()
-
-// Используем новый композабл для обработки ошибок
 const { handleFormError } = useErrorHandler()
 
-const isEdit = computed(() => !!route.params.id)
-const categoryId = computed(() => isEdit.value ? Number(route.params.id) : null)
+// Открыто в модалке, если prop `initial` передан (в т.ч. null — создание в модалке).
+const isModal = computed(() => props.initial !== undefined)
+const routeId = computed(() => (route.params.id ? Number(route.params.id) : null))
+const categoryId = computed(() => props.initial?.id ?? routeId.value)
+const isEdit = computed(() => categoryId.value != null)
 
-// Конфигурация формы
-const formConfig: GenericFormConfig = {
+// Конфигурация формы — computed, чтобы реагировать на загрузку категорий (иначе
+// селект родителя оставался пустым) и на режим создание/редактирование.
+const formConfig = computed<GenericFormConfig>(() => ({
   title: isEdit.value ? 'Редактировать категорию' : 'Новая категория',
   subtitle: 'Заполните информацию о категории материалов',
-  
   fields: [
     {
       key: 'name',
@@ -41,10 +48,7 @@ const formConfig: GenericFormConfig = {
       placeholder: 'Введите название категории',
       required: true,
       order: 1,
-      validation: {
-        minLength: 2,
-        maxLength: 128
-      }
+      validation: { minLength: 2, maxLength: 128 },
     },
     {
       key: 'parent',
@@ -54,44 +58,34 @@ const formConfig: GenericFormConfig = {
       required: false,
       options: [
         { value: '', label: 'Без родительской категории' },
-        ...materialCategoriesStore.selectOptions.filter((option: any) => 
-          !isEdit.value || option.value !== categoryId.value
-        )
+        ...materialCategoriesStore.selectOptions.filter(
+          (option: { value: number | string }) => !isEdit.value || option.value !== categoryId.value,
+        ),
       ],
       order: 2,
-      help: 'Выберите родительскую категорию для создания иерархии'
-    }
+      help: 'Выберите родительскую категорию для создания иерархии',
+    },
   ],
-  
   submitText: isEdit.value ? 'Сохранить изменения' : 'Создать категорию',
   cancelText: 'Отмена',
-  showCancel: true
-}
+  showCancel: true,
+}))
 
-// Начальные данные
+// Начальные данные: из prop (модалка) либо из стора (маршрут).
 const initialData = computed(() => {
-  if (isEdit.value && materialCategoriesStore.items.length > 0) {
-    const category = materialCategoriesStore.items.find(c => c.id === categoryId.value)
-    return {
-      name: category?.name || '',
-      parent: category?.parent || ''
-    }
-  }
-  return {
-    name: '',
-    parent: ''
-  }
+  const src =
+    props.initial ??
+    (isEdit.value ? materialCategoriesStore.items.find((c) => c.id === categoryId.value) : null)
+  return { name: src?.name || '', parent: (src as { parent?: number | string })?.parent || '' }
 })
 
-// Загрузка данных
 onMounted(async () => {
-  // Загружаем список категорий для выбора родительской категории
+  // Категории нужны для селекта родителя.
   if (materialCategoriesStore.items.length === 0) {
     await materialCategoriesStore.fetchList()
   }
-  
-  // Если редактируем, загружаем данные категории
-  if (isEdit.value && categoryId.value) {
+  // При маршрутном редактировании подгружаем конкретную категорию.
+  if (!isModal.value && isEdit.value && categoryId.value) {
     try {
       await materialCategoriesStore.fetchOne(categoryId.value)
     } catch (error) {
@@ -101,29 +95,33 @@ onMounted(async () => {
   }
 })
 
-// Обработка отправки формы
-async function handleSubmit(data: any) {
+async function handleSubmit(data: { name: string; parent?: number | string }) {
   try {
     const categoryData = {
       name: data.name,
-      parent: data.parent ? Number(data.parent) : undefined
+      parent: data.parent ? Number(data.parent) : undefined,
     }
-    
     if (isEdit.value && categoryId.value) {
       await materialCategoriesStore.update(categoryId.value, categoryData)
     } else {
       await materialCategoriesStore.create(categoryData)
     }
-    
-    router.push('/material_categories')
+    if (isModal.value) {
+      emit('saved')
+    } else {
+      router.push('/material_categories')
+    }
   } catch (error) {
     await handleFormError(error, 'category')
   }
 }
 
-// Отмена
 function handleCancel() {
-  router.push('/material_categories')
+  if (isModal.value) {
+    emit('cancel')
+  } else {
+    router.push('/material_categories')
+  }
 }
 </script>
 
