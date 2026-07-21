@@ -26,23 +26,24 @@ vi.mock('@/api/client', () => ({
 }))
 
 // Mock stores that ObjectInfo uses
+// These stores are consumed as `useXStore()` — the mock export MUST be a function.
 vi.mock('@/stores/purchases', () => ({
-  usePurchasesStore: {
+  usePurchasesStore: () => ({
     items: [],
     loading: false,
     error: null,
     fetchList: vi.fn().mockResolvedValue([])
-  },
+  }),
   getByObject: vi.fn().mockReturnValue([])
 }))
 
 vi.mock('@/stores/writeOffs', () => ({
-  useWriteOffsStore: {
+  useWriteOffsStore: () => ({
     items: [],
     loading: false,
     error: null,
     fetchList: vi.fn().mockResolvedValue([])
-  },
+  }),
   getByObject: vi.fn().mockReturnValue([])
 }))
 
@@ -66,7 +67,7 @@ describe('ObjectInfo', () => {
 
   describe('Component Rendering', () => {
     it('mounts successfully', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.items = [
         {
           id: 1,
@@ -98,7 +99,7 @@ describe('ObjectInfo', () => {
     })
 
     it('displays object name', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       const testObject = {
         id: 1,
         name: 'ЖК Солнечный',
@@ -131,7 +132,7 @@ describe('ObjectInfo', () => {
     })
 
     it('shows loading state when object is not loaded', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.current = null
       store.loading = true
 
@@ -152,7 +153,7 @@ describe('ObjectInfo', () => {
 
   describe('Quick Actions', () => {
     it('renders quick action buttons', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.items = [
         {
           id: 1,
@@ -183,7 +184,7 @@ describe('ObjectInfo', () => {
 
   describe('Edit Modal', () => {
     it('opens edit modal when edit button is clicked', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.items = [
         {
           id: 1,
@@ -223,7 +224,7 @@ describe('ObjectInfo', () => {
 
   describe('Object Status Display', () => {
     it('displays active status correctly', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.items = [
         {
           id: 1,
@@ -250,7 +251,7 @@ describe('ObjectInfo', () => {
     })
 
     it('displays inactive status correctly', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.items = [
         {
           id: 1,
@@ -278,7 +279,7 @@ describe('ObjectInfo', () => {
 
   describe('Stage Display', () => {
     it('displays current stage', async () => {
-      const store = useObjectsStore
+      const store = useObjectsStore()
       store.items = [
         {
           id: 1,

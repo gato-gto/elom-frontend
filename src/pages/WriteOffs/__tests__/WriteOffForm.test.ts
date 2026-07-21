@@ -1,33 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 
+// Stores are consumed as `useXStore()` — every mock export MUST be a function.
 vi.mock('@/stores/writeOffs', () => ({
-  useWriteOffsStore: {}
+  useWriteOffsStore: () => ({ create: vi.fn(), update: vi.fn(), items: [] })
 }))
 
 vi.mock('@/stores/objects', () => ({
-  useObjectsStore: { items: [{ id: 1, name: 'Объект 1', responsible: 10 }] }
+  useObjectsStore: () => ({
+    items: [{ id: 1, name: 'Объект 1', responsible: 10 }],
+    fetchList: vi.fn().mockResolvedValue(undefined)
+  })
 }))
 
 vi.mock('@/stores/employees', () => ({
-  useEmployeesStore: { items: [{ id: 10, username: 'brigadier1', role: 'brigadier' }] },
-  getByObject: (objectId: number) => [{ id: 10, username: 'brigadier1', role: 'brigadier' }]
+  useEmployeesStore: () => ({
+    items: [{ id: 10, username: 'brigadier1', role: 'brigadier' }],
+    fetchList: vi.fn().mockResolvedValue(undefined)
+  }),
+  getByObject: (_objectId: number) => [{ id: 10, username: 'brigadier1', role: 'brigadier' }]
 }))
 
 vi.mock('@/stores/units', () => ({
-  useUnitsStore: { items: [{ id: 5, name: 'Килограмм', code: 'кг' }] }
+  useUnitsStore: () => ({
+    items: [{ id: 5, name: 'Килограмм', code: 'кг' }],
+    fetchList: vi.fn().mockResolvedValue(undefined)
+  })
 }))
 
-vi.mock('@/stores/materials', () => {
-  const materialsStoreMock = {
+vi.mock('@/stores/materials', () => ({
+  useMaterialsStore: () => ({
     items: [{ id: 100, name: 'Цемент', default_unit: 5 }],
-    fetchList: vi.fn()
-  }
-  return {
-    useMaterialsStore: materialsStoreMock,
-    getMaterialsByObject: async (objectId: number) => [{ id: 100, name: 'Цемент', default_unit: 5 }]
-  }
-})
+    fetchList: vi.fn().mockResolvedValue(undefined)
+  }),
+  getMaterialsByObject: async (_objectId: number) => [{ id: 100, name: 'Цемент', default_unit: 5 }]
+}))
 
 vi.mock('@/api/client', () => {
   const apiGet = vi.fn()
