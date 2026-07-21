@@ -581,7 +581,14 @@ const loadCurrentBalance = async (item: WriteOffItem, index: number) => {
       }
     })
     
-    item.currentBalance = parseFloat(data.current_balance || 0)
+    let balance = parseFloat(data.current_balance || 0)
+    // F-229: в edit-режиме /balance возвращает остаток, УЖЕ уменьшенный на собственный снапшот
+    // этого списания, поэтому getFutureBalance вычитал бы количество ДВАЖДЫ. Возвращаем своё
+    // количество обратно (только для отображения «текущий/будущий остаток»; сабмит не затрагивается).
+    if (props.initial && item.material === props.initial.material) {
+      balance += parseFloat(String(props.initial.quantity)) || 0
+    }
+    item.currentBalance = balance
   } catch (error) {
     console.error('Error loading current balance:', error)
     item.currentBalance = null
