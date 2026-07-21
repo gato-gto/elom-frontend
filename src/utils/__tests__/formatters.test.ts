@@ -133,7 +133,7 @@ describe('formatCurrency', () => {
   it('formats number as currency', () => {
     const result = formatCurrency(1234.56)
     expect(result).toMatch(/1[\s\u00A0]234/) // Should have thousand separator
-    expect(result).toMatch(/₽|руб/i) // Should have currency symbol
+    expect(result).toMatch(/UZS/i) // ELOM currency is Uzbek som (UZS), not RUB
   })
 
   it('handles null and undefined', () => {

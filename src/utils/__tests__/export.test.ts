@@ -181,15 +181,17 @@ describe('Export Utils', () => {
 
   describe('error handling', () => {
     it('handles export errors gracefully', () => {
-      // Mock downloadFile to throw an error
+      // Simulate the browser failing to start a download.
       const originalCreateElement = document.createElement
       document.createElement = vi.fn(() => {
         throw new Error('Export error')
       }) as any
 
+      // F-064: a download-trigger failure is caught+logged, NOT propagated — the app
+      // must never crash because the browser couldn't begin a download.
       expect(() => {
         exportToCSV(mockData, 'test.csv')
-      }).toThrow('Export error')
+      }).not.toThrow()
 
       // Restore
       document.createElement = originalCreateElement
