@@ -242,11 +242,18 @@ function handleFieldChange(key: string, value: any) {
   emit('field-change', key, value)
 }
 
-// Watch for config changes to update form fields
-         watch(() => props.config, (newConfig) => {
-           // Force re-render of form fields when config changes
-           // This ensures that dynamic options (like material options) are updated
-         }, { deep: true })
+// F-071: initialData может приходить АСИНХРОННО (загрузка записи для edit) или
+// меняться при выборе другого элемента. useGenericForm копирует его лишь один раз
+// при инициализации, поэтому маршрутные формы оставались пустыми на редактировании
+// (в модалках это маскировалось remount'ом). Синхронизируем форму при смене initialData.
+watch(
+  () => props.initialData,
+  (newData) => {
+    if (newData && Object.keys(newData).length > 0) {
+      form.value = { ...form.value, ...(newData as Record<string, unknown>) }
+    }
+  },
+)
 
 // Lifecycle
 onMounted(() => {
