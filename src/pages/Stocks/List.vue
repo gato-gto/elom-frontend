@@ -1,11 +1,10 @@
 <template>
   <div class="list-container">
-    <!-- GenericList Component -->
+    <!-- GenericList Component — /stocks is READ-ONLY (F-213): the snapshot ledger is derived,
+         not hand-edited. Recording consumption lives on /writeoffs («Новое списание» / «По остатку»). -->
     <GenericList
       :store="stockSnapshotsStore"
       :config="listConfig"
-      @create="openCreate"
-      @action="handleAction"
       @export="handleExport"
     >
       <!-- Custom column for object name -->
@@ -64,21 +63,11 @@
         <span>{{ responsibleName(value) ?? '—' }}</span>
       </template>
     </GenericList>
-
-    <!-- Modal for creating/editing stock snapshot -->
-    <Modal v-model="modalOpen" :title="modalTitle" size="4xl" :closable="true">
-      <StockForm 
-        :initial="editingStockSnapshot" 
-        @saved="onStockSnapshotSaved" 
-        @cancel="modalOpen = false" 
-      />
-    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted } from 'vue'
 import type { StockSnapshot, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
@@ -90,14 +79,11 @@ import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
-import Modal from '@/components/Modal.vue'
-import StockForm from './StockForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import StockCard from '@/components/cards/StockCard.vue'
 
-// Router and stores
-const router = useRouter()
+// Stores
 const stockSnapshotsStore = useStockSnapshotsStore()
 const objectsStore = useObjectsStore()
 const materialsStore = useMaterialsStore()
@@ -107,18 +93,8 @@ const ui = useUiStore()
 // Error handling
 const { handleLoadingError } = useErrorHandler()
 
-// Modal state
-const modalOpen = ref(false)
-const editingStockSnapshot = ref<StockSnapshot | null>(null)
-
-// Computed properties
-const modalTitle = computed(() => {
-  return editingStockSnapshot.value ? 'Редактировать внесение остатков' : 'Внести остатки'
-})
-
-// ✅ RBAC: используем permissions
-const { can, canExportReports } = usePermissions()
-const canEdit = computed(() => can('stock', 'edit'))
+// ✅ RBAC: используем permissions (только экспорт — страница только для чтения)
+const { canExportReports } = usePermissions()
 
 // Computed для справочников
 const objects = computed(() => objectsStore.items)
@@ -199,11 +175,10 @@ function getSourceTypeDisplayName(sourceType: string) {
 // GenericList configuration
 const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
   title: 'Остатки',
-  subtitle: 'Просмотр и управление остатками материалов по объектам',
+  subtitle: 'Журнал движения остатков по объектам (только просмотр). Списания — на странице «Списания».',
   icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-  showCreate: canEdit.value,
-  createText: 'Внести остатки',
-  canCreate: canEdit.value,
+  showCreate: false,
+  canCreate: false,
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'stocks',
@@ -282,13 +257,6 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
       ]
     }
   ],
-  actions: [
-    {
-      key: 'edit',
-      label: 'Редактировать',
-      class: 'btn-outline'
-    }
-  ],
   mobileCardComponent: StockCard,
   mobileCardProp: 'stock',
   defaultSort: 'date',
@@ -296,17 +264,6 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
 }))
 
 // Methods
-function openCreate() {
-  modalOpen.value = true
-  editingStockSnapshot.value = null
-}
-
-function onStockSnapshotSaved() {
-  modalOpen.value = false
-  editingStockSnapshot.value = null
-  stockSnapshotsStore.fetchList()
-}
-
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
     const data = stockSnapshotsStore.items
@@ -331,15 +288,6 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 }
 
 // Функции экспорта удалены - используются импортированные из @/utils/export
-
-async function handleAction(action: string, item: StockSnapshot) {
-  switch (action) {
-    case 'edit':
-      editingStockSnapshot.value = item
-      modalOpen.value = true
-      break
-  }
-}
 
 // Lifecycle
 onMounted(async () => {

@@ -8,6 +8,19 @@
       @action="handleAction"
       @export="handleExport"
     >
+      <!-- Inventory-count entry point (F-213): enter the actual remaining balance,
+           backend computes расход = книжный остаток − факт and records the write-off. -->
+      <template #header-actions>
+        <button
+          v-if="canCreate"
+          @click="byBalanceOpen = true"
+          class="btn btn-sm btn-outline"
+          title="Инвентаризация: введите фактический остаток на объекте — система вычислит расход (книжный − факт) и оформит списание на разницу"
+        >
+          По остатку
+        </button>
+      </template>
+
       <!-- Custom column for object name -->
       <template #column-object="{ item, value }">
         <span>{{ objectName(value) ?? value }}</span>
@@ -50,11 +63,18 @@
     </GenericList>
 
     <!-- WriteOffForm Modal -->
-    <WriteOffForm 
+    <WriteOffForm
       :is-open="modalOpen"
-      :initial="editingWriteOff" 
+      :initial="editingWriteOff"
       @close="modalOpen = false"
       @success="onWriteOffSaved"
+    />
+
+    <!-- Inventory-count modal (F-213 / D-015): «Внести остатки» → from-balance write-off -->
+    <WriteOffByBalanceForm
+      :is-open="byBalanceOpen"
+      @close="byBalanceOpen = false"
+      @success="onByBalanceSaved"
     />
   </div>
 </template>
@@ -71,6 +91,7 @@ import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
 import WriteOffForm from './WriteOffForm.vue'
+import WriteOffByBalanceForm from './WriteOffByBalanceForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import WriteOffCard from '@/components/cards/WriteOffCard.vue'
@@ -92,6 +113,8 @@ const { handleLoadingError } = useErrorHandler()
 // Modal state
 const modalOpen = ref(false)
 const editingWriteOff = ref<WriteOff | null>(null)
+// Inventory-count ("По остатку") modal — F-213
+const byBalanceOpen = ref(false)
 
 // Computed properties
 const modalTitle = computed(() => {
@@ -249,6 +272,12 @@ function openEdit(writeOff: WriteOff) {
 function onWriteOffSaved() {
   modalOpen.value = false
   editingWriteOff.value = null
+  writeOffsStore.fetchList()
+}
+
+// Inventory count recorded (from-balance) → close and refresh the ledger view
+function onByBalanceSaved() {
+  byBalanceOpen.value = false
   writeOffsStore.fetchList()
 }
 
