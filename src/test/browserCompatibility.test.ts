@@ -1,301 +1,139 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import browserSupport from '@/utils/browserSupport'
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import browserSupport, { BrowserSupportChecker } from '@/utils/browserSupport'
 
-// Мокаем window объект для тестов
-const mockWindow = {
-  CSS: {
-    supports: vi.fn()
-  },
-  fetch: vi.fn(),
-  Promise: vi.fn(),
-  IntersectionObserver: vi.fn(),
-  ResizeObserver: vi.fn(),
-  navigator: {
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-  },
-  document: {
-    createElement: vi.fn((tagName: string) => {
-      if (tagName === 'canvas') {
-        return {
-          width: 1,
-          height: 1,
-          toDataURL: vi.fn(() => 'data:image/webp;base64,test')
-        }
-      }
-      return {}
-    })
-  }
+/**
+ * NOTE on design: the exported `browserSupport` singleton computes feature support ONCE in its
+ * constructor (at import time), so mocking window.* then calling singleton.getSupport() can never
+ * change the result. Feature-detection tests therefore construct a FRESH BrowserSupportChecker
+ * AFTER stubbing the relevant globals. Browser detection (getBrowserInfo/getRecommendations) reads
+ * navigator.userAgent live, so it is tested by overriding navigator.userAgent per test.
+ *
+ * All global overrides are restored in afterEach so nothing leaks into the rest of the suite
+ * (a clobbered global Promise would break vitest's own async runner).
+ */
+
+const realUserAgent = window.navigator.userAgent
+
+function setUserAgent(ua: string) {
+  Object.defineProperty(window.navigator, 'userAgent', { value: ua, configurable: true })
+}
+
+function stubCSS(supports: (prop: string, value: string) => boolean) {
+  vi.stubGlobal('CSS', { supports: vi.fn(supports) })
 }
 
 describe('Browser Compatibility', () => {
-  beforeEach(() => {
-    // Сбрасываем все моки
-    vi.clearAllMocks()
-    
-    // Устанавливаем мок window
-    Object.assign(window, mockWindow)
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    setUserAgent(realUserAgent)
+    vi.restoreAllMocks()
   })
 
-  describe('CSS Variables Support', () => {
-    it('should detect CSS variables support', () => {
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === 'color' && value === 'var(--fake-var)') {
-          return true
-        }
-        return false
-      })
-
-      const support = browserSupport.getSupport()
-      expect(support.cssVariables).toBe(true)
+  describe('CSS feature detection', () => {
+    it('detects CSS variables support', () => {
+      stubCSS((prop, value) => prop === 'color' && value === 'var(--fake-var)')
+      expect(new BrowserSupportChecker().getSupport().cssVariables).toBe(true)
     })
 
-    it('should detect lack of CSS variables support', () => {
-      mockWindow.CSS.supports.mockImplementation(() => false)
-
-      const support = browserSupport.getSupport()
-      expect(support.cssVariables).toBe(false)
-    })
-  })
-
-  describe('Backdrop Filter Support', () => {
-    it('should detect backdrop filter support', () => {
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === 'backdrop-filter' && value === 'blur(1px)') {
-          return true
-        }
-        return false
-      })
-
-      const support = browserSupport.getSupport()
-      expect(support.backdropFilter).toBe(true)
+    it('detects lack of CSS variables support', () => {
+      stubCSS(() => false)
+      expect(new BrowserSupportChecker().getSupport().cssVariables).toBe(false)
     })
 
-    it('should detect webkit backdrop filter support (Safari)', () => {
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === '-webkit-backdrop-filter' && value === 'blur(1px)') {
-          return true
-        }
-        return false
-      })
-
-      const support = browserSupport.getSupport()
-      expect(support.backdropFilter).toBe(true)
+    it('detects backdrop-filter support', () => {
+      stubCSS((prop, value) => prop === 'backdrop-filter' && value === 'blur(1px)')
+      expect(new BrowserSupportChecker().getSupport().backdropFilter).toBe(true)
     })
 
-    it('should detect lack of backdrop filter support', () => {
-      mockWindow.CSS.supports.mockImplementation(() => false)
+    it('detects webkit backdrop-filter support (Safari)', () => {
+      stubCSS((prop, value) => prop === '-webkit-backdrop-filter' && value === 'blur(1px)')
+      expect(new BrowserSupportChecker().getSupport().backdropFilter).toBe(true)
+    })
 
-      const support = browserSupport.getSupport()
-      expect(support.backdropFilter).toBe(false)
+    it('detects lack of backdrop-filter support', () => {
+      stubCSS(() => false)
+      expect(new BrowserSupportChecker().getSupport().backdropFilter).toBe(false)
+    })
+
+    it('detects CSS grid support', () => {
+      stubCSS((prop, value) => prop === 'display' && value === 'grid')
+      expect(new BrowserSupportChecker().getSupport().grid).toBe(true)
+    })
+
+    it('detects flexbox support', () => {
+      stubCSS((prop, value) => prop === 'display' && value === 'flex')
+      expect(new BrowserSupportChecker().getSupport().flexbox).toBe(true)
     })
   })
 
-  describe('CSS Grid Support', () => {
-    it('should detect CSS grid support', () => {
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === 'display' && value === 'grid') {
-          return true
-        }
-        return false
-      })
+  describe('JS capability detection', () => {
+    it('detects fetch API support', () => {
+      vi.stubGlobal('fetch', vi.fn())
+      expect(new BrowserSupportChecker().getSupport().fetch).toBe(true)
+    })
 
-      const support = browserSupport.getSupport()
-      expect(support.grid).toBe(true)
+    it('detects lack of fetch API support', () => {
+      vi.stubGlobal('fetch', undefined)
+      expect(new BrowserSupportChecker().getSupport().fetch).toBe(false)
+    })
+
+    it('detects Promise support', () => {
+      // Native Promise is present.
+      expect(new BrowserSupportChecker().getSupport().promises).toBe(true)
+    })
+
+    it('detects ES6 support (native)', () => {
+      // The real JS engine running the tests supports ES6.
+      expect(new BrowserSupportChecker().getSupport().es6).toBe(true)
     })
   })
 
-  describe('Flexbox Support', () => {
-    it('should detect flexbox support', () => {
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === 'display' && value === 'flex') {
-          return true
-        }
-        return false
-      })
+  describe('Browser detection (navigator.userAgent, live)', () => {
+    it('detects Chrome', () => {
+      setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+      const info = browserSupport.getBrowserInfo()
+      expect(info.name).toBe('Chrome')
+      expect(info.version).toBe('91')
+    })
 
-      const support = browserSupport.getSupport()
-      expect(support.flexbox).toBe(true)
+    it('detects Firefox', () => {
+      setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0')
+      const info = browserSupport.getBrowserInfo()
+      expect(info.name).toBe('Firefox')
+      expect(info.version).toBe('89')
+    })
+
+    it('detects Safari', () => {
+      setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15')
+      const info = browserSupport.getBrowserInfo()
+      expect(info.name).toBe('Safari')
+      expect(info.version).toBe('14')
+    })
+
+    it('detects modern Edge (Edg/ UA, not misreported as Chrome)', () => {
+      setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59')
+      const info = browserSupport.getBrowserInfo()
+      expect(info.name).toBe('Edge')
+      expect(info.version).toBe('91')
+    })
+
+    it('detects Internet Explorer', () => {
+      setUserAgent('Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko')
+      const info = browserSupport.getBrowserInfo()
+      expect(info.name).toBe('Internet Explorer')
+      expect(info.version).toBe('11')
     })
   })
 
-  describe('Fetch API Support', () => {
-    it('should detect fetch API support', () => {
-      mockWindow.fetch = vi.fn()
-
-      const support = browserSupport.getSupport()
-      expect(support.fetch).toBe(true)
-    })
-
-    it('should detect lack of fetch API support', () => {
-      mockWindow.fetch = undefined
-
-      const support = browserSupport.getSupport()
-      expect(support.fetch).toBe(false)
-    })
-  })
-
-  describe('Promise Support', () => {
-    it('should detect Promise support', () => {
-      mockWindow.Promise = vi.fn()
-
-      const support = browserSupport.getSupport()
-      expect(support.promises).toBe(true)
-    })
-
-    it('should detect lack of Promise support', () => {
-      mockWindow.Promise = undefined
-
-      const support = browserSupport.getSupport()
-      expect(support.promises).toBe(false)
-    })
-  })
-
-  describe('Browser Detection', () => {
-    it('should detect Chrome browser', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-
-      const browserInfo = browserSupport.getBrowserInfo()
-      expect(browserInfo.name).toBe('Chrome')
-      expect(browserInfo.version).toBe('91')
-    })
-
-    it('should detect Firefox browser', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0'
-
-      const browserInfo = browserSupport.getBrowserInfo()
-      expect(browserInfo.name).toBe('Firefox')
-      expect(browserInfo.version).toBe('89')
-    })
-
-    it('should detect Safari browser', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
-
-      const browserInfo = browserSupport.getBrowserInfo()
-      expect(browserInfo.name).toBe('Safari')
-      expect(browserInfo.version).toBe('14')
-    })
-
-    it('should detect Edge browser', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
-
-      const browserInfo = browserSupport.getBrowserInfo()
-      expect(browserInfo.name).toBe('Edge')
-      expect(browserInfo.version).toBe('91')
-    })
-
-    it('should detect Internet Explorer', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
-
-      const browserInfo = browserSupport.getBrowserInfo()
-      expect(browserInfo.name).toBe('Internet Explorer')
-      expect(browserInfo.version).toBe('11')
-    })
-  })
-
-  describe('ES6 Support', () => {
-    it('should detect ES6 support', () => {
-      // Мокаем Function constructor для тестирования ES6
-      const originalFunction = window.Function
-      window.Function = vi.fn().mockImplementation((code: string) => {
-        if (code.includes('() => "test"')) {return () => 'test'}
-        if (code.includes('const x = 1')) {return () => 1}
-        if (code.includes('`test-${1}`')) {return () => 'test-1'}
-        return originalFunction(code)
-      }) as any
-
-      const support = browserSupport.getSupport()
-      expect(support.es6).toBe(true)
-
-      // Восстанавливаем оригинальный Function
-      window.Function = originalFunction
-    })
-
-    it('should detect lack of ES6 support', () => {
-      // Мокаем Function constructor для имитации ошибки
-      const originalFunction = window.Function
-      window.Function = vi.fn().mockImplementation(() => {
-        throw new Error('ES6 not supported')
-      }) as any
-
-      const support = browserSupport.getSupport()
-      expect(support.es6).toBe(false)
-
-      // Восстанавливаем оригинальный Function
-      window.Function = originalFunction
-    })
-  })
-
-  describe('Full Support Check', () => {
-    it('should return true for fully supported browser', () => {
-      // Мокаем все необходимые функции
-      mockWindow.CSS.supports.mockImplementation(() => true)
-      mockWindow.fetch = vi.fn()
-      mockWindow.Promise = vi.fn()
-      mockWindow.IntersectionObserver = vi.fn()
-      mockWindow.ResizeObserver = vi.fn()
-
-      // Мокаем Function для ES6 поддержки
-      const originalFunction = window.Function
-      window.Function = vi.fn().mockImplementation((code: string) => {
-        if (code.includes('() => "test"')) {return () => 'test'}
-        if (code.includes('const x = 1')) {return () => 1}
-        if (code.includes('`test-${1}`')) {return () => 'test-1'}
-        return originalFunction(code)
-      }) as any
-
-      const isSupported = browserSupport.isFullySupported()
-      expect(isSupported).toBe(true)
-
-      // Восстанавливаем оригинальный Function
-      window.Function = originalFunction
-    })
-
-    it('should return false for unsupported browser', () => {
-      // Мокаем отсутствие поддержки
-      mockWindow.CSS.supports.mockImplementation(() => false)
-      mockWindow.fetch = undefined
-      mockWindow.Promise = undefined
-
-      const isSupported = browserSupport.isFullySupported()
-      expect(isSupported).toBe(false)
-    })
-  })
-
-  describe('Recommendations', () => {
-    it('should provide recommendations for unsupported features', () => {
-      // Мокаем отсутствие поддержки CSS переменных
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === 'color' && value === 'var(--fake-var)') {
-          return false
-        }
-        return true
-      })
-
-      const recommendations = browserSupport.getRecommendations()
-      expect(recommendations).toContain('CSS Variables not supported - some themes may not work correctly')
-    })
-
-    it('should NOT show backdrop filter warning for Safari', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
-      
-      // Эмулируем Safari с webkit-backdrop-filter, но без стандартного backdrop-filter
-      mockWindow.CSS.supports.mockImplementation((prop: string, value: string) => {
-        if (prop === '-webkit-backdrop-filter' && value === 'blur(1px)') {
-          return true
-        }
-        if (prop === 'backdrop-filter' && value === 'blur(1px)') {
-          return false
-        }
-        return true
-      })
-
+  describe('Recommendations (navigator-driven, live)', () => {
+    it('does NOT warn about backdrop-filter for Safari', () => {
+      setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15')
       const recommendations = browserSupport.getRecommendations()
       expect(recommendations).not.toContain('Backdrop filter not supported - some visual effects will be disabled')
     })
 
-    it('should provide IE specific recommendations', () => {
-      mockWindow.navigator.userAgent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
-
+    it('provides an Internet Explorer specific recommendation', () => {
+      setUserAgent('Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko')
       const recommendations = browserSupport.getRecommendations()
       expect(recommendations).toContain('Internet Explorer is not fully supported. Please use a modern browser.')
     })

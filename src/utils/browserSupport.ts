@@ -13,7 +13,7 @@ interface BrowserSupport {
   resizeObserver: boolean;
 }
 
-class BrowserSupportChecker {
+export class BrowserSupportChecker {
   private support: BrowserSupport;
 
   constructor() {
@@ -115,8 +115,15 @@ class BrowserSupportChecker {
     let name = 'Unknown';
     let version = 'Unknown';
 
+    // Edge (Chromium 'Edg/' and legacy EdgeHTML 'Edge/') — check BEFORE Chrome, since
+    // Chromium Edge also reports 'Chrome' in its UA.
+    if (userAgent.includes('Edg/') || userAgent.includes('Edge/')) {
+      name = 'Edge';
+      const match = userAgent.match(/Edg(?:e)?\/(\d+)/);
+      version = match ? match[1] : 'Unknown';
+    }
     // Chrome
-    if (userAgent.includes('Chrome') && !userAgent.includes('Edge')) {
+    else if (userAgent.includes('Chrome')) {
       name = 'Chrome';
       const match = userAgent.match(/Chrome\/(\d+)/);
       version = match ? match[1] : 'Unknown';
@@ -131,12 +138,6 @@ class BrowserSupportChecker {
     else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
       name = 'Safari';
       const match = userAgent.match(/Version\/(\d+)/);
-      version = match ? match[1] : 'Unknown';
-    }
-    // Edge
-    else if (userAgent.includes('Edge')) {
-      name = 'Edge';
-      const match = userAgent.match(/Edge\/(\d+)/);
       version = match ? match[1] : 'Unknown';
     }
     // IE
