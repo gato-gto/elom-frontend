@@ -5,45 +5,35 @@ import type { ParsedApiError, ErrorType, ErrorDisplayConfig, ErrorContext } from
  * Обрабатывает структуры типа items[0].material, items[1].quantity и т.д.
  */
 export function parseNestedErrors(errors: any): Record<string, string[]> {
+  // Рекурсивный разбор произвольной вложенности DRF-ошибок в плоские ключи вида
+  // items[0].material, companies[0].employees[0].contacts.email.
+  // Раньше функция обрабатывала лишь один уровень и складывала вложенные объекты
+  // как «массив ошибок» — отсюда баг «массив показан как object[0]».
   const result: Record<string, string[]> = {}
-  
-  for (const [key, value] of Object.entries(errors)) {
-    if (Array.isArray(value)) {
-      // Проверяем, является ли это массивом ошибок для одного поля
-      // (например, ["error1", "error2"]) или массивом объектов
-      if (value.length > 0 && typeof value[0] === 'string') {
-        // Это массив строк - ошибки для одного поля
-        result[key] = value as string[]
+  const seen = new WeakSet<object>()
+
+  const walk = (node: any, path: string) => {
+    if (node && typeof node === 'object') {
+      if (seen.has(node)) { return }  // защита от циклических ссылок
+      seen.add(node)
+    }
+    if (Array.isArray(node)) {
+      if (node.length > 0 && node.every((v) => typeof v === 'string')) {
+        // массив строк — это ошибки для поля path
+        if (path) { result[path] = node as string[] }
       } else {
-        // Это массив объектов - обрабатываем как вложенную структуру
-        value.forEach((item, index) => {
-          if (typeof item === 'object' && item !== null) {
-            // Обрабатываем объекты в массиве
-            for (const [fieldKey, fieldErrors] of Object.entries(item)) {
-              if (Array.isArray(fieldErrors)) {
-                const nestedKey = `${key}[${index}].${fieldKey}`
-                result[nestedKey] = fieldErrors as string[]
-              }
-            }
-          } else if (typeof item === 'string') {
-            // Простые строки в массиве
-            result[`${key}[${index}]`] = [item]
-          }
-        })
+        node.forEach((item, index) => walk(item, `${path}[${index}]`))
       }
-    } else if (typeof value === 'object' && value !== null) {
-      // Обрабатываем объекты
-      for (const [nestedKey, nestedValue] of Object.entries(value)) {
-        if (Array.isArray(nestedValue)) {
-          result[`${key}.${nestedKey}`] = nestedValue as string[]
-        }
+    } else if (node && typeof node === 'object') {
+      for (const [key, value] of Object.entries(node)) {
+        walk(value, path ? `${path}.${key}` : key)
       }
-    } else if (typeof value === 'string') {
-      // Простые строки
-      result[key] = [value]
+    } else if (typeof node === 'string') {
+      if (path) { result[path] = [node] }
     }
   }
-  
+
+  walk(errors || {}, '')
   return result
 }
 
