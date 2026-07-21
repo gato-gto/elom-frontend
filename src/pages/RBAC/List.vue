@@ -110,8 +110,10 @@
             </td>
             <td class="text-right">
               <div class="flex gap-1 justify-end">
+                <!-- Системную роль нельзя менять/удалять через API (права задаются init_rbac),
+                     поэтому для неё показываем только «Просмотр» — без вводящих в заблуждение кнопок. -->
                 <button
-                  v-if="canManage"
+                  v-if="canManage && !role.is_system"
                   @click="openEdit(role)"
                   class="btn btn-xs btn-outline"
                 >
@@ -124,6 +126,7 @@
                 >
                   Удалить
                 </button>
+                <span v-if="role.is_system" class="text-xs text-gray-400">системная — только просмотр</span>
               </div>
             </td>
           </tr>
