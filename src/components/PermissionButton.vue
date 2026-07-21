@@ -124,12 +124,14 @@ const hasAccess = computed(() => {
     return hasAllPermissions(...props.all)
   }
   
-  // Проверка через resource + action
-  if (props.resource && props.action) {
-    return can(props.resource, props.action)
+  // F-070 (безопасность): resource/action заданы = НАМЕРЕНИЕ ограничить доступ.
+  // Неполная пара (только resource ИЛИ только action) раньше проваливалась в
+  // `return true` и показывала кнопку всем (fail-open). Теперь fail-closed.
+  if (props.resource || props.action) {
+    return !!(props.resource && props.action) && can(props.resource, props.action)
   }
-  
-  // Если ничего не указано, показываем (для обратной совместимости)
+
+  // Никаких ограничений не задано — кнопка публичная (например, «Отмена»).
   return true
 })
 

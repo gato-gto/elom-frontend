@@ -74,12 +74,12 @@ const hasAccess = computed(() => {
     return hasAnyPermission(...props.any)
   }
   
-  // Проверка через resource + action
-  if (props.resource && props.action) {
-    return can(props.resource, props.action)
+  // F-070 (безопасность): неполная пара resource/action = fail-closed, не fail-open.
+  if (props.resource || props.action) {
+    return !!(props.resource && props.action) && can(props.resource, props.action)
   }
-  
-  // Если ничего не указано, показываем
+
+  // Никаких ограничений не задано — показываем.
   return true
 })
 </script>
