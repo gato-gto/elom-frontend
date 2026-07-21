@@ -166,6 +166,24 @@ balancesStore.filters = {
   ordering: 'object_name'
 }
 
+// F-068: GenericList дёргает store.setFilters/setPage/setPageSize/fetchList, а их
+// базовые версии бьют в агрегатный /stock/snapshots/by-objects/ (возвращает
+// {objects:[]}, а не {results,count}) → таблица ОЧИЩАЛАСЬ при любом фильтре/
+// сортировке/пагинации. Перенаправляем эти методы в кастомный агрегатный
+// загрузчик (эндпоинт не пагинируется — отдаёт все объекты сразу).
+balancesStore.fetchList = (async (params?: Record<string, unknown>) => {
+  await fetchBalancesList(params as never)
+  return balancesStore.items
+}) as typeof balancesStore.fetchList
+balancesStore.setFilters = (async (f: Record<string, unknown>) => {
+  await setBalancesFilters(f)
+}) as typeof balancesStore.setFilters
+balancesStore.resetFilters = (async () => {
+  await resetBalancesFilters()
+}) as typeof balancesStore.resetFilters
+balancesStore.setPage = (async () => { /* агрегат отдаёт всё сразу */ }) as typeof balancesStore.setPage
+balancesStore.setPageSize = (async () => {}) as typeof balancesStore.setPageSize
+
 // State for expanded rows
 const expandedRows = ref<Set<number>>(new Set())
 
