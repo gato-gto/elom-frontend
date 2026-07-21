@@ -20,9 +20,12 @@ vi.mock('@/composables/useNotifications', () => ({
   })
 }))
 
-vi.mock('@/utils/errorHandler', () => ({
-  handleApiErrorAsync: vi.fn()
-}))
+// Keep the REAL parseApiError (base store relies on it to populate `error`),
+// only stub the async toast side-effect.
+vi.mock('@/utils/errorHandler', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/errorHandler')>()
+  return { ...actual, handleApiErrorAsync: vi.fn() }
+})
 
 // Типы для тестирования
 interface TestEntity {
@@ -174,7 +177,8 @@ describe('Base Store', () => {
       expect(result).toEqual(mockData.results)
       expect(store.items).toEqual(mockData.results)
       expect(store.pagination.count).toBe(2)
-      expect(mockedApi.get).toHaveBeenCalledWith('/api/test/?page=1&page_size=20')
+      // Store always sends a deterministic default ordering for stable pagination.
+      expect(mockedApi.get).toHaveBeenCalledWith('/api/test/?page=1&page_size=20&ordering=id')
     })
 
     it('should fetch one item', async () => {
@@ -266,8 +270,9 @@ describe('Base Store', () => {
 
       expect(store.filters.search).toBe('test search')
       expect(store.pagination.page).toBe(1)
+      // URLSearchParams encodes spaces as '+'; the default ordering is always appended.
       expect(mockedApi.get).toHaveBeenCalledWith(
-        '/api/test/?page=1&page_size=20&search=test%20search'
+        '/api/test/?page=1&page_size=20&search=test+search&ordering=id'
       )
     })
 
@@ -301,8 +306,9 @@ describe('Base Store', () => {
       const result = await store.search(searchQuery)
 
       expect(result).toEqual(mockResults)
+      // search() builds its own URL (encodeURIComponent => %20) and caps results at page_size=15.
       expect(mockedApi.get).toHaveBeenCalledWith(
-        '/api/test/?search=test%20query&page_size=20'
+        '/api/test/?search=test%20query&page_size=15'
       )
     })
 
@@ -337,7 +343,7 @@ describe('Base Store', () => {
       await store.setPage(3)
 
       expect(store.pagination.page).toBe(3)
-      expect(mockedApi.get).toHaveBeenCalledWith('/api/test/?page=3&page_size=20')
+      expect(mockedApi.get).toHaveBeenCalledWith('/api/test/?page=3&page_size=20&ordering=id')
     })
 
     it('should set page size', async () => {
@@ -351,7 +357,7 @@ describe('Base Store', () => {
 
       expect(store.pagination.pageSize).toBe(50)
       expect(store.pagination.page).toBe(1) // Reset to first page
-      expect(mockedApi.get).toHaveBeenCalledWith('/api/test/?page=1&page_size=50')
+      expect(mockedApi.get).toHaveBeenCalledWith('/api/test/?page=1&page_size=50&ordering=id')
     })
   })
 
@@ -473,8 +479,9 @@ describe('Base Store', () => {
       mockedApi.get.mockRejectedValueOnce(error)
 
       await expect(store.fetchList()).rejects.toBeTruthy()
-      
-      expect(store.error).toBe('Ошибка при загрузке tests')
+
+      // No response.detail => parseApiError falls back to the JS Error message.
+      expect(store.error).toBe('Generic error')
     })
   })
 })

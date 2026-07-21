@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useToolsStore } from '@/stores/tools'
+import { endpoints } from '@/api/endpoints'
 import api from '@/api/client'
 
 // Мокаем API клиент
@@ -20,9 +21,11 @@ vi.mock('@/composables/useNotifications', () => ({
   })
 }))
 
-vi.mock('@/utils/errorHandler', () => ({
-  handleApiErrorAsync: vi.fn()
-}))
+// Keep the REAL parseApiError (the store uses it to populate `error`); stub the toast.
+vi.mock('@/utils/errorHandler', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/errorHandler')>()
+  return { ...actual, handleApiErrorAsync: vi.fn() }
+})
 
 describe('Tools Store', () => {
   beforeEach(() => {
@@ -238,7 +241,7 @@ describe('Tools Store', () => {
       
       expect(result).toEqual(mockTool)
       expect(store.current).toEqual(mockTool)
-      expect(mockedApi.get).toHaveBeenCalledWith('/api/v1/tools/1/')
+      expect(mockedApi.get).toHaveBeenCalledWith(endpoints.tools.one(1))
     })
 
     it('should create tool', async () => {
@@ -263,7 +266,7 @@ describe('Tools Store', () => {
       expect(result).toEqual(createdTool)
       expect(store.items).toContainEqual(createdTool)
       expect(store.pagination.count).toBe(1)
-      expect(mockedApi.post).toHaveBeenCalledWith('/api/v1/tools/', newTool)
+      expect(mockedApi.post).toHaveBeenCalledWith(endpoints.tools.list, newTool)
     })
 
     it('should update tool', async () => {
@@ -293,7 +296,7 @@ describe('Tools Store', () => {
       expect(result).toEqual(updatedTool)
       expect(store.items[0]).toEqual(updatedTool)
       expect(store.current).toEqual(updatedTool)
-      expect(mockedApi.patch).toHaveBeenCalledWith('/api/v1/tools/1/', updates)
+      expect(mockedApi.patch).toHaveBeenCalledWith(endpoints.tools.one(1), updates)
     })
 
     it('should remove tool', async () => {
@@ -317,7 +320,7 @@ describe('Tools Store', () => {
       expect(store.items).toEqual([])
       expect(store.current).toBe(null)
       expect(store.pagination.count).toBe(0)
-      expect(mockedApi.delete).toHaveBeenCalledWith('/api/v1/tools/1/')
+      expect(mockedApi.delete).toHaveBeenCalledWith(endpoints.tools.one(1))
     })
 
     it('should fetch categories', async () => {
@@ -332,7 +335,7 @@ describe('Tools Store', () => {
       
       expect(result).toEqual(mockCategories.categories)
       expect(store.categories).toEqual(mockCategories.categories)
-      expect(mockedApi.get).toHaveBeenCalledWith('/api/v1/tools/categories/')
+      expect(mockedApi.get).toHaveBeenCalledWith(endpoints.tools.categories)
     })
 
     it('should handle categories as direct array', async () => {
@@ -390,8 +393,8 @@ describe('Tools Store', () => {
       const result = await store.bulkCreate(bulkData)
       
       expect(result).toEqual(mockResponse.tools)
-      expect(mockedApi.post).toHaveBeenCalledWith('/api/v1/tools/bulk-create/', bulkData)
-      expect(mockedApi.get).toHaveBeenCalledWith('/api/v1/tools/?page=1&page_size=20&ordering=inventory_number')
+      expect(mockedApi.post).toHaveBeenCalledWith(endpoints.tools.bulkCreate, bulkData)
+      expect(mockedApi.get).toHaveBeenCalledWith(endpoints.tools.list + '?page=1&page_size=20&ordering=inventory_number')
     })
 
     it('should set filters', async () => {
@@ -471,8 +474,9 @@ describe('Tools Store', () => {
       const result = await store.search(searchQuery)
       
       expect(result).toEqual(mockResults)
+      // search() caps results at page_size=15 (mobile-friendly) and encodes via encodeURIComponent.
       expect(mockedApi.get).toHaveBeenCalledWith(
-        '/api/v1/tools/?search=Makita&page_size=20'
+        endpoints.tools.list + '?search=Makita&page_size=15'
       )
     })
 
