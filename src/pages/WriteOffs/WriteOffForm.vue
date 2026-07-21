@@ -795,18 +795,38 @@ const handleSubmit = async () => {
     }
     
     if (props.initial) {
-      // Редактирование - пока поддерживается только одна запись
-      // TODO: Реализовать редактирование множественных записей
-      const updateData: WriteOffUpdateRequest = {
-        date: formData.value.date,
-        object: formData.value.object,
-        material: items.value[0]?.material || null,
-        unit: items.value[0]?.unit || 0,
-        quantity: items.value[0]?.quantity || '0',
-        responsible: formData.value.responsible,
-        comment: formData.value.comment
+      // F-072: списание — это одна строка (объект+материал+кол-во). Раньше при
+      // редактировании сохранялась ТОЛЬКО items[0], остальные позиции молча
+      // терялись. Теперь: первую позицию обновляем как текущую запись, остальные
+      // добавленные позиции создаём как новые списания — данные не теряются.
+      const validItems = items.value.filter(
+        item => item.material && item.unit && parseFloat(item.quantity) > 0,
+      )
+      const first = validItems[0]
+      if (first) {
+        const updateData: WriteOffUpdateRequest = {
+          date: formData.value.date,
+          object: formData.value.object,
+          material: first.material,
+          unit: first.unit,
+          quantity: first.quantity,
+          responsible: formData.value.responsible,
+          comment: formData.value.comment,
+        }
+        await writeOffsStore.update(props.initial.id, updateData)
       }
-      await writeOffsStore.update(props.initial.id, updateData)
+      const extraCreates = validItems.slice(1).map(item =>
+        writeOffsStore.create({
+          date: formData.value.date,
+          object: formData.value.object,
+          material: item.material!,
+          unit: item.unit,
+          quantity: item.quantity,
+          responsible: formData.value.responsible,
+          comment: formData.value.comment || '',
+        } as WriteOffCreateRequest),
+      )
+      await Promise.all(extraCreates)
     } else {
       // Создание - создаем множественные WriteOff записи
       const createPromises = items.value
