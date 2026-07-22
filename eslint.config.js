@@ -97,7 +97,9 @@ export default [
       'no-unused-vars': 'off', // Use TypeScript version instead
       'prefer-const': 'warn',
       'no-var': 'error',
-      'eqeqeq': 'warn',
+      // `== null` / `!= null` — идиоматичная проверка null И undefined одновременно;
+      // не считаем нарушением (менять на === сломало бы смысл).
+      'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'curly': 'warn',
       'no-empty': 'warn',
       'no-case-declarations': 'warn'

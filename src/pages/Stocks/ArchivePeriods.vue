@@ -137,7 +137,7 @@ const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель',
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 function formatMonth(m: string): string {
   const d = new Date(m)
-  if (isNaN(d.getTime())) return m
+  if (isNaN(d.getTime())) {return m}
   return `${RU_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
 }
 
@@ -146,7 +146,7 @@ function objectName(id: number): string {
 }
 
 function askClose() {
-  if (!form.object || !form.month) return
+  if (!form.object || !form.month) {return}
   confirm.title = 'Закрыть период'
   confirm.message = `Закрыть ${formatMonth(form.month + '-01')} по объекту «${objectName(form.object)}»? `
     + 'Закупки, движения и списания этого периода станут архивными (только для чтения).'
@@ -176,7 +176,7 @@ function askReopen(p: ArchivePeriod) {
 }
 
 async function runConfirm() {
-  if (!confirm.run) return
+  if (!confirm.run) {return}
   busy.value = true
   confirm.error = null
   try {
@@ -199,7 +199,7 @@ async function refresh() {
 
 onMounted(async () => {
   const loads: Promise<unknown>[] = [store.fetchList().catch(() => {})]
-  if (!objectsStore.items.length) loads.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  if (!objectsStore.items.length) {loads.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))}
   await Promise.all(loads)
 })
 </script>

@@ -27,7 +27,7 @@ export const useThemeStore = defineStore('theme', () => {
         html.setAttribute('data-theme', 'light')
         isDark.value = false
         break
-      case 'system':
+      case 'system': {
         const systemIsDark = getSystemTheme()
         if (systemIsDark) {
           html.classList.add('dark')
@@ -38,6 +38,7 @@ export const useThemeStore = defineStore('theme', () => {
         }
         isDark.value = systemIsDark
         break
+      }
     }
   }
 

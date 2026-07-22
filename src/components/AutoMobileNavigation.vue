@@ -382,7 +382,7 @@
           topItems.push(firstItem)
         }
         usedNames.add(firstItem.name)
-        if (topItems.length >= 5) break
+        if (topItems.length >= 5) {break}
       }
     }
     

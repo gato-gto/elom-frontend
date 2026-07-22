@@ -127,7 +127,7 @@ function addRow() {
 }
 
 function removeRow(index: number) {
-  if (rows.value.length > 1) rows.value.splice(index, 1)
+  if (rows.value.length > 1) {rows.value.splice(index, 1)}
 }
 
 function clearErrors() {
@@ -137,12 +137,12 @@ function clearErrors() {
 
 function handleSubmit() {
   clearErrors()
-  if (!date.value) topErrors.value.date = 'Укажите дату'
-  if (!objectId.value) topErrors.value.object = 'Выберите объект'
+  if (!date.value) {topErrors.value.date = 'Укажите дату'}
+  if (!objectId.value) {topErrors.value.object = 'Выберите объект'}
 
   // отбрасываем полностью пустые строки; валидируем заполненные
   const filled = rows.value.filter(r => r.material || (r.actual_balance !== '' && r.actual_balance != null))
-  if (filled.length === 0) topErrors.value.form = 'Добавьте хотя бы одну позицию'
+  if (filled.length === 0) {topErrors.value.form = 'Добавьте хотя бы одну позицию'}
 
   const seen = new Set<number>()
   filled.forEach((r) => {
@@ -191,8 +191,8 @@ function reset() {
 }
 
 onMounted(() => {
-  if (!objectsStore.items.length) objectsStore.fetchList?.({ page_size: 1000 } as any)
-  if (!materialsStore.items.length) materialsStore.fetchList?.({ page_size: 1000 } as any)
-  if (!unitsStore.items.length) unitsStore.fetchList?.({ page_size: 1000 } as any)
+  if (!objectsStore.items.length) {objectsStore.fetchList?.({ page_size: 1000 } as any)}
+  if (!materialsStore.items.length) {materialsStore.fetchList?.({ page_size: 1000 } as any)}
+  if (!unitsStore.items.length) {unitsStore.fetchList?.({ page_size: 1000 } as any)}
 })
 </script>

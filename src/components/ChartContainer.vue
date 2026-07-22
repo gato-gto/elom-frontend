@@ -109,6 +109,7 @@ import {
   Filler
 } from 'chart.js'
 import { formatDateTime } from '@/utils/formatters'
+import { useThemeStore } from '@/stores/theme'
 
 // Register Chart.js components
 Chart.register(
@@ -170,9 +171,26 @@ const emit = defineEmits<{
 const chartCanvas = ref<any>() // HTMLCanvasElement
 const chartInstance = ref<Chart | null>(null)
 const isFullscreen = ref(false)
+// F-065: последний конфиг — чтобы пересобрать график с цветами новой темы
+let lastChartConfig: ChartConfiguration | null = null
 
 // Chart configuration
-const defaultOptions: ChartOptions = {
+// F-065: цвета осей/сетки/тултипа зависят от темы (в тёмной чёрный тултип и
+// светлая сетка выглядели инородно). Читаем текущую тему из класса .dark.
+function getThemeColors() {
+  const dark = document.documentElement.classList.contains('dark')
+  return {
+    grid: dark ? 'rgba(212, 219, 223, 0.10)' : 'rgba(28, 40, 46, 0.10)',
+    ticks: dark ? '#AAB6BD' : '#5C6B74',          // graphite-300 / graphite-500
+    tooltipBg: dark ? 'rgba(232, 237, 240, 0.96)' : 'rgba(20, 26, 29, 0.92)',
+    tooltipText: dark ? '#161D22' : '#FFFFFF',
+    tooltipBorder: dark ? 'rgba(20, 26, 29, 0.12)' : 'rgba(255, 255, 255, 0.12)',
+  }
+}
+
+function getDefaultOptions(): ChartOptions {
+  const c = getThemeColors()
+  return {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -189,10 +207,10 @@ const defaultOptions: ChartOptions = {
       }
     },
     tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleColor: '#ffffff',
-      bodyColor: '#ffffff',
-      borderColor: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: c.tooltipBg,
+      titleColor: c.tooltipText,
+      bodyColor: c.tooltipText,
+      borderColor: c.tooltipBorder,
       borderWidth: 1,
       cornerRadius: 8,
       displayColors: true,
@@ -212,7 +230,7 @@ const defaultOptions: ChartOptions = {
   scales: {
            x: {
              grid: {
-               color: 'rgba(0, 0, 0, 0.1)'
+               color: c.grid
              },
              // axis tick labels are DATA → monospace
              ticks: {
@@ -220,19 +238,19 @@ const defaultOptions: ChartOptions = {
                  family: 'IBM Plex Mono, ui-monospace, monospace',
                  size: 11
                },
-               color: '#6b7280'
+               color: c.ticks
              }
            },
            y: {
              grid: {
-               color: 'rgba(0, 0, 0, 0.1)'
+               color: c.grid
              },
              ticks: {
                font: {
                  family: 'IBM Plex Mono, ui-monospace, monospace',
                  size: 11
                },
-               color: '#6b7280'
+               color: c.ticks
              }
            }
   },
@@ -243,6 +261,7 @@ const defaultOptions: ChartOptions = {
   interaction: {
     intersect: false,
     mode: 'index'
+  }
   }
 }
 
@@ -264,6 +283,7 @@ const daisyColors = [
 // Methods
 function createChart(config: ChartConfiguration) {
   if (!chartCanvas.value) { return }
+  lastChartConfig = config
 
   // Destroy existing chart completely
   if (chartInstance.value) {
@@ -281,7 +301,7 @@ function createChart(config: ChartConfiguration) {
   const finalConfig = {
     ...config,
     options: {
-      ...defaultOptions,
+      ...getDefaultOptions(),
       ...config.options
     }
   }
@@ -305,7 +325,7 @@ function updateChart(config: ChartConfiguration) {
   const finalConfig = {
     ...config,
     options: {
-      ...defaultOptions,
+      ...getDefaultOptions(),
       ...config.options
     }
   }
@@ -371,26 +391,23 @@ onUnmounted(() => {
   destroyChart()
 })
 
-// Watch for theme changes
-watch(() => document.documentElement.classList.contains('dark'), () => {
-  if (chartInstance.value) {
-    // Update colors for dark theme
-    chartInstance.value.update('none')
+// F-065: при смене темы пересобираем график, чтобы применились цвета сетки/
+// осей/тултипа новой темы (options запекаются при создании — update() их не меняет).
+// Следим за РЕАКТИВНЫМ isDark из стора (класс .dark на DOM сам по себе не реактивен).
+const themeStore = useThemeStore()
+watch(() => themeStore.isDark, () => {
+  if (chartInstance.value && lastChartConfig) {
+    createChart(lastChartConfig)
   }
 })
 </script>
 
 <style scoped>
 .chart-container {
-  background-color: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-}
-
-.dark .chart-container {
-  background-color: #1f2937;
-  border-color: #374151;
+  background-color: hsl(var(--b1));
+  border-radius: 0.375rem;
+  border: 1px solid hsl(var(--b3));
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 .chart-header {

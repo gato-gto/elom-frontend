@@ -303,7 +303,7 @@ const getSelectedCountForResource = (resource: string): number => {
 
 const isResourceAllSelected = (resource: string): boolean => {
   const resourcePerms = getResourcePermissions(resource)
-  if (resourcePerms.length === 0) return false
+  if (resourcePerms.length === 0) {return false}
   return resourcePerms.every(p => isPermissionSelected(p.id))
 }
 
@@ -314,7 +314,7 @@ const getPermissionDisplayName = (permissionId: number): string => {
 
 // Methods
 const togglePermission = (permissionId: number) => {
-  if (!canManage.value) return
+  if (!canManage.value) {return}
 
   const index = localSelectedPermissionIds.value.indexOf(permissionId)
   if (index > -1) {
@@ -328,7 +328,7 @@ const togglePermission = (permissionId: number) => {
 }
 
 const toggleResourceAll = (resource: string) => {
-  if (!canManage.value) return
+  if (!canManage.value) {return}
 
   const resourcePerms = getResourcePermissions(resource)
   const allSelected = isResourceAllSelected(resource)

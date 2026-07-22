@@ -1,6 +1,14 @@
 <template>
   <div v-if="modelValue" class="modal modal-open">
-    <div class="modal-box w-full max-w-none mx-4 my-4" :class="sizeClass">
+    <div
+      ref="modalBox"
+      class="modal-box w-full max-w-none mx-4 my-4"
+      :class="sizeClass"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="title || undefined"
+      tabindex="-1"
+    >
       <div v-if="title || $slots.header" class="modal-header flex items-center justify-between mb-4 no-print">
         <h3 v-if="title" class="font-bold text-lg modal-title">{{ title }}</h3>
         <slot name="header" />
@@ -29,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref, nextTick, onBeforeUnmount } from 'vue'
 
 interface Props {
   modelValue: boolean
@@ -81,21 +89,62 @@ const handleBackdropClick = () => {
   }
 }
 
-// Закрытие по Escape
+// F-065: доступный модал — focus-trap (Escape + Tab), возврат фокуса при закрытии.
+// (Прежняя версия навешивала Escape-слушатель без снятия — утечка + дубли.)
+const modalBox = ref<HTMLElement | null>(null)
+let lastActive: HTMLElement | null = null
+
+function focusables(): HTMLElement[] {
+  if (!modalBox.value) { return [] }
+  const sel = 'a[href], button:not([disabled]), textarea:not([disabled]), ' +
+    'input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  return Array.from(modalBox.value.querySelectorAll<HTMLElement>(sel))
+    .filter((el) => el.offsetParent !== null)
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && props.closable) {
+    handleClose()
+    return
+  }
+  if (e.key !== 'Tab') { return }
+  const items = focusables()
+  const active = document.activeElement as HTMLElement | null
+  if (items.length === 0) {
+    e.preventDefault()
+    modalBox.value?.focus()
+    return
+  }
+  const first = items[0]
+  const last = items[items.length - 1]
+  const inside = !!modalBox.value && !!active && modalBox.value.contains(active)
+  if (e.shiftKey && (active === first || !inside)) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && active === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
+
 watch(
   () => props.modelValue,
-  (isOpen) => {
+  async (isOpen) => {
     if (isOpen) {
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && props.closable) {
-          handleClose()
-        }
-      }
-      document.addEventListener('keydown', handleEscape)
-      return () => document.removeEventListener('keydown', handleEscape)
+      lastActive = document.activeElement as HTMLElement | null
+      document.addEventListener('keydown', onKeydown)
+      await nextTick()
+      const items = focusables()
+      ;(items[0] || modalBox.value)?.focus()
+    } else {
+      document.removeEventListener('keydown', onKeydown)
+      lastActive?.focus?.()
+      lastActive = null
     }
   }
 )
+
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>

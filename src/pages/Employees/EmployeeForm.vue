@@ -86,8 +86,8 @@ const selectedObjectIds = ref<number[]>([])
 const objectOptions = computed(() => objectsStore.items.map((o: SiteObject) => ({ id: o.id, name: o.name })))
 function toggleObject(id: number) {
   const i = selectedObjectIds.value.indexOf(id)
-  if (i >= 0) selectedObjectIds.value.splice(i, 1)
-  else selectedObjectIds.value.push(id)
+  if (i >= 0) {selectedObjectIds.value.splice(i, 1)}
+  else {selectedObjectIds.value.push(id)}
 }
 const { handleFormError } = useErrorHandler()
 const { canManageUserRoles } = usePermissions()

@@ -261,7 +261,7 @@ const filteredRoles = computed(() => {
 })
 
 const viewingRolePermissions = computed(() => {
-  if (!viewingRole.value) return []
+  if (!viewingRole.value) {return []}
   return viewingRole.value.permissions || []
 })
 

@@ -100,10 +100,10 @@ const formConfig = computed<GenericFormConfig<PurchaseSupplierCreateRequest>>(()
         // F-234: выравниваем с бэкендом (^\+?[1-9]\d{7,14}$ по цифрам) — 8–15 цифр,
         // не начинается с 0; форматирующие символы допускаются.
         custom: (v: any) => {
-          if (!v || !String(v).trim()) return null
+          if (!v || !String(v).trim()) {return null}
           const digits = String(v).replace(/\D/g, '')
-          if (digits.length < 8 || digits.length > 15) return 'Телефон должен содержать 8–15 цифр'
-          if (!/^[1-9]/.test(digits)) return 'Номер не может начинаться с 0'
+          if (digits.length < 8 || digits.length > 15) {return 'Телефон должен содержать 8–15 цифр'}
+          if (!/^[1-9]/.test(digits)) {return 'Номер не может начинаться с 0'}
           return null
         }
       }
