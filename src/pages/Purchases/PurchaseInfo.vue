@@ -21,7 +21,7 @@
           <h1 class="invoice-title">НАКЛАДНАЯ</h1>
           <div class="invoice-number">
             <span class="label">№</span>
-            <span class="value">{{ purchase.purchase_no || purchase.id }}</span>
+            <span class="value font-mono">{{ purchase.purchase_no || purchase.id }}</span>
           </div>
         </div>
         <div class="invoice-header-right">
@@ -91,17 +91,17 @@
               <td class="col-number">{{ index + 1 }}</td>
               <td class="col-material">{{ item.material_name || '—' }}</td>
               <td class="col-unit">{{ item.unit_code || '—' }}</td>
-              <td class="col-quantity">{{ formatNumberClean(item.quantity) }}</td>
-              <td class="col-price">{{ formatCurrency(item.price) }}</td>
-              <td class="col-amount">{{ formatCurrency(item.amount) }}</td>
+              <td class="col-quantity font-mono">{{ formatNumberClean(item.quantity) }}</td>
+              <td class="col-price font-mono">{{ formatCurrency(item.price) }}</td>
+              <td class="col-amount font-mono">{{ formatCurrency(item.amount) }}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr class="total-row">
               <td colspan="3" class="total-label">ИТОГО:</td>
-              <td class="total-quantity">{{ formatNumberClean(totalQuantity) }}</td>
+              <td class="total-quantity font-mono">{{ formatNumberClean(totalQuantity) }}</td>
               <td class="total-price">—</td>
-              <td class="total-amount">{{ formatCurrency(purchase.total_amount) }}</td>
+              <td class="total-amount font-mono">{{ formatCurrency(purchase.total_amount) }}</td>
             </tr>
           </tfoot>
         </table>
@@ -340,9 +340,9 @@ function getPhotoTypeLabel(type?: string): string {
 
 function getPhotoTypeClass(type?: string): string {
   switch (type) {
-    case 'instructions': return 'bg-blue-100 text-blue-800'
-    case 'report': return 'bg-green-100 text-green-800'
-    default: return 'bg-gray-100 text-gray-800'
+    case 'instructions': return 'badge badge-info'
+    case 'report': return 'badge badge-success'
+    default: return 'badge badge-ghost'
   }
 }
 
@@ -547,8 +547,8 @@ onUnmounted(() => {
 }
 
 .status-new {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: color-mix(in oklab, var(--color-info) 15%, transparent);
+  color: var(--color-info);
 }
 
 .status-completed {
@@ -606,25 +606,25 @@ onUnmounted(() => {
 }
 
 .invoice-table thead {
-  background-color: #f3f4f6;
+  background-color: var(--color-base-200);
 }
 
 .invoice-table th {
   padding: 0.75rem;
   text-align: left;
   font-weight: 600;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-base-300);
   font-size: 0.75rem;
   text-transform: uppercase;
 }
 
 .invoice-table td {
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-base-300);
 }
 
 .invoice-table tbody tr:nth-child(even) {
-  background-color: #f9fafb;
+  background-color: var(--color-base-200);
 }
 
 .col-number {
@@ -658,7 +658,7 @@ onUnmounted(() => {
 }
 
 .total-row {
-  background-color: #f3f4f6;
+  background-color: var(--color-base-200);
   font-weight: bold;
 }
 

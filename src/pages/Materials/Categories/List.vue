@@ -12,18 +12,18 @@
       <template #column-name="{ item, value }">
         <div class="flex items-center gap-3">
           <div class="flex items-center justify-center">
-            <div class="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg border flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="h-10 w-10 bg-primary/10 rounded border flex items-center justify-center">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
           </div>
           <div class="flex flex-col">
-            <span class="font-medium text-gray-900">{{ value }}</span>
-            <span v-if="item.parent_name" class="text-sm text-gray-500">
+            <span class="font-medium text-base-content">{{ value }}</span>
+            <span v-if="item.parent_name" class="text-sm text-base-content/60">
               Родительская: {{ item.parent_name }}
             </span>
-            <span v-else class="text-sm text-gray-500">Корневая категория</span>
+            <span v-else class="text-sm text-base-content/60">Корневая категория</span>
           </div>
         </div>
       </template>
@@ -32,12 +32,12 @@
       <template #column-materials_count="{ item, value }">
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
-            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <span class="font-medium text-blue-600">{{ value }}</span>
+            <span class="font-medium text-base-content font-mono">{{ value }}</span>
           </div>
-          <span class="text-sm text-gray-500">материалов</span>
+          <span class="text-sm text-base-content/60">материалов</span>
         </div>
       </template>
 
@@ -45,12 +45,12 @@
       <template #column-children_count="{ item, value }">
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
-            <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <span class="font-medium text-purple-600">{{ value }}</span>
+            <span class="font-medium text-base-content font-mono">{{ value }}</span>
           </div>
-          <span class="text-sm text-gray-500">подкатегорий</span>
+          <span class="text-sm text-base-content/60">подкатегорий</span>
         </div>
       </template>
     </GenericList>

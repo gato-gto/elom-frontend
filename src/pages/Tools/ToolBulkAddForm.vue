@@ -161,7 +161,7 @@
         </div>
 
         <!-- Empty state -->
-        <div v-if="tools.length === 0" class="text-center py-8 text-gray-500">
+        <div v-if="tools.length === 0" class="text-center py-8 text-base-content/60">
           <p>Добавьте хотя бы один инструмент</p>
         </div>
       </div>

@@ -11,7 +11,7 @@
     </header>
 
     <!-- Закрыть период — только для держателей stock.edit (иначе контрол скрыт, не «обманка») -->
-    <section v-if="canEdit" class="rounded-lg border border-base-300 p-4">
+    <section v-if="canEdit" class="rounded border border-base-300 p-4">
       <h2 class="text-sm font-medium mb-3">Закрыть период</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-end">
         <label class="block">
@@ -36,7 +36,7 @@
     </section>
 
     <!-- Список закрытых периодов -->
-    <section class="rounded-lg border border-base-300 overflow-hidden">
+    <section class="rounded border border-base-300 overflow-hidden">
       <div class="px-4 py-3 border-b border-base-300 flex items-center justify-between">
         <h2 class="text-sm font-medium">Закрытые периоды</h2>
         <button class="btn btn-ghost btn-xs" :disabled="store.loading" @click="refresh">Обновить</button>
@@ -61,9 +61,9 @@
           </thead>
           <tbody>
             <tr v-for="p in store.items" :key="p.id" class="border-b border-base-200 last:border-0">
-              <td class="px-4 py-2 whitespace-nowrap">{{ formatMonth(p.month) }}</td>
+              <td class="px-4 py-2 whitespace-nowrap font-mono">{{ formatMonth(p.month) }}</td>
               <td class="px-4 py-2">{{ p.object_name }}</td>
-              <td class="px-4 py-2 text-base-content/70 whitespace-nowrap">{{ formatDateTime(p.closed_at) }}</td>
+              <td class="px-4 py-2 text-base-content/70 whitespace-nowrap font-mono">{{ formatDateTime(p.closed_at) }}</td>
               <td class="px-4 py-2 text-base-content/70">{{ p.closed_by_name || '—' }}</td>
               <td v-if="canEdit" class="px-4 py-2 text-right">
                 <button class="btn btn-xs btn-outline" :disabled="busy" @click="askReopen(p)">Открыть</button>

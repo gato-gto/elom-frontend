@@ -9,7 +9,7 @@
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <!-- Позиции материалов -->
         <div class="space-y-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 class="text-lg font-semibold text-base-content mb-2">
             Материалы
           </h2>
           

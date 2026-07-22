@@ -5,7 +5,7 @@
       <div class="card-body">
         <h4 class="card-title text-sm">Инструмент</h4>
         <div class="grid grid-cols-2 gap-2 text-sm">
-          <div><span class="font-semibold">Инв. номер:</span> {{ issue.tool_inventory_number }}</div>
+          <div><span class="font-semibold">Инв. номер:</span> <span class="font-mono">{{ issue.tool_inventory_number }}</span></div>
           <div><span class="font-semibold">Название:</span> {{ issue.tool_name }}</div>
         </div>
       </div>
@@ -18,7 +18,7 @@
         <div class="grid grid-cols-2 gap-2 text-sm">
           <div><span class="font-semibold">Кто выдал:</span> {{ issue.issued_by_name }}</div>
           <div><span class="font-semibold">Кому выдал:</span> {{ issue.issued_to_name }}</div>
-          <div><span class="font-semibold">Дата выдачи:</span> {{ formatDateTime(issue.issued_at) }}</div>
+          <div><span class="font-semibold">Дата выдачи:</span> <span class="font-mono">{{ formatDateTime(issue.issued_at) }}</span></div>
           <div><span class="font-semibold">Объект:</span> {{ issue.object_name || 'Не указан' }}</div>
           <div>
             <span class="font-semibold">Состояние:</span>
@@ -35,14 +35,14 @@
       <div class="card-body">
         <h4 class="card-title text-sm">Возврат</h4>
         <div class="grid grid-cols-2 gap-2 text-sm">
-          <div><span class="font-semibold">Дата возврата:</span> {{ formatDateTime(issue.return_date) }}</div>
+          <div><span class="font-semibold">Дата возврата:</span> <span class="font-mono">{{ formatDateTime(issue.return_date) }}</span></div>
           <div>
             <span class="font-semibold">Состояние:</span>
             <span class="badge badge-sm ml-1" :class="getConditionBadgeClass(issue.return_condition || '')">
               {{ issue.return_condition_display || getConditionDisplayName(issue.return_condition || '') }}
             </span>
           </div>
-          <div><span class="font-semibold">Длительность:</span> {{ calculateDuration() }}</div>
+          <div><span class="font-semibold">Длительность:</span> <span class="font-mono">{{ calculateDuration() }}</span></div>
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@ function handlePrint() {
 
 .info {
   font-size: 0.9rem;
-  color: #4b5563;
+  color: #374151;
 }
 
 .state {

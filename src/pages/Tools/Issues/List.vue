@@ -26,7 +26,7 @@
       <!-- Custom column for issued_at -->
       <template #column-issued_at="{ item, value }">
         <div class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium">{{ formatDate(value) }}</span>
+          <span class="text-sm font-medium font-mono">{{ formatDate(value) }}</span>
           <span class="text-xs text-base-content/60">{{ formatTime(value) }}</span>
         </div>
       </template>
@@ -52,7 +52,7 @@
         <div v-if="value" class="badge badge-sm" :class="getConditionBadgeClass(value)">
           {{ item.return_condition_display || getConditionDisplayName(value) }}
         </div>
-        <span v-else class="text-gray-400">—</span>
+        <span v-else class="text-base-content/40">—</span>
       </template>
 
       <!-- Custom column for status -->

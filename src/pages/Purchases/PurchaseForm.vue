@@ -204,7 +204,7 @@
                     <div>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-gray-600 p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-base-content/70 p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
@@ -324,7 +324,7 @@
                       </label>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-gray-600 p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-base-content/70 p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
@@ -457,7 +457,7 @@
               <tr v-for="(material, idx) in newMaterialsToConfirm" :key="idx">
                 <td>{{ material.name }}</td>
                 <td>{{ material.unit }}</td>
-                <td>{{ material.quantity }}</td>
+                <td class="font-mono">{{ material.quantity }}</td>
               </tr>
             </tbody>
           </table>

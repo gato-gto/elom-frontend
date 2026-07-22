@@ -1,7 +1,7 @@
 <template>
   <div v-if="tool" class="tool-history">
     <!-- Tool Info Header -->
-    <div class="bg-base-200 rounded-lg p-4 mb-4">
+    <div class="bg-base-200 rounded p-4 mb-4">
       <div class="flex flex-wrap justify-between items-start gap-4">
         <div class="flex-1 min-w-0">
           <h3 class="text-lg font-bold font-mono text-primary">{{ tool.inventory_number }}</h3>
@@ -29,7 +29,7 @@
 
     <!-- History Table -->
     <div class="overflow-hidden">
-      <h4 class="text-sm font-semibold mb-3 text-gray-600">История выдач и возвратов</h4>
+      <h4 class="text-sm font-semibold mb-3 text-base-content/70">История выдач и возвратов</h4>
       
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-12">
@@ -37,7 +37,7 @@
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="history.length === 0" class="text-center py-12 text-gray-500">
+      <div v-else-if="history.length === 0" class="text-center py-12 text-base-content/60">
         <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
@@ -65,8 +65,8 @@
               <tr v-for="issue in history" :key="issue.id" :class="{ 'bg-warning/10': !issue.is_returned }">
                 <!-- Дата выдачи -->
                 <td>
-                  <div class="text-sm font-medium">{{ formatDate(issue.issued_at) }}</div>
-                  <div class="text-xs text-gray-500">{{ formatTime(issue.issued_at) }}</div>
+                  <div class="text-sm font-medium font-mono">{{ formatDate(issue.issued_at) }}</div>
+                  <div class="text-xs text-base-content/60 font-mono">{{ formatTime(issue.issued_at) }}</div>
                 </td>
                 
                 <!-- Кому -->
@@ -77,12 +77,12 @@
                 <!-- Объект -->
                 <td>
                   <div v-if="issue.object_name" class="text-sm">{{ issue.object_name }}</div>
-                  <span v-else class="text-xs text-gray-400">—</span>
+                  <span v-else class="text-xs text-base-content/40">—</span>
                 </td>
-                
+
                 <!-- Выдал -->
                 <td>
-                  <div class="text-sm text-gray-600">{{ issue.issued_by_name }}</div>
+                  <div class="text-sm text-base-content/70">{{ issue.issued_by_name }}</div>
                 </td>
                 
                 <!-- Состояние при выдаче -->
@@ -94,10 +94,10 @@
                 
                 <!-- Дата возврата -->
                 <td>
-                  <div v-if="issue.return_date" class="text-sm font-medium text-success">
+                  <div v-if="issue.return_date" class="text-sm font-medium text-success font-mono">
                     {{ formatDate(issue.return_date) }}
                   </div>
-                  <div v-if="issue.return_date" class="text-xs text-gray-500">{{ formatTime(issue.return_date) }}</div>
+                  <div v-if="issue.return_date" class="text-xs text-base-content/60 font-mono">{{ formatTime(issue.return_date) }}</div>
                   <span v-else class="badge badge-warning badge-sm">Не возвращён</span>
                 </td>
                 
@@ -106,19 +106,19 @@
                   <span v-if="issue.return_condition" class="badge badge-sm" :class="getConditionBadgeClass(issue.return_condition)">
                     {{ getConditionDisplayName(issue.return_condition) }}
                   </span>
-                  <span v-else-if="issue.is_returned" class="text-xs text-gray-400">—</span>
-                  <span v-else class="text-xs text-gray-400">—</span>
+                  <span v-else-if="issue.is_returned" class="text-xs text-base-content/40">—</span>
+                  <span v-else class="text-xs text-base-content/40">—</span>
                 </td>
                 
                 <!-- Длительность -->
                 <td>
-                  <div v-if="issue.duration_days !== null && issue.duration_days !== undefined" class="text-sm">
+                  <div v-if="issue.duration_days !== null && issue.duration_days !== undefined" class="text-sm font-mono">
                     {{ formatDuration(issue.duration_days) }}
                   </div>
-                  <div v-else-if="!issue.is_returned" class="text-xs text-gray-500">
+                  <div v-else-if="!issue.is_returned" class="text-xs text-base-content/60 font-mono">
                     {{ calculateDaysAgo(issue.issued_at) }}
                   </div>
-                  <span v-else class="text-xs text-gray-400">—</span>
+                  <span v-else class="text-xs text-base-content/40">—</span>
                 </td>
               </tr>
             </tbody>
@@ -137,8 +137,8 @@
             <!-- Header -->
             <div class="flex justify-between items-start">
               <div>
-                <div class="text-sm font-semibold">{{ formatDate(issue.issued_at) }}</div>
-                <div class="text-xs text-gray-500">{{ formatTime(issue.issued_at) }}</div>
+                <div class="text-sm font-semibold font-mono">{{ formatDate(issue.issued_at) }}</div>
+                <div class="text-xs text-base-content/60 font-mono">{{ formatTime(issue.issued_at) }}</div>
               </div>
               <span v-if="!issue.is_returned" class="badge badge-warning badge-sm">Активна</span>
               <span v-else class="badge badge-success badge-sm">Возвращена</span>
@@ -147,27 +147,27 @@
             <!-- Issue info -->
             <div class="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span class="text-gray-500">Кому:</span>
+                <span class="text-base-content/60">Кому:</span>
                 <div class="font-medium">{{ issue.issued_to_name }}</div>
               </div>
               <div>
-                <span class="text-gray-500">Выдал:</span>
+                <span class="text-base-content/60">Выдал:</span>
                 <div>{{ issue.issued_by_name }}</div>
               </div>
               <div v-if="issue.object_name" class="col-span-2">
-                <span class="text-gray-500">Объект:</span>
+                <span class="text-base-content/60">Объект:</span>
                 <div>{{ issue.object_name }}</div>
               </div>
             </div>
 
             <!-- Conditions inline -->
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs text-gray-500">Выдача:</span>
+              <span class="text-xs text-base-content/60">Выдача:</span>
               <span class="badge badge-sm" :class="getConditionBadgeClass(issue.issue_condition)">
                 {{ getConditionDisplayName(issue.issue_condition) }}
               </span>
-              <span v-if="issue.return_condition" class="text-xs text-gray-500">→</span>
-              <span v-if="issue.return_condition" class="text-xs text-gray-500">Возврат:</span>
+              <span v-if="issue.return_condition" class="text-xs text-base-content/60">→</span>
+              <span v-if="issue.return_condition" class="text-xs text-base-content/60">Возврат:</span>
               <span v-if="issue.return_condition" class="badge badge-sm" :class="getConditionBadgeClass(issue.return_condition)">
                 {{ getConditionDisplayName(issue.return_condition) }}
               </span>
@@ -176,17 +176,17 @@
             <!-- Return info -->
             <div v-if="issue.is_returned && issue.return_date" class="border-t border-base-300 pt-2 mt-2">
               <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Возврат:</span>
-                <span class="font-medium text-success">
+                <span class="text-base-content/60">Возврат:</span>
+                <span class="font-medium text-success font-mono">
                   {{ formatDate(issue.return_date) }} {{ formatTime(issue.return_date) }}
                 </span>
               </div>
-              <div v-if="issue.duration_days !== null && issue.duration_days !== undefined" class="text-xs text-gray-500 mt-1">
+              <div v-if="issue.duration_days !== null && issue.duration_days !== undefined" class="text-xs text-base-content/60 mt-1 font-mono">
                 Длительность: {{ formatDuration(issue.duration_days) }}
               </div>
             </div>
             <div v-else-if="!issue.is_returned" class="border-t border-base-300 pt-2 mt-2">
-              <div class="text-xs text-gray-500">{{ calculateDaysAgo(issue.issued_at) }}</div>
+              <div class="text-xs text-base-content/60 font-mono">{{ calculateDaysAgo(issue.issued_at) }}</div>
             </div>
           </div>
         </div>

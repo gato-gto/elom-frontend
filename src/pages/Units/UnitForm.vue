@@ -11,7 +11,7 @@
     />
 
     <!-- Информация о конвертации -->
-    <div v-if="currentCode" class=" rounded-lg mt-6">
+    <div v-if="currentCode" class=" rounded mt-6">
       <div class="">
         <h2 class="text-lg font-semibold mb-4">Умная конвертация</h2>
         <div class="alert" :class="getSmartConversionAlertClass()">

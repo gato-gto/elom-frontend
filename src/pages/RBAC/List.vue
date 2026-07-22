@@ -89,7 +89,7 @@
             </td>
             <td>
               <div class="flex items-center gap-2">
-                <span class="badge badge-primary badge-sm">
+                <span class="badge badge-primary badge-sm font-mono">
                   {{ getRolePermissionsCount(role.id) }} разрешений
                 </span>
                 <button
@@ -126,7 +126,7 @@
                 >
                   Удалить
                 </button>
-                <span v-if="role.is_system" class="text-xs text-gray-400">системная — только просмотр</span>
+                <span v-if="role.is_system" class="text-xs text-base-content/50">системная — только просмотр</span>
               </div>
             </td>
           </tr>
@@ -166,7 +166,7 @@
           </svg>
           <div>
             <div class="font-semibold">Разрешения роли "{{ viewingRole.display_name }}"</div>
-            <div class="text-sm">Всего разрешений: {{ viewingRolePermissions.length }}</div>
+            <div class="text-sm">Всего разрешений: <span class="font-mono">{{ viewingRolePermissions.length }}</span></div>
           </div>
         </div>
         

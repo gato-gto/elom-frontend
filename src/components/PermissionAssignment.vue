@@ -73,7 +73,7 @@
                 </span>
               </h3>
               <div class="flex items-center gap-2">
-                <span class="text-xs text-base-content/70">
+                <span class="text-xs text-base-content/70 font-mono">
                   {{ getSelectedCountForResource(resource) }} / {{ getResourcePermissions(resource).length }}
                 </span>
                 <button
@@ -91,7 +91,7 @@
               <label
                 v-for="permission in getResourcePermissions(resource)"
                 :key="permission.id"
-                class="flex items-start gap-2 p-2 rounded-lg hover:bg-base-300 cursor-pointer transition-colors"
+                class="flex items-start gap-2 p-2 rounded hover:bg-base-300 cursor-pointer transition-colors"
                 :class="{ 'bg-base-300': isPermissionSelected(permission.id) }"
               >
                 <input
@@ -127,7 +127,7 @@
     </div>
 
     <!-- Selected permissions summary -->
-    <div v-if="selectedPermissionIds.length > 0" class="mt-4 p-3 bg-base-200 rounded-lg">
+    <div v-if="selectedPermissionIds.length > 0" class="mt-4 p-3 bg-base-200 rounded">
       <div class="text-sm font-semibold mb-2">
         Выбрано разрешений: {{ selectedPermissionIds.length }} из {{ allPermissions.length }}
       </div>

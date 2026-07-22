@@ -25,7 +25,7 @@
 
       <!-- F-237: назначенные объекты (доступ/скоуп) -->
       <template #field-assigned_objects="{ error }">
-        <div class="border border-base-300 rounded-lg max-h-56 overflow-y-auto divide-y divide-base-200">
+        <div class="border border-base-300 rounded max-h-56 overflow-y-auto divide-y divide-base-200">
           <label
             v-for="o in objectOptions"
             :key="o.id"
