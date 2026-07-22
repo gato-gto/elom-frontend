@@ -3,6 +3,7 @@
   <TopbarProgress/>
   <ToastCenter/>
   <BrowserWarning/>
+  <PwaStatus/>
   <AppLayout v-if="showLayout" />
   <router-view v-else />
 </template>
@@ -13,6 +14,7 @@ import { useRoute } from 'vue-router'
 import TopbarProgress from '@/components/TopbarProgress.vue'
 import ToastCenter from '@/components/ToastCenter.vue'
 import BrowserWarning from '@/components/BrowserWarning.vue'
+import PwaStatus from '@/components/PwaStatus.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 

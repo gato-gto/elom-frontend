@@ -7,11 +7,58 @@
 
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
+import {VitePWA} from 'vite-plugin-pwa'
 
 import {fileURLToPath, URL} from 'node:url'
 
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [
+        vue(),
+        VitePWA({
+            // 'prompt': не обновляемся молча — показываем пользователю кнопку «Обновить»
+            registerType: 'prompt',
+            includeAssets: [
+                'favicon.svg', 'favicon-16x16.svg', 'favicon-32x32.svg', 'apple-touch-icon.svg',
+            ],
+            manifest: {
+                name: 'ELOM — Учёт материалов',
+                short_name: 'ELOM',
+                description: 'Система учёта материалов и закупок для строительных объектов',
+                start_url: '/',
+                display: 'standalone',
+                orientation: 'portrait-primary',
+                background_color: '#F4F7F8', // graphite-50 (светлый фон приложения)
+                theme_color: '#B0500F',      // copper-600 — фирменный акцент
+                lang: 'ru',
+                categories: ['business', 'productivity'],
+                icons: [
+                    {src: '/android-chrome-192x192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable'},
+                    {src: '/android-chrome-512x512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable'},
+                    {src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml'},
+                ],
+            },
+            workbox: {
+                // App-shell: прекэшируем сборку (cache-first по хэшу — файлы неизменяемы)
+                globPatterns: ['**/*.{js,css,html,svg,woff2,woff,ttf,ico,png}'],
+                // Офлайн-загрузка SPA: навигации отдаём закэшированный index.html …
+                navigateFallback: '/index.html',
+                // … но НЕ для API — бизнес-данные никогда не подменяем оболочкой
+                navigateFallbackDenylist: [/^\/api\//],
+                cleanupOutdatedCaches: true,
+                clientsClaim: true,
+                runtimeCaching: [
+                    {
+                        // БИЗНЕС-ДАННЫЕ (балансы, закупки, списания) — ТОЛЬКО сеть.
+                        // Никогда не кэшируем и не отдаём устаревшее как актуальное:
+                        // офлайн эти запросы падают → приложение показывает баннер.
+                        urlPattern: ({url}) => url.pathname.startsWith('/api/'),
+                        handler: 'NetworkOnly',
+                    },
+                ],
+            },
+            devOptions: {enabled: false},
+        }),
+    ],
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url)),

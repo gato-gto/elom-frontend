@@ -123,6 +123,24 @@ async function refreshAccessToken(): Promise<string | null> {
 
 // ---- Interceptors -----------------------------------------------------------
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    // R7/PWA: в офлайне блокируем мутации (POST/PUT/PATCH/DELETE) с понятным
+    // сообщением — бизнес-данные пишутся ТОЛЬКО онлайн (никаких «отложенных»
+    // изменений, которые тихо разойдутся с сервером). GET-запросы просто упадут
+    // и приложение покажет офлайн-баннер.
+    const method = (config.method || 'get').toLowerCase()
+    const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
+    if (isMutation && typeof navigator !== 'undefined' && navigator.onLine === false) {
+        try {
+            const ui = uiStoreSafe()
+            ui?.toast?.({ type: 'error', text: 'Нет соединения — изменения недоступны в офлайн-режиме.' })
+        } catch {
+            // no-op
+        }
+        const err: any = new Error('Нет соединения — изменения недоступны в офлайн-режиме.')
+        err.isOfflineBlock = true
+        err.config = config
+        return Promise.reject(err)
+    }
     try {
         const ui = uiStoreSafe()
         if (ui && typeof ui.start === 'function') {
