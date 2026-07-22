@@ -170,6 +170,9 @@ const initialData = computed(() => {
 // Form submission
 async function handleSubmit(formData: any) {
   try {
+    // F-232 (owner D-014): иерархия ролей (parent) и is_active управляются ТОЛЬКО через admin/API,
+    // а не через эту форму — RoleForm намеренно их не раскрывает (не расширяем UI). Роли создаются
+    // активными (backend default is_active=True, F-251); системные роли редактируются лишь init_rbac.
     const roleData = {
       name: formData.name,
       display_name: formData.display_name,

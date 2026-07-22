@@ -22,6 +22,32 @@
           <span class="label-text-alt text-error">{{ error }}</span>
         </div>
       </template>
+
+      <!-- F-237: назначенные объекты (доступ/скоуп) -->
+      <template #field-assigned_objects="{ error }">
+        <div class="border border-base-300 rounded-lg max-h-56 overflow-y-auto divide-y divide-base-200">
+          <label
+            v-for="o in objectOptions"
+            :key="o.id"
+            class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-base-200/50"
+          >
+            <input
+              type="checkbox"
+              class="checkbox checkbox-sm"
+              :checked="selectedObjectIds.includes(o.id)"
+              @change="toggleObject(o.id)"
+            />
+            <span class="text-sm">{{ o.name }}</span>
+          </label>
+          <div v-if="objectOptions.length === 0" class="px-3 py-4 text-center text-sm text-base-content/50">
+            Нет объектов
+          </div>
+        </div>
+        <p class="text-xs text-base-content/50 mt-1">
+          Объекты, к которым у сотрудника есть доступ. Пусто — доступ определяется его ролью.
+        </p>
+        <div v-if="error" class="label"><span class="label-text-alt text-error">{{ error }}</span></div>
+      </template>
     </GenericForm>
   </div>
 </template>
@@ -30,10 +56,11 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useEmployeesStore } from '@/stores/employees'
 import { useRbacStore } from '@/stores/rbac'
+import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
-import type { Employee, EmployeeRequest } from '@/api/types'
+import type { Employee, EmployeeRequest, SiteObject } from '@/api/types'
 import type { GenericFormConfig, FieldConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import RoleAssignment from '@/components/RoleAssignment.vue'
@@ -51,7 +78,17 @@ const emit = defineEmits<{
 
 const employeesStore = useEmployeesStore()
 const rbacStore = useRbacStore()
+const objectsStore = useObjectsStore()
 const ui = useUiStore()
+
+// F-237: назначенные объекты (скоуп доступа) — управляется отдельно от formData, как roles
+const selectedObjectIds = ref<number[]>([])
+const objectOptions = computed(() => objectsStore.items.map((o: SiteObject) => ({ id: o.id, name: o.name })))
+function toggleObject(id: number) {
+  const i = selectedObjectIds.value.indexOf(id)
+  if (i >= 0) selectedObjectIds.value.splice(i, 1)
+  else selectedObjectIds.value.push(id)
+}
 const { handleFormError } = useErrorHandler()
 const { canManageUserRoles } = usePermissions()
 const authStore = useAuthStore()
@@ -175,6 +212,15 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
       checkboxLabel: 'Активен',
       order: 8,
       width: 'half' as const
+    },
+    {
+      // F-237: назначенные объекты (доступ/скоуп) — раньше поле принималось бэком, но UI не было
+      key: 'assigned_objects',
+      type: 'custom' as const,
+      label: 'Доступные объекты',
+      required: false,
+      order: 9,
+      width: 'full' as const
     }
   ],
   submitText: props.initial ? 'Обновить' : 'Создать',
@@ -215,6 +261,14 @@ function handleRolesChange(roleIds: number[]) {
 
 // Load user roles when editing
 onMounted(async () => {
+  // F-237: справочник объектов + инициализация назначенных объектов при редактировании
+  if (!objectsStore.items.length) {
+    try { await objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any) } catch { /* ignore */ }
+  }
+  if (props.initial) {
+    selectedObjectIds.value = [...(((props.initial as any).assigned_object_ids) || [])]
+  }
+
   // Загружаем роли из системы, если их нет
   const currentRoles = Array.isArray(rbacStore.roles) ? rbacStore.roles : []
   if (currentRoles.length === 0 && canManageUserRoles.value) {
@@ -261,6 +315,9 @@ async function handleSubmit(formData: EmployeeRequest) {
     const cleanFormData: EmployeeRequest = { ...formData }
     delete (cleanFormData as any).role  // Убираем legacy поле role
     delete (cleanFormData as any).roles  // Не отправляем roles через API employees
+    delete (cleanFormData as any).assigned_objects  // кастомное поле формы, не для API
+    // F-237: сериализатор принимает assigned_object_ids (M2M объектов сотрудника)
+    ;(cleanFormData as any).assigned_object_ids = [...selectedObjectIds.value]
 
     if (props.initial) {
       // Update existing employee
