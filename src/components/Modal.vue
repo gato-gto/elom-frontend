@@ -14,11 +14,13 @@
         <slot name="header" />
         <button
           v-if="closable"
-          class="btn btn-sm btn-circle btn-ghost"
+          class="modal-close-btn"
+          type="button"
           aria-label="Закрыть"
+          title="Закрыть"
           @click="handleClose"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
@@ -32,7 +34,8 @@
         <slot name="footer" />
       </div>
     </div>
-    <div v-if="backdrop" class="modal-backdrop" @click="handleBackdropClick"></div>
+    <!-- бэкдроп НЕ закрывает форму: закрытие только крестиком, чтобы не терять введённые данные -->
+    <div v-if="backdrop" class="modal-backdrop"></div>
   </div>
 </template>
 
@@ -45,7 +48,6 @@ interface Props {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl'
   closable?: boolean
   backdrop?: boolean
-  closeOnBackdrop?: boolean
 }
 
 interface Emits {
@@ -56,8 +58,7 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   closable: true,
-  backdrop: true,
-  closeOnBackdrop: true
+  backdrop: true
 })
 
 const emit = defineEmits<Emits>()
@@ -83,14 +84,9 @@ const handleClose = () => {
   emit('update:modelValue', false)
 }
 
-const handleBackdropClick = () => {
-  if (props.closeOnBackdrop) {
-    handleClose()
-  }
-}
-
-// F-065: доступный модал — focus-trap (Escape + Tab), возврат фокуса при закрытии.
-// (Прежняя версия навешивала Escape-слушатель без снятия — утечка + дубли.)
+// F-300: закрытие формы ТОЛЬКО крестиком — без закрытия по клику вне формы (бэкдроп)
+// и без Escape, чтобы случайный клик/нажатие не потеряли введённые данные.
+// focus-trap (Tab) сохранён: модал остаётся доступным с клавиатуры.
 const modalBox = ref<HTMLElement | null>(null)
 let lastActive: HTMLElement | null = null
 
@@ -103,10 +99,7 @@ function focusables(): HTMLElement[] {
 }
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && props.closable) {
-    handleClose()
-    return
-  }
+  // Escape НЕ закрывает форму (F-300): только крестик, чтобы не терять данные.
   if (e.key !== 'Tab') { return }
   const items = focusables()
   const active = document.activeElement as HTMLElement | null
@@ -148,6 +141,33 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>
+/* F-300: чётко заметный крестик закрытия (был btn-ghost — почти невидим).
+   Обведённый, с ховером и copper-фокусом, по дизайн-языку. */
+.modal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  border: 1px solid hsl(var(--bc) / 0.25);
+  background: hsl(var(--b2));
+  color: hsl(var(--bc));
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+}
+.modal-close-btn:hover {
+  background: color-mix(in oklab, var(--color-error) 12%, hsl(var(--b1)));
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+.modal-close-btn:focus-visible {
+  outline: none;
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 0 2px hsl(var(--p) / 0.4);
+}
+
 @media print {
   /* КРИТИЧНО: Показываем модальное окно с максимальной специфичностью */
   html body .modal,

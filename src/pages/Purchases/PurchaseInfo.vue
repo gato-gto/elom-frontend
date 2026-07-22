@@ -169,7 +169,7 @@
           <h3 class="text-lg font-bold">
             {{ getPhotoTypeLabel(selectedPhoto?.type) }} - {{ currentPhotoIndex + 1 }} из {{ currentPhotoList.length }}
           </h3>
-          <button class="btn btn-sm btn-circle btn-ghost" @click="photoModalOpen = false">
+          <button class="btn btn-sm btn-circle btn-outline" aria-label="Закрыть" title="Закрыть" @click="photoModalOpen = false">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
