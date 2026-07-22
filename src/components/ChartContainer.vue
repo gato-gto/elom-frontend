@@ -62,7 +62,7 @@
       <!-- Empty State -->
       <div v-else-if="!hasData" class="chart-empty">
         <div class="empty-icon">
-          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-12 h-12 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </div>
@@ -183,7 +183,7 @@ const defaultOptions: ChartOptions = {
         usePointStyle: true,
         padding: 20,
         font: {
-          family: 'Inter, system-ui, sans-serif',
+          family: 'IBM Plex Sans, system-ui, sans-serif',
           size: 12
         }
       }
@@ -197,12 +197,13 @@ const defaultOptions: ChartOptions = {
       cornerRadius: 8,
       displayColors: true,
              titleFont: {
-               family: 'Inter, system-ui, sans-serif',
+               family: 'IBM Plex Sans, system-ui, sans-serif',
                size: 13,
                weight: 'bold'
              },
+      // tooltip body shows values (DATA) → monospace
       bodyFont: {
-        family: 'Inter, system-ui, sans-serif',
+        family: 'IBM Plex Mono, ui-monospace, monospace',
         size: 12
       },
       padding: 12
@@ -213,9 +214,10 @@ const defaultOptions: ChartOptions = {
              grid: {
                color: 'rgba(0, 0, 0, 0.1)'
              },
+             // axis tick labels are DATA → monospace
              ticks: {
                font: {
-                 family: 'Inter, system-ui, sans-serif',
+                 family: 'IBM Plex Mono, ui-monospace, monospace',
                  size: 11
                },
                color: '#6b7280'
@@ -227,7 +229,7 @@ const defaultOptions: ChartOptions = {
              },
              ticks: {
                font: {
-                 family: 'Inter, system-ui, sans-serif',
+                 family: 'IBM Plex Mono, ui-monospace, monospace',
                  size: 11
                },
                color: '#6b7280'
@@ -244,18 +246,19 @@ const defaultOptions: ChartOptions = {
   }
 }
 
-// DaisyUI color palette
+// ELOM series palette — copper accent + steel/graphite + domain status hues
+// (derived from DESIGN_LANGUAGE.md; no default blue/violet/indigo/cyan/pink).
 const daisyColors = [
-  '#3b82f6', // blue-500
-  '#ef4444', // red-500
-  '#10b981', // emerald-500
-  '#f59e0b', // amber-500
-  '#8b5cf6', // violet-500
-  '#06b6d4', // cyan-500
-  '#84cc16', // lime-500
-  '#f97316', // orange-500
-  '#ec4899', // pink-500
-  '#6366f1'  // indigo-500
+  '#B0500F', // copper-600 (primary accent)
+  '#3E6B8C', // steel-blue
+  '#1F7A54', // terminal-green
+  '#C77A0A', // signal-amber
+  '#5C6B74', // graphite-500
+  '#B23A2E', // fault-red
+  '#8F400B', // copper-700
+  '#7FA3BE', // steel-blue light
+  '#2C3840', // graphite-700
+  '#4E7C6F'  // muted teal-green
 ]
 
 // Methods
@@ -480,14 +483,8 @@ watch(() => document.documentElement.classList.contains('dark'), () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.8);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background-color: hsl(var(--b1) / 0.9);
   z-index: 10;
-}
-
-.dark .chart-loading-overlay {
-  background-color: rgba(31, 41, 55, 0.8);
 }
 
 .loading-spinner {
@@ -497,7 +494,7 @@ watch(() => document.documentElement.classList.contains('dark'), () => {
 .spinner {
   width: 2rem;
   height: 2rem;
-  border: 2px solid #3b82f6;
+  border: 2px solid hsl(var(--p));
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;

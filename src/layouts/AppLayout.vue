@@ -7,7 +7,7 @@
       
       
       <!-- Page content -->
-      <main class="flex-1 p-1 sm:p-4 bg-gray-50 pb-20 lg:pb-4">
+      <main class="flex-1 p-1 sm:p-4 bg-base-200 pb-20 lg:pb-4">
         <router-view />
       </main>
     </div>

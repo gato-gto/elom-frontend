@@ -1,6 +1,6 @@
 <template>
   <div v-show="busy" class="fixed left-0 top-0 right-0 z-50 h-0.5 overflow-hidden">
-    <div class="h-full bg-blue-500 animate-topbar"></div>
+    <div class="h-full bg-primary animate-topbar"></div>
   </div>
 </template>
 

@@ -179,18 +179,14 @@ function handleMultiselectChange(event: Event) {
 .filter-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: hsl(var(--bc));
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-:root.dark .filter-label {
-  color: #e2e8f0;
-}
-
 .required-mark {
-  color: #ef4444;
+  color: hsl(var(--er));
   font-weight: 600;
 }
 
@@ -199,42 +195,34 @@ function handleMultiselectChange(event: Event) {
 .filter-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--b3));
+  border-radius: 0.375rem;
   font-size: 0.875rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: white;
-  color: #374151;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: hsl(var(--b1));
+  color: hsl(var(--bc));
 }
 
-:root.dark .filter-input,
-:root.dark .filter-select,
-:root.dark .filter-textarea {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #e2e8f0;
-}
-
+/* copper focus ring — design mandate for field visibility */
 .filter-input:focus,
 .filter-select:focus,
 .filter-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  transform: translateY(-1px);
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 0 2px hsl(var(--p) / 0.3);
 }
 
 .filter-input:hover:not(:disabled),
 .filter-select:hover:not(:disabled),
 .filter-textarea:hover:not(:disabled) {
-  border-color: #9ca3af;
+  border-color: hsl(var(--bc) / 0.4);
 }
 
 .filter-input:disabled,
 .filter-select:disabled,
 .filter-textarea:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
+  background: hsl(var(--b2));
+  color: hsl(var(--bc) / 0.4);
   cursor: not-allowed;
 }
 

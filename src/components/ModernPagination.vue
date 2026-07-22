@@ -192,9 +192,9 @@ watch(() => props.currentPage, () => {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 1rem 1rem;
+  background: hsl(var(--b2));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 0.375rem;
   /* Отступ снизу для мобильной навигации */
   margin-bottom: 6rem;
 }
@@ -227,9 +227,11 @@ watch(() => props.currentPage, () => {
 }
 
 .pagination-stats {
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   font-size: 0.875rem;
   font-weight: 500;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
 .pagination-size-selector {
@@ -239,25 +241,25 @@ watch(() => props.currentPage, () => {
 }
 
 .size-label {
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .size-select {
   padding: 0.375rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  background: white;
-  color: #374151;
+  border: 1px solid hsl(var(--b3));
+  border-radius: 0.25rem;
+  background: hsl(var(--b1));
+  color: hsl(var(--bc));
   font-size: 0.875rem;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .size-select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 0 2px hsl(var(--p) / 0.3);
 }
 
 .pagination-nav {
@@ -278,30 +280,29 @@ watch(() => props.currentPage, () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-  background: white;
-  color: #64748b;
+  border-radius: 0.25rem;
+  border: 1px solid hsl(var(--b3));
+  background: hsl(var(--b1));
+  color: hsl(var(--bc) / 0.7);
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* page numbers are DATA → monospace */
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
   text-decoration: none;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
+  border-color: hsl(var(--p));
 }
 
 .pagination-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .pagination-btn-nav {
@@ -315,10 +316,10 @@ watch(() => props.currentPage, () => {
 }
 
 .pagination-btn-active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
+  border-color: hsl(var(--p));
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 .pagination-btn-jump {
@@ -337,7 +338,7 @@ watch(() => props.currentPage, () => {
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  color: #9ca3af;
+  color: hsl(var(--bc) / 0.5);
   font-weight: 500;
 }
 
@@ -350,7 +351,7 @@ watch(() => props.currentPage, () => {
 }
 
 .jump-label {
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -358,61 +359,24 @@ watch(() => props.currentPage, () => {
 .jump-input {
   width: 4rem;
   padding: 0.375rem 0.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  background: white;
-  color: #374151;
+  border: 1px solid hsl(var(--b3));
+  border-radius: 0.25rem;
+  background: hsl(var(--b1));
+  color: hsl(var(--bc));
   font-size: 0.875rem;
   text-align: center;
-  transition: all 0.2s ease;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .jump-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 0 2px hsl(var(--p) / 0.3);
 }
 
-/* Темная тема */
-:root.dark .modern-pagination-container {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-:root.dark .pagination-stats,
-:root.dark .size-label,
-:root.dark .jump-label {
-  color: #94a3b8;
-}
-
-:root.dark .size-select,
-:root.dark .jump-input {
-  background: rgba(51, 65, 85, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #e2e8f0;
-}
-
-:root.dark .pagination-btn {
-  background: rgba(51, 65, 85, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #94a3b8;
-}
-
-:root.dark .pagination-btn:hover:not(:disabled) {
-  background: #60a5fa;
-  color: white;
-  border-color: #60a5fa;
-}
-
-:root.dark .pagination-btn-active {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  color: white;
-  border-color: #60a5fa;
-}
-
-:root.dark .pagination-ellipsis {
-  color: #6b7280;
-}
+/* Тёмная тема наследуется через токены (--b1/--b2/--b3/--bc/--p) —
+   отдельные :root.dark переопределения больше не нужны. */
 
 /* Адаптивность */
 @media (max-width: 768px) {

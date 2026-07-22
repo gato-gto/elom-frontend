@@ -75,22 +75,23 @@ defineEmits<{
 
 <style scoped>
 .list-header {
-  background: linear-gradient(135deg, hsl(var(--b1)) 0%, hsl(var(--b2)) 100%);
+  background: hsl(var(--b1));
   border: 1px solid hsl(var(--b3));
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
   overflow: hidden;
   position: relative;
 }
 
+/* copper top-rule — the one accent, spent with restraint */
 .list-header::before {
-  
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .header-content {
@@ -127,7 +128,7 @@ defineEmits<{
 .title-icon {
   width: 1.5rem;
   height: 1.5rem;
-  color: #3b82f6;
+  color: hsl(var(--p));
   flex-shrink: 0;
 }
 
@@ -217,60 +218,41 @@ defineEmits<{
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: 0.375rem;
   font-weight: 500;
   font-size: 0.875rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
   border: none;
   position: relative;
-  overflow: hidden;
   text-decoration: none;
 }
 
-.action-btn::before {
-  
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.action-btn:hover::before {
-  opacity: 1;
-}
-
 .action-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .action-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 .action-btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  background: color-mix(in oklab, hsl(var(--p)) 88%, black);
 }
 
 .action-btn-outline {
   background: transparent;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  color: hsl(var(--bc) / 0.75);
+  border: 1px solid hsl(var(--b3));
 }
 
 .action-btn-outline:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: #3b82f6;
-  border-color: #3b82f6;
-  transform: translateY(-1px);
+  background: hsl(var(--b2));
+  color: hsl(var(--p));
+  border-color: hsl(var(--p));
 }
 
 .btn-icon {
@@ -283,8 +265,8 @@ defineEmits<{
   align-items: center;
   gap: 0.75rem;
   padding: 0.625rem 0.75rem;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
+  background: hsl(var(--b2));
+  border-top: 1px solid hsl(var(--b3));
 }
 
 @media (min-width: 768px) {
@@ -302,18 +284,17 @@ defineEmits<{
 
 .stat-label {
   font-size: 0.875rem;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   font-weight: 500;
 }
 
+/* stat value is DATA → monospace, per the design language */
 .stat-value {
   font-size: 0.875rem;
-  color: #1e293b;
+  color: hsl(var(--p));
   font-weight: 600;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Дополнительные стили для очень маленьких экранов */

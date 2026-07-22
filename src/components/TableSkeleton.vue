@@ -36,24 +36,16 @@ function getSkeletonClass(column: number) {
 
 .skeleton-cell {
   padding: 1rem 0.75rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
-:root.dark .skeleton-cell {
-  border-bottom: 1px solid #334155;
-}
-
+/* shimmer placeholder — token-based so it tracks light/dark automatically */
 .skeleton-content {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, hsl(var(--b2)) 25%, hsl(var(--b3)) 50%, hsl(var(--b2)) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   height: 1rem;
-}
-
-:root.dark .skeleton-content {
-  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
-  background-size: 200% 100%;
 }
 
 /* Разные размеры для разных типов контента */
@@ -70,7 +62,7 @@ function getSkeletonClass(column: number) {
 .skeleton-content.badge {
   width: 4rem;
   height: 1.5rem;
-  border-radius: 9999px;
+  border-radius: 3px;
 }
 
 .skeleton-content.number {

@@ -40,11 +40,9 @@ withDefaults(defineProps<Props>(), {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background: hsl(var(--b1) / 0.92);
   z-index: 50;
-  border-radius: 1rem;
+  border-radius: 0.375rem;
 }
 
 :root.dark .loading-overlay {
@@ -123,35 +121,31 @@ withDefaults(defineProps<Props>(), {
 
 /* Варианты цветов */
 .spinner-primary {
-  color: #3b82f6;
+  color: hsl(var(--p));
 }
 
 .spinner-secondary {
-  color: #64748b;
+  color: hsl(var(--bc) / 0.55);
 }
 
 .spinner-success {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .spinner-warning {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .spinner-error {
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .loading-text {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   text-align: center;
   animation: pulse 2s ease-in-out infinite;
-}
-
-:root.dark .loading-text {
-  color: #94a3b8;
 }
 
 @keyframes spin {

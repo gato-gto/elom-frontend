@@ -53,18 +53,18 @@ function alertClass(type?: 'success' | 'error' | 'info') {
   }
   
   .alert-error {
-    border-color: #ef4444;
-    background-color: #fef2f2;
+    border-color: var(--color-error);
+    background-color: color-mix(in oklab, var(--color-error) 10%, transparent);
   }
-  
+
   .alert-success {
-    border-color: #10b981;
-    background-color: #f0fdf4;
+    border-color: var(--color-success);
+    background-color: color-mix(in oklab, var(--color-success) 10%, transparent);
   }
-  
+
   .alert-info {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
+    border-color: var(--color-info);
+    background-color: color-mix(in oklab, var(--color-info) 10%, transparent);
   }
 }
 

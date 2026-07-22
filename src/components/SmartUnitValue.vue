@@ -1,7 +1,7 @@
 <template>
   <span :class="valueClass" :title="tooltip">
     {{ displayValue }}
-    <span v-if="showOriginal && result.converted" class="text-xs text-gray-500 ml-1">
+    <span v-if="showOriginal && result.converted" class="text-xs text-base-content/60 ml-1">
       ({{ formatValue(result.originalValue, result.originalUnit) }})
     </span>
   </span>
@@ -76,7 +76,7 @@ const formatValue = (value: number, unit: string) => {
 // CSS классы
 const valueClass = computed(() => {
   const baseClass = props.className || 'font-mono'
-  const convertedClass = result.value.converted ? 'text-blue-600 font-semibold' : ''
+  const convertedClass = result.value.converted ? 'text-primary font-semibold' : ''
   return `${baseClass} ${convertedClass}`.trim()
 })
 
