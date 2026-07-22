@@ -382,11 +382,15 @@ function isMonoColumn(column: ColumnConfig): boolean {
   return !!column.mono || column.align === 'right' || MONO_KEY_RE.test(column.key)
 }
 // Единое выравнивание: заголовок и ячейки одного столбца ВСЕГДА на одной оси.
-// Данные (числа/№/суммы/даты/id/код) — по правому краю; текст — по левому; center — по центру.
+// Правило (DESIGN_LANGUAGE: «right-aligned numbers»): ЧИСЛА/№/суммы/остатки/id — по
+// правому краю; текст, ДАТЫ и коды — по левому (даты консистентно левые везде, как в
+// бесшовных таблицах ArchivePeriods); center — по центру. Явный align в конфиге приоритетен.
+const RIGHT_ALIGN_KEY_RE = /^(id|quantity|quantity_signed|qty|price|amount|total|sum|balance|current_balance|current_stock|target_balance|purchase_no|invoice_number|inventory_number)$/i
 function colAlign(column: ColumnConfig): string {
   if (column.align === 'center') { return 'text-center' }
+  if (column.align === 'right') { return 'text-right' }
   if (column.align === 'left') { return 'text-left' }
-  if (isMonoColumn(column)) { return 'text-right' }
+  if (RIGHT_ALIGN_KEY_RE.test(column.key)) { return 'text-right' }
   return 'text-left'
 }
 
