@@ -196,14 +196,12 @@ const listConfig = computed(() => ({
       key: 'view',
       label: 'Просмотр',
       class: 'btn-outline btn-sm',
-      shortLabel: '👁️'
       // ✅ RBAC: Permission определяется автоматически как 'purchases.view'
     },
     {
       key: 'edit',
       label: isRequester.value ? 'Редактировать заявку' : 'Редактировать',
       class: 'btn-primary btn-sm',
-      shortLabel: '✏️',
       // ✅ RBAC: Permission определяется автоматически как 'purchases.edit'
       // Проверка scope-based (purchases.edit_own) выполняется автоматически
       visible: (item: Purchase) => {
@@ -221,7 +219,6 @@ const listConfig = computed(() => ({
         key: 'approve',
         label: 'Одобрить',
         class: 'btn-success btn-sm',
-        shortLabel: '✅',
         permission: 'purchases.approve', // ✅ RBAC: Явное указание permission
         visible: (item: Purchase) => item.status === 'new'
       },
@@ -229,7 +226,6 @@ const listConfig = computed(() => ({
         key: 'reject',
         label: 'Отклонить',
         class: 'btn-error btn-sm',
-        shortLabel: '❌',
         permission: 'purchases.reject', // ✅ RBAC: Явное указание permission
         visible: (item: Purchase) => item.status === 'new'
       }

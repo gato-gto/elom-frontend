@@ -53,7 +53,7 @@
 
       <!-- Custom column for source -->
       <template #column-source="{ item, value }">
-        <span class="text-xs text-gray-600">
+        <span class="text-xs text-base-content/70">
           {{ item.source_description || `${getSourceTypeDisplayName(item.source_type)} #${item.source_id}` }}
         </span>
       </template>

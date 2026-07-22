@@ -165,7 +165,7 @@ function getCodeHelpText(): string {
   
   const isSmart = isUsedInSmartConversion(currentCode.value)
   if (isSmart) {
-    return '✅ Этот код поддерживает умную конвертацию'
+    return 'Этот код поддерживает умную конвертацию'
   }
   
   return 'Код будет использоваться как есть, без автоматической конвертации'

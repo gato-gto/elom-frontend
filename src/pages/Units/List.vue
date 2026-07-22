@@ -25,7 +25,7 @@
     >
       <!-- Custom column for code -->
       <template #column-code="{ item, value }">
-        <div class="text-sm text-gray-600 font-mono">{{ value }}</div>
+        <div class="text-sm text-base-content/70 font-mono">{{ value }}</div>
       </template>
 
       <!-- Custom column for smart conversion -->
@@ -143,7 +143,7 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
         let message = `Удалить единицу измерения "${item.name}" (${item.code})?`
         
         if (isSmartUnit) {
-          message += `\n\n⚠️ ВНИМАНИЕ: Эта единица поддерживает умную конвертацию!\nУдаление может нарушить работу автоматического округления значений.\n\nРекомендуется оставить единицу для корректной работы системы.`
+          message += `\n\nВНИМАНИЕ: Эта единица поддерживает умную конвертацию!\nУдаление может нарушить работу автоматического округления значений.\n\nРекомендуется оставить единицу для корректной работы системы.`
         }
         
         return message
@@ -212,7 +212,7 @@ async function handleDelete(unit: Unit) {
   let confirmMessage = `Удалить единицу измерения "${unit.name}" (${unit.code})?`
   
   if (isSmartUnit) {
-    confirmMessage += `\n\n⚠️ ВНИМАНИЕ: Эта единица поддерживает умную конвертацию!`
+    confirmMessage += `\n\nВНИМАНИЕ: Эта единица поддерживает умную конвертацию!`
     confirmMessage += `\nУдаление может нарушить работу автоматического округления значений.`
     confirmMessage += `\n\nРекомендуется оставить единицу для корректной работы системы.`
   }

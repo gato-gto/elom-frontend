@@ -12,8 +12,8 @@
       <template #column-name="{ item, value }">
         <div class="flex items-center gap-3">
           <div>
-            <div class="font-medium text-gray-900">{{ value }}</div>
-            <div class="text-sm text-gray-500">
+            <div class="font-medium text-base-content">{{ value }}</div>
+            <div class="text-sm text-base-content/60">
               <span class="badge" :class="item.is_active ? 'badge-success badge-xs' : 'badge-error badge-xs'">
                 {{ item.is_active ? 'Активен' : 'Неактивен' }}
               </span>
