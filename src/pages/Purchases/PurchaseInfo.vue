@@ -32,6 +32,14 @@
           <div class="invoice-status" :class="statusClass">
             {{ statusLabel }}
           </div>
+          <!-- F-271/D-019: завершена, но фото-отчёт не приложен -->
+          <div
+            v-if="purchase.status === 'completed' && purchase.has_report_photos === false"
+            class="no-print badge badge-warning badge-sm"
+            title="Закупка завершена без фото-отчёта"
+          >
+            нет фото-отчёта
+          </div>
         </div>
       </div>
 

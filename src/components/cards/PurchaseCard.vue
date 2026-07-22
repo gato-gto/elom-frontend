@@ -57,6 +57,12 @@
           <span class="text-gray-500">Статус:</span>
           <span class="badge badge-warning badge-sm ml-2">Архив</span>
         </div>
+
+        <!-- F-271/D-019: завершена, но фото-отчёт не приложен -->
+        <div v-if="purchase.status === 'completed' && purchase.has_report_photos === false">
+          <span class="text-gray-500">Фото-отчёт:</span>
+          <span class="badge badge-warning badge-sm ml-2">нет фото</span>
+        </div>
       </div>
     </template>
 

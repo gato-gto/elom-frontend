@@ -44,6 +44,9 @@ export interface Purchase {
   status: 'new' | 'completed' | 'cancelled';
   items: PurchaseItem[];
   photos: PurchasePhoto[];
+  // F-271/D-019: аннотация с бэка — есть ли хотя бы одно фото типа «report».
+  // Для завершённой закупки без него показываем янтарный маркер «нет фото-отчёта».
+  has_report_photos?: boolean;
   created_at: string;
   updated_at: string;
 }

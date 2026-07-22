@@ -13,6 +13,12 @@
         <div class="flex items-center gap-2">
           <span class="font-medium">{{ value || '#' + item.id }}</span>
           <span v-if="item.is_archived" class="badge badge-warning badge-xs">Архив</span>
+          <!-- F-271/D-019: завершена, но фото-отчёт не приложен -->
+          <span
+            v-if="item.status === 'completed' && item.has_report_photos === false"
+            class="badge badge-warning badge-xs"
+            title="Закупка завершена без фото-отчёта"
+          >нет фото</span>
         </div>
       </template>
 
