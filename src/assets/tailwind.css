@@ -264,8 +264,6 @@ html, body, #app {
     
     /* Анимация появления дополнительного меню */
     .mobile-more-menu {
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
     }
     
     /* Улучшенные hover эффекты */

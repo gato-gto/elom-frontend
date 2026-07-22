@@ -18,7 +18,6 @@ import '@fontsource/ibm-plex-mono/400.css'
 import '@fontsource/ibm-plex-mono/500.css'
 
 import '@/assets/tailwind.css'
-import '@/assets/login-animations.css'
 import '@/assets/navigation-styles.css'
 import '@/styles/animations.css'
 import '@/styles/components.css' 

@@ -3,21 +3,19 @@
 
 /* Основные стили для сайдбара */
 .sidebar {
-  background-color: #1e293b;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background-color: hsl(var(--b2));
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
 }
 
 :root.dark .sidebar {
-  background-color: #0f172a;
+  background-color: hsl(var(--b1));
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-header {
-  background-color: #3b82f6;
+  background-color: hsl(var(--p));
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
@@ -51,7 +49,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: hsl(var(--p) / 0.1);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -81,9 +79,9 @@
 }
 
 .nav-link.active {
-  background-color: #3b82f6;
+  background-color: hsl(var(--p));
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
   transform: translateX(4px);
 }
 
@@ -116,11 +114,8 @@
 
 /* Стили для топбара */
 .topbar {
-  background: rgba(255, 255, 255, 0.95);
-  /* Fallback for browsers that don't support backdrop-filter */
-  background-color: rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background: hsl(var(--b1));
+  background-color: hsl(var(--b1));
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -135,12 +130,12 @@
   right: 0;
   bottom: 0;
   height: 2px;
-  background-color: rgba(59,130,246,0.3);
+  background-color: hsl(var(--p) / 0.3);
   pointer-events: none;
 }
 
 .topbar-title {
-  color: #1e293b;
+  color: hsl(var(--bc));
   font-weight: 600;
   letter-spacing: 0.005em;
   white-space: nowrap;
@@ -159,7 +154,7 @@
 }
 
 .icon-btn:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: hsl(var(--p) / 0.08);
 }
 
 .icon-btn:active {
@@ -190,16 +185,16 @@
 
 /* Стили для аватара пользователя */
 .user-avatar {
-  background-color: #3b82f6;
+  background-color: hsl(var(--p));
   color: white;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
   transition: all 0.3s ease;
 }
 
 .user-avatar:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 /* Стили для уведомлений */
@@ -238,9 +233,7 @@
 /* Стили для dropdown меню */
 .dropdown-menu,
 .dropdown-content {
-  background: rgba(255, 255, 255, 0.95) !important;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background: hsl(var(--b1)) !important;
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   border-radius: 0.75rem;
@@ -254,7 +247,7 @@
 }
 
 .dropdown-item:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: hsl(var(--p) / 0.1);
   transform: translateX(4px);
 }
 
@@ -265,7 +258,7 @@
 
 .mobile-menu-btn:hover {
   transform: scale(1.05);
-  background: rgba(59, 130, 246, 0.1);
+  background: hsl(var(--p) / 0.1);
 }
 
 /* Анимации */
@@ -317,25 +310,25 @@
 /* Стили для темной темы */
 @media (prefers-color-scheme: dark) {
   .sidebar {
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    background: hsl(var(--b1));
   }
   
   .topbar {
-    background: rgba(15, 23, 42, 0.95);
+    background: hsl(var(--b1));
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
   
   .topbar::after {
-    background-color: rgba(59,130,246,0.35);
+    background-color: hsl(var(--p) / 0.35);
   }
   
   .topbar-title {
-    color: #f1f5f9;
+    color: hsl(var(--bc));
   }
   
   .dropdown-menu,
   .dropdown-content {
-    background: rgba(15, 23, 42, 0.95) !important;
+    background: hsl(var(--b1)) !important;
     border-color: rgba(255, 255, 255, 0.1);
     opacity: 1 !important;
   }
@@ -456,7 +449,7 @@
 
 /* Стили для активного состояния */
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+  background: hsl(var(--p) / 0.2);
 }
 
 .nav-item.active::before {
@@ -490,7 +483,7 @@
 .admin-divider {
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: transparent;
   margin: 1rem 0;
 }
 
@@ -515,7 +508,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent);
+  background: transparent;
 }
 
 /* Стили для компонентов списков - оптимизированные отступы для мобильных */
@@ -532,20 +525,20 @@
 }
 
 :root.dark {
-  background: #121b2c;
+  background: hsl(var(--b1));
 }
 
 .list-content {
   background: white;
   border-radius: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: 1px solid hsl(var(--p) / 0.1);
   position: relative;
 }
 
 :root.dark .list-content {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: hsl(var(--b2) / 0.8);
+  border: 1px solid hsl(var(--bc) / 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -556,7 +549,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  background: hsl(var(--p));
 }
 
 /* Стили для таблиц */
@@ -567,47 +560,47 @@
 }
 
 :root.dark .modern-table {
-  background: rgba(30, 41, 59, 0.8);
+  background: hsl(var(--b2) / 0.8);
 }
 
 .modern-table th {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  color: #374151;
+  background: hsl(var(--b2));
+  color: hsl(var(--bc));
   font-weight: 600;
   font-size: 0.875rem;
   text-align: left;
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid hsl(var(--b3));
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 :root.dark .modern-table th {
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%);
-  color: #e2e8f0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  background: hsl(var(--b3) / 0.8);
+  color: hsl(var(--bc));
+  border-bottom: 1px solid hsl(var(--bc) / 0.2);
 }
 
 .modern-table td {
   padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  color: #374151;
+  border-bottom: 1px solid hsl(var(--b3));
+  color: hsl(var(--bc));
   font-size: 0.875rem;
   vertical-align: middle;
 }
 
 :root.dark .modern-table td {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-  color: #e2e8f0;
+  border-bottom: 1px solid hsl(var(--bc) / 0.1);
+  color: hsl(var(--bc));
 }
 
 .modern-table tbody tr:hover {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: hsl(var(--b2));
 }
 
 :root.dark .modern-table tbody tr:hover {
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.6) 0%, rgba(71, 85, 105, 0.6) 100%);
+  background: hsl(var(--b3) / 0.6);
 }
 
 .modern-table tbody tr:last-child td {
@@ -621,8 +614,8 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
+  background: hsl(var(--b2));
+  border-top: 1px solid hsl(var(--p) / 0.1);
 }
 
 .pagination-btn {
@@ -632,9 +625,9 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid hsl(var(--b3));
   background: white;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -643,11 +636,11 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #3b82f6;
+  background: hsl(var(--p));
   color: white;
-  border-color: #3b82f6;
+  border-color: hsl(var(--p));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 .pagination-btn:disabled {
@@ -656,14 +649,14 @@
 }
 
 .pagination-btn.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: hsl(var(--p));
   color: white;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  border-color: hsl(var(--p));
+  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 .pagination-info {
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 1rem;
@@ -695,8 +688,6 @@
   /* Overlay для мобильных */
   .drawer-overlay {
     background-color: rgba(0, 0, 0, 0.5);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
   }
   
   /* Адаптация заголовка для мобильных */
@@ -956,7 +947,7 @@
   right: 0;
   bottom: 0;
   width: 20px;
-  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+  background: transparent;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -982,7 +973,7 @@
     padding: 1rem;
     margin-bottom: 0.75rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
+    border: 1px solid hsl(var(--b3));
   }
   
   .mobile-card-header {
@@ -994,7 +985,7 @@
   
   .mobile-card-title {
     font-weight: 600;
-    color: #374151;
+    color: hsl(var(--bc));
     flex: 1;
   }
   
@@ -1016,32 +1007,32 @@
   
   .mobile-card-label {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: hsl(var(--bc) / 0.6);
     font-weight: 500;
     margin-bottom: 0.25rem;
   }
   
   .mobile-card-value {
-    color: #374151;
+    color: hsl(var(--bc));
     font-weight: 500;
   }
 }
 
 :root.dark .mobile-card {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(71, 85, 105, 0.3);
+  background: hsl(var(--b2) / 0.8);
+  border-color: hsl(var(--b3) / 0.3);
 }
 
 :root.dark .mobile-card-title {
-  color: #e2e8f0;
+  color: hsl(var(--bc));
 }
 
 :root.dark .mobile-card-label {
-  color: #9ca3af;
+  color: hsl(var(--bc) / 0.5);
 }
 
 :root.dark .mobile-card-value {
-  color: #e2e8f0;
+  color: hsl(var(--bc));
 }
 
 /* ========================================
@@ -1088,9 +1079,9 @@
   }
   
   .toast .alert-info {
-    border-color: #3b82f6 !important;
-    background-color: #eff6ff !important;
-    color: #2563eb !important;
+    border-color: hsl(var(--p)) !important;
+    background-color: hsl(var(--p) / 0.1) !important;
+    color: hsl(var(--p)) !important;
   }
 }
 
@@ -1119,7 +1110,7 @@
 }
 
 :root.dark .toast .alert-info {
-  background-color: #1e3a8a !important;
-  color: #93c5fd !important;
-  border-color: #3b82f6 !important;
+  background-color: hsl(var(--p) / 0.2) !important;
+  color: hsl(var(--p)) !important;
+  border-color: hsl(var(--p)) !important;
 }
