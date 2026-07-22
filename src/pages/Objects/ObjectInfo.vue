@@ -1,14 +1,14 @@
 <template>
   <div class="space-y-6">
       <!-- Loading state -->
-      <div v-if="loading" class=" rounded-lg shadow">
+      <div v-if="loading" class=" rounded shadow-sm">
         <div class="">
           <LoadingSpinner text="Загрузка информации об объекте..." :overlay="false" />
         </div>
       </div>
 
       <!-- Not found state -->
-      <div v-else-if="!object" class=" rounded-lg shadow">
+      <div v-else-if="!object" class=" rounded shadow-sm">
         <div class="text-center space-y-4">
           <svg class="w-16 h-16 mx-auto text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -30,8 +30,8 @@
           <div class="header-content">
             <div class="header-title-section">
               <div class="title-icon-wrapper">
-                <div class="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl border flex items-center justify-center">
-                  <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="h-16 w-16 bg-primary/10 rounded border border-base-300 flex items-center justify-center">
+                  <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
@@ -84,7 +84,7 @@
         <div class="info-card">
           <div class="card-header">
             <div class="card-icon">
-              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -123,36 +123,36 @@
                 <h3 class="info-section-title">Статистика</h3>
                 <div class="stat-item">
                   <div class="stat-icon">
-                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h2l3.6 7.59a1 1 0 00.9.59H17a1 1 0 00.95-.68L21 7H6" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 13a4 4 0 11-8 0" />
                     </svg>
                   </div>
                   <div class="stat-content">
                     <div class="stat-title">Закупок</div>
-                    <div class="stat-value">{{ objectStats.purchasesCount }}</div>
+                    <div class="stat-value font-mono">{{ objectStats.purchasesCount }}</div>
                   </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-icon">
-                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
                   <div class="stat-content">
                     <div class="stat-title">Материалов</div>
-                    <div class="stat-value">{{ objectStats.materialsCount }}</div>
+                    <div class="stat-value font-mono">{{ objectStats.materialsCount }}</div>
                   </div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-icon">
-                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11m0 0l-4-4m4 4l-4 4m13-7v10" />
                     </svg>
                   </div>
                   <div class="stat-content">
                     <div class="stat-title">Списаний</div>
-                    <div class="stat-value">{{ objectStats.writeoffsCount }}</div>
+                    <div class="stat-value font-mono">{{ objectStats.writeoffsCount }}</div>
                   </div>
                 </div>
               </div>
@@ -186,11 +186,11 @@
                 <h3 class="info-section-title">Сроки и прогресс</h3>
                 <div class="info-item">
                   <label class="info-label">Дата начала</label>
-                  <p class="info-value">{{ formatDate(object.date_start || null) }}</p>
+                  <p class="info-value font-mono">{{ formatDate(object.date_start || null) }}</p>
                 </div>
                 <div class="info-item">
                   <label class="info-label">Дата окончания</label>
-                  <p class="info-value">{{ formatDate(object.date_end || null) }}</p>
+                  <p class="info-value font-mono">{{ formatDate(object.date_end || null) }}</p>
                 </div>
                 <div class="info-item" v-if="projectProgress !== null">
                   <label class="info-label">Прогресс выполнения</label>
@@ -202,7 +202,7 @@
                       />
                     </div>
                     <p class="text-sm text-base-content/70 mt-1">
-                      {{ projectProgress }}% завершено
+                      <span class="font-mono">{{ projectProgress }}%</span> завершено
                     </p>
                   </div>
                 </div>
@@ -215,7 +215,7 @@
         <div class="quick-actions-section mt-8">
           <div class="section-header">
             <div class="section-icon">
-              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
@@ -231,7 +231,7 @@
               <div class="quick-action-icon" :class="action.iconClass">
                 <svg
                   v-if="action.key === 'purchases'"
-                  class="w-6 h-6 text-white"
+                  class="w-6 h-6 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -241,7 +241,7 @@
                 </svg>
                 <svg
                   v-else-if="action.key === 'balances'"
-                  class="w-6 h-6 text-white"
+                  class="w-6 h-6 text-success"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -251,7 +251,7 @@
                 </svg>
                 <svg
                   v-else-if="action.key === 'writeoffs'"
-                  class="w-6 h-6 text-white"
+                  class="w-6 h-6 text-warning"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -260,7 +260,7 @@
                 </svg>
                 <svg
                   v-else
-                  class="w-6 h-6 text-white"
+                  class="w-6 h-6 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -273,7 +273,7 @@
                 <p class="quick-action-description">{{ action.description }}</p>
               </div>
               <div class="quick-action-arrow">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -472,17 +472,12 @@ onBeforeUnmount(() => {
 <style scoped>
 /* Modern Header Styles */
 .object-header {
-  background: linear-gradient(135deg, hsl(var(--b1)) 0%, hsl(var(--b2)) 100%);
+  background: hsl(var(--b1));
   border: 1px solid hsl(var(--b3));
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
   overflow: hidden;
   position: relative;
   margin-bottom: 2rem;
-}
-
-:root.dark .object-header {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .object-header::before {
@@ -491,8 +486,8 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .header-content {
@@ -549,63 +544,32 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  border-radius: 0.875rem;
+  border-radius: 4px;
   font-weight: 500;
   font-size: 0.875rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   cursor: pointer;
   border: none;
   position: relative;
-  overflow: hidden;
   text-decoration: none;
 }
 
-.action-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.action-btn:hover::before {
-  opacity: 1;
-}
-
 .action-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
 }
 
 .action-btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  background: hsl(var(--p) / 0.9);
 }
 
 .action-btn-outline {
   background: transparent;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-:root.dark .action-btn-outline {
   color: hsl(var(--bc) / 0.7);
-  border-color: hsl(var(--b3));
+  border: 1px solid hsl(var(--b3));
 }
 
 .action-btn-outline:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: #3b82f6;
-  border-color: #3b82f6;
-  transform: translateY(-1px);
-}
-
-:root.dark .action-btn-outline:hover:not(:disabled) {
   background: hsl(var(--b2));
   color: hsl(var(--p));
   border-color: hsl(var(--p));
@@ -632,30 +596,18 @@ onBeforeUnmount(() => {
 .info-section-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0 0 0.5rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid rgba(59, 130, 246, 0.2);
-}
-
-:root.dark .info-section-title {
-  color: #e2e8f0;
-  border-bottom-color: rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
 .info-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: hsl(var(--b1));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 6px;
   overflow: hidden;
   position: relative;
-}
-
-:root.dark .info-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .info-card::before {
@@ -664,8 +616,8 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .card-header {
@@ -673,7 +625,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
 .card-icon {
@@ -697,34 +649,22 @@ onBeforeUnmount(() => {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-:root.dark .info-label {
   color: hsl(var(--bc) / 0.6);
+  margin-bottom: 0.25rem;
 }
 
 .info-value {
   font-size: 1rem;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0;
   word-break: break-word;
-}
-
-:root.dark .info-value {
-  color: #e2e8f0;
 }
 
 .info-hint {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
-  margin-top: 0.25rem;
-}
-
-:root.dark .info-hint {
   color: hsl(var(--bc) / 0.6);
+  margin-top: 0.25rem;
 }
 
 /* Stat Items */
@@ -749,36 +689,21 @@ onBeforeUnmount(() => {
 
 .stat-title {
   font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-:root.dark .stat-title {
   color: hsl(var(--bc) / 0.6);
+  margin-bottom: 0.25rem;
 }
 
 .stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-:root.dark .stat-value {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: hsl(var(--p));
 }
 
 /* Progress Bar */
 .progress-bar {
   width: 100%;
   height: 0.75rem;
-  border-radius: 9999px;
+  border-radius: 4px;
   background-color: hsl(var(--b3));
   overflow: hidden;
 }
@@ -791,19 +716,12 @@ onBeforeUnmount(() => {
 
 /* Quick Actions Section */
 .quick-actions-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--b1));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 6px;
   overflow: hidden;
   position: relative;
   margin-bottom: 2rem;
-}
-
-:root.dark .quick-actions-section {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .quick-actions-section::before {
@@ -812,8 +730,8 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .section-header {
@@ -821,7 +739,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
 .section-icon {
@@ -831,12 +749,8 @@ onBeforeUnmount(() => {
 .section-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0;
-}
-
-:root.dark .section-title {
-  color: #e2e8f0;
 }
 
 .quick-actions-grid {
@@ -851,46 +765,23 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 1rem;
   padding: 1.25rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
+  background: hsl(var(--b2));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
-:root.dark .quick-action-card {
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.5) 0%, rgba(71, 85, 105, 0.5) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.quick-action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.quick-action-card:hover::before {
-  opacity: 1;
-}
-
 .quick-action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
-  border-color: #8b5cf6;
+  border-color: hsl(var(--p));
 }
 
 .quick-action-icon {
   height: 3rem;
   width: 3rem;
-  border-radius: 0.75rem;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -898,19 +789,19 @@ onBeforeUnmount(() => {
 }
 
 .quick-action-icon--primary {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: hsl(var(--p) / 0.1);
 }
 
 .quick-action-icon--success {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: hsl(var(--su) / 0.1);
 }
 
 .quick-action-icon--warning {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: hsl(var(--wa) / 0.1);
 }
 
 .quick-action-icon--accent {
-  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  background: hsl(var(--p) / 0.1);
 }
 
 .quick-action-content {
@@ -921,24 +812,16 @@ onBeforeUnmount(() => {
 .quick-action-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0 0 0.25rem 0;
   line-height: 1.2;
 }
 
-:root.dark .quick-action-title {
-  color: #e2e8f0;
-}
-
 .quick-action-description {
   font-size: 0.875rem;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.7);
   margin: 0;
   line-height: 1.4;
-}
-
-:root.dark .quick-action-description {
-  color: hsl(var(--bc) / 0.7);
 }
 
 .quick-action-arrow {

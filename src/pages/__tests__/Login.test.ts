@@ -76,7 +76,7 @@ describe('Login Page', () => {
 
     const submitButton = wrapper.find('button[type="submit"]')
     expect(submitButton.attributes('disabled')).toBeDefined()
-    expect(submitButton.text()).toContain('Вход...')
+    expect(submitButton.text()).toContain('Вход…')
   })
 
   it('shows error message when login fails', () => {

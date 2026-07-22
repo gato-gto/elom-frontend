@@ -6,8 +6,8 @@
         <div class="header-content">
           <div class="header-title-section">
             <div class="title-icon-wrapper">
-              <div class="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl border flex items-center justify-center">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="h-16 w-16 bg-primary/10 rounded border border-base-300 flex items-center justify-center">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
@@ -50,7 +50,7 @@
         <div class="info-card">
           <div class="card-header">
             <div class="card-icon">
-              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -76,7 +76,7 @@
         <div class="info-card">
           <div class="card-header">
             <div class="card-icon">
-              <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -85,24 +85,24 @@
           <div class="card-content">
             <div class="stat-item">
               <div class="stat-icon">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
               <div class="stat-content">
                 <div class="stat-title">Материалов</div>
-                <div class="stat-value">{{ category.materials_count }}</div>
+                <div class="stat-value font-mono">{{ category.materials_count }}</div>
               </div>
             </div>
             <div class="stat-item">
               <div class="stat-icon">
-                <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <div class="stat-content">
                 <div class="stat-title">Подкатегорий</div>
-                <div class="stat-value">{{ category.children_count }}</div>
+                <div class="stat-value font-mono">{{ category.children_count }}</div>
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@
         <div class="info-card">
           <div class="card-header">
             <div class="card-icon">
-              <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -121,11 +121,11 @@
           <div class="card-content">
             <div class="info-item">
               <label class="info-label">Создано</label>
-              <p class="info-value">{{ formatDate(category.created_at) }}</p>
+              <p class="info-value font-mono">{{ formatDate(category.created_at) }}</p>
             </div>
             <div class="info-item">
               <label class="info-label">Обновлено</label>
-              <p class="info-value">{{ formatDate(category.updated_at) }}</p>
+              <p class="info-value font-mono">{{ formatDate(category.updated_at) }}</p>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@
       <div v-if="childCategories.length > 0" class="subcategories-section">
         <div class="section-header">
           <div class="section-icon">
-            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
@@ -149,8 +149,8 @@
             @click="$router.push(`/material_categories/${child.id}`)"
           >
             <div class="subcategory-icon">
-              <div class="h-12 w-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl border flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="h-12 w-12 bg-primary/10 rounded border border-base-300 flex items-center justify-center">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
@@ -159,21 +159,21 @@
               <h3 class="subcategory-name">{{ child.name }}</h3>
               <div class="subcategory-stats">
                 <div class="stat-badge">
-                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  <span>{{ child.materials_count }} материалов</span>
+                  <span><span class="font-mono">{{ child.materials_count }}</span> материалов</span>
                 </div>
                 <div class="stat-badge">
-                  <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <span>{{ child.children_count }} подкатегорий</span>
+                  <span><span class="font-mono">{{ child.children_count }}</span> подкатегорий</span>
                 </div>
               </div>
             </div>
             <div class="subcategory-arrow">
-              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </div>
@@ -193,7 +193,7 @@
       </div>
 
       <!-- Пустая категория -->
-      <div v-else-if="category && category.materials_count === 0 && category.children_count === 0" class=" rounded-lg">
+      <div v-else-if="category && category.materials_count === 0 && category.children_count === 0" class="rounded">
         <div class="text-center py-12">
           <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -347,10 +347,9 @@ onMounted(async () => {
 <style scoped>
 /* Modern Header Styles */
 .category-header {
-  background: linear-gradient(135deg, hsl(var(--b1)) 0%, hsl(var(--b2)) 100%);
+  background: hsl(var(--b1));
   border: 1px solid hsl(var(--b3));
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
   margin-bottom: 2rem;
@@ -362,8 +361,8 @@ onMounted(async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .header-content {
@@ -418,55 +417,35 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  border-radius: 0.875rem;
+  border-radius: 4px;
   font-weight: 500;
   font-size: 0.875rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   cursor: pointer;
   border: none;
   position: relative;
-  overflow: hidden;
   text-decoration: none;
 }
 
-.action-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.action-btn:hover::before {
-  opacity: 1;
-}
-
 .action-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
 }
 
 .action-btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  background: hsl(var(--p) / 0.9);
 }
 
 .action-btn-outline {
   background: transparent;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  color: hsl(var(--bc) / 0.7);
+  border: 1px solid hsl(var(--b3));
 }
 
 .action-btn-outline:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: #3b82f6;
-  border-color: #3b82f6;
-  transform: translateY(-1px);
+  background: hsl(var(--b2));
+  color: hsl(var(--p));
+  border-color: hsl(var(--p));
 }
 
 .btn-icon {
@@ -483,18 +462,11 @@ onMounted(async () => {
 }
 
 .info-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: hsl(var(--b1));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
-}
-
-:root.dark .info-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .info-card::before {
@@ -503,8 +475,8 @@ onMounted(async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .card-header {
@@ -512,7 +484,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
 .card-icon {
@@ -536,33 +508,24 @@ onMounted(async () => {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   margin-bottom: 0.25rem;
 }
 
 .info-value {
   font-size: 1rem;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0;
   word-break: break-word;
-}
-
-:root.dark .info-value {
-  color: #e2e8f0;
 }
 
 .path-value {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875rem;
-  background: #f1f5f9;
+  background: hsl(var(--b2));
   padding: 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-:root.dark .path-value {
-  background: rgba(51, 65, 85, 0.5);
-  border-color: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+  border: 1px solid hsl(var(--b3));
 }
 
 /* Stat Items */
@@ -587,35 +550,24 @@ onMounted(async () => {
 
 .stat-title {
   font-size: 0.875rem;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
   margin-bottom: 0.25rem;
 }
 
 .stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: hsl(var(--p));
 }
 
 /* Subcategories Section */
 .subcategories-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--b1));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
   margin-bottom: 2rem;
-}
-
-:root.dark .subcategories-section {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .subcategories-section::before {
@@ -624,8 +576,8 @@ onMounted(async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .section-header {
@@ -633,7 +585,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
 .section-icon {
@@ -643,12 +595,8 @@ onMounted(async () => {
 .section-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0;
-}
-
-:root.dark .section-title {
-  color: #e2e8f0;
 }
 
 .subcategories-grid {
@@ -663,40 +611,17 @@ onMounted(async () => {
   align-items: center;
   gap: 1rem;
   padding: 1.25rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
+  background: hsl(var(--b2));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
-:root.dark .subcategory-card {
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.5) 0%, rgba(71, 85, 105, 0.5) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.subcategory-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.subcategory-card:hover::before {
-  opacity: 1;
-}
-
 .subcategory-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
-  border-color: #8b5cf6;
+  border-color: hsl(var(--p));
 }
 
 .subcategory-icon {
@@ -711,13 +636,9 @@ onMounted(async () => {
 .subcategory-name {
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: hsl(var(--bc));
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
-}
-
-:root.dark .subcategory-name {
-  color: #e2e8f0;
 }
 
 .subcategory-stats {
@@ -731,7 +652,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #64748b;
+  color: hsl(var(--bc) / 0.6);
 }
 
 .subcategory-arrow {
@@ -747,19 +668,12 @@ onMounted(async () => {
 
 /* Materials Section */
 .materials-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--b1));
+  border: 1px solid hsl(var(--b3));
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
   margin-bottom: 2rem;
-}
-
-:root.dark .materials-section {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .materials-section::before {
@@ -768,8 +682,8 @@ onMounted(async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #10b981 100%);
+  height: 2px;
+  background: hsl(var(--p));
 }
 
 .materials-content {
