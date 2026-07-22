@@ -7,13 +7,13 @@
     <template #content>
       <div class="space-y-3 text-sm">
         <div>
-          <span class="text-gray-500">Адрес:</span>
+          <span class="text-base-content/60">Адрес:</span>
           <span class="font-medium ml-2">{{ balance.object_address || '—' }}</span>
         </div>
         
         <div>
-          <span class="text-gray-500">Общий остаток:</span>
-          <span class="font-medium ml-2 text-success">
+          <span class="text-base-content/60">Общий остаток:</span>
+          <span class="font-medium ml-2 text-success font-mono">
             {{ formatQuantity(calculateTotalBalance(balance.materials)) }}
           </span>
         </div>
@@ -44,24 +44,24 @@
             <div
               v-for="material in sortMaterials(balance.materials)"
               :key="material.material_id"
-              class="p-3 bg-base-200 dark:bg-base-300 rounded-lg border border-base-300"
+              class="p-3 bg-base-200 dark:bg-base-300 rounded border border-base-300"
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1 min-w-0">
-                  <div class="font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <div class="font-medium text-base-content truncate">
                     {{ material.material_name }}
                   </div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ material.unit_code }}</div>
+                  <div class="text-xs text-base-content/60 mt-1">{{ material.unit_code }}</div>
                 </div>
                 <div class="ml-2 text-right flex-shrink-0">
-                  <div class="font-semibold text-success dark:text-success">
+                  <div class="font-semibold text-success dark:text-success font-mono">
                     {{ formatQuantity(material.current_balance) }} {{ material.unit_code }}
                   </div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Приход: <span class="text-info">{{ formatQuantity(material.total_purchased) }}</span>
+                  <div class="text-xs text-base-content/60 mt-1">
+                    Приход: <span class="text-info font-mono">{{ formatQuantity(material.total_purchased) }}</span>
                   </div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">
-                    Расход: <span class="text-error">{{ formatQuantity(material.total_written_off) }}</span>
+                  <div class="text-xs text-base-content/60">
+                    Расход: <span class="text-error font-mono">{{ formatQuantity(material.total_written_off) }}</span>
                   </div>
                 </div>
               </div>
@@ -70,7 +70,7 @@
         </div>
         
         <!-- Пустое состояние, если нет материалов -->
-        <div v-else class="pt-2 border-t border-base-300 text-center text-sm text-gray-500">
+        <div v-else class="pt-2 border-t border-base-300 text-center text-sm text-base-content/60">
           Нет материалов
         </div>
       </div>

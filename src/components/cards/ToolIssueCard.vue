@@ -28,11 +28,11 @@
         </div>
         <div class="flex items-start gap-2">
           <span class="font-medium text-base-content/80 flex-shrink-0">Выдано:</span>
-          <span class="break-words">{{ formatDate(issue.issued_at) }}</span>
+          <span class="break-words font-mono">{{ formatDate(issue.issued_at) }}</span>
         </div>
         <div v-if="issue.return_date" class="flex items-start gap-2">
           <span class="font-medium text-base-content/80 flex-shrink-0">Возвращено:</span>
-          <span class="break-words">{{ formatDate(issue.return_date) }}</span>
+          <span class="break-words font-mono">{{ formatDate(issue.return_date) }}</span>
         </div>
         <div class="flex items-start gap-2 flex-wrap">
           <span class="font-medium text-base-content/80 flex-shrink-0">Состояние:</span>

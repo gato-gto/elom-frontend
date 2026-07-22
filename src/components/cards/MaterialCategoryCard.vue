@@ -9,45 +9,45 @@
     <template #content>
       <div class="space-y-2 text-sm">
         <div v-if="category.parent_name">
-          <span class="text-gray-500">Родительская категория:</span>
+          <span class="text-base-content/60">Родительская категория:</span>
           <span class="font-medium ml-2">{{ category.parent_name }}</span>
         </div>
         <div v-else>
-          <span class="text-gray-500">Тип:</span>
+          <span class="text-base-content/60">Тип:</span>
           <span class="font-medium ml-2">Корневая категория</span>
         </div>
         
         <div class="flex items-center gap-4 mt-3 pt-3 border-t border-base-300">
           <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
             <div class="flex flex-col">
-              <span class="text-xs text-gray-500">Материалов</span>
-              <span class="font-semibold text-blue-600">{{ category.materials_count }}</span>
+              <span class="text-xs text-base-content/60">Материалов</span>
+              <span class="font-semibold font-mono">{{ category.materials_count }}</span>
             </div>
           </div>
           
           <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             <div class="flex flex-col">
-              <span class="text-xs text-gray-500">Подкатегорий</span>
-              <span class="font-semibold text-purple-600">{{ category.children_count }}</span>
+              <span class="text-xs text-base-content/60">Подкатегорий</span>
+              <span class="font-semibold font-mono">{{ category.children_count }}</span>
             </div>
           </div>
         </div>
         
         <div v-if="category.full_path" class="mt-2">
-          <span class="text-gray-500">Полный путь:</span>
+          <span class="text-base-content/60">Полный путь:</span>
           <span class="font-medium ml-2 text-xs font-mono">{{ category.full_path }}</span>
         </div>
       </div>
     </template>
     
     <template #extra>
-      <div class="flex justify-between items-center text-xs text-gray-500">
+      <div class="flex justify-between items-center text-xs text-base-content/60">
         <span>Создано: {{ formatDate(category.created_at) }}</span>
         <span v-if="category.updated_at !== category.created_at">
           Обновлено: {{ formatDate(category.updated_at) }}

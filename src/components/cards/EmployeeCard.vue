@@ -9,22 +9,22 @@
     <template #content>
       <div class="space-y-2 text-sm">
         <div>
-          <span class="text-gray-500">Логин:</span>
+          <span class="text-base-content/60">Логин:</span>
           <span class="font-medium ml-2">{{ employee.username }}</span>
         </div>
         
         <div v-if="employee.email">
-          <span class="text-gray-500">Email:</span>
+          <span class="text-base-content/60">Email:</span>
           <span class="font-medium ml-2">{{ employee.email }}</span>
         </div>
         
         <div v-if="employee.phone">
-          <span class="text-gray-500">Телефон:</span>
+          <span class="text-base-content/60">Телефон:</span>
           <span class="font-medium ml-2">{{ employee.phone }}</span>
         </div>
         
         <div v-if="employee.roles && employee.roles.length > 0">
-          <span class="text-gray-500">Роли:</span>
+          <span class="text-base-content/60">Роли:</span>
           <span class="font-medium ml-2">
             <span
               v-for="role in employee.roles"
@@ -36,14 +36,14 @@
           </span>
         </div>
         <div v-else>
-          <span class="text-gray-500">Роль:</span>
+          <span class="text-base-content/60">Роль:</span>
           <span class="font-medium ml-2">
             <span class="badge badge-sm badge-ghost">Нет роли</span>
           </span>
         </div>
         
         <div>
-          <span class="text-gray-500">Статус:</span>
+          <span class="text-base-content/60">Статус:</span>
           <span class="font-medium ml-2">
             <span class="badge badge-sm" :class="employee.is_active ? 'badge-success' : 'badge-error'">
               {{ employee.is_active ? 'Активен' : 'Неактивен' }}
@@ -52,17 +52,17 @@
         </div>
         
         <div v-if="employee.assigned_objects_count">
-          <span class="text-gray-500">Назначенных объектов:</span>
-          <span class="font-medium ml-2">{{ employee.assigned_objects_count }}</span>
+          <span class="text-base-content/60">Назначенных объектов:</span>
+          <span class="font-medium ml-2 font-mono">{{ employee.assigned_objects_count }}</span>
         </div>
         
         <div v-if="employee.last_login">
-          <span class="text-gray-500">Последний вход:</span>
-          <span class="font-medium ml-2">{{ formatDate(employee.last_login) }}</span>
+          <span class="text-base-content/60">Последний вход:</span>
+          <span class="font-medium ml-2 font-mono">{{ formatDate(employee.last_login) }}</span>
         </div>
         
         <div v-if="employee.assigned_objects && employee.assigned_objects.length > 0">
-          <span class="text-gray-500">Назначенные объекты:</span>
+          <span class="text-base-content/60">Назначенные объекты:</span>
           <div class="font-medium ml-2">
             <div class="flex flex-wrap gap-1 mt-1">
               <span
@@ -83,22 +83,22 @@
         </div>
         
         <div v-if="employee.purchases_count">
-          <span class="text-gray-500">Закупок:</span>
-          <span class="font-medium ml-2">{{ employee.purchases_count }}</span>
+          <span class="text-base-content/60">Закупок:</span>
+          <span class="font-medium ml-2 font-mono">{{ employee.purchases_count }}</span>
         </div>
         
         <div v-if="employee.total_purchases_amount">
-          <span class="text-gray-500">Общая сумма закупок:</span>
-          <span class="font-medium ml-2">{{ employee.total_purchases_amount }}</span>
+          <span class="text-base-content/60">Общая сумма закупок:</span>
+          <span class="font-medium ml-2 font-mono">{{ employee.total_purchases_amount }}</span>
         </div>
       </div>
     </template>
     
     <template #extra>
-      <div class="flex justify-between items-center text-xs text-gray-500">
-        <span>Создан: {{ formatDate(employee.created_at || null) }}</span>
+      <div class="flex justify-between items-center text-xs text-base-content/60">
+        <span>Создан: <span class="font-mono">{{ formatDate(employee.created_at || null) }}</span></span>
         <span v-if="employee.updated_at !== employee.created_at">
-          Обновлен: {{ formatDate(employee.updated_at || null) }}
+          Обновлен: <span class="font-mono">{{ formatDate(employee.updated_at || null) }}</span>
         </span>
       </div>
     </template>

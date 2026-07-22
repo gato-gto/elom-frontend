@@ -31,7 +31,7 @@
       </div>
       <div>
         <p class="text-xs text-base-content/60">Создан:</p>
-        <p class="font-medium">{{ formatDate(supplier.created_at) }}</p>
+        <p class="font-medium font-mono">{{ formatDate(supplier.created_at) }}</p>
       </div>
       <div v-if="supplier.address" class="col-span-2">
         <p class="text-xs text-base-content/60">Адрес:</p>
