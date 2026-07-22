@@ -25,7 +25,7 @@
   --color-info-content: hsl(0 0% 100%);
   --color-success: hsl(155 60% 30%);
   --color-success-content: hsl(0 0% 100%);
-  --color-warning: hsl(36 90% 41%);
+  --color-warning: hsl(36 90% 36%);  /* F-276: AA белый-на-янтаре + янтарь-на-белом */
   --color-warning-content: hsl(0 0% 100%);
   --color-error: hsl(6 59% 44%);
   --color-error-content: hsl(0 0% 100%);
@@ -41,7 +41,7 @@
   --color-base-200: hsl(204 22% 11%);
   --color-base-300: hsl(204 19% 21%);
   --color-base-content: hsl(200 20% 92%);
-  --color-primary: hsl(24 78% 46%);
+  --color-primary: hsl(24 78% 40%);  /* F-276: AA белый на кнопке */
   --color-primary-content: hsl(0 0% 100%);
   --color-secondary: hsl(204 19% 30%);
   --color-secondary-content: hsl(200 20% 96%);
@@ -55,7 +55,7 @@
   --color-success-content: hsl(200 24% 8%);
   --color-warning: hsl(36 85% 50%);
   --color-warning-content: hsl(200 24% 8%);
-  --color-error: hsl(6 62% 55%);
+  --color-error: hsl(6 62% 58%);  /* F-276: AA */
   --color-error-content: hsl(200 24% 8%);
   --radius-selector: 0.25rem;
   --radius-field: 0.25rem;
@@ -92,7 +92,7 @@
   --color-info-content: 0 0% 100%;
   --color-success: 155 60% 30%;
   --color-success-content: 0 0% 100%;
-  --color-warning: 36 90% 41%;
+  --color-warning: 36 90% 36%;
   --color-warning-content: 0 0% 100%;
   --color-error: 6 59% 44%;
   --color-error-content: 0 0% 100%;
@@ -110,7 +110,7 @@
   --color-neutral: 204 19% 25%;
   --color-neutral-content: 200 20% 92%;
 
-  --color-primary: 24 78% 46%;
+  --color-primary: 24 78% 40%;
   --color-primary-content: 0 0% 100%;
   --color-secondary: 204 19% 30%;
   --color-secondary-content: 200 20% 96%;
@@ -123,7 +123,7 @@
   --color-success-content: 200 24% 8%;
   --color-warning: 36 85% 50%;
   --color-warning-content: 200 24% 8%;
-  --color-error: 6 62% 55%;
+  --color-error: 6 62% 58%;
   --color-error-content: 200 24% 8%;
 }
 
@@ -134,6 +134,11 @@
     --b1: 0 0% 100%;
     --b2: 195 20% 96%;
     --b3: 200 14% 85%;
+    /* F-276: кастомный CSS (components.css, .vue) читает эти короткие DaisyUI-переменные
+       (фокус-кольцо инпутов = hsl(var(--p))). После R5 они пропали → фокус исчезал. Возвращаем. */
+    --p: 24 84% 37%;
+    --pc: 0 0% 100%;
+    --er: 6 59% 44%;
     color-scheme: light;
   }
 
@@ -142,6 +147,9 @@
     --b1: 200 24% 8%;
     --b2: 204 22% 11%;
     --b3: 204 19% 21%;
+    --p: 24 78% 40%;   /* F-276: затемнили с 46% → белый текст на кнопке проходит AA (было 3.81:1) */
+    --pc: 0 0% 100%;
+    --er: 6 62% 58%;   /* F-276: подняли с 55% → проходит AA (было 4.43:1) */
     color-scheme: dark;
   }
 
