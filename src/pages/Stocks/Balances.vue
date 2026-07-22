@@ -27,8 +27,8 @@
             </svg>
           </button>
           <div class="flex flex-col">
-            <span class="font-medium text-gray-900">{{ value }}</span>
-            <span class="text-sm text-gray-500">{{ item.object_address }}</span>
+            <span class="font-medium text-base-content">{{ value }}</span>
+            <span class="text-sm text-base-content/60">{{ item.object_address }}</span>
           </div>
         </div>
       </template>
@@ -36,7 +36,7 @@
       <!-- Custom column for total materials -->
       <template #column-total_materials="{ item, value }">
         <div class="text-center">
-          <span class="font-semibold text-blue-600 dark:text-blue-400">
+          <span class="font-semibold text-info font-mono">
             {{ value }}
           </span>
         </div>
@@ -45,7 +45,7 @@
       <!-- Custom column for total balance -->
       <template #column-total_balance="{ item }">
         <div class="text-right">
-          <span class="font-semibold text-green-600 dark:text-green-400">
+          <span class="font-semibold text-success font-mono">
             {{ formatQuantity(calculateTotalBalance(item.materials)) }}
           </span>
         </div>
@@ -53,16 +53,16 @@
 
       <!-- Expanded materials rows -->
       <template #row-expanded="{ item }">
-        <tr v-if="expandedRows.has(item.object_id)" class="bg-gray-50 dark:bg-gray-800">
+        <tr v-if="expandedRows.has(item.object_id)" class="bg-base-200">
           <td colspan="3" class="p-0">
             <div class="p-4">
-              <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Материалы объекта</h4>
+              <h4 class="font-medium text-base-content mb-3">Материалы объекта</h4>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                    <tr class="border-b border-base-300">
                       <th 
-                        class="text-left py-2 px-3 font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                        class="text-left py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('material_name')"
                       >
                         Материал
@@ -71,7 +71,7 @@
                         </span>
                       </th>
                       <th 
-                        class="text-right py-2 px-3 font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                        class="text-right py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('current_balance')"
                       >
                         Остаток
@@ -80,7 +80,7 @@
                         </span>
                       </th>
                       <th 
-                        class="text-right py-2 px-3 font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                        class="text-right py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('total_purchased')"
                       >
                         Приход
@@ -89,7 +89,7 @@
                         </span>
                       </th>
                       <th 
-                        class="text-right py-2 px-3 font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                        class="text-right py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('total_written_off')"
                       >
                         Расход
@@ -100,25 +100,25 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="material in sortMaterials(item.materials)" :key="material.material_id" class="border-b border-gray-100 dark:border-gray-700">
+                    <tr v-for="material in sortMaterials(item.materials)" :key="material.material_id" class="border-b border-base-300">
                       <td class="py-2 px-3">
                         <div class="flex flex-col">
-                          <span class="font-medium text-gray-900 dark:text-gray-100">{{ material.material_name }}</span>
-                          <span class="text-xs text-gray-500">{{ material.unit_code }}</span>
+                          <span class="font-medium text-base-content">{{ material.material_name }}</span>
+                          <span class="text-xs text-base-content/60">{{ material.unit_code }}</span>
                         </div>
                       </td>
                       <td class="py-2 px-3 text-right">
-                        <span class="font-semibold text-green-600 dark:text-green-400">
+                        <span class="font-semibold text-success font-mono">
                           {{ formatQuantity(material.current_balance) }} {{ material.unit_code }}
                         </span>
                       </td>
                       <td class="py-2 px-3 text-right">
-                        <span class="font-semibold text-blue-600 dark:text-blue-400">
+                        <span class="font-semibold text-info font-mono">
                           {{ formatQuantity(material.total_purchased) }} {{ material.unit_code }}
                         </span>
                       </td>
                       <td class="py-2 px-3 text-right">
-                        <span class="font-semibold text-red-600 dark:text-red-400">
+                        <span class="font-semibold text-error font-mono">
                           {{ formatQuantity(material.total_written_off) }} {{ material.unit_code }}
                         </span>
                       </td>
@@ -353,20 +353,12 @@ th.cursor-pointer {
 }
 
 th.cursor-pointer:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.dark th.cursor-pointer:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: hsl(var(--bc) / 0.05);
 }
 
 /* Индикаторы сортировки */
 th span {
   font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.dark th span {
-  color: #9ca3af;
+  color: hsl(var(--bc) / 0.5);
 }
 </style>
