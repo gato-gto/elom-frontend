@@ -86,25 +86,25 @@
       <table class="modern-table">
         <thead>
           <tr>
-            <th @click="handleSort('material_name')" class="cursor-pointer hover:bg-gray-50">
+            <th @click="handleSort('material_name')" class="cursor-pointer hover:bg-base-200">
               Материал
               <span v-if="sortBy === 'material_name'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('unit')" class="cursor-pointer hover:bg-gray-50">
+            <th @click="handleSort('unit')" class="cursor-pointer hover:bg-base-200">
               Ед.
               <span v-if="sortBy === 'unit'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('total_amount')" class="cursor-pointer hover:bg-gray-50 text-right">
+            <th @click="handleSort('total_amount')" class="cursor-pointer hover:bg-base-200 text-right">
               Сумма
               <span v-if="sortBy === 'total_amount'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
-            <th @click="handleSort('rows')" class="cursor-pointer hover:bg-gray-50 text-right">
+            <th @click="handleSort('rows')" class="cursor-pointer hover:bg-base-200 text-right">
               Позиций
               <span v-if="sortBy === 'rows'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
@@ -129,9 +129,9 @@
           <td class="text-right">{{ r.rows ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length === 0">
-          <td colspan="4" class="text-center text-gray-500 py-8">
+          <td colspan="4" class="text-center text-base-content/60 py-8">
             <div class="flex flex-col items-center gap-2 empty-state">
-              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-12 h-12 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
               <span class="text-sm">Нет данных по материалам</span>

@@ -91,6 +91,19 @@
   font-weight: 500;
 }
 
+/* Right-aligned columns carry the numeric DATA (sums, counts, averages) →
+   monospace, tabular figures, so they align like a cable schedule. */
+.modern-table td.text-right,
+.modern-table th.text-right,
+.modern-table tfoot th {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+}
+.modern-table thead th.text-right {
+  /* header labels stay in the UI sans face, not mono */
+  font-family: inherit;
+}
+
 /* ============================================
    КНОПКИ
    ============================================ */
@@ -102,14 +115,10 @@
   overflow: hidden;
 }
 
-.btn:not(:disabled):hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
+/* Quiet, functional buttons — no decorative lift/glow (DaisyUI handles the
+   hover colour). A tiny press feedback only. */
 .btn:not(:disabled):active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(0.5px);
 }
 
 .btn:disabled {
