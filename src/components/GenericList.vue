@@ -84,7 +84,8 @@
                 :key="column.key"
                 :class="[
                   'cursor-pointer hover:bg-base-200',
-                  column.sortable !== false ? '' : 'cursor-default'
+                  column.sortable !== false ? '' : 'cursor-default',
+                  colAlign(column)
                 ]"
                 @click="column.sortable !== false ? handleSort(column.sortKey || column.key) : null"
               >
@@ -112,7 +113,7 @@
                   v-for="column in config.columns"
                   :key="column.key"
                   :class="[
-                    column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : '',
+                    colAlign(column),
                     isMonoColumn(column) ? 'font-mono' : ''
                   ]"
                 >
@@ -379,6 +380,14 @@ const isCardVisible = (index: number): boolean => {
 const MONO_KEY_RE = /^(id|date|created_at|updated_at|closed_at|month|quantity|quantity_signed|qty|price|amount|total|sum|sku|purchase_no|invoice_number|inventory_number|code|balance|current_balance|current_stock|target_balance|expires_at|assigned_at)$/i
 function isMonoColumn(column: ColumnConfig): boolean {
   return !!column.mono || column.align === 'right' || MONO_KEY_RE.test(column.key)
+}
+// Единое выравнивание: заголовок и ячейки одного столбца ВСЕГДА на одной оси.
+// Данные (числа/№/суммы/даты/id/код) — по правому краю; текст — по левому; center — по центру.
+function colAlign(column: ColumnConfig): string {
+  if (column.align === 'center') { return 'text-center' }
+  if (column.align === 'left') { return 'text-left' }
+  if (isMonoColumn(column)) { return 'text-right' }
+  return 'text-left'
 }
 
 // Methods
