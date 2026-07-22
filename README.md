@@ -1,157 +1,129 @@
-# ELOM Frontend
+# ELOM — Frontend
 
-**Система управления закупками, остатками и инструментами**
+Веб-клиент системы учёта материалов и закупок для строительных объектов (слаботочные
+системы: СКС, видеонаблюдение, СКУД, ОПС). SPA на Vue 3, работает поверх Django/DRF
+бэкенда (`/opt/elom-backend`) через JWT-авторизацию. Интерфейс на русском языке.
+Приложение установимо как PWA.
 
----
+## Стек
 
-## 🚀 Быстрый старт
+| Слой | Технология |
+|------|-----------|
+| Фреймворк | Vue 3 (Composition API, `<script setup>`) |
+| Состояние | Pinia (`src/stores`) |
+| Маршрутизация | vue-router 4 (`src/router`) |
+| Сборка / dev | Vite 7 (`vite.config.ts`) |
+| Стили | Tailwind CSS v4 (`@tailwindcss/vite`) + DaisyUI v5 |
+| HTTP | axios (`src/api`) |
+| Графики | Chart.js + vue-chartjs |
+| Экспорт | jsPDF + jspdf-autotable |
+| Шрифты | IBM Plex Sans / IBM Plex Mono (`@fontsource/*`) |
+| Юнит-тесты | Vitest + @vue/test-utils + jsdom |
+| E2E-тесты | Playwright |
+| PWA | vite-plugin-pwa (Workbox) |
+| Язык | TypeScript, ESLint, Prettier |
+
+## Структура `src`
+
+```
+api/         axios-клиент и карта эндпоинтов (endpoints.ts)
+components/  переиспользуемые компоненты (config-driven kit + PWA/RBAC)
+composables/ переиспользуемая логика
+layouts/     оболочки страниц
+pages/       страницы, привязанные к маршрутам
+router/      определение маршрутов
+stores/      Pinia-хранилища
+styles/      токены темы и глобальные стили
+types/       общие типы
+utils/       вспомогательные функции
+```
+
+## Config-driven UI
+
+Списки и формы не пишутся вручную под каждую сущность — они собираются из объекта
+конфигурации, что обеспечивает единообразие всех разделов.
+
+- **`GenericList.vue`** — универсальный список. По `config` рендерит заголовок
+  (`ListHeader`), панель фильтров (`FilterPanel` / `FilterField`), таблицу с
+  пагинацией (`ModernPagination`), кнопку экспорта (`ExportButton`) и мобильные
+  карточки. Данные и состояние берутся из привязанного Pinia-store
+  (`store.items`, `store.filters`, `store.pagination`, `store.loading`).
+- **`GenericForm.vue`** — универсальная форма. Из `config.sections[].fields[]`
+  рендерит поля через `FormField`, поддерживает секции, условное отображение полей
+  (`field.condition`), кастомные поля (`type: 'custom'` через именованный слот) и
+  валидацию.
+- **`Modal.vue`** — модальное окно (DaisyUI `modal`) со слотами `header` / контент /
+  `footer`, управляется через `v-model`.
+
+RBAC встроен в kit: видимость действий (создание, экспорт) и разделов управляется
+компонентами `PermissionGuard`, `PermissionButton`, `PermissionSection` и данными
+эндпоинта `rbac/my-permissions/`.
+
+## Дизайн-язык
+
+Интерфейс — «профессиональный инструмент», а не потребительское приложение:
+инженерно-функциональный, высококонтрастный (читаемость на объекте при ярком солнце —
+функциональное требование).
+
+- **Сталь / графит** — холодная нейтральная база и hairline-границы (сетка как в
+  кабельном журнале).
+- **Медь (copper)** — единственный тёплый акцент: первичные действия, фокус, активная
+  навигация.
+- **Данные — моноширинным шрифтом IBM Plex Mono** (количества, балансы, цены, номера,
+  даты) — как показания прибора; выравнивается по колонкам и мгновенно сканируется.
+- **Статусы — кабельные маркеры**: мелкие моноширинные бордюрные бейджи с цветовой
+  семантикой (green / steel-blue / amber / fault-red / graphite).
+
+Полное описание токенов и семантики — в [`DESIGN_LANGUAGE.md`](./DESIGN_LANGUAGE.md).
+
+## PWA
+
+Настраивается в `vite.config.ts` (плагин `VitePWA`), UI-статус —
+[`src/components/PwaStatus.vue`](./src/components/PwaStatus.vue).
+
+- **Установимость** — manifest (`ELOM — Учёт материалов`, `display: standalone`,
+  theme_color медный `#B0500F`).
+- **App-shell precache** — сборка (js/css/html/svg/шрифты/иконки) кэшируется Workbox по
+  хэшу (cache-first, файлы неизменяемы). Навигации офлайн отдают закэшированный
+  `index.html` (`navigateFallback`).
+- **Бизнес-данные — только сеть** (`NetworkOnly` для `/api/`, `navigateFallbackDenylist`
+  для API): балансы, закупки и списания никогда не подменяются устаревшим кэшем.
+- **Офлайн-баннер** — при потере соединения `PwaStatus` показывает предупреждение
+  «Нет соединения. Данные могут быть неактуальны, изменения отключены.».
+- **Запрос на обновление** — `registerType: 'prompt'`: тихого обновления нет, при
+  новой версии показывается кнопка «Обновить».
+
+## Скрипты (`package.json`)
+
+| Команда | Действие |
+|---------|----------|
+| `npm run dev` | Vite dev-сервер (порт 5173, `host: true`) |
+| `npm run build` | Проверка типов `vue-tsc -b` + продакшн-сборка `vite build` |
+| `npm run preview` | Локальный предпросмотр собранного бандла |
+| `npm test` | Vitest в watch-режиме |
+| `npm run test:run` | Прогон юнит-тестов один раз |
+| `npm run test:ui` | Vitest UI |
+| `npm run test:coverage` | Покрытие (v8) |
+| `npm run test:e2e` | Playwright E2E |
+| `npm run test:e2e:ui` / `:headed` / `:debug` | Варианты запуска Playwright |
+| `npm run lint` | ESLint с автофиксом (`--fix`) |
+| `npm run lint:check` | ESLint без изменений |
+| `npm run type-check` | `vue-tsc --noEmit` |
+| `npm run format` / `format:check` | Prettier |
+
+## Окружение
+
+- **`VITE_API_URL`** — базовый префикс API. По умолчанию `/api/v1` (см.
+  [`src/api/endpoints.ts`](./src/api/endpoints.ts) — `API_PREFIX`). Все эндпоинты
+  строятся относительно этого префикса.
+- Алиас **`@`** → `./src` (`vite.config.ts`).
+
+## Быстрый старт
 
 ```bash
 npm install
-npm run dev     # http://localhost:5173
+npm run dev        # http://localhost:5173
+# сборка
+npm run build
+npm run preview
 ```
-
----
-
-## 📋 Возможности
-
-- **Закупки** — создание, редактирование, фото
-- **Материалы** — номенклатура с категориями
-- **Объекты** — управление строительными объектами
-- **Остатки** — автоматический расчет движений
-- **Списания** — учет расхода материалов
-- **Отчёты** — по периодам, объектам, материалам
-- **Инструменты** — учёт и выдача (только admin) 🆕
-
----
-
-## 🏗️ Архитектура
-
-```
-src/
-├── api/           # API клиент и типы
-├── components/    # Vue компоненты (55 файлов)
-├── composables/   # Composables (13 файлов)
-├── pages/         # Страницы (38 файлов)
-├── stores/        # Pinia stores (18 файлов)
-├── router/        # Vue Router
-└── utils/         # Утилиты
-```
-
-### Технологический стек
-
-- **Vue 3** (Composition API)
-- **TypeScript**
-- **Pinia** (state management)
-- **Vue Router**
-- **Tailwind CSS** + **DaisyUI**
-- **Vite**
-
----
-
-## 🔐 Роли и права доступа (RBAC)
-
-Система использует RBAC (Role-Based Access Control) с управлением через **permissions**, а не через имена ролей.
-
-### Основные роли:
-| Роль | Описание |
-|------|----------|
-| `admin` | Полный доступ + инструменты |
-| `manager` | Полный доступ без учета изменений |
-| `brigadier` | Создание объекта, списание, закупка |
-| `warehouse` | Полный доступ без учета изменений |
-| `requester` | Просмотр и подача заявки на материал |
-
-### Управление UI на основе прав:
-```vue
-<!-- Кнопка с проверкой прав -->
-<PermissionButton 
-  permission="materials.create"
-  label="Создать"
-  @click="handleCreate"
-/>
-
-<!-- Секция с проверкой прав -->
-<PermissionSection permission="reports.view" title="Отчеты">
-  <ReportList />
-</PermissionSection>
-```
-
-📚 [Полная документация по компонентам прав доступа](src/docs/PERMISSION_COMPONENTS.md)
-
----
-
-## 📁 Ключевые компоненты
-
-### Универсальные
-- `GenericForm` — универсальная форма
-- `GenericList` — универсальный список
-- `GenericSearchSelect` — поиск с автодополнением
-
-### Stores
-Все entity stores используют `createBaseStore`:
-```typescript
-const store = useMyStore()  // Вызываем как функцию!
-await store.fetchList()
-await store.create(data)
-await store.update(id, data)
-await store.remove(id)
-```
-
----
-
-## 🧪 Тестирование
-
-```bash
-npm run test           # Unit тесты
-npm run test:e2e       # E2E тесты
-npm run test:coverage  # С покрытием
-```
-
----
-
-## 📚 Документация
-
-- [Архитектура](docs/summary/01-architecture.md)
-- [Компоненты](docs/summary/04-frontend-components.md)
-- [API](docs/summary/03-api-documentation.md)
-- [Stores](docs/summary/STORES_ARCHITECTURE.md)
-- [Статус проекта](docs/PROJECT_STATUS.md)
-
----
-
-## 🆕 Последние изменения (Январь 2026)
-
-### Универсальная система управления UI на основе прав (Январь 2026):
-- ✅ PermissionButton, PermissionSection, PermissionFilter компоненты
-- ✅ Улучшенный PermissionGuard с поддержкой сложных условий
-- ✅ Утилиты для создания конфигураций действий с проверкой прав
-- ✅ Детальная обработка ошибок с конкретными сообщениями
-
-### Система инструментов (27 ноября 2025):
-
-### Система инструментов
-- ✅ Список инструментов (`/tools_index`)
-- ✅ Журнал выдач (`/tools_issues`)
-- ✅ Массовое добавление
-- ✅ Выдача/возврат
-- ✅ История инструмента
-
-### Рефакторинг Stores
-- ✅ Все stores используют `createBaseStore`
-- ✅ Вызов как функции: `useMyStore()`
-- ✅ Метод `remove` вместо `delete`
-
-### Оптимизация ролей (декабрь 2025)
-- ✅ 5 ролей: admin, manager, brigadier, warehouse, requester
-- ✅ Роли manager и warehouse работают "без учета изменений"
-- ✅ Новая роль requester для просмотра и подачи заявок
-- ✅ Система заявок на материалы
-- 📚 [Подробная документация по ролям и задачам](../elom-backend/ROLES_AND_TASKS.md)
-
----
-
-**Версия:** 3.7  
-**Статус:** ✅ Production Ready  
-**Документация RBAC:** [RBAC_FINAL.md](../elom-backend/RBAC_FINAL.md)  
-**Компоненты прав доступа:** [PERMISSION_COMPONENTS.md](src/docs/PERMISSION_COMPONENTS.md)
