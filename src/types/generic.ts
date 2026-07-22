@@ -10,6 +10,7 @@ export interface ColumnConfig<T = any> {
   path?: string // для вложенных свойств типа 'user.name'
   width?: string
   align?: 'left' | 'center' | 'right'
+  mono?: boolean // D-020: данные (кол-во/цена/id/дата/№) моноширинным Plex Mono
 }
 
 export type FilterType = 'text' | 'number' | 'select' | 'date' | 'multiselect' | 'checkbox'

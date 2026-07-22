@@ -108,9 +108,16 @@
           <tbody v-else>
             <template v-for="item in store.items" :key="item.id">
               <tr >
-                <td v-for="column in config.columns" :key="column.key">
-                  <slot 
-                    :name="`column-${column.key}`" 
+                <td
+                  v-for="column in config.columns"
+                  :key="column.key"
+                  :class="[
+                    column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : '',
+                    isMonoColumn(column) ? 'font-mono' : ''
+                  ]"
+                >
+                  <slot
+                    :name="`column-${column.key}`"
                     :item="item" 
                     :value="getColumnValue(item, column)"
                   >
@@ -365,6 +372,13 @@ const isCardVisible = (index: number): boolean => {
   // На мобильных: показываем все элементы, которые есть в списке
   // visibleCards заполняется при инициализации всеми элементами
   return visibleCards.value.has(index) || index < props.store.items.length
+}
+
+// D-020: данные (кол-во/цена/id/дата/№/артикул/остаток) — моноширинным (как кабельный журнал).
+// Явный флаг mono, или правое выравнивание (числовые), или ключ-данные по шаблону.
+const MONO_KEY_RE = /^(id|date|created_at|updated_at|closed_at|month|quantity|quantity_signed|qty|price|amount|total|sum|sku|purchase_no|invoice_number|inventory_number|code|balance|current_balance|current_stock|target_balance|expires_at|assigned_at)$/i
+function isMonoColumn(column: ColumnConfig): boolean {
+  return !!column.mono || column.align === 'right' || MONO_KEY_RE.test(column.key)
 }
 
 // Methods
