@@ -727,9 +727,11 @@ const onItemMaterialChange = async (item: WriteOffItem, material: Material | nul
   
   if (material) {
     item.material = material.id
-  
-  // Автозаполнение единицы измерения
-    if (material.default_unit && !item.unit) {
+
+    // Единица ВСЕГДА следует за материалом (unit — производное поле, показывается/скрытый input,
+    // пользователь его не выбирает). Прежний guard `&& !item.unit` оставлял единицу от ПРЕДЫДУЩЕГО
+    // материала при смене материала → неверная единица/конвертация/баланс. Как в PurchaseForm.
+    if (material.default_unit) {
       item.unit = material.default_unit
     }
     
