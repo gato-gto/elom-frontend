@@ -121,6 +121,13 @@ export const endpoints = {
         fromBalanceBulk: join('/writeoffs/from-balance-bulk/'),
     },
 
+    // Archive periods (закрытие/открытие месяца×объекта)
+    archivePeriods: {
+        list: join('/archive/periods/'),
+        close: join('/archive/periods/close/'),
+        reopen: join('/archive/periods/reopen/'),
+    },
+
     // Tools endpoints
     tools: {
         list: join('/tools/'),

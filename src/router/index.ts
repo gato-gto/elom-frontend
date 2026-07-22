@@ -40,6 +40,7 @@ const RBACRoleForm = () => import(/* webpackChunkName: "rbac" */ '@/pages/RBAC/R
 // Stocks
 const StocksList = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/List.vue')
 const StockBalances = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/Balances.vue')
+const ArchivePeriods = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/ArchivePeriods.vue')
 
 // WriteOffs
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
@@ -409,6 +410,20 @@ const routes = [
       description: 'Текущие остатки материалов по объектам',
       category: 'inventory',
       order: 7,
+      permissions: ['stock.view']
+    }
+  },
+  {
+    path: '/archive-periods',
+    name: 'ArchivePeriods',
+    component: ArchivePeriods,
+    meta: {
+      title: 'Архив',
+      icon: 'inventory_2',
+      breadcrumb: 'Архивные периоды',
+      description: 'Закрытие и открытие месяцев по объектам',
+      category: 'inventory',
+      order: 8,
       permissions: ['stock.view']
     }
   },
