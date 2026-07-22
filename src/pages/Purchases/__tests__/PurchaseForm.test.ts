@@ -250,19 +250,16 @@ describe('PurchaseForm', () => {
   })
 
   describe('Status Validation', () => {
-    it('validates completed status requires report photos', () => {
-      // According to business logic, status 'completed' requires report photos
-      const purchase = {
-        status: 'completed',
-        photos: []
-      }
+    it('D-019: report photo is OPTIONAL for completed (does NOT block completion)', () => {
+      // D-019/F-302: фото-отчёт при завершении ОПЦИОНАЛЕН. Завершённая закупка без него
+      // ДОПУСТИМА (не блокируется); в списке она несёт янтарный маркер «нет фото-отчёта».
+      // Прежний тест закреплял НЕВЕРНОЕ поведение (требование фото-отчёта).
+      const completionAllowed = (status: string, reportPhotoCount: number) =>
+        status !== 'completed' || reportPhotoCount >= 0 // completed допустимо при любом числе фото-отчётов
 
-      // Business rule: completed status needs at least one report photo
-      const hasReportPhotos = purchase.photos.some((p: any) => p.photo_type === 'report')
-      
-      if (purchase.status === 'completed') {
-        expect(hasReportPhotos).toBe(false) // Should fail validation
-      }
+      expect(completionAllowed('completed', 0)).toBe(true) // без фото-отчёта — можно завершить
+      expect(completionAllowed('completed', 2)).toBe(true) // с фото-отчётом — тоже
+      expect(completionAllowed('new', 0)).toBe(true)
     })
 
     it('allows new status without photos', () => {

@@ -1116,22 +1116,10 @@ async function onSaved(data: PurchaseRequest) {
       await uploadPhotos(purchaseId, reportPhotos.value, 'report')
     }
     
-    // 6. Валидация фотоотчетов для завершенных закупок
+    // 6. Фото-отчёт при завершении — ОПЦИОНАЛЕН (D-019/F-302): НЕ блокируем завершение.
+    // Ненавязчиво напоминаем; в списке такая закупка несёт янтарный маркер «нет фото-отчёта».
     if (isEdit.value && data.status === 'completed' && reportPhotos.value.length === 0) {
-      try {
-        const validationResponse = await api.get(`/purchases/${purchaseId}/validate/`)
-        if (validationResponse.data.report_photos_count === 0) {
-          ui.toast({ 
-            type: 'error', 
-            text: 'Для завершенных закупок обязательны фотоотчеты' 
-          })
-          return
-        }
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Error validating purchase:', error)
-        }
-      }
+      ui.toast({ type: 'info', text: 'Закупка завершена без фото-отчёта' })
     }
     
     // 7. Успешное завершение
