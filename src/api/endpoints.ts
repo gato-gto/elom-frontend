@@ -117,6 +117,8 @@ export const endpoints = {
     writeOffs: {
         list: join('/writeoffs/'),
         one: (id: number) => join(`/writeoffs/${id}/`),
+        fromBalance: join('/writeoffs/from-balance/'),
+        fromBalanceBulk: join('/writeoffs/from-balance-bulk/'),
     },
 
     // Tools endpoints
