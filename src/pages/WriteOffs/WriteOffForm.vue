@@ -812,6 +812,18 @@ const handleSubmit = async () => {
       return
     }
 
+    // F-306: не отправляем списание больше доступного остатка — сразу подсказываем на клиенте.
+    // Бэкенд всё равно проверяет (WriteOff.clean → 400); это UX-ограничение, не замена бэк-проверке.
+    const overItems = items.value.filter(
+      (item) => item.material && item.unit && parseFloat(String(item.quantity)) > 0 && getFutureBalance(item) < 0,
+    )
+    if (overItems.length > 0) {
+      errors.value.non_field_errors = ['Нельзя списать больше остатка — исправьте позиции с отрицательным будущим остатком.']
+      ui.toast({ type: 'error', text: 'Нельзя списать больше остатка' })
+      isSubmitting.value = false
+      return
+    }
+
     if (props.initial) {
       // F-072: списание — это одна строка (объект+материал+кол-во). Раньше при
       // редактировании сохранялась ТОЛЬКО items[0], остальные позиции молча
