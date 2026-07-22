@@ -1,54 +1,90 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* Light theme */
+/* ══ ELOM design language v1 (D-020): сталь/графит (cool) + медь, инженерный тон ══
+   Токены — единый источник стиля; компоненты DaisyUI перекрашиваются централизованно.
+   Light = поле/солнце (высокий контраст текста), dark = низкий свет. */
 @theme {
   --color-*: initial;
-  --color-base-200: 210 40% 98%;
-  --color-base-300: 214.3 31.8% 91.4%;
-  --color-base-content: 215.4 16.3% 46.9%;
-  --color-primary: 262.1 83.3% 57.8%;
-  --color-secondary: 210 40% 98%;
-  --color-accent: 210 40% 98%;
-  --color-neutral: 210 40% 98%;
-  --color-info: 199.89 89.12% 48.04%;
-  --color-success: 142.1 76.2% 36.3%;
-  --color-warning: 32.95 94.89% 43.73%;
-  --color-error: 0 84.2% 60.2%;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* база — сталь/графит */
+  --color-base-100: 0 0% 100%;
+  --color-base-200: 195 20% 96%;
+  --color-base-300: 200 14% 85%;
+  --color-base-content: 200 20% 15%;
+  --color-neutral: 204 19% 21%;
+  --color-neutral-content: 200 20% 96%;
+
+  /* акцент — медь (единственный «громкий» цвет) */
+  --color-primary: 24 84% 37%;
+  --color-primary-content: 0 0% 100%;
+  --color-secondary: 204 19% 27%;
+  --color-secondary-content: 0 0% 100%;
+  --color-accent: 205 39% 40%;
+  --color-accent-content: 0 0% 100%;
+
+  /* семантика статусов */
+  --color-info: 205 39% 40%;
+  --color-info-content: 0 0% 100%;
+  --color-success: 155 60% 30%;
+  --color-success-content: 0 0% 100%;
+  --color-warning: 36 90% 41%;
+  --color-warning-content: 0 0% 100%;
+  --color-error: 6 59% 44%;
+  --color-error-content: 0 0% 100%;
 }
 
-/* Dark theme */
 @theme dark {
   --color-*: initial;
-  --color-base-200: 222.2 84% 4.9%;
-  --color-base-300: 217.2 32.6% 17.5%;
-  --color-base-content: 210 40% 98%;
-  --color-primary: 262.1 83.3% 57.8%;
-  --color-secondary: 217.2 32.6% 17.5%;
-  --color-accent: 217.2 32.6% 17.5%;
-  --color-neutral: 217.2 32.6% 17.5%;
-  --color-info: 199.89 89.12% 48.04%;
-  --color-success: 142.1 76.2% 36.3%;
-  --color-warning: 32.95 94.89% 43.73%;
-  --color-error: 0 84.2% 60.2%;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  --color-base-100: 200 24% 8%;
+  --color-base-200: 204 22% 11%;
+  --color-base-300: 204 19% 21%;
+  --color-base-content: 200 20% 92%;
+  --color-neutral: 204 19% 25%;
+  --color-neutral-content: 200 20% 92%;
+
+  --color-primary: 24 78% 46%;
+  --color-primary-content: 0 0% 100%;
+  --color-secondary: 204 19% 30%;
+  --color-secondary-content: 200 20% 96%;
+  --color-accent: 205 45% 56%;
+  --color-accent-content: 200 24% 8%;
+
+  --color-info: 205 45% 56%;
+  --color-info-content: 200 24% 8%;
+  --color-success: 155 45% 42%;
+  --color-success-content: 200 24% 8%;
+  --color-warning: 36 85% 50%;
+  --color-warning-content: 200 24% 8%;
+  --color-error: 6 62% 55%;
+  --color-error-content: 200 24% 8%;
 }
 
-/* DaisyUI base styles */
+/* DaisyUI короткие base-переменные (используются кастомным CSS через hsl(var(--bX))) */
 @layer base {
   :root {
-    --bc: 215.4 16.3% 46.9%;
+    --bc: 200 20% 15%;
     --b1: 0 0% 100%;
-    --b2: 210 40% 98%;
-    --b3: 214.3 31.8% 91.4%;
+    --b2: 195 20% 96%;
+    --b3: 200 14% 85%;
     color-scheme: light;
   }
-  
+
   :root.dark {
-    --bc: 210 40% 98%;
-    --b1: 222.2 84% 4.9%;
-    --b2: 217.2 32.6% 17.5%;
-    --b3: 215.4 16.3% 25.9%;
+    --bc: 200 20% 92%;
+    --b1: 200 24% 8%;
+    --b2: 204 22% 11%;
+    --b3: 204 19% 21%;
     color-scheme: dark;
+  }
+
+  body {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
 }
 

@@ -10,6 +10,13 @@ import '@/utils/polyfills'
 // Проверяем поддержку браузера
 import '@/utils/browserSupport'
 
+// Design language (D-020): self-hosted IBM Plex Sans (UI) + IBM Plex Mono (данные), офлайн/PWA-ready
+import '@fontsource/ibm-plex-sans/400.css'
+import '@fontsource/ibm-plex-sans/500.css'
+import '@fontsource/ibm-plex-sans/600.css'
+import '@fontsource/ibm-plex-mono/400.css'
+import '@fontsource/ibm-plex-mono/500.css'
+
 import '@/assets/tailwind.css'
 import '@/assets/login-animations.css'
 import '@/assets/navigation-styles.css'
