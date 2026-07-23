@@ -537,7 +537,7 @@
 }
 
 :root.dark .list-content {
-  background: hsl(var(--b2) / 0.8);
+  background: hsl(var(--b2));
   border: 1px solid hsl(var(--bc) / 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
@@ -560,7 +560,7 @@
 }
 
 :root.dark .modern-table {
-  background: hsl(var(--b2) / 0.8);
+  background: hsl(var(--b2));
 }
 
 .modern-table th {
@@ -577,7 +577,7 @@
 }
 
 :root.dark .modern-table th {
-  background: hsl(var(--b3) / 0.8);
+  background: hsl(var(--b3));
   color: hsl(var(--bc));
   border-bottom: 1px solid hsl(var(--bc) / 0.2);
 }
@@ -1019,7 +1019,7 @@
 }
 
 :root.dark .mobile-card {
-  background: hsl(var(--b2) / 0.8);
+  background: hsl(var(--b2));
   border-color: hsl(var(--b3) / 0.3);
 }
 

@@ -54,17 +54,17 @@ function alertClass(type?: 'success' | 'error' | 'info') {
   
   .alert-error {
     border-color: var(--color-error);
-    background-color: color-mix(in oklab, var(--color-error) 10%, transparent);
+    background-color: color-mix(in oklab, var(--color-error) 10%, var(--color-base-100));
   }
 
   .alert-success {
     border-color: var(--color-success);
-    background-color: color-mix(in oklab, var(--color-success) 10%, transparent);
+    background-color: color-mix(in oklab, var(--color-success) 10%, var(--color-base-100));
   }
 
   .alert-info {
     border-color: var(--color-info);
-    background-color: color-mix(in oklab, var(--color-info) 10%, transparent);
+    background-color: color-mix(in oklab, var(--color-info) 10%, var(--color-base-100));
   }
 }
 

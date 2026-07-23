@@ -256,9 +256,25 @@ describe('MaterialSearchSelect', () => {
       })
 
       await wrapper.vm.$nextTick()
-      
+
       // Component should either show the material name or have the value set
       expect(wrapper.exists()).toBe(true)
+    })
+  })
+
+  // Регресс: выпадающий список телепортируется в <body> и не наследует фон — у него
+  // ДОЛЖЕН быть непрозрачный токен-фон, иначе контент под ним просвечивает (баг владельца).
+  describe('Dropdown opacity (transparency regression)', () => {
+    it('teleported dropdown declares an opaque surface background', async () => {
+      const wrapper = mount(MaterialSearchSelect, { props: { modelValue: null }, attachTo: document.body })
+      const vm = wrapper.vm as any
+      vm.searchResults = [{ id: 1, name: 'Цемент' }]
+      vm.showDropdown = true
+      await wrapper.vm.$nextTick()
+      const dd = document.body.querySelector('.fixed.z-50') as HTMLElement | null
+      expect(dd).not.toBeNull()
+      expect(dd!.className).toContain('bg-base-100') // непрозрачный фон поверхности
+      wrapper.unmount()
     })
   })
 })
