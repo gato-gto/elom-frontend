@@ -315,32 +315,13 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
-/* Стили для темной темы */
-@media (prefers-color-scheme: dark) {
-  .sidebar {
-    background: hsl(var(--b1));
-  }
-  
-  .topbar {
-    background: hsl(var(--b1));
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .topbar::after {
-    background-color: hsl(var(--p) / 0.35);
-  }
-  
-  .topbar-title {
-    color: hsl(var(--bc));
-  }
-  
-  .dropdown-menu,
-  .dropdown-content {
-    background: hsl(var(--b1)) !important;
-    border-color: rgba(255, 255, 255, 0.1);
-    opacity: 1 !important;
-  }
-}
+/* F-314: удалён блок @media (prefers-color-scheme: dark) — он ключился на СИСТЕМНУЮ тему и
+   переопределял тему, которую пользователь ВЫБРАЛ в приложении (.dark / data-theme). Симптом:
+   система тёмная + приложение светлое → `.sidebar { background: hsl(var(--b1)) }` красил сайдбар в
+   белый (в светлой теме --b1 = белый) → белый текст на белом сайдбаре сливался. Все эти элементы уже
+   покрыты базовыми правилами + `:root.dark` (которые следуют явно выбранной теме): .sidebar →
+   --sidebar-bg, .topbar/.topbar-title/.dropdown → --b1/--bc/:root.dark. Системную тему учитывает
+   только стор темы (auto-режим), а не CSS. */
 
 /* Адаптивность */
 @media (max-width: 1024px) {
