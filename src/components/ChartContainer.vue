@@ -106,22 +106,34 @@ import {
   BarElement,
   LineElement,
   PointElement,
-  Filler
+  Filler,
+  // F-504: Chart.js v4 требует регистрировать КОНТРОЛЛЕРЫ, а не только элементы/шкалы.
+  // Их не было — поэтому new Chart({type:'bar'|'line'|'pie'|'doughnut'}) бросал
+  // «… is not a registered controller», ошибка глоталась (см. catch ниже) и графики
+  // во ВСЕХ отчётах оставались пустым canvas'ом.
+  BarController,
+  LineController,
+  PieController,
+  DoughnutController
 } from 'chart.js'
 import { formatDateTime } from '@/utils/formatters'
 import { useThemeStore } from '@/stores/theme'
 
 // Register Chart.js components
 Chart.register(
-  CategoryScale, 
-  LinearScale, 
-  ArcElement, 
-  Tooltip, 
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  Tooltip,
   Legend,
   BarElement,
   LineElement,
   PointElement,
-  Filler
+  Filler,
+  BarController,
+  LineController,
+  PieController,
+  DoughnutController
 )
 
 export interface LegendItem {
@@ -309,7 +321,10 @@ function createChart(config: ChartConfiguration) {
   try {
     chartInstance.value = new Chart(chartCanvas.value, finalConfig)
   } catch (error) {
-    // console.error('Error creating chart:', error) // Удалено для продакшена
+    // F-504: раньше лог был закомментирован «для продакшена» — из-за этого падение отрисовки
+    // было полностью НЕМЫМ: пустой canvas при чистой консоли, и баг жил незамеченным.
+    // Диагностика в консоль обязана оставаться: это сигнал разработчику, а не пользователю.
+    console.error('ChartContainer: не удалось создать график', error)
     chartInstance.value = null
   }
 }
@@ -335,7 +350,8 @@ function updateChart(config: ChartConfiguration) {
     chartInstance.value.options = finalConfig.options
     chartInstance.value.update('active')
   } catch (error) {
-    // console.error('Error updating chart:', error) // Удалено для продакшена
+    // F-504: лог не глушим — немой catch уже спрятал баг с контроллерами Chart.js.
+    console.error('ChartContainer: не удалось обновить график, пересоздаю', error)
     // If update fails, recreate the chart
     createChart(config)
   }

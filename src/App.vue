@@ -31,8 +31,9 @@ onMounted(async () => {
   try {
     await auth.tryHydrate()
   } catch (e: any) {
-    // Ошибки авторизации обрабатываются в auth store
-    // console.warn('Auth initialization failed:', e) // Удалено для продакшена
+    // Ошибки авторизации обрабатываются в auth store (пользователю — редирект на вход),
+    // но саму причину не глушим: немой catch уже прятал баг отрисовки графиков (F-504).
+    console.warn('Инициализация авторизации не удалась:', e)
   }
 })
 </script>
