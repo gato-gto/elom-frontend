@@ -44,7 +44,6 @@ const ArchivePeriods = () => import(/* webpackChunkName: "stocks" */ '@/pages/St
 
 // WriteOffs
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
-const WriteOffForm = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/WriteOffForm.vue')
 
 // Reports
 const ReportByPeriod = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByPeriod.vue')
@@ -444,10 +443,13 @@ const routes = [
     }
   },
   {
+    // F-502: WriteOffForm — МОДАЛКА (корень <Modal :model-value="isOpen">), а не страница.
+    // Смонтированная роутером без is-open она рендерила ПУСТОЙ экран. Ведём на список,
+    // который открывает модалку по query. (PurchaseForm — обычная страница, его роуты не трогаем.)
     path: '/writeoffs/create',
     name: 'WriteOffCreate',
-    component: WriteOffForm,
-    meta: { 
+    redirect: () => ({ path: '/writeoffs', query: { new: '1' } }),
+    meta: {
       title: 'Новое списание',
       breadcrumb: 'Списания / Новое',
       description: 'Создание нового списания',
@@ -458,8 +460,8 @@ const routes = [
   {
     path: '/writeoffs/:id/edit',
     name: 'WriteOffEdit',
-    component: WriteOffForm,
-    meta: { 
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/writeoffs', query: { edit: String(to.params.id) } }),
+    meta: {
       title: 'Редактировать списание',
       breadcrumb: 'Списания / Редактировать',
       description: 'Редактирование существующего списания',

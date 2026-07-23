@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import type { WriteOff, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
@@ -101,6 +102,8 @@ import { usePermissions } from '@/composables/usePermissions'
 // ✅ RBAC: проверка через permissions
 const { can, canExportReports } = usePermissions()
 const canCreate = computed(() => can('writeoffs', 'create'))
+
+const route = useRoute()
 
 // Stores
 const writeOffsStore = useWriteOffsStore()
@@ -322,6 +325,16 @@ onMounted(async () => {
     ])
   } catch (error) {
     await handleLoadingError(error, 'writeoffs')
+  }
+
+  // F-502: /writeoffs/create и /writeoffs/:id/edit ведут сюда (WriteOffForm — модалка и
+  // отдельной страницей рендерила пустой экран). Открываем нужную модалку по query.
+  if (route.query.new) {
+    openCreate()
+  } else if (route.query.edit) {
+    const id = Number(route.query.edit)
+    const found = writeOffsStore.items.find((w: WriteOff) => w.id === id)
+    if (found) { openEdit(found) }   // не нашли в загруженной странице — просто остаёмся на списке
   }
 })
 </script>
