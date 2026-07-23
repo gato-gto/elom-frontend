@@ -84,8 +84,10 @@ const handleClose = () => {
   emit('update:modelValue', false)
 }
 
-// F-300: закрытие формы ТОЛЬКО крестиком — без закрытия по клику вне формы (бэкдроп)
-// и без Escape, чтобы случайный клик/нажатие не потеряли введённые данные.
+// F-300 + F-508: закрытие крестиком И по Escape. Клик по фону (бэкдроп) НЕ закрывает.
+// Почему так: случайный клик мимо формы — самая частая причина потери введённых данных,
+// поэтому бэкдроп остаётся выключенным (F-300). Escape же — осознанное намеренное действие
+// и стандартное ожидание от диалога, поэтому владелец вернул его (F-508, 2026-07-23).
 // focus-trap (Tab) сохранён: модал остаётся доступным с клавиатуры.
 const modalBox = ref<HTMLElement | null>(null)
 let lastActive: HTMLElement | null = null
@@ -99,7 +101,15 @@ function focusables(): HTMLElement[] {
 }
 
 function onKeydown(e: KeyboardEvent) {
-  // Escape НЕ закрывает форму (F-300): только крестик, чтобы не терять данные.
+  // F-508: Escape закрывает форму (как крестик). Уважает prop `closable`: если закрытие
+  // запрещено (напр. незавершённая операция), Escape тоже не закрывает.
+  if (e.key === 'Escape') {
+    if (props.closable) {
+      e.preventDefault()
+      handleClose()
+    }
+    return
+  }
   if (e.key !== 'Tab') { return }
   const items = focusables()
   const active = document.activeElement as HTMLElement | null
@@ -120,21 +130,26 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+// F-508: watch с `immediate` — иначе модалка, смонтированная СРАЗУ открытой, не вешала
+// обработчик клавиш вообще: не работали ни Escape, ни focus-trap (watch без immediate
+// не срабатывает, если значение не менялось). `wasOpen === undefined` — это первый
+// (immediate) вызов: тогда ветку закрытия не выполняем, чтобы не увести фокус при монтировании.
 watch(
   () => props.modelValue,
-  async (isOpen) => {
+  async (isOpen, wasOpen) => {
     if (isOpen) {
       lastActive = document.activeElement as HTMLElement | null
       document.addEventListener('keydown', onKeydown)
       await nextTick()
       const items = focusables()
       ;(items[0] || modalBox.value)?.focus()
-    } else {
+    } else if (wasOpen !== undefined) {
       document.removeEventListener('keydown', onKeydown)
       lastActive?.focus?.()
       lastActive = null
     }
-  }
+  },
+  { immediate: true },
 )
 
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
