@@ -5,12 +5,13 @@ import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import { createBaseStore } from './base'
 import { parseApiError } from '@/utils/errorHandler'
-import type { 
-  Material, 
-  MaterialRequest, 
+import type {
+  Material,
+  MaterialRequest,
   PatchedMaterialRequest,
-  PaginatedMaterialList 
+  PaginatedMaterialList
 } from '@/api/types'
+import type { MaterialBalance, BalancesByObjectsResponse } from '@/api/types/stocks'
 
 // Создаём store
 export const useMaterialsStore = createBaseStore<Material, MaterialRequest, PatchedMaterialRequest>({
@@ -33,12 +34,39 @@ export const getMaterialsByObject = async (objectId: number): Promise<Material[]
 
     const queryString = buildQuery(queryParams)
     const { data } = await api.get<Material[]>(endpoints.materials.byObject + queryString)
-    
+
     return data
   } catch (error: any) {
     console.error('Error getting materials by object:', error)
     return []
   }
+}
+
+/**
+ * Материалы, доступные к СПИСАНИЮ на объекте на дату — только те, что реально в наличии
+ * (книжный остаток current_balance > 0). Единый источник для форм, которые списывают из
+ * остатков: MaterialSearchSelect (filter-by-balance) и WriteOffByBalanceForm («Внести остатки»).
+ * Закупки (добавляют новый материал) и фильтры списков сюда НЕ входят — там материал не обязан
+ * быть в наличии. Баланс берётся из канонического /stock/snapshots/by-objects/ (net по всем
+ * строкам, вкл. архивные, clamp ≥0 — см. BUSINESS_LOGIC.md / D-012/D-016).
+ *
+ * Без объекта/даты возвращает [] (запрос не делает). При сетевой ошибке ПРОБРАСЫВАЕТ исключение —
+ * решение fail-open/fail-closed принимает вызывающий: MaterialSearchSelect показывает результаты
+ * поиска как есть (fail-open, чтобы сбой by-objects не выглядел как «ничего не найдено»), а
+ * WriteOffByBalanceForm оставляет список пустым (fail-closed — не предлагать то, чего нет).
+ */
+export const getMaterialsInStock = async (
+  objectId: number,
+  date: string,
+): Promise<MaterialBalance[]> => {
+  if (!objectId || !date) { return [] }
+  const queryString = buildQuery({ object_id: objectId, date })
+  const { data } = await api.get<BalancesByObjectsResponse>(
+    endpoints.stockSnapshots.byObjects + queryString,
+  )
+  const objectData = data?.objects?.[0]
+  if (!objectData?.materials) { return [] }
+  return objectData.materials.filter(m => parseFloat(m.current_balance || '0') > 0)
 }
 
 export const uploadPhoto = async (id: number, photo: File) => {

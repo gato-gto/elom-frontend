@@ -112,11 +112,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useMaterialsStore } from '@/stores/materials'
+import { useMaterialsStore, getMaterialsInStock } from '@/stores/materials'
 import type { Material } from '@/api/types/materials'
-import api from '@/api/client'
-import { endpoints } from '@/api/endpoints'
-import type { MaterialBalance, ObjectBalance } from '@/api/types/stocks'
 
 const props = defineProps<{
   modelValue?: number | null
@@ -153,6 +150,7 @@ const showDropdown = ref(false)
 const loading = ref(false)
 const searchTimeout = ref<NodeJS.Timeout>()
 const isUserTyping = ref(false) // Флаг для отслеживания активного ввода пользователя
+let searchSeq = 0 // токен для отбрасывания устаревших (out-of-order) ответов поиска
 
 const hasError = computed(() => !!props.error)
 const isSuccess = computed(() => !!props.isSuccess)
@@ -219,48 +217,34 @@ watch(() => props.modelValue, (newValue) => {
 
 async function searchMaterials(query: string) {
   if (query.length < 2) {return}
-  
+
+  const mySeq = ++searchSeq
   loading.value = true
   try {
     let results = await materialsStore.search(query)
-    
+
     // Фильтруем исключённые материалы (уже добавленные в форму)
     if (props.excludeMaterials && props.excludeMaterials.length > 0) {
       results = results.filter((material: Material) => !props.excludeMaterials!.includes(material.id))
     }
-    
-    // Фильтруем по остаткам, если указан objectId и включена фильтрация
+
+    // Фильтруем по остаткам, если указан objectId и включена фильтрация.
+    // Единый источник «что в наличии» — getMaterialsInStock (тот же by-objects контракт,
+    // что и форма «Внести остатки»), чтобы логика фильтра нигде не расходилась. При сбое
+    // by-objects — fail-open: показываем результаты поиска как есть (иначе сбой выглядел бы
+    // как «ничего не найдено» и полностью блокировал бы выбор материала).
     if (props.filterByBalance && props.objectId && props.date) {
       try {
-        // Получаем остатки для объекта на указанную дату
-        const apiParams = new URLSearchParams()
-        apiParams.append('object_id', String(props.objectId))
-        apiParams.append('date', props.date)
-        
-        const response = await api.get(`${endpoints.stockSnapshots.byObjects}?${apiParams}`)
-        
-        // Собираем все материалы с остатками > 0
-        const materialsWithBalance = new Set<number>()
-        if (response.data.objects && response.data.objects.length > 0) {
-          const objectData = response.data.objects[0] as ObjectBalance
-          if (objectData.materials) {
-            objectData.materials.forEach((material: MaterialBalance) => {
-              const balance = parseFloat(material.current_balance || '0')
-              if (balance > 0) {
-                materialsWithBalance.add(material.material_id)
-              }
-            })
-          }
-        }
-        
-        // Фильтруем результаты поиска, оставляя только материалы с остатками
-        results = results.filter((material: Material) => materialsWithBalance.has(material.id))
+        const inStock = await getMaterialsInStock(props.objectId, props.date)
+        const idsWithBalance = new Set(inStock.map(m => m.material_id))
+        results = results.filter((material: Material) => idsWithBalance.has(material.id))
       } catch (error) {
         console.error('Error fetching balances for material filtering:', error)
-        // В случае ошибки показываем все результаты поиска
       }
     }
-    
+
+    // Гонка: пока шли запросы, пользователь мог начать более новый поиск — не затираем свежий.
+    if (mySeq !== searchSeq) { return }
     searchResults.value = results
     // Открываем dropdown только если пользователь активно печатает
     if (isUserTyping.value) {
@@ -268,9 +252,9 @@ async function searchMaterials(query: string) {
     }
   } catch (error) {
     console.error('Error searching materials:', error)
-    searchResults.value = []
+    if (mySeq === searchSeq) { searchResults.value = [] }
   } finally {
-    loading.value = false
+    if (mySeq === searchSeq) { loading.value = false }
   }
 }
 
