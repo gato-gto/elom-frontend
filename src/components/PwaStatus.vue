@@ -8,7 +8,7 @@
   </div>
 
   <!-- Обновление приложения: тихо не обновляемся, спрашиваем пользователя -->
-  <div v-if="needRefresh" class="pwa-update" role="status" aria-live="polite">
+  <div v-if="showUpdate" class="pwa-update" role="status" aria-live="polite">
     <span class="pwa-update-text">Доступна новая версия ELOM.</span>
     <div class="pwa-update-actions">
       <button class="btn btn-primary btn-sm" @click="applyUpdate">Обновить</button>
@@ -20,17 +20,17 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
+import { usePwaUpdatePrompt } from '@/composables/usePwaUpdatePrompt'
 
 // Регистрируем service worker; needRefresh становится true, когда собрана новая версия.
 const { needRefresh, updateServiceWorker } = useRegisterSW()
 
-function applyUpdate() {
-  // true → перезагрузить страницу после активации нового SW
-  updateServiceWorker(true)
-}
-function dismiss() {
-  needRefresh.value = false
-}
+// F-511: «Позже» переживает перезагрузку (см. usePwaUpdatePrompt). applyUpdate(true) →
+// перезагрузить страницу после активации нового SW.
+const { showUpdate, applyUpdate, dismiss } = usePwaUpdatePrompt(
+  needRefresh,
+  () => updateServiceWorker(true),
+)
 
 // Онлайн/офлайн статус
 const online = ref(typeof navigator !== 'undefined' ? navigator.onLine : true)
