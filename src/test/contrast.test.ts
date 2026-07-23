@@ -47,6 +47,8 @@ const ratio = (t: Record<string, [number, number, number]>, fg: string, bg: stri
   contrast(hslToRgb(t[fg]), hslToRgb(t[bg]))
 
 const THEMES = { light: tokens(':root'), dark: tokens(':root.dark') }
+// Статусные цвета живут в @theme (триплеты --color-*); нужны для проверки текста бейджей.
+const STATUS = { light: tokens('@theme'), dark: tokens('@theme dark') }
 
 describe.each(Object.entries(THEMES))('token contrast — %s theme (WCAG AA)', (name, t) => {
   it('токены присутствуют', () => {
@@ -72,4 +74,21 @@ describe.each(Object.entries(THEMES))('token contrast — %s theme (WCAG AA)', (
   it('фокус-кольцо (--p на base-100) видно, ≥ 3:1 (не-текст)', () => {
     expect(ratio(t, '--p', '--b1')).toBeGreaterThanOrEqual(3)
   })
+
+  it('граница контрола (--control-border на base-100) видна, ≥ 3:1 (F-313)', () => {
+    expect(t['--control-border'], `--control-border в ${name}`).toBeDefined()
+    expect(ratio(t, '--control-border', '--b1')).toBeGreaterThanOrEqual(3)
+  })
+})
+
+// Текст статус-бейджа (цвет статуса из @theme на base-100) — ≥4.5:1 (мелкий mono-текст маркера). F-313.
+describe.each(Object.entries(STATUS))('status badge text — %s theme', (name, sc) => {
+  const b1 = THEMES[name as 'light' | 'dark']['--b1']
+  it.each(['--color-warning', '--color-success', '--color-error', '--color-info'])(
+    '%s на base-100 ≥ 4.5:1',
+    (key) => {
+      expect(sc[key], `${key} в @theme(${name})`).toBeDefined()
+      expect(contrast(hslToRgb(sc[key]), hslToRgb(b1))).toBeGreaterThanOrEqual(4.5)
+    },
+  )
 })

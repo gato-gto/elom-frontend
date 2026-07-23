@@ -195,12 +195,19 @@ function handleMultiselectChange(event: Event) {
 .filter-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid hsl(var(--b3));
+  border: 1px solid hsl(var(--control-border));  /* F-313: видимая граница ≥3:1 (было --b3 = 1.41:1) */
   border-radius: 0.375rem;
   font-size: 0.875rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   background: hsl(var(--b1));
   color: hsl(var(--bc));
+}
+
+/* F-313: плейсхолдеры фильтр-полей — сплошной третичный токен (не наследуют .input-правило) */
+.filter-input::placeholder,
+.filter-textarea::placeholder {
+  color: hsl(var(--tx-3));
+  opacity: 1;
 }
 
 /* copper focus ring — design mandate for field visibility */
@@ -215,14 +222,14 @@ function handleMultiselectChange(event: Event) {
 .filter-input:hover:not(:disabled),
 .filter-select:hover:not(:disabled),
 .filter-textarea:hover:not(:disabled) {
-  border-color: hsl(var(--bc) / 0.4);
+  border-color: hsl(var(--tx-3));  /* F-313: заметный hover (было bc/0.4 = 2.4:1) */
 }
 
 .filter-input:disabled,
 .filter-select:disabled,
 .filter-textarea:disabled {
   background: hsl(var(--b2));
-  color: hsl(var(--bc) / 0.4);
+  color: hsl(var(--tx-3));
   cursor: not-allowed;
 }
 

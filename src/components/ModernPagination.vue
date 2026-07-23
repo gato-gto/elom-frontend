@@ -227,7 +227,7 @@ watch(() => props.currentPage, () => {
 }
 
 .pagination-stats {
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   font-weight: 500;
   font-family: var(--font-mono, ui-monospace, monospace);
@@ -241,7 +241,7 @@ watch(() => props.currentPage, () => {
 }
 
 .size-label {
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -283,7 +283,7 @@ watch(() => props.currentPage, () => {
   border-radius: 0.25rem;
   border: 1px solid hsl(var(--b3));
   background: hsl(var(--b1));
-  color: hsl(var(--bc) / 0.7);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   font-weight: 500;
   /* page numbers are DATA → monospace */
@@ -338,7 +338,7 @@ watch(() => props.currentPage, () => {
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  color: hsl(var(--bc) / 0.5);
+  color: hsl(var(--tx-3));
   font-weight: 500;
 }
 
@@ -351,7 +351,7 @@ watch(() => props.currentPage, () => {
 }
 
 .jump-label {
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   font-weight: 500;
 }

@@ -1,17 +1,25 @@
 /* src/assets/navigation-styles.css */
 /* Современные стили для навигации */
 
-/* Основные стили для сайдбара */
+/* Основные стили для сайдбара — тёмный «остров» в ОБЕИХ темах (F-313).
+   Раньше в светлой теме фон падал на hsl(var(--b2)) (near-white) → белый текст был невидим. */
 .sidebar {
-  background-color: hsl(var(--b2));
+  background-color: hsl(var(--sidebar-bg));
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
 }
 
 :root.dark .sidebar {
-  background-color: hsl(var(--b1));
+  background-color: hsl(var(--sidebar-bg));
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Заголовки секций навигации используют тема-зависимый .text-subtle (тёмный в светлой теме);
+   на тёмном сайдбаре он нечитаем → внутри сайдбара делаем их светлыми. Меню пользователя —
+   в белом dropdown, там .text-muted корректно тёмный, его НЕ трогаем. (F-313) */
+.sidebar .text-subtle {
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .sidebar-header {
@@ -211,8 +219,8 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  background-color: #ef4444;
-  color: white;
+  background-color: hsl(var(--er));  /* F-313: токен вместо #ef4444; белый-на-error = 5.88:1 */
+  color: hsl(var(--pc));
   font-size: 0.75rem;
   font-weight: 600;
   min-width: 1.25rem;
@@ -625,9 +633,9 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.5rem;
-  border: 1px solid hsl(var(--b3));
-  background: white;
-  color: hsl(var(--bc) / 0.6);
+  border: 1px solid hsl(var(--control-border));  /* F-313: видимая граница ≥3:1 */
+  background: hsl(var(--b1));  /* F-313: токен вместо white (тёмная тема) */
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -656,7 +664,7 @@
 }
 
 .pagination-info {
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 1rem;
@@ -1007,7 +1015,7 @@
   
   .mobile-card-label {
     font-size: 0.75rem;
-    color: hsl(var(--bc) / 0.6);
+    color: hsl(var(--tx-2));
     font-weight: 500;
     margin-bottom: 0.25rem;
   }
@@ -1028,7 +1036,7 @@
 }
 
 :root.dark .mobile-card-label {
-  color: hsl(var(--bc) / 0.5);
+  color: hsl(var(--tx-3));
 }
 
 :root.dark .mobile-card-value {
@@ -1067,15 +1075,15 @@
   }
   
   .toast .alert-error {
-    border-color: #ef4444 !important;
-    background-color: #fef2f2 !important;
-    color: #dc2626 !important;
+    border-color: hsl(var(--er)) !important;
+    background-color: color-mix(in oklab, hsl(var(--er)) 12%, hsl(var(--b1))) !important;
+    color: hsl(var(--er)) !important;  /* F-313: токены; error-текст на тинте = 5.9:1 */
   }
-  
+
   .toast .alert-success {
-    border-color: #10b981 !important;
-    background-color: #f0fdf4 !important;
-    color: #059669 !important;
+    border-color: hsl(var(--color-success)) !important;
+    background-color: color-mix(in oklab, hsl(var(--color-success)) 12%, hsl(var(--b1))) !important;
+    color: hsl(var(--color-success)) !important;  /* F-313: 5.9:1 на тинте (L28) */
   }
   
   .toast .alert-info {

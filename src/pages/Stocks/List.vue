@@ -24,11 +24,11 @@
             v-if="item.smart_quantity" 
             :smart-quantity="item.smart_quantity" 
             :show-original="true"
-            :class-name="parseFloat(value) >= 0 ? 'font-mono text-sm text-green-600' : 'font-mono text-sm text-red-600'"
+            :class-name="parseFloat(value) >= 0 ? 'font-mono text-sm text-success' : 'font-mono text-sm text-error'"
           />
           <span 
             v-else
-            :class="parseFloat(value) >= 0 ? 'font-mono text-sm text-green-600' : 'font-mono text-sm text-red-600'"
+            :class="parseFloat(value) >= 0 ? 'font-mono text-sm text-success' : 'font-mono text-sm text-error'"
           >
             {{ parseFloat(value) >= 0 ? '+' : '' }}{{ formatNumberClean(value) }} {{ item.unit_code }}
           </span>

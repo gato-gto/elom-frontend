@@ -400,7 +400,7 @@ onMounted(async () => {
 
 .category-subtitle {
   margin: 0.5rem 0 0 0;
-  color: hsl(var(--bc) / 0.7);
+  color: hsl(var(--tx-2));
   font-size: 1rem;
   line-height: 1.4;
 }
@@ -438,7 +438,7 @@ onMounted(async () => {
 
 .action-btn-outline {
   background: transparent;
-  color: hsl(var(--bc) / 0.7);
+  color: hsl(var(--tx-2));
   border: 1px solid hsl(var(--b3));
 }
 
@@ -508,7 +508,7 @@ onMounted(async () => {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   margin-bottom: 0.25rem;
 }
 
@@ -550,7 +550,7 @@ onMounted(async () => {
 
 .stat-title {
   font-size: 0.875rem;
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   margin-bottom: 0.25rem;
 }
 
@@ -652,7 +652,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
 }
 
 .subcategory-arrow {

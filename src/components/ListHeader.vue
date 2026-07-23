@@ -134,7 +134,7 @@ defineEmits<{
 
 .list-subtitle {
   margin: 0.5rem 0 0 0;
-  color: hsl(var(--bc) / 0.7);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -245,7 +245,7 @@ defineEmits<{
 
 .action-btn-outline {
   background: transparent;
-  color: hsl(var(--bc) / 0.75);
+  color: hsl(var(--tx-2));
   border: 1px solid hsl(var(--b3));
 }
 
@@ -284,7 +284,7 @@ defineEmits<{
 
 .stat-label {
   font-size: 0.875rem;
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   font-weight: 500;
 }
 

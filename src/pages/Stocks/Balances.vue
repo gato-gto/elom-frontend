@@ -359,6 +359,6 @@ th.cursor-pointer:hover {
 /* Индикаторы сортировки */
 th span {
   font-size: 0.875rem;
-  color: hsl(var(--bc) / 0.5);
+  color: hsl(var(--tx-3));
 }
 </style>

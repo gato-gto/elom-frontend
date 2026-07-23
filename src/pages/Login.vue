@@ -50,7 +50,7 @@
                 <input
                   v-model.trim="username"
                   type="text"
-                  class="login-input w-full pl-10 pr-4 py-3 rounded border border-base-300 bg-base-100 text-base-content transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+                  class="login-input w-full pl-10 pr-4 py-3 rounded border border-control bg-base-100 text-base-content transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Введите логин"
                   required
                 />
@@ -69,7 +69,7 @@
                 <input
                   v-model="password"
                   type="password"
-                  class="login-input w-full pl-10 pr-4 py-3 rounded border border-base-300 bg-base-100 text-base-content transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+                  class="login-input w-full pl-10 pr-4 py-3 rounded border border-control bg-base-100 text-base-content transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Введите пароль"
                   required
                 />

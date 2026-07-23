@@ -532,7 +532,7 @@
     padding: 0.5rem;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
-    color: hsl(var(--bc) / 0.6);
+    color: hsl(var(--tx-2));
     text-decoration: none;
     min-width: 0;
     flex: 1;
@@ -643,7 +643,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: hsl(var(--bc) / 0.6);
+    color: hsl(var(--tx-2));
     margin-bottom: 0.75rem;
     padding: 0 0.5rem;
   }
@@ -761,7 +761,7 @@
 
 .mobile-menu-user-role {
   font-size: 0.75rem;
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

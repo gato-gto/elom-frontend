@@ -125,7 +125,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .spinner-secondary {
-  color: hsl(var(--bc) / 0.55);
+  color: hsl(var(--tx-3));
 }
 
 .spinner-success {
@@ -143,7 +143,7 @@ withDefaults(defineProps<Props>(), {
 .loading-text {
   font-size: 0.875rem;
   font-weight: 500;
-  color: hsl(var(--bc) / 0.6);
+  color: hsl(var(--tx-2));
   text-align: center;
   animation: pulse 2s ease-in-out infinite;
 }

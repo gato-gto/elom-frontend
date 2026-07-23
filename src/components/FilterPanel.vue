@@ -217,7 +217,7 @@ const gridClass = computed(() => {
 
 .filter-btn-outline {
   background: transparent;
-  color: hsl(var(--bc) / 0.75);
+  color: hsl(var(--tx-2));
   border: 1px solid hsl(var(--b3));
 }
 
