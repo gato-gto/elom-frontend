@@ -481,7 +481,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
@@ -516,7 +516,6 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
-const route = useRoute()
 
 const purchasesStore = usePurchasesStore()
 const materialsStore = useMaterialsStore()
@@ -532,7 +531,12 @@ const { handleFormError, errors: formErrors, clearErrors } = useErrorHandler()
 const saving = ref(false)
 const errors = reactive<Record<string, string>>({})
 
-const isEdit = computed(() => !!props.initial || !!route.params.id)
+// F-509: ОДИН источник данных — prop `initial`. Маршрут `/purchases/:id/edit` больше не
+// монтирует эту форму (F-505: редирект на список с ?edit=:id, модалку открывает useEditQuery),
+// поэтому route.params.id здесь всегда пустой. Пока он оставался вторым источником, режим
+// редактирования из модалки подставлял Number(undefined) → NaN (см. уведомление об ошибке).
+// Роутом остаётся только `/purchases/create` — создание.
+const isEdit = computed(() => !!props.initial)
 
 // Form data for tracking status changes
 const formData = ref({
@@ -1018,7 +1022,7 @@ async function createOrUpdatePurchase(purchaseData: PurchaseRequest): Promise<nu
   
   if (isEdit.value) {
     // Режим редактирования
-    purchaseId = props.initial?.id || Number(route.params.id)
+    purchaseId = props.initial!.id
     await purchasesStore.update(purchaseId, purchaseData)
     
     // Уведомление об изменении закупки
@@ -1141,7 +1145,7 @@ async function onSaved(data: PurchaseRequest) {
     
     // Уведомление об ошибке
     notifications.notifyPurchaseError(
-      isEdit.value ? Number(route.params.id) : 0, 
+      props.initial?.id ?? 0, // F-509: было Number(route.params.id) → NaN в модалке
       errorResult.detail
     )
     
@@ -1313,13 +1317,9 @@ async function loadData() {
     try {
       let purchase: Purchase | null = null
       
-      if (props.initial) {
-        // Use provided initial data
-        purchase = props.initial
-      } else if (route.params.id) {
-        // Load from API
-        purchase = await purchasesStore.fetchOne(Number(route.params.id))
-      }
+      // F-509: единственный источник — prop. Ветка «догрузить по id из роута» была мертва
+      // (на форму ведёт только /purchases/create) и именно её рассинхрон с initialData дал F-505.
+      purchase = props.initial ?? null
       
         if (purchase) {
         // Загружаем материалы из позиций закупки в store (включая неактивные)
