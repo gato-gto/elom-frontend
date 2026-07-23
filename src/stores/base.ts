@@ -23,6 +23,50 @@ import { findById } from '@/utils/arrayHelpers'
 import { getOptimalPageSize } from '@/utils/device'
 
 // ============================================================================
+// Сигнализация усечённого справочника (F-510)
+// ============================================================================
+
+/** Доля page_size, начиная с которой справочник считаем «на грани усечения». */
+export const PAGE_SIZE_ALARM_RATIO = 0.8
+
+/**
+ * F-510. Экраны грузят справочники как `fetchList({ page_size: 1000 })` и молча считают,
+ * что пришло ВСЁ. Это допущение, а не гарантия: когда записей станет больше лимита, ответ
+ * тихо обрежется — селект просто не покажет часть материалов/объектов, а колонка вместо
+ * названия напечатает ID (тот же класс, что F-501). Никакой ошибки при этом не будет.
+ *
+ * Пока лимит не убран (см. ARCHITECTURE.md, «Известные ограничения»), ставим сигнализацию:
+ * в dev шумим в консоль, когда ответ подошёл к границе. `next !== null` — уже доказанное
+ * усечение, доля от page_size — предупреждение заранее.
+ *
+ * Только dev: в проде это не ошибка пользователя и молчит.
+ */
+export function warnIfNearPageSize(
+  endpoint: string,
+  count: number,
+  pageSize: number,
+  hasNext: boolean,
+): void {
+  if (!import.meta.env.DEV) { return }
+  if (!pageSize || !count) { return }
+  if (hasNext) {
+    console.warn(
+      `[F-510] ${endpoint}: ответ УСЕЧЁН (count=${count} > page_size=${pageSize}, есть next). ` +
+      'Экран, который считает этот справочник полным, покажет не все записи. ' +
+      'Нужна подгрузка/серверный поиск вместо page_size.',
+    )
+    return
+  }
+  if (count >= pageSize * PAGE_SIZE_ALARM_RATIO) {
+    console.warn(
+      `[F-510] ${endpoint}: count=${count} — это ≥${Math.round(PAGE_SIZE_ALARM_RATIO * 100)}% ` +
+      `от page_size=${pageSize}. Справочник вот-вот перестанет помещаться в один запрос ` +
+      'и начнёт молча обрезаться. См. ARCHITECTURE.md → «Известные ограничения».',
+    )
+  }
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -164,6 +208,12 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
           next: data.next || null,
           previous: data.previous || null
         }
+        warnIfNearPageSize(
+          config.endpoint.list,
+          pagination.value.count,
+          Number(queryParams.page_size),
+          !!pagination.value.next,
+        )
 
         if (params) {
           Object.assign(filters.value, params)
@@ -209,6 +259,12 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
                 next: data.next || null,
                 previous: data.previous || null
               }
+              warnIfNearPageSize(
+                config.endpoint.list,
+                pagination.value.count,
+                Number(queryParams.page_size),
+                !!pagination.value.next,
+              )
               
               // Обновляем URL без параметра page или с page=1
               if (typeof window !== 'undefined' && window.history) {
