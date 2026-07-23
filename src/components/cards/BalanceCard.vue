@@ -7,12 +7,12 @@
     <template #content>
       <div class="space-y-3 text-sm">
         <div>
-          <span class="text-base-content/60">Адрес:</span>
+          <span class="text-muted">Адрес:</span>
           <span class="font-medium ml-2">{{ balance.object_address || '—' }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Общий остаток:</span>
+          <span class="text-muted">Общий остаток:</span>
           <span class="font-medium ml-2 text-success font-mono">
             {{ formatQuantity(calculateTotalBalance(balance.materials)) }}
           </span>
@@ -51,16 +51,16 @@
                   <div class="font-medium text-base-content truncate">
                     {{ material.material_name }}
                   </div>
-                  <div class="text-xs text-base-content/60 mt-1">{{ material.unit_code }}</div>
+                  <div class="text-xs text-muted mt-1">{{ material.unit_code }}</div>
                 </div>
                 <div class="ml-2 text-right flex-shrink-0">
                   <div class="font-semibold text-success dark:text-success font-mono">
                     {{ formatQuantity(material.current_balance) }} {{ material.unit_code }}
                   </div>
-                  <div class="text-xs text-base-content/60 mt-1">
+                  <div class="text-xs text-muted mt-1">
                     Приход: <span class="text-info font-mono">{{ formatQuantity(material.total_purchased) }}</span>
                   </div>
-                  <div class="text-xs text-base-content/60">
+                  <div class="text-xs text-muted">
                     Расход: <span class="text-error font-mono">{{ formatQuantity(material.total_written_off) }}</span>
                   </div>
                 </div>
@@ -70,7 +70,7 @@
         </div>
         
         <!-- Пустое состояние, если нет материалов -->
-        <div v-else class="pt-2 border-t border-base-300 text-center text-sm text-base-content/60">
+        <div v-else class="pt-2 border-t border-base-300 text-center text-sm text-muted">
           Нет материалов
         </div>
       </div>

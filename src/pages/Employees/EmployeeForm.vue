@@ -39,11 +39,11 @@
             />
             <span class="text-sm">{{ o.name }}</span>
           </label>
-          <div v-if="objectOptions.length === 0" class="px-3 py-4 text-center text-sm text-base-content/50">
+          <div v-if="objectOptions.length === 0" class="px-3 py-4 text-center text-sm text-subtle">
             Нет объектов
           </div>
         </div>
-        <p class="text-xs text-base-content/50 mt-1">
+        <p class="text-xs text-subtle mt-1">
           Объекты, к которым у сотрудника есть доступ. Пусто — доступ определяется его ролью.
         </p>
         <div v-if="error" class="label"><span class="label-text-alt text-error">{{ error }}</span></div>

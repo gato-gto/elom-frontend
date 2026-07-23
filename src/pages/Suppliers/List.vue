@@ -13,7 +13,7 @@
         <div class="flex items-center gap-3">
           <div>
             <div class="font-medium text-base-content">{{ value }}</div>
-            <div class="text-sm text-base-content/60">
+            <div class="text-sm text-muted">
               <span class="badge" :class="item.is_active ? 'badge-success badge-xs' : 'badge-error badge-xs'">
                 {{ item.is_active ? 'Активен' : 'Неактивен' }}
               </span>
@@ -38,11 +38,11 @@
       title="Подтверждение удаления"
     >
       <div class="p-6">
-        <p class="text-base-content/80 mb-4">
+        <p class="text-muted mb-4">
           Вы уверены, что хотите удалить поставщика 
           <strong>{{ deletingSupplier?.name }}</strong>?
         </p>
-        <p class="text-sm text-base-content/60 mb-6">
+        <p class="text-sm text-muted mb-6">
           Это действие нельзя отменить. Удалить можно только поставщика без связанных закупок.
         </p>
         <div class="flex justify-end gap-3">

@@ -49,7 +49,7 @@
       <!-- Custom column for current balance -->
       <template #column-current_balance="{ item, value }">
         <div class="text-right">
-          <span class="font-mono text-sm text-base-content/70">
+          <span class="font-mono text-sm text-muted">
             {{ formatNumberClean(value) }} {{ item.unit_code }}
           </span>
         </div>

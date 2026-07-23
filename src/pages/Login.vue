@@ -11,14 +11,14 @@
             </svg>
           </div>
           <h1 class="text-3xl font-semibold tracking-tight text-base-content mb-1">ELOM</h1>
-          <p class="text-sm text-base-content/60">Система учёта материалов</p>
+          <p class="text-sm text-muted">Система учёта материалов</p>
         </div>
 
         <!-- Login card -->
         <div class="login-card bg-base-100 rounded-md border border-base-300 p-8">
           <div class="mb-6">
             <h2 class="text-xl font-semibold text-base-content mb-1">Вход в систему</h2>
-            <p class="text-sm text-base-content/60">Введите логин и пароль</p>
+            <p class="text-sm text-muted">Введите логин и пароль</p>
           </div>
 
           <!-- Alerts -->
@@ -40,10 +40,10 @@
           <form @submit.prevent="submit" class="login-form">
             <!-- Username field -->
             <div class="space-y-1.5">
-              <label class="text-xs font-medium uppercase tracking-wide text-base-content/60">Логин</label>
+              <label class="text-xs font-medium uppercase tracking-wide text-muted">Логин</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
                 </div>
@@ -59,10 +59,10 @@
 
             <!-- Password field -->
             <div class="space-y-1.5">
-              <label class="text-xs font-medium uppercase tracking-wide text-base-content/60">Пароль</label>
+              <label class="text-xs font-medium uppercase tracking-wide text-muted">Пароль</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                   </svg>
                 </div>
@@ -95,7 +95,7 @@
 
           <!-- Footer -->
           <div class="mt-7 pt-5 border-t border-base-300 text-center">
-            <p class="text-xs text-base-content/50">
+            <p class="text-xs text-subtle">
               © <span class="font-mono">{{ new Date().getFullYear() }}</span>
               <a href="https://elom.uz" target="_blank" class="text-primary hover:underline">Energy Life</a>. Все права защищены.
             </p>

@@ -18,24 +18,24 @@
     </template>
     <template #content>
       <div>
-        <p class="text-xs text-base-content/60">Контактное лицо:</p>
+        <p class="text-xs text-muted">Контактное лицо:</p>
         <p class="font-medium">{{ supplier.contact_person || '—' }}</p>
       </div>
       <div>
-        <p class="text-xs text-base-content/60">Телефон:</p>
+        <p class="text-xs text-muted">Телефон:</p>
         <p class="font-medium">{{ supplier.phone || '—' }}</p>
       </div>
       <div>
-        <p class="text-xs text-base-content/60">Email:</p>
+        <p class="text-xs text-muted">Email:</p>
         <p class="font-medium">{{ supplier.email || '—' }}</p>
       </div>
       <div>
-        <p class="text-xs text-base-content/60">Создан:</p>
+        <p class="text-xs text-muted">Создан:</p>
         <p class="font-medium font-mono">{{ formatDate(supplier.created_at) }}</p>
       </div>
       <div v-if="supplier.address" class="col-span-2">
-        <p class="text-xs text-base-content/60">Адрес:</p>
-        <p class="text-sm italic text-base-content/80">{{ supplier.address }}</p>
+        <p class="text-xs text-muted">Адрес:</p>
+        <p class="text-sm italic text-muted">{{ supplier.address }}</p>
       </div>
     </template>
   </MobileCard>

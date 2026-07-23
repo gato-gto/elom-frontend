@@ -69,7 +69,7 @@ function handlePrint() {
 
 .info {
   font-size: 0.9rem;
-  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+  color: hsl(var(--tx-2));
 }
 
 .state {

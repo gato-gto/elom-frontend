@@ -9,34 +9,34 @@
     <template #content>
       <div class="space-y-2 text-sm">
         <div>
-          <span class="text-base-content/60">Дата:</span>
+          <span class="text-muted">Дата:</span>
           <span class="font-medium ml-2 font-mono">{{ formatDate(stock.date) }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Объект:</span>
+          <span class="text-muted">Объект:</span>
           <span class="font-medium ml-2">{{ stock.object_name }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Количество:</span>
+          <span class="text-muted">Количество:</span>
           <span class="font-medium ml-2 font-mono" :class="getQuantityColorClass()">
             {{ formatQuantityWithSign() }} {{ stock.unit_code }}
           </span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Тип операции:</span>
+          <span class="text-muted">Тип операции:</span>
           <span class="font-medium ml-2">{{ isIncome() ? 'Приход' : 'Расход' }}</span>
         </div>
         
         <div v-if="stock.responsible_name">
-          <span class="text-base-content/60">Ответственный:</span>
+          <span class="text-muted">Ответственный:</span>
           <span class="font-medium ml-2">{{ stock.responsible_name }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Источник:</span>
+          <span class="text-muted">Источник:</span>
           <span class="font-medium ml-2">
             <span class="badge badge-sm" :class="getSourceTypeBadgeClass()">
               {{ getSourceTypeLabel() }}
@@ -45,22 +45,22 @@
         </div>
         
         <div>
-          <span class="text-base-content/60">Этап:</span>
+          <span class="text-muted">Этап:</span>
           <span class="font-medium ml-2">{{ getStageLabel(stock.stage) }}</span>
         </div>
         
         <div v-if="stock.source_description">
-          <span class="text-base-content/60">Описание источника:</span>
+          <span class="text-muted">Описание источника:</span>
           <span class="font-medium ml-2">{{ truncateText(stock.source_description, 50) }}</span>
         </div>
         
         <div v-if="stock.comment">
-          <span class="text-base-content/60">Комментарий:</span>
+          <span class="text-muted">Комментарий:</span>
           <span class="font-medium ml-2">{{ truncateText(stock.comment, 80) }}</span>
         </div>
         
         <div v-if="stock.smart_quantity">
-          <span class="text-base-content/60">Умная конвертация:</span>
+          <span class="text-muted">Умная конвертация:</span>
           <span class="font-medium ml-2">
             <span class="font-mono">{{ stock.smart_quantity.display_value }}</span> {{ stock.smart_quantity.display_unit }}
             <span v-if="stock.smart_quantity.conversion_applied" class="text-xs text-info ml-1">
@@ -72,7 +72,7 @@
     </template>
     
     <template #extra>
-      <div class="flex justify-between items-center text-xs text-base-content/60">
+      <div class="flex justify-between items-center text-xs text-muted">
         <span>Создано: <span class="font-mono">{{ formatDate(stock.created_at) }}</span></span>
         <span v-if="stock.updated_at !== stock.created_at">
           Обновлено: <span class="font-mono">{{ formatDate(stock.updated_at) }}</span>

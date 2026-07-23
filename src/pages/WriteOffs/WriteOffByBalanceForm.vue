@@ -1,7 +1,7 @@
 <template>
   <Modal :size="'5xl'" :model-value="isOpen" title="Внести остатки (инвентаризация)" @close="$emit('close')">
     <div class="space-y-4">
-      <p class="text-sm text-base-content/70">
+      <p class="text-sm text-muted">
         Введите ФАКТИЧЕСКИЙ остаток по каждому материалу — система вычислит расход
         (книжный остаток − факт) и оформит списания на разницу. Единица берётся из материала.
         В списке материалов — только то, что есть в наличии на выбранном объекте
@@ -53,7 +53,7 @@
               <td>
                 <input v-model="row.actual_balance" type="number" step="0.000001" min="0"
                        placeholder="0" class="input input-bordered input-sm w-full text-right" />
-                <div v-if="balanceFor(row)" class="text-xs text-base-content/60 mt-1 text-right">
+                <div v-if="balanceFor(row)" class="text-xs text-muted mt-1 text-right">
                   Книжный остаток:
                   <span class="font-mono">{{ formatNumberClean(Number(balanceFor(row)!.current_balance)) }} {{ balanceFor(row)!.unit_code }}</span>
                 </div>
@@ -68,7 +68,7 @@
       </div>
 
       <div v-if="objectId && !materialsLoading && stockMaterials.length === 0"
-           class="text-sm text-base-content/70">
+           class="text-sm text-muted">
         На этом объекте нет материалов в наличии — списывать нечего.
       </div>
 

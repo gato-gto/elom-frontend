@@ -21,26 +21,26 @@
       </div>
 
       <!-- Details -->
-      <div class="mt-3 space-y-2 text-sm text-base-content/70">
+      <div class="mt-3 space-y-2 text-sm text-muted">
         <div class="flex items-start gap-2">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Кому:</span>
+          <span class="font-medium text-muted flex-shrink-0">Кому:</span>
           <span class="break-words">{{ issue.issued_to_name }}</span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Выдано:</span>
+          <span class="font-medium text-muted flex-shrink-0">Выдано:</span>
           <span class="break-words font-mono">{{ formatDate(issue.issued_at) }}</span>
         </div>
         <div v-if="issue.return_date" class="flex items-start gap-2">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Возвращено:</span>
+          <span class="font-medium text-muted flex-shrink-0">Возвращено:</span>
           <span class="break-words font-mono">{{ formatDate(issue.return_date) }}</span>
         </div>
         <div class="flex items-start gap-2 flex-wrap">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Состояние:</span>
+          <span class="font-medium text-muted flex-shrink-0">Состояние:</span>
           <div class="flex items-center gap-2 flex-wrap">
             <span class="badge badge-xs md:badge-sm" :class="getConditionBadgeClass(issue.issue_condition)">
               {{ issue.issue_condition_display || getConditionDisplayName(issue.issue_condition) }}
             </span>
-            <span v-if="issue.return_condition" class="text-base-content/50">→</span>
+            <span v-if="issue.return_condition" class="text-subtle">→</span>
             <span v-if="issue.return_condition" class="badge badge-xs md:badge-sm" :class="getConditionBadgeClass(issue.return_condition)">
               {{ issue.return_condition_display || getConditionDisplayName(issue.return_condition) }}
             </span>

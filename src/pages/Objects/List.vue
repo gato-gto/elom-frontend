@@ -11,26 +11,26 @@
       <!-- Custom column for address -->
       <template #column-address="{ item, value }">
         <span v-if="value">{{ value }}</span>
-        <span v-else class="text-base-content/40">—</span>
+        <span v-else class="text-subtle">—</span>
       </template>
 
       <!-- Custom column for date_start -->
       <template #column-date_start="{ item, value }">
         <span v-if="value">{{ formatDate(value) }}</span>
-        <span v-else class="text-base-content/40">—</span>
+        <span v-else class="text-subtle">—</span>
       </template>
 
       <!-- Custom column for date_end -->
       <template #column-date_end="{ item, value }">
         <span v-if="value">{{ formatDate(value) }}</span>
-        <span v-else class="text-base-content/40">—</span>
+        <span v-else class="text-subtle">—</span>
       </template>
 
       <!-- Custom column for responsible -->
       <template #column-responsible="{ item, value }">
         <span v-if="value && item.responsible_name">{{ item.responsible_name }}</span>
         <span v-else-if="value">{{ getResponsibleName(value) || `ID: ${value}` }}</span>
-        <span v-else class="text-base-content/40">—</span>
+        <span v-else class="text-subtle">—</span>
       </template>
 
       <!-- Custom column for is_active -->

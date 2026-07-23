@@ -190,7 +190,7 @@
             
             <div class="flex items-center gap-2">
               <span class="badge badge-primary">{{ getPhotoTypeLabel(selectedPhoto.type) }}</span>
-              <span class="text-sm text-base-content/70">{{ currentPhotoIndex + 1 }} / {{ currentPhotoList.length }}</span>
+              <span class="text-sm text-muted">{{ currentPhotoIndex + 1 }} / {{ currentPhotoList.length }}</span>
             </div>
             
             <button 
@@ -453,7 +453,7 @@ onUnmounted(() => {
 .invoice-paper .info-label,
 .invoice-paper .comment-label,
 .invoice-paper .signature-label {
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: hsl(var(--tx-2));
 }
 
 /* Шапка накладной */
@@ -486,7 +486,7 @@ onUnmounted(() => {
 
 .invoice-number .label {
   font-size: 0.875rem;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: hsl(var(--tx-2));
 }
 
 .invoice-number .value {
@@ -504,7 +504,7 @@ onUnmounted(() => {
 
 .invoice-date .label {
   font-size: 0.875rem;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: hsl(var(--tx-2));
   margin-right: 0.5rem;
 }
 
@@ -560,7 +560,7 @@ onUnmounted(() => {
 
 .info-label {
   font-weight: 500;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: hsl(var(--tx-2));
   min-width: 120px;
 }
 
@@ -661,7 +661,7 @@ onUnmounted(() => {
 .comment-label {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: hsl(var(--tx-2));
   font-size: 0.875rem;
 }
 
@@ -692,7 +692,7 @@ onUnmounted(() => {
 
 .signature-label {
   font-size: 0.875rem;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: hsl(var(--tx-2));
   text-align: center;
 }
 

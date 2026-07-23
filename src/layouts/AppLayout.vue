@@ -67,7 +67,7 @@
               <li>
                 <div class="text-sm px-3 py-2 bg-primary/5 rounded-lg">
                   <div class="font-semibold text-base-content">{{ auth.me?.username }}</div>
-                  <div class="text-xs text-base-content/60">{{ roleDisplayName }}</div>
+                  <div class="text-xs text-muted">{{ roleDisplayName }}</div>
                 </div>
               </li>
               <li><div class="divider my-2"></div></li>

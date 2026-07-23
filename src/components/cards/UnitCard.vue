@@ -9,37 +9,37 @@
     <template #content>
       <div class="space-y-2 text-sm">
         <div>
-          <span class="text-base-content/60">Код единицы:</span>
+          <span class="text-muted">Код единицы:</span>
           <span class="font-medium ml-2 text-primary">{{ unit.code }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Название:</span>
+          <span class="text-muted">Название:</span>
           <span class="font-medium ml-2">{{ unit.name }}</span>
         </div>
         
         <div v-if="unit.materials_count">
-          <span class="text-base-content/60">Материалов:</span>
+          <span class="text-muted">Материалов:</span>
           <span class="font-medium ml-2 font-mono">{{ unit.materials_count }}</span>
         </div>
         
         <div v-if="unit.conversions_count">
-          <span class="text-base-content/60">Конверсий:</span>
+          <span class="text-muted">Конверсий:</span>
           <span class="font-medium ml-2 font-mono">{{ unit.conversions_count }}</span>
         </div>
         
         <div v-if="unit.purchases_count">
-          <span class="text-base-content/60">В закупках:</span>
+          <span class="text-muted">В закупках:</span>
           <span class="font-medium ml-2 font-mono">{{ unit.purchases_count }}</span>
         </div>
         
         <div v-if="unit.writeoffs_count">
-          <span class="text-base-content/60">В списаниях:</span>
+          <span class="text-muted">В списаниях:</span>
           <span class="font-medium ml-2 font-mono">{{ unit.writeoffs_count }}</span>
         </div>
         
         <div v-if="unit.conversions && unit.conversions.length > 0">
-          <span class="text-base-content/60">Конверсии:</span>
+          <span class="text-muted">Конверсии:</span>
           <div class="font-medium ml-2">
             <div class="space-y-1 mt-1">
               <div 
@@ -49,7 +49,7 @@
               >
                 1 {{ unit.code }} = {{ conversion.factor }} {{ conversion.to_unit_code }}
               </div>
-              <div v-if="unit.conversions.length > 3" class="text-xs text-base-content/60">
+              <div v-if="unit.conversions.length > 3" class="text-xs text-muted">
                 +{{ unit.conversions.length - 3 }} еще...
               </div>
             </div>
@@ -57,7 +57,7 @@
         </div>
         
         <div v-if="unit.example_materials && unit.example_materials.length > 0">
-          <span class="text-base-content/60">Используется в материалах:</span>
+          <span class="text-muted">Используется в материалах:</span>
           <div class="font-medium ml-2">
             <div class="flex flex-wrap gap-1 mt-1">
               <span
@@ -80,7 +80,7 @@
     </template>
     
     <template #extra>
-      <div class="flex justify-between items-center text-xs text-base-content/60">
+      <div class="flex justify-between items-center text-xs text-muted">
         <span class="font-mono">Создана: {{ formatDate(unit.created_at || null) }}</span>
         <span v-if="unit.updated_at !== unit.created_at" class="font-mono">
           Обновлена: {{ formatDate(unit.updated_at || null) }}

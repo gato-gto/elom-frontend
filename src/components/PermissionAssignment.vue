@@ -4,7 +4,7 @@
     <div class="mb-4">
       <label class="label">
         <span class="label-text font-semibold">Разрешения роли</span>
-        <span class="label-text-alt text-base-content/70">
+        <span class="label-text-alt text-muted">
           Выберите разрешения для роли. Разрешения сгруппированы по ресурсам.
         </span>
       </label>
@@ -45,7 +45,7 @@
     <!-- Loading state -->
     <div v-if="loading" class="flex justify-center py-8">
       <span class="loading loading-spinner loading-md"></span>
-      <span class="ml-3 text-base-content/70">Загрузка разрешений...</span>
+      <span class="ml-3 text-muted">Загрузка разрешений...</span>
     </div>
 
     <!-- Error state -->
@@ -73,7 +73,7 @@
                 </span>
               </h3>
               <div class="flex items-center gap-2">
-                <span class="text-xs text-base-content/70 font-mono">
+                <span class="text-xs text-muted font-mono">
                   {{ getSelectedCountForResource(resource) }} / {{ getResourcePermissions(resource).length }}
                 </span>
                 <button
@@ -103,8 +103,8 @@
                 />
                 <div class="flex-1">
                   <div class="font-medium text-sm">{{ permission.name }}</div>
-                  <div class="text-xs text-base-content/60">{{ permission.codename }}</div>
-                  <div v-if="permission.description" class="text-xs text-base-content/50 mt-1">
+                  <div class="text-xs text-muted">{{ permission.codename }}</div>
+                  <div v-if="permission.description" class="text-xs text-subtle mt-1">
                     {{ permission.description }}
                   </div>
                 </div>
@@ -115,12 +115,12 @@
       </template>
 
       <!-- No permissions message -->
-      <div v-if="filteredPermissions.length === 0" class="text-center py-8 text-base-content/50">
-        <svg class="w-12 h-12 mx-auto mb-3 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="filteredPermissions.length === 0" class="text-center py-8 text-subtle">
+        <svg class="w-12 h-12 mx-auto mb-3 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
         </svg>
-        <p class="text-base-content/70 font-medium">Нет доступных разрешений</p>
-        <p class="text-sm text-base-content/50 mt-1">
+        <p class="text-muted font-medium">Нет доступных разрешений</p>
+        <p class="text-sm text-subtle mt-1">
           {{ searchQuery ? 'Попробуйте изменить поисковый запрос' : 'Разрешения могут быть еще не загружены' }}
         </p>
       </div>
@@ -146,7 +146,7 @@
     </div>
 
     <!-- Help text -->
-    <div class="mt-4 text-xs text-base-content/60 border-t border-base-300 pt-3">
+    <div class="mt-4 text-xs text-muted border-t border-base-300 pt-3">
       <p class="flex items-start gap-2">
         <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -164,7 +164,7 @@
           Для управления разрешениями требуется разрешение <code class="bg-base-300 px-1 rounded text-xs">rbac.manage_roles</code>
         </span>
       </p>
-      <p v-if="props.disabled" class="mt-2 text-base-content/50 flex items-start gap-2">
+      <p v-if="props.disabled" class="mt-2 text-subtle flex items-start gap-2">
         <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
         </svg>

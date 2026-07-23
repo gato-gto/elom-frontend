@@ -115,9 +115,9 @@
           <td class="text-right">{{ r.purchases ?? '—' }}</td>
         </tr>
         <tr v-if="!loading && rows.length === 0">
-          <td colspan="3" class="text-center text-base-content/60 py-8">
+          <td colspan="3" class="text-center text-muted py-8">
             <div class="flex flex-col items-center gap-2 empty-state">
-              <svg class="w-12 h-12 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-12 h-12 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <span class="text-sm">Нет данных по ответственным</span>

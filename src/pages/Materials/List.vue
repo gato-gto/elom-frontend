@@ -59,14 +59,14 @@
               class="h-10 w-10 object-cover rounded border"
             />
             <div v-else class="h-10 w-10 bg-base-200 rounded border flex items-center justify-center">
-              <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
           </div>
           <div class="flex flex-col">
             <span class="font-medium text-base-content">{{ value }}</span>
-            <span v-if="item.sku" class="text-sm text-base-content/60">SKU: {{ item.sku }}</span>
+            <span v-if="item.sku" class="text-sm text-muted">SKU: {{ item.sku }}</span>
           </div>
         </div>
       </template>

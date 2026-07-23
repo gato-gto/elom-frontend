@@ -3,7 +3,7 @@
     <!-- Header -->
     <header>
       <h1 class="text-xl font-semibold">Архивные периоды</h1>
-      <p class="text-sm text-base-content/60 mt-1 max-w-3xl">
+      <p class="text-sm text-muted mt-1 max-w-3xl">
         Закрытие периода (месяц × объект) делает данные периода — закупки, движения остатков и
         списания — архивными и только для чтения. Открытие периода снимает архив. Балансы при этом
         сохраняются (архив — про неизменяемость истории, не про обнуление остатков).
@@ -15,14 +15,14 @@
       <h2 class="text-sm font-medium mb-3">Закрыть период</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-end">
         <label class="block">
-          <span class="block text-xs mb-1 text-base-content/60">Объект</span>
+          <span class="block text-xs mb-1 text-muted">Объект</span>
           <select v-model="form.object" class="select select-bordered select-sm w-full">
             <option :value="0" disabled>— выберите объект —</option>
             <option v-for="o in objectOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="block text-xs mb-1 text-base-content/60">Месяц</span>
+          <span class="block text-xs mb-1 text-muted">Месяц</span>
           <input v-model="form.month" type="month" class="input input-bordered input-sm w-full" />
         </label>
         <button
@@ -44,13 +44,13 @@
 
       <div v-if="store.error" class="px-4 py-3 text-sm text-error border-b border-base-300">{{ store.error }}</div>
 
-      <div v-if="store.loading" class="p-6 text-center text-sm text-base-content/50">Загрузка…</div>
-      <div v-else-if="store.items.length === 0" class="p-8 text-center text-sm text-base-content/50">
+      <div v-if="store.loading" class="p-6 text-center text-sm text-subtle">Загрузка…</div>
+      <div v-else-if="store.items.length === 0" class="p-8 text-center text-sm text-subtle">
         Пока нет закрытых периодов
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="text-left text-xs text-base-content/60 border-b border-base-300">
+          <thead class="text-left text-xs text-muted border-b border-base-300">
             <tr>
               <th class="px-4 py-2 font-medium">Месяц</th>
               <th class="px-4 py-2 font-medium">Объект</th>
@@ -63,8 +63,8 @@
             <tr v-for="p in store.items" :key="p.id" class="border-b border-base-200 last:border-0">
               <td class="px-4 py-2 whitespace-nowrap font-mono">{{ formatMonth(p.month) }}</td>
               <td class="px-4 py-2">{{ p.object_name }}</td>
-              <td class="px-4 py-2 text-base-content/70 whitespace-nowrap font-mono">{{ formatDateTime(p.closed_at) }}</td>
-              <td class="px-4 py-2 text-base-content/70">{{ p.closed_by_name || '—' }}</td>
+              <td class="px-4 py-2 text-muted whitespace-nowrap font-mono">{{ formatDateTime(p.closed_at) }}</td>
+              <td class="px-4 py-2 text-muted">{{ p.closed_by_name || '—' }}</td>
               <td v-if="canEdit" class="px-4 py-2 text-right">
                 <button class="btn btn-xs btn-outline" :disabled="busy" @click="askReopen(p)">Открыть</button>
               </td>

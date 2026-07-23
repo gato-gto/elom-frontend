@@ -57,7 +57,7 @@
       <template #column-current_holder="{ item, value }">
         <div v-if="item.current_holder_name" class="flex flex-col gap-1">
           <span class="font-medium break-words">{{ item.current_holder_name }}</span>
-          <span v-if="item.current_object_name" class="text-xs text-base-content/60 break-words">
+          <span v-if="item.current_object_name" class="text-xs text-muted break-words">
             {{ item.current_object_name }}
           </span>
         </div>

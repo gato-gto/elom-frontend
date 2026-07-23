@@ -1,7 +1,7 @@
 <template>
   <span :class="valueClass" :title="tooltip">
     {{ displayValue }}
-    <span v-if="showOriginal && result.converted" class="text-xs text-base-content/60 ml-1">
+    <span v-if="showOriginal && result.converted" class="text-xs text-muted ml-1">
       ({{ formatValue(result.originalValue, result.originalUnit) }})
     </span>
   </span>

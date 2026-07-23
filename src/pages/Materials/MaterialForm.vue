@@ -25,8 +25,8 @@
             </button>
           </div>
           <div>
-            <p class="text-sm text-base-content/70">Текущее фото материала</p>
-            <p class="text-xs text-base-content/50">Нажмите на крестик для удаления</p>
+            <p class="text-sm text-muted">Текущее фото материала</p>
+            <p class="text-xs text-subtle">Нажмите на крестик для удаления</p>
           </div>
         </div>
       </div>

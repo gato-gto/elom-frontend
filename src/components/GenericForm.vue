@@ -9,7 +9,7 @@
       >
         <div class="">
           <h2 class="card-title text-lg mb-4">{{ section.title }}</h2>
-          <p v-if="section.description" class="text-base-content/70 text-sm mb-4">{{ section.description }}</p>
+          <p v-if="section.description" class="text-muted text-sm mb-4">{{ section.description }}</p>
 
           <div class="grid md:grid-cols-2 gap-2 md:gap-4">
             <template v-for="field in getSectionFields(index)" :key="field.key">
@@ -56,7 +56,7 @@
     <!-- Simple Form (no sections) as Single Card -->
     <div v-else class="">
       <div class="">
-        <p v-if="config.subtitle" class="text-base-content/70 text-sm mb-4">{{ config.subtitle }}</p>
+        <p v-if="config.subtitle" class="text-muted text-sm mb-4">{{ config.subtitle }}</p>
 
         <div class="grid md:grid-cols-2 gap-4">
           <template v-for="field in sortedFields" :key="field.key">

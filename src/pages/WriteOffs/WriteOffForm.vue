@@ -146,7 +146,7 @@
                   </td>
                   <td>
                     <div>
-                      <div class="text-sm text-base-content/70 font-mono p-2" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div class="text-sm text-muted font-mono p-2" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(item.unit) || '—' }}
                       </div>
                       <input type="hidden" v-model.number="item.unit" />
@@ -175,9 +175,9 @@
                   <td>
                     <div v-if="item.currentBalance !== null && item.material" class="text-sm">
                       <div class="font-mono">{{ formatNumberClean(item.currentBalance) }}</div>
-                      <div class="text-xs text-base-content/60">{{ getUnitName(item.unit) || '' }}</div>
+                      <div class="text-xs text-muted">{{ getUnitName(item.unit) || '' }}</div>
                     </div>
-                    <div v-else class="text-sm text-base-content/40">—</div>
+                    <div v-else class="text-sm text-subtle">—</div>
                   </td>
                   <td>
                     <div v-if="item.currentBalance !== null && item.material" class="text-sm">
@@ -190,12 +190,12 @@
                       >
                         {{ formatNumberClean(getFutureBalance(item)) }}
                       </div>
-                      <div class="text-xs text-base-content/60">{{ getUnitName(item.unit) || '' }}</div>
+                      <div class="text-xs text-muted">{{ getUnitName(item.unit) || '' }}</div>
                       <div v-if="getFutureBalance(item) < 0" class="text-xs text-error mt-1">
                         Отрицательный остаток!
                       </div>
                     </div>
-                    <div v-else class="text-sm text-base-content/40">—</div>
+                    <div v-else class="text-sm text-subtle">—</div>
                   </td>
                   <td class="text-right">
                     <button type="button" class="btn btn-error btn-xs" @click="removeItem(idx)">
@@ -250,7 +250,7 @@
                       <label class="label">
                         <span class="label-text text-xs">Единица измерения</span>
                       </label>
-                      <div class="text-sm text-base-content/70 font-mono p-2  rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div class="text-sm text-muted font-mono p-2  rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(item.unit) || '—' }}
                       </div>
                       <input type="hidden" v-model.number="item.unit" />
@@ -287,7 +287,7 @@
                       <div v-if="item.currentBalance !== null && item.material" class="text-sm font-mono p-2  rounded border">
                         {{ formatNumberClean(item.currentBalance) }} {{ getUnitName(item.unit) || '' }}
                       </div>
-                      <div v-else class="text-sm text-base-content/40 p-2  rounded border">
+                      <div v-else class="text-sm text-subtle p-2  rounded border">
                         —
                       </div>
                     </div>
@@ -311,7 +311,7 @@
                           Отрицательный остаток!
                         </div>
                       </div>
-                      <div v-else class="text-sm text-base-content/40 p-2  rounded border">
+                      <div v-else class="text-sm text-subtle p-2  rounded border">
                         —
                       </div>
                     </div>

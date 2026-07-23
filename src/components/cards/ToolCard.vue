@@ -21,21 +21,21 @@
       </div>
 
       <!-- Details -->
-      <div class="mt-3 space-y-2 text-sm text-base-content/70">
+      <div class="mt-3 space-y-2 text-sm text-muted">
         <div v-if="tool.category" class="flex items-start gap-2">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Категория:</span>
+          <span class="font-medium text-muted flex-shrink-0">Категория:</span>
           <span class="break-words">{{ tool.category }}</span>
         </div>
         <div v-if="tool.brand" class="flex items-start gap-2">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Марка:</span>
+          <span class="font-medium text-muted flex-shrink-0">Марка:</span>
           <span class="break-words">{{ tool.brand }}</span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="font-medium text-base-content/80 flex-shrink-0">Местоположение:</span>
+          <span class="font-medium text-muted flex-shrink-0">Местоположение:</span>
           <div class="flex-1 min-w-0">
             <span v-if="tool.current_holder_name" class="break-words">
               {{ tool.current_holder_name }}
-              <span v-if="tool.current_object_name" class="text-xs text-base-content/60 block mt-1">
+              <span v-if="tool.current_object_name" class="text-xs text-muted block mt-1">
                 ({{ tool.current_object_name }})
               </span>
             </span>

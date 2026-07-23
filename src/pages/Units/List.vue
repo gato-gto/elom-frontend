@@ -25,7 +25,7 @@
     >
       <!-- Custom column for code -->
       <template #column-code="{ item, value }">
-        <div class="text-sm text-base-content/70 font-mono">{{ value }}</div>
+        <div class="text-sm text-muted font-mono">{{ value }}</div>
       </template>
 
       <!-- Custom column for smart conversion -->

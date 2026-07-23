@@ -28,7 +28,7 @@
           </button>
           <div class="flex flex-col">
             <span class="font-medium text-base-content">{{ value }}</span>
-            <span class="text-sm text-base-content/60">{{ item.object_address }}</span>
+            <span class="text-sm text-muted">{{ item.object_address }}</span>
           </div>
         </div>
       </template>
@@ -62,7 +62,7 @@
                   <thead>
                     <tr class="border-b border-base-300">
                       <th 
-                        class="text-left py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
+                        class="text-left py-2 px-3 font-medium text-muted cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('material_name')"
                       >
                         Материал
@@ -71,7 +71,7 @@
                         </span>
                       </th>
                       <th 
-                        class="text-right py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
+                        class="text-right py-2 px-3 font-medium text-muted cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('current_balance')"
                       >
                         Остаток
@@ -80,7 +80,7 @@
                         </span>
                       </th>
                       <th 
-                        class="text-right py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
+                        class="text-right py-2 px-3 font-medium text-muted cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('total_purchased')"
                       >
                         Приход
@@ -89,7 +89,7 @@
                         </span>
                       </th>
                       <th 
-                        class="text-right py-2 px-3 font-medium text-base-content/70 cursor-pointer hover:bg-base-200"
+                        class="text-right py-2 px-3 font-medium text-muted cursor-pointer hover:bg-base-200"
                         @click="handleMaterialsSort('total_written_off')"
                       >
                         Расход
@@ -104,7 +104,7 @@
                       <td class="py-2 px-3">
                         <div class="flex flex-col">
                           <span class="font-medium text-base-content">{{ material.material_name }}</span>
-                          <span class="text-xs text-base-content/60">{{ material.unit_code }}</span>
+                          <span class="text-xs text-muted">{{ material.unit_code }}</span>
                         </div>
                       </td>
                       <td class="py-2 px-3 text-right">

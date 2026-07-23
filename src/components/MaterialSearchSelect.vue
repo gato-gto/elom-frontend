@@ -67,7 +67,7 @@
       >
           <!-- No results -->
           <div v-if="searchResults.length === 0 && searchQuery.length >= 2" class="p-3">
-            <div class="text-sm text-base-content/70 mb-2">Материалы не найдены</div>
+            <div class="text-sm text-muted mb-2">Материалы не найдены</div>
             <!-- Предложение создать новый материал -->
             <button
               v-if="allowCustom && searchQuery.length >= 2"
@@ -96,7 +96,7 @@
             @click="selectMaterial(material)"
           >
             <div class="font-medium">{{ material.name }}</div>
-            <div v-if="material.category_name" class="text-xs text-base-content/60">
+            <div v-if="material.category_name" class="text-xs text-muted">
               {{ material.category_name }}
             </div>
           </button>

@@ -82,7 +82,7 @@
           <tr v-for="role in filteredRoles" :key="role.id">
             <td>
               <div class="font-medium">{{ role.display_name }}</div>
-              <div class="text-xs text-base-content/60">{{ role.name }}</div>
+              <div class="text-xs text-muted">{{ role.name }}</div>
             </td>
             <td>
               <div class="text-sm">{{ role.description || '—' }}</div>
@@ -126,7 +126,7 @@
                 >
                   Удалить
                 </button>
-                <span v-if="role.is_system" class="text-xs text-base-content/50">системная — только просмотр</span>
+                <span v-if="role.is_system" class="text-xs text-subtle">системная — только просмотр</span>
               </div>
             </td>
           </tr>
@@ -135,11 +135,11 @@
 
       <!-- Empty state -->
       <div v-if="filteredRoles.length === 0 && !rbacStore.loading" class="text-center py-12">
-        <svg class="w-16 h-16 mx-auto mb-4 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-16 h-16 mx-auto mb-4 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
-        <p class="text-base-content/70 font-medium text-lg">Нет ролей</p>
-        <p class="text-sm text-base-content/50 mt-2">
+        <p class="text-muted font-medium text-lg">Нет ролей</p>
+        <p class="text-sm text-subtle mt-2">
           {{ filters.search || filters.is_system ? 'Попробуйте изменить фильтры' : 'Создайте первую роль для начала работы' }}
         </p>
         <button
@@ -177,11 +177,11 @@
             class="flex items-center gap-2 p-2 bg-base-200 rounded"
           >
             <span class="font-medium">{{ permission.name }}</span>
-            <span class="text-xs text-base-content/60">({{ permission.codename }})</span>
+            <span class="text-xs text-muted">({{ permission.codename }})</span>
           </div>
         </div>
 
-        <div v-if="viewingRolePermissions.length === 0" class="text-center py-8 text-base-content/50">
+        <div v-if="viewingRolePermissions.length === 0" class="text-center py-8 text-subtle">
           <p>У роли нет назначенных разрешений</p>
         </div>
       </div>

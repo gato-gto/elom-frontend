@@ -93,6 +93,23 @@ requester → graphite-500. (All muted; roles are labels, not decoration.)
 `base-content`=graphite-800 · `neutral`=graphite-700. Dark mode inverts the base scale (graphite-950
 page, graphite-100 text) and keeps the same accent/status hues (slightly lightened for contrast).
 
+### Text levels — the ONE muted-text rule (F-312, WCAG-AA guarded)
+Приглушённый/вторичный текст задаётся ТОЛЬКО сплошными токенами уровней — **никогда** прозрачностью
+base-content. `text-base-content/NN` в светлой теме проваливал контраст (/60 = 4.09:1, /50 = 3.07,
+/40 = 2.36, /30 = 1.85 — нечитаемо), потому что приглушение полупрозрачным тёмным на белом убивает
+контраст. Три уровня (HSL-триплеты в `--bc`/`--tx-2`/`--tx-3`, светлая и тёмная в `:root`/`:root.dark`):
+
+| Уровень | Класс / токен | Light HSL | Light contrast (base-100 / base-200) | Dark HSL | Dark contrast | Назначение |
+|---------|---------------|-----------|--------------------------------------|----------|---------------|------------|
+| Primary | `text-base-content` / `--bc` | `200 20% 15%` | 14.9 / 13.7 | `200 20% 92%` | 15.3 / 14.3 | основной текст |
+| Secondary | `.text-muted` / `--tx-2` | `205 15% 32%` | **7.2 / 6.6** | `205 13% 72%` | 9.2 / 8.5 | метки, мета, подписи |
+| Tertiary | `.text-subtle` / `--tx-3` | `205 12% 40%` | **5.3 / 4.9** | `205 11% 62%` | 6.8 / 6.3 | самый приглушённый читаемый |
+
+Все три ≥4.5:1 (обычный текст) в ОБЕИХ темах на base-100 и base-200. Правило закреплено тестом
+`src/test/contrast.test.ts` — читает реальные токены из `tailwind.css` и падает при регрессии контраста
+(как страж после F-276, где терялись фокус-кольца и проваливался AA). Границы/иконки/фокус — ≥3:1;
+фокус-кольцо инпутов = `hsl(var(--p))` (copper), проверяется тем же тестом.
+
 ## 4. Typography
 
 Two families, self-hosted (Cyrillic+Latin subset), `font-display: swap`, sans-regular preloaded; a

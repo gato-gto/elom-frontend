@@ -17,7 +17,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
                 <h2 class="text-lg font-semibold">{{ field.label }}</h2>
-                <p v-if="field.help" class="text-sm text-base-content/70">{{ field.help }}</p>
+                <p v-if="field.help" class="text-sm text-muted">{{ field.help }}</p>
               </div>
               <input
                 type="file"
@@ -32,7 +32,7 @@
 
             <!-- Existing photos -->
             <div v-if="existingInstructionPhotos.length > 0" class="mb-4">
-              <h4 class="text-sm font-medium text-base-content/70 mb-2">Существующие фотоинструкции:</h4>
+              <h4 class="text-sm font-medium text-muted mb-2">Существующие фотоинструкции:</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div v-for="photo in existingInstructionPhotos" :key="photo.id" class="relative">
                   <img
@@ -49,7 +49,7 @@
 
             <!-- New photo previews -->
             <div v-if="instructionPhotos.length > 0" class="mb-4">
-              <h4 class="text-sm font-medium text-base-content/70 mb-2">Новые фотоинструкции:</h4>
+              <h4 class="text-sm font-medium text-muted mb-2">Новые фотоинструкции:</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div v-for="(photo, index) in instructionPhotos" :key="index" class="relative">
                   <img
@@ -71,7 +71,7 @@
               </div>
             </div>
 
-            <div v-if="existingInstructionPhotos.length === 0 && instructionPhotos.length === 0" class="text-center py-8 text-base-content/50">
+            <div v-if="existingInstructionPhotos.length === 0 && instructionPhotos.length === 0" class="text-center py-8 text-subtle">
               <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
@@ -88,7 +88,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div>
                 <h2 class="text-lg font-semibold">{{ field.label }}</h2>
-                <p v-if="field.help" class="text-sm text-base-content/70">{{ field.help }}</p>
+                <p v-if="field.help" class="text-sm text-muted">{{ field.help }}</p>
                 <div class="alert alert-info mt-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -109,7 +109,7 @@
 
             <!-- Existing photos -->
             <div v-if="existingReportPhotos.length > 0" class="mb-4">
-              <h4 class="text-sm font-medium text-base-content/70 mb-2">Существующие фотоотчеты:</h4>
+              <h4 class="text-sm font-medium text-muted mb-2">Существующие фотоотчеты:</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div v-for="photo in existingReportPhotos" :key="photo.id" class="relative">
                   <img
@@ -126,7 +126,7 @@
 
             <!-- New photo previews -->
             <div v-if="reportPhotos.length > 0" class="mb-4">
-              <h4 class="text-sm font-medium text-base-content/70 mb-2">Новые фотоотчеты:</h4>
+              <h4 class="text-sm font-medium text-muted mb-2">Новые фотоотчеты:</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div v-for="(photo, index) in reportPhotos" :key="index" class="relative">
                   <img
@@ -148,7 +148,7 @@
               </div>
             </div>
 
-            <div v-if="existingReportPhotos.length === 0 && reportPhotos.length === 0" class="text-center py-8 text-base-content/50">
+            <div v-if="existingReportPhotos.length === 0 && reportPhotos.length === 0" class="text-center py-8 text-subtle">
               <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
@@ -204,7 +204,7 @@
                     <div>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-base-content/70 p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-muted p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
@@ -324,7 +324,7 @@
                       </label>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-base-content/70 p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-muted p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->

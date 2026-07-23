@@ -4,7 +4,7 @@
     <div class="mb-4">
       <label class="label">
         <span class="label-text font-semibold">Роли пользователя</span>
-        <span class="label-text-alt text-base-content/70">
+        <span class="label-text-alt text-muted">
           Выберите роли для назначения. Можно выбрать несколько ролей.
         </span>
       </label>
@@ -13,7 +13,7 @@
     <!-- Loading state -->
     <div v-if="loading" class="flex justify-center py-8">
       <span class="loading loading-spinner loading-md"></span>
-      <span class="ml-3 text-base-content/70">Загрузка ролей...</span>
+      <span class="ml-3 text-muted">Загрузка ролей...</span>
     </div>
 
     <!-- Error state -->
@@ -51,10 +51,10 @@
               <span v-if="isRoleSystem(role)" class="badge badge-info badge-xs">Системная</span>
               <span v-if="isRoleAssigned(role.id)" class="badge badge-success badge-xs">Выбрана</span>
             </div>
-            <div v-if="role.description" class="text-sm text-base-content/70 mt-1">
+            <div v-if="role.description" class="text-sm text-muted mt-1">
               {{ role.description }}
             </div>
-            <div v-else class="text-xs text-base-content/50 mt-1 italic">
+            <div v-else class="text-xs text-subtle mt-1 italic">
               Нет описания
             </div>
           </label>
@@ -62,12 +62,12 @@
       </template>
 
       <!-- No roles message -->
-      <div v-if="availableRoles.length === 0 && !loading && !error" class="text-center py-8 text-base-content/50">
-        <svg class="w-12 h-12 mx-auto mb-3 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="availableRoles.length === 0 && !loading && !error" class="text-center py-8 text-subtle">
+        <svg class="w-12 h-12 mx-auto mb-3 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
-        <p class="text-base-content/70 font-medium">Нет доступных ролей</p>
-        <p class="text-sm text-base-content/50 mt-1">
+        <p class="text-muted font-medium">Нет доступных ролей</p>
+        <p class="text-sm text-subtle mt-1">
           Роли могут быть еще не загружены или не настроены в системе.
         </p>
         <button 
@@ -103,7 +103,7 @@
     </div>
 
     <!-- Help text -->
-    <div class="mt-4 text-xs text-base-content/60 border-t border-base-300 pt-3">
+    <div class="mt-4 text-xs text-muted border-t border-base-300 pt-3">
       <p class="flex items-start gap-2">
         <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -116,12 +116,12 @@
         </svg>
         <span>
           Для назначения ролей требуется разрешение <code class="bg-base-300 px-1 rounded text-xs">rbac.manage_user_roles</code>
-          <span class="text-xs block mt-1 text-base-content/50">
+          <span class="text-xs block mt-1 text-subtle">
             Текущие разрешения: {{ permissionsStore.permissions.map(p => p.codename).join(', ') || 'не загружены' }}
           </span>
         </span>
       </p>
-      <p v-if="props.disabled" class="mt-2 text-base-content/50 flex items-start gap-2">
+      <p v-if="props.disabled" class="mt-2 text-subtle flex items-start gap-2">
         <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
         </svg>

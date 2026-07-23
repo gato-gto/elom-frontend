@@ -3,42 +3,42 @@
     <template #content>
       <div class="space-y-2 text-sm">
         <div>
-          <span class="text-base-content/60">Адрес:</span>
+          <span class="text-muted">Адрес:</span>
           <span class="font-medium ml-2">{{ object.address }}</span>
         </div>
         
         <div v-if="object.date_start">
-          <span class="text-base-content/60">Начало работ:</span>
+          <span class="text-muted">Начало работ:</span>
           <span class="font-medium ml-2 font-mono">{{ formatDate(object.date_start || null) }}</span>
         </div>
         
         <div v-if="object.date_end">
-          <span class="text-base-content/60">Окончание:</span>
+          <span class="text-muted">Окончание:</span>
           <span class="font-medium ml-2 font-mono">{{ formatDate(object.date_end) }}</span>
         </div>
         
         <div v-if="getProjectProgress() !== null">
-          <span class="text-base-content/60">Прогресс:</span>
+          <span class="text-muted">Прогресс:</span>
           <span class="font-medium ml-2 font-mono">{{ getProjectProgress() }}%</span>
         </div>
         
         <div v-if="object.responsible_name">
-          <span class="text-base-content/60">Ответственный:</span>
+          <span class="text-muted">Ответственный:</span>
           <span class="font-medium ml-2 text-primary">{{ object.responsible_name }}</span>
         </div>
         
         <div v-if="object.key_person_name">
-          <span class="text-base-content/60">Прораб:</span>
+          <span class="text-muted">Прораб:</span>
           <span class="font-medium ml-2">{{ object.key_person_name }}</span>
         </div>
         
         <div v-if="object.key_person_contacts">
-          <span class="text-base-content/60">Контакты прораба:</span>
+          <span class="text-muted">Контакты прораба:</span>
           <span class="font-medium ml-2">{{ object.key_person_contacts }}</span>
         </div>
         
         <div v-if="object.location_url">
-          <span class="text-base-content/60">Локация:</span>
+          <span class="text-muted">Локация:</span>
           <a 
             :href="object.location_url" 
             target="_blank" 
@@ -50,14 +50,14 @@
         </div>
         
         <div v-else-if="object.lat && object.lng">
-          <span class="text-base-content/60">Координаты:</span>
+          <span class="text-muted">Координаты:</span>
           <span class="font-medium ml-2 font-mono">{{ object.lat }}, {{ object.lng }}</span>
         </div>
       </div>
     </template>
     
     <template #extra>
-      <div class="flex justify-between items-center text-xs text-base-content/60">
+      <div class="flex justify-between items-center text-xs text-muted">
         <span>Создан: <span class="font-mono">{{ formatDate(object.created_at) }}</span></span>
         <span v-if="object.updated_at !== object.created_at">
           Обновлен: <span class="font-mono">{{ formatDate(object.updated_at) }}</span>

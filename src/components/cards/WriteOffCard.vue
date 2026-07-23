@@ -9,54 +9,54 @@
     <template #content>
       <div class="space-y-2 text-sm">
         <div>
-          <span class="text-base-content/60">Дата:</span>
+          <span class="text-muted">Дата:</span>
           <span class="font-medium ml-2 font-mono">{{ formatDate(writeOff.date) }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Объект:</span>
+          <span class="text-muted">Объект:</span>
           <span class="font-medium ml-2">{{ writeOff.object_name }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Количество списания:</span>
+          <span class="text-muted">Количество списания:</span>
           <span class="font-medium ml-2 text-error font-mono">
             -{{ formatQuantity(writeOff.quantity) }} {{ writeOff.unit_code }}
           </span>
         </div>
         
         <div v-if="writeOff.responsible_name">
-          <span class="text-base-content/60">Ответственный:</span>
+          <span class="text-muted">Ответственный:</span>
           <span class="font-medium ml-2">{{ writeOff.responsible_name }}</span>
         </div>
         
         <div v-if="writeOff.stage">
-          <span class="text-base-content/60">Этап:</span>
+          <span class="text-muted">Этап:</span>
           <span class="font-medium ml-2">{{ getStageLabel(writeOff.stage) }}</span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Остаток до списания:</span>
+          <span class="text-muted">Остаток до списания:</span>
           <span class="font-medium ml-2 text-info font-mono">
             {{ formatQuantity(writeOff.current_balance) }} {{ writeOff.unit_code }}
           </span>
         </div>
         
         <div>
-          <span class="text-base-content/60">Остаток после списания:</span>
+          <span class="text-muted">Остаток после списания:</span>
           <span class="font-medium ml-2 text-success font-mono">
             {{ formatQuantity(getBalanceAfter()) }} {{ writeOff.unit_code }}
           </span>
         </div>
         
         <div v-if="writeOff.comment">
-          <span class="text-base-content/60">Комментарий:</span>
+          <span class="text-muted">Комментарий:</span>
           <span class="font-medium ml-2">{{ truncateText(writeOff.comment, 80) }}</span>
         </div>
         
         
         <div v-if="writeOff.smart_quantity">
-          <span class="text-base-content/60">Умная конвертация:</span>
+          <span class="text-muted">Умная конвертация:</span>
           <span class="font-medium ml-2 font-mono">
             {{ writeOff.smart_quantity.display_value }} {{ writeOff.smart_quantity.display_unit }}
             <span v-if="writeOff.smart_quantity.conversion_applied" class="text-xs text-warning ml-1">
@@ -68,7 +68,7 @@
     </template>
     
     <template #extra>
-      <div class="flex justify-between items-center text-xs text-base-content/60">
+      <div class="flex justify-between items-center text-xs text-muted">
         <span class="font-mono">Создано: {{ formatDate(writeOff.created_at) }}</span>
         <span v-if="writeOff.updated_at !== writeOff.created_at" class="font-mono">
           Обновлено: {{ formatDate(writeOff.updated_at) }}
