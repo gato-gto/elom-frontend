@@ -26,6 +26,13 @@
       <template #column-responsible="{ item, value }">
         <span>{{ item.responsible_name || responsibleName(item.responsible) || '—' }}</span>
       </template>
+
+      <!-- F-316: автор записи. Пусто = автор неизвестен (историческая запись/импорт),
+           показываем это честно, а не подставляем ответственного. -->
+      <template #column-created_by__username="{ item }">
+        <span v-if="item.created_by_name">{{ item.created_by_name }}</span>
+        <span v-else class="text-xs opacity-60">неизвестно</span>
+      </template>
     </GenericList>
 
     <!-- Modal for creating/editing purchase -->
@@ -141,6 +148,9 @@ const listConfig = computed(() => ({
     { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name
     { key: 'supplier__name', label: 'Поставщик', sortable: true, displayKey: 'supplier_name' }, // Используем supplier__name для сортировки, но отображаем supplier_name
     { key: 'responsible__id', label: 'Ответственный', sortable: true, displayKey: 'responsible_name' }, // Используем responsible__id для сортировки, но отображаем responsible_name
+    // F-316: кто ВНЁС запись — это не «Ответственный». Сортировка реальная:
+    // created_by__username добавлен в ordering_fields на бэке (иначе была бы мёртвая сортировка).
+    { key: 'created_by__username', label: 'Внёс', sortable: true, displayKey: 'created_by_name' },
     { key: 'items', label: 'Позиций', sortable: false, formatter: (value: any) => value?.length ?? 0 }
   ],
   filters: [

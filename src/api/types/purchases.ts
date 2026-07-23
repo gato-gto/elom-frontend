@@ -47,6 +47,12 @@ export interface Purchase {
   // F-271/D-019: аннотация с бэка — есть ли хотя бы одно фото типа «report».
   // Для завершённой закупки без него показываем янтарный маркер «нет фото-отчёта».
   has_report_photos?: boolean;
+  // F-316: АВТОР записи — кто внёс её через форму. Это не responsible
+  // (ответственный по делу). Пусто = автор неизвестен (историческая запись/импорт).
+  created_by?: number | null;
+  created_by_name?: string | null;
+  updated_by?: number | null;
+  updated_by_name?: string | null;
   created_at: string;
   updated_at: string;
 }

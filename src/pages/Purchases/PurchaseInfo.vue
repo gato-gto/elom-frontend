@@ -71,6 +71,18 @@
             <span class="info-value">{{ purchase.invoice_number }}</span>
           </div>
         </div>
+        <!-- F-316: кто внёс запись. Отличается от «Ответственный»: ответственный
+             отвечает за закупку по делу, автор — тот, кто завёл её в системе. -->
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Внёс:</span>
+            <span class="info-value">{{ purchase.created_by_name || 'неизвестно' }}</span>
+          </div>
+          <div class="info-item" v-if="purchase.updated_by_name && purchase.updated_by !== purchase.created_by">
+            <span class="info-label">Изменил:</span>
+            <span class="info-value">{{ purchase.updated_by_name }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Таблица позиций -->
