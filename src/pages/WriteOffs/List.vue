@@ -83,6 +83,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useEditQuery } from '@/composables/useEditQuery'
 import type { WriteOff, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
@@ -331,12 +332,12 @@ onMounted(async () => {
   // отдельной страницей рендерила пустой экран). Открываем нужную модалку по query.
   if (route.query.new) {
     openCreate()
-  } else if (route.query.edit) {
-    const id = Number(route.query.edit)
-    const found = writeOffsStore.items.find((w: WriteOff) => w.id === id)
-    if (found) { openEdit(found) }   // не нашли в загруженной странице — просто остаёмся на списке
   }
+  // ?edit=:id обрабатывает общий useEditQuery (ниже) — он переживает асинхронную загрузку списка.
 })
+
+// F-507: единый механизм открытия модалки по ?edit=:id (см. F-505)
+useEditQuery(writeOffsStore, openEdit)
 </script>
 
 <style scoped>

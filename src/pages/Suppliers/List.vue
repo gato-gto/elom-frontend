@@ -73,6 +73,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import SupplierForm from './SupplierForm.vue'
 import { usePermissions } from '@/composables/usePermissions'
+import { useEditQuery } from '@/composables/useEditQuery'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
@@ -256,6 +257,10 @@ onMounted(async () => {
     await handleLoadingError(error, 'suppliers')
   }
 })
+
+// F-507: /:id/edit ведёт сюда с ?edit=:id — открываем модалку уже с записью
+// (форма получает данные только через :initial, роутом рендерилась пустой — см. F-505).
+useEditQuery(suppliersStore, openEdit)
 </script>
 
 <style scoped>

@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useEditQuery } from '@/composables/useEditQuery'
 import type { Purchase, SiteObject, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate } from '@/utils/formatters'
@@ -94,7 +94,6 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
 // Modal state
 const modalOpen = ref(false)
-const route = useRoute()
 const editingPurchase = ref<Purchase | null>(null)
 const viewModalOpen = ref(false)
 const viewingPurchase = ref<Purchase | null>(null)
@@ -364,14 +363,10 @@ onMounted(async () => {
     await handleLoadingError(error, 'purchases')
   }
 
-  // F-505: /purchases/:id/edit ведёт сюда (форма получает данные только через :initial).
-  // Открываем модалку редактирования уже с записью.
-  if (route.query.edit) {
-    const id = Number(route.query.edit)
-    const found = purchasesStore.items.find((x: Purchase) => x.id === id)
-    if (found) { openEditModal(found) }   // нет в загруженной странице — просто остаёмся на списке
-  }
 })
+
+// F-507: единый механизм открытия модалки по ?edit=:id (см. F-505)
+useEditQuery(purchasesStore, openEditModal)
 </script>
 
 <style scoped>

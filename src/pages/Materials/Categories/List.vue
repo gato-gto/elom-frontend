@@ -78,6 +78,7 @@ import Modal from '@/components/Modal.vue'
 import GenericList from '@/components/GenericList.vue'
 import MaterialCategoryCard from '@/components/cards/MaterialCategoryCard.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useEditQuery } from '@/composables/useEditQuery'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
@@ -236,6 +237,10 @@ onMounted(async () => {
     await handleLoadingError(error, 'material-categories')
   }
 })
+
+// F-507: /:id/edit ведёт сюда с ?edit=:id — открываем модалку уже с записью
+// (форма получает данные только через :initial, роутом рендерилась пустой — см. F-505).
+useEditQuery(materialCategoriesStore, openEdit)
 </script>
 
 <style scoped>

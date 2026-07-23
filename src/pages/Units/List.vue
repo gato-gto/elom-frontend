@@ -58,6 +58,7 @@ import { useUnitsStore } from '@/stores/units'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useEditQuery } from '@/composables/useEditQuery'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import type { Unit } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
@@ -258,6 +259,10 @@ onMounted(async () => {
     await handleLoadingError(error, 'units')
   }
 })
+
+// F-507: /:id/edit ведёт сюда с ?edit=:id — открываем модалку уже с записью
+// (форма получает данные только через :initial, роутом рендерилась пустой — см. F-505).
+useEditQuery(unitsStore, openEdit)
 </script>
 
 <style scoped>
