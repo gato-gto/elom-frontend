@@ -224,6 +224,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useResponsiveTable } from '@/composables/useResponsiveTable'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { usePermissions } from '@/composables/usePermissions'
+import { useUrlFilters } from '@/composables/useUrlFilters'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
 import { filterActionsByPermissions, getListPermissions, canPerformActionOnItem } from '@/utils/permissions'
@@ -252,6 +253,12 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// F-506: единая синхронизация «URL ↔ фильтры/сортировка/страница».
+// GenericList — единственная точка, через которую идут все списочные экраны, поэтому
+// deep-link, обратная запись в URL и «назад/вперёд» чинятся здесь один раз для всех.
+// Вызов ДО onMounted страницы: значения из URL попадают в store.filters до первого fetchList.
+useUrlFilters(props.store, () => props.config.filters)
 
 // Emits
 const emit = defineEmits<{
