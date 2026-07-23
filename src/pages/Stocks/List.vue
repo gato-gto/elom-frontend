@@ -7,14 +7,14 @@
       :config="listConfig"
       @export="handleExport"
     >
-      <!-- Custom column for object name -->
+      <!-- F-501: имя из ответа API (object_name/material_name); клиентский lookup — только
+           запасной путь (store.items перетирается любым fetchList). ID не показываем. -->
       <template #column-object="{ item, value }">
-        <span>{{ objectName(value) ?? value }}</span>
+        <span>{{ item.object_name || objectName(value) || '—' }}</span>
       </template>
 
-      <!-- Custom column for material name -->
       <template #column-material="{ item, value }">
-        <span>{{ materialName(value) ?? value }}</span>
+        <span>{{ item.material_name || materialName(value) || '—' }}</span>
       </template>
 
       <!-- Custom column for quantity with SmartUnitValue -->

@@ -21,14 +21,15 @@
         </button>
       </template>
 
-      <!-- Custom column for object name -->
+      <!-- F-501: имя приходит ИЗ ОТВЕТА API (object_name/material_name). Клиентский lookup по
+           общему стору — только запасной путь: store.items перетирается любым fetchList
+           (base.ts), из-за чего часть строк печатала голый ID. ID пользователю не показываем. -->
       <template #column-object="{ item, value }">
-        <span>{{ objectName(value) ?? value }}</span>
+        <span>{{ item.object_name || objectName(value) || '—' }}</span>
       </template>
 
-      <!-- Custom column for material name -->
       <template #column-material="{ item, value }">
-        <span>{{ materialName(value) ?? value }}</span>
+        <span>{{ item.material_name || materialName(value) || '—' }}</span>
       </template>
 
       <!-- Custom column for quantity with SmartUnitValue -->
