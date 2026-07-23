@@ -75,9 +75,21 @@ function serialize(v: unknown): string | undefined {
   return String(v)
 }
 
+/** Пустая заглушка, когда роутера нет (изолированное монтирование компонента, юнит-тесты). */
+const NOOP_SYNC = {
+  applyFromUrl: () => false,
+  buildQuery: () => ({} as Record<string, string>),
+  parseQuery: () => ({ patch: {} as Record<string, unknown>, page: undefined as number | undefined }),
+}
+
 export function useUrlFilters(store: any, getFilterConfigs: () => FilterConfig[] | undefined) {
   const route = useRoute()
   const router = useRouter()
+
+  // GenericList — общий компонент, его монтируют и вне роутера (юнит-тесты, изолированный рендер).
+  // Жёстко требовать роутер он не должен: без него просто нет синхронизации с URL.
+  if (!route || !router) { return NOOP_SYNC }
+
   // защита от цикла «пишем URL → срабатывает watch на query → применяем → снова пишем URL»
   let syncing = false
 
