@@ -49,7 +49,7 @@ function handlePrint() {
 
 <style scoped>
 .print-page {
-  background: #f5f5f5;
+  background: var(--color-base-200);
   min-height: 100vh;
   padding: 1rem;
 }
@@ -69,19 +69,20 @@ function handlePrint() {
 
 .info {
   font-size: 0.9rem;
-  color: #374151;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
 }
 
 .state {
   padding: 1rem;
-  background: white;
+  background: var(--color-base-100);
+  color: var(--color-base-content);
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .state.error {
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  color: var(--color-error);
+  border: 1px solid color-mix(in oklab, var(--color-error) 40%, transparent);
 }
 
 @media print {

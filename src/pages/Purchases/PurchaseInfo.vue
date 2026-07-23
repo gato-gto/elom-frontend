@@ -425,60 +425,35 @@ onUnmounted(() => {
 
 .actions-bar {
   padding: 1rem;
-  background: white;
+  background: var(--color-base-100);
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 10;
-  color: #000;
+  color: var(--color-base-content);
 }
 
 .actions-bar h2 {
-  color: #000 !important;
+  color: var(--color-base-content);
 }
 
 .invoice-paper {
-  background: white;
+  background: var(--color-base-100);
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 0.5rem;
-  /* Черный цвет текста для накладной (документ всегда на белом фоне) */
-  color: #000 !important;
+  /* Экран: фон/текст из токенов (корректно в light и dark). Печать форсит белый фон +
+     чёрный текст — см. @media print ниже (документ на бумаге всегда бело-чёрный). */
+  color: var(--color-base-content);
 }
 
-/* Принудительно черный текст для всех элементов накладной */
-.invoice-paper *,
-.invoice-paper h1,
-.invoice-paper h2,
-.invoice-paper h3,
-.invoice-paper p,
-.invoice-paper span,
-.invoice-paper td,
-.invoice-paper th,
-.invoice-paper div {
-  color: #000 !important;
-}
-
-/* Исключение для статусов - они имеют свои цвета */
-.invoice-paper .status-new {
-  color: #1e40af !important;
-}
-
-.invoice-paper .status-completed {
-  color: #065f46 !important;
-}
-
-.invoice-paper .status-cancelled {
-  color: #991b1b !important;
-}
-
-/* Серый цвет для меток */
+/* Приглушённый цвет для меток (base-content с прозрачностью — читаемо в обеих темах) */
 .invoice-paper .label,
 .invoice-paper .info-label,
 .invoice-paper .comment-label,
 .invoice-paper .signature-label {
-  color: #666 !important;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
 }
 
 /* Шапка накладной */
@@ -488,7 +463,7 @@ onUnmounted(() => {
   align-items: flex-start;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid var(--color-base-content);
 }
 
 .invoice-header-left {
@@ -511,7 +486,7 @@ onUnmounted(() => {
 
 .invoice-number .label {
   font-size: 0.875rem;
-  color: #666;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
 }
 
 .invoice-number .value {
@@ -529,7 +504,7 @@ onUnmounted(() => {
 
 .invoice-date .label {
   font-size: 0.875rem;
-  color: #666;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
   margin-right: 0.5rem;
 }
 
@@ -552,18 +527,18 @@ onUnmounted(() => {
 }
 
 .status-completed {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: color-mix(in oklab, var(--color-success) 15%, transparent);
+  color: var(--color-success);
 }
 
 .status-cancelled {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: color-mix(in oklab, var(--color-error) 15%, transparent);
+  color: var(--color-error);
 }
 
 .status-default {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: var(--color-base-200);
+  color: var(--color-base-content);
 }
 
 /* Информация о закупке */
@@ -585,7 +560,7 @@ onUnmounted(() => {
 
 .info-label {
   font-weight: 500;
-  color: #666;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
   min-width: 120px;
 }
 
@@ -678,15 +653,15 @@ onUnmounted(() => {
 .invoice-comment {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background-color: #f9fafb;
-  border-left: 3px solid #d1d5db;
+  background-color: var(--color-base-200);
+  border-left: 3px solid var(--color-base-300);
   border-radius: 0.25rem;
 }
 
 .comment-label {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #666;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
   font-size: 0.875rem;
 }
 
@@ -701,7 +676,7 @@ onUnmounted(() => {
   justify-content: space-between;
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid #d1d5db;
+  border-top: 1px solid var(--color-base-300);
 }
 
 .signature-block {
@@ -711,13 +686,13 @@ onUnmounted(() => {
 
 .signature-line {
   height: 1px;
-  background-color: #000;
+  background-color: var(--color-base-content);
   margin-bottom: 0.5rem;
 }
 
 .signature-label {
   font-size: 0.875rem;
-  color: #666;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
   text-align: center;
 }
 
@@ -725,7 +700,7 @@ onUnmounted(() => {
 .invoice-photos {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-base-300);
 }
 
 .photos-header {
@@ -749,7 +724,7 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 0.5rem;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-base-300);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -777,16 +752,58 @@ onUnmounted(() => {
 
 /* Стили для печати - основные стили в components.css */
 @media print {
-  /* Дополнительные стили специфичные для накладной */
+  /* Печать — документ на бумаге: ВСЕГДА белый фон + чёрный текст, независимо от темы
+     экрана. Явно гасим токен-заливки (в тёмной теме base-200/300 тёмные) — иначе тёмная
+     тема протекла бы в печать (жжёт тонер / нечитаемо). */
   .invoice-container {
     overflow: visible !important;
     max-height: none !important;
   }
-  
+
   .invoice-paper {
+    background: #fff !important;
+    color: #000 !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
+  }
+
+  .invoice-paper * {
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+
+  /* Лёгкие серые заливки для читаемости таблицы (не тёмные) */
+  .invoice-table thead,
+  .invoice-table tbody tr:nth-child(even),
+  .total-row {
+    background-color: #f0f0f0 !important;
+  }
+
+  .invoice-comment {
+    background-color: #f7f7f7 !important;
+    border-left-color: #000 !important;
+  }
+
+  .signature-line {
+    background-color: #000 !important;
+  }
+
+  /* Статусы в печати — без цветных заливок, только контур + чёрный текст */
+  .invoice-status {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+
+  /* Метки чуть светлее чёрного, но не прозрачные (color-mix с transparent на бумаге бледнит) */
+  .invoice-paper .label,
+  .invoice-paper .info-label,
+  .invoice-paper .comment-label,
+  .invoice-paper .signature-label,
+  .invoice-number .label,
+  .invoice-date .label {
+    color: #333 !important;
   }
 }
 
