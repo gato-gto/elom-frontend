@@ -109,7 +109,10 @@ const routes = [
   {
     path: '/materials/:id/edit',
     name: 'MaterialEdit',
-    component: MaterialForm,
+    // F-505: форма получает данные ТОЛЬКО через prop :initial (её открывает список модалкой).
+    // Роутом она монтировалась без пропса → ПУСТАЯ форма редактирования, которую можно отправить.
+    // Ведём на список с ?edit=:id — там модалка открывается уже с записью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/materials', query: { edit: String(to.params.id) } }),
     meta: { 
       title: 'Редактировать материал',
       breadcrumb: 'Материалы / Редактировать',
@@ -161,7 +164,10 @@ const routes = [
   {
     path: '/material_categories/:id/edit',
     name: 'MaterialCategoryEdit',
-    component: MaterialCategoryForm,
+    // F-505: форма получает данные ТОЛЬКО через prop :initial (её открывает список модалкой).
+    // Роутом она монтировалась без пропса → ПУСТАЯ форма редактирования, которую можно отправить.
+    // Ведём на список с ?edit=:id — там модалка открывается уже с записью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/material_categories', query: { edit: String(to.params.id) } }),
     meta: { 
       title: 'Редактировать категорию',
       breadcrumb: 'Категории материалов / Редактировать',
@@ -201,7 +207,10 @@ const routes = [
   {
     path: '/purchases/:id/edit',
     name: 'PurchaseEdit',
-    component: PurchaseForm,
+    // F-505: форма получает данные ТОЛЬКО через prop :initial (её открывает список модалкой).
+    // Роутом она монтировалась без пропса → ПУСТАЯ форма редактирования, которую можно отправить.
+    // Ведём на список с ?edit=:id — там модалка открывается уже с записью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/purchases', query: { edit: String(to.params.id) } }),
     meta: { 
       title: 'Редактировать закупку',
       breadcrumb: 'Закупки / Редактировать',
@@ -293,7 +302,10 @@ const routes = [
   {
     path: '/units/:id/edit',
     name: 'UnitEdit',
-    component: UnitForm,
+    // F-505: форма получает данные ТОЛЬКО через prop :initial (её открывает список модалкой).
+    // Роутом она монтировалась без пропса → ПУСТАЯ форма редактирования, которую можно отправить.
+    // Ведём на список с ?edit=:id — там модалка открывается уже с записью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/units', query: { edit: String(to.params.id) } }),
     meta: { 
       title: 'Редактировать единицу',
       breadcrumb: 'Единицы / Редактировать',
@@ -333,7 +345,10 @@ const routes = [
   {
     path: '/employees/:id/edit',
     name: 'EmployeeEdit',
-    component: EmployeeForm,
+    // F-505: форма получает данные ТОЛЬКО через prop :initial (её открывает список модалкой).
+    // Роутом она монтировалась без пропса → ПУСТАЯ форма редактирования, которую можно отправить.
+    // Ведём на список с ?edit=:id — там модалка открывается уже с записью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/employees', query: { edit: String(to.params.id) } }),
     meta: { 
       title: 'Редактировать сотрудника',
       breadcrumb: 'Сотрудники / Редактировать',
@@ -373,7 +388,10 @@ const routes = [
   {
     path: '/suppliers/:id/edit',
     name: 'SupplierEdit',
-    component: SupplierForm,
+    // F-505: форма получает данные ТОЛЬКО через prop :initial (её открывает список модалкой).
+    // Роутом она монтировалась без пропса → ПУСТАЯ форма редактирования, которую можно отправить.
+    // Ведём на список с ?edit=:id — там модалка открывается уже с записью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/suppliers', query: { edit: String(to.params.id) } }),
     meta: { 
       title: 'Редактировать поставщика',
       breadcrumb: 'Поставщики / Редактировать',
