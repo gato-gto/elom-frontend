@@ -105,7 +105,7 @@ async function shot(ctx, tag, route, meta, opts = {}) {
   let a = {}
   try { a = await page.evaluate(PAGE_AUDIT) } catch (e) { a = { err: e.message.slice(0, 70) } }
   const f = SHOTS + '/' + tag + '.png'
-  if (!existsSync(f)) { try { await page.screenshot({ path: f, fullPage: !!opts.full }) } catch {} }
+  if (!existsSync(f)) { try { await page.screenshot({ path: f, fullPage: !!opts.full }) } catch { /* скриншот не критичен для сбора метрик */ } }
   appendFileSync(OUT, JSON.stringify({ tag, route, ...meta, ...a, consoleErrors: errors.slice(0, 4), failedReq: failed.slice(0, 5) }) + '\n')
   await page.close()
 }

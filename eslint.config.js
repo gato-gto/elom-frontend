@@ -131,6 +131,28 @@ export default [
     }
   },
   {
+    // F-315: оснастка UI-аудита — Node-скрипт, часть кода которого выполняется В СТРАНИЦЕ
+    // (page.evaluate), поэтому здесь легитимно соседствуют node- и browser-глобалы.
+    files: ['tools/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        document: 'readonly',
+        getComputedStyle: 'readonly',
+        innerWidth: 'readonly',
+        innerHeight: 'readonly',
+        localStorage: 'readonly',
+        location: 'readonly',
+        matchMedia: 'readonly'
+      },
+      sourceType: 'module'
+    },
+    rules: {
+      'no-console': 'off'
+    }
+  },
+  {
     ignores: [
       'dist/**',
       'node_modules/**',
