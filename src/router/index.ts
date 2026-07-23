@@ -189,7 +189,11 @@ const routes = [
       description: 'Управление закупками и поставками',
       category: 'purchases',
       order: 3,
-      permissions: ['purchases.view']  // RBAC
+      // F-512: заявитель имеет purchases.view_own (не .view) и бэкенд пускает его на список
+      // (PurchasesPermission: SAFE_METHODS → view ИЛИ view_own, queryset скоупит по объектам).
+      // Без view_own этот пункт исчезал из меню и роут-гард не пускал — роль оставалась без
+      // своих главных экранов. Показываем ссылку тем, у кого доступ реально есть.
+      permissions: ['purchases.view', 'purchases.view_own']
     }
   },
   {
@@ -413,7 +417,8 @@ const routes = [
       description: 'Журнал движений материалов',
       category: 'inventory',
       order: 6,
-      permissions: ['stock.view']
+      // F-512: stock.view_own достаточно — StockViewSet скоупит движения по назначенным объектам.
+      permissions: ['stock.view', 'stock.view_own']
     }
   },
   {
@@ -427,7 +432,8 @@ const routes = [
       description: 'Текущие остатки материалов по объектам',
       category: 'inventory',
       order: 7,
-      permissions: ['stock.view']
+      // F-512: заявитель с stock.view_own видит свои остатки (queryset скоупит по объектам).
+      permissions: ['stock.view', 'stock.view_own']
     }
   },
   {
@@ -457,7 +463,9 @@ const routes = [
       description: 'Управление списаниями материалов',
       category: 'writeoffs',
       order: 3,
-      permissions: ['writeoffs.view']
+      // F-512: заявитель имеет writeoffs.view_own; бэкенд WriteOffViewSet гейтит через
+      // StockPermission (stock.view/stock.view_own) и скоупит queryset по назначенным объектам.
+      permissions: ['writeoffs.view', 'writeoffs.view_own']
     }
   },
   {
