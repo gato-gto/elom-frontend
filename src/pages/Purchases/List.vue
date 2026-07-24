@@ -133,6 +133,11 @@ const listConfig = computed(() => ({
   showCreate: true,
   createText: isRequester.value ? 'Новая заявка' : 'Новая закупка',
   canCreate: canCreateRequests.value || canApprovePurchases.value, // может создавать заявки или закупки
+  // F-517: кнопка создания видна при ЛЮБОМ из прав — иначе GenericList проверял только
+  // purchases.create (ресурсный дефолт) и прятал кнопку у заявителя с purchases.create_request.
+  // Бэкенд POST принимает оба (PurchasesPermission). purchases.create покрывает менеджеров/
+  // одобряющих (у них есть create), create_request — заявителя.
+  createPermissionAny: ['purchases.create', 'purchases.create_request'],
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'purchases',

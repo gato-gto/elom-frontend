@@ -92,10 +92,20 @@ export function usePermissions() {
   // ============================================================
   
   /**
-   * Может ли пользователь создавать заявки (requester функционал)
+   * Может ли пользователь создавать заявки (requester функционал).
+   *
+   * F-517: раньше проверяли ТОЛЬКО `purchases.create`. Но у роли «Заявитель» право называется
+   * `purchases.create_request` (создание заявки, не полноценной закупки) — с одним `create` она
+   * получала canCreateRequests=false и оставалась БЕЗ кнопки создания: роль, смысл которой
+   * подавать заявки, не могла подать ни одной (замерено вживую на проде: 0 кнопок создания на
+   * /purchases). Бэкенд POST-заявку по create_request уже принимает
+   * (PurchasesPermission: create ИЛИ create_request), то есть доступ реально был — прятал его
+   * фронт. Тот же класс, что F-512: фронт-гард проверял не тот вариант права. Модель прав не
+   * меняем — выравниваем фронт с уже существующим и соблюдаемым бэком доступом.
    */
-  const canCreateRequests = computed(() => 
-    hasPermission('purchases.create') && !hasPermission('purchases.approve')
+  const canCreateRequests = computed(() =>
+    (hasPermission('purchases.create') || hasPermission('purchases.create_request')) &&
+    !hasPermission('purchases.approve')
   )
   
   /**

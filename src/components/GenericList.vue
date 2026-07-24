@@ -195,9 +195,9 @@
           <h3 class="text-lg font-medium text-base-content mb-1">{{ config.emptyTitle || 'Нет данных' }}</h3>
           <p class="text-muted">{{ config.emptySubtitle || 'Создайте первый элемент для начала работы' }}</p>
         </div>
-        <button 
-          v-if="config.showCreate && config.canCreate" 
-          class="btn btn-primary" 
+        <button
+          v-if="config.showCreate && canCreate"
+          class="btn btn-primary"
           @click="$emit('create')"
         >
           {{ config.createText || 'Создать' }}
@@ -297,6 +297,13 @@ const canExport = computed(() => {
 
 // ✅ RBAC: Проверка разрешения на создание
 const canCreate = computed(() => {
+  // F-517: одно действие может покрываться разными правами (напр. purchases.create ИЛИ
+  // purchases.create_request у роли «Заявитель» — бэкенд на POST принимает оба). Если список
+  // задал createPermissionAny явно, кнопку показываем при наличии ЛЮБОГО из них. Иначе —
+  // прежняя логика по одиночному {resource}.create, поведение остальных списков не меняется.
+  if (props.config.createPermissionAny?.length) {
+    return permissions.hasAnyPermission(...props.config.createPermissionAny)
+  }
   const listPermissions = getListPermissions(props.config)
   if (listPermissions.create) {
     return permissions.hasPermission(listPermissions.create)
