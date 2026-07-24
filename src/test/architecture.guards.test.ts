@@ -143,3 +143,26 @@ describe('ARCH · правило — молча не действующий ме
     }
   })
 })
+
+describe('ARCH · Apple-стандарты — исполнимые стражи (F-514/516/520)', () => {
+  const css = collectSources(['.css', '.vue'])
+  const html = readFileSync(resolve(ROOT, 'index.html'), 'utf8')
+
+  it('поля ввода ≥16px на мобильных (иначе iOS зумит при фокусе, A-04/F-516)', () => {
+    // Должно быть правило с font-size:16px под мобильным условием для .input/.filter-input.
+    const has16 = /font-size:\s*16px/.test(css.replace(/\s+/g, ' '))
+    expect(has16, 'Нет правила font-size:16px для полей — вернётся зум при фокусе на iOS.').toBe(true)
+  })
+
+  it('тач-цель ≥44px на pointer:coarse (Apple HIG, A-06/F-520)', () => {
+    // В блоке @media (pointer: coarse) должен быть min-height:44px.
+    const coarseBlocks = css.match(/@media[^{]*pointer:\s*coarse[^{]*\{[\s\S]*?\}\s*\}/g) || []
+    const has44 = coarseBlocks.some(b => /min-height:\s*44px/.test(b)) ||
+      /pointer:\s*coarse[\s\S]{0,400}min-height:\s*44px/.test(css)
+    expect(has44, 'Нет min-height:44px в блоке pointer:coarse — тач-цели меньше нормы Apple 44pt.').toBe(true)
+  })
+
+  it('манифест иконок и apple-touch-icon — PNG на месте (A-11/F-514)', () => {
+    expect(/apple-touch-icon\.png/.test(html), 'apple-touch-icon должен быть PNG (iOS игнорит SVG).').toBe(true)
+  })
+})

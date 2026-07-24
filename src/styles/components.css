@@ -190,6 +190,26 @@
   }
 }
 
+/* A-06 (F-520): тач-цель ≥44pt (Apple HIG). Замерено вживую: часть контролов рендерилась 40px
+   (поля/кастомные кнопки), а -xs в плотных строках — 32px. На тач-устройствах поднимаем
+   минимальную высоту. pointer:coarse — целимся именно в тач, десктоп с мышью не трогаем. */
+@media (pointer: coarse) {
+  .btn,
+  .input,
+  .select,
+  .textarea,
+  .file-input,
+  .action-btn {
+    min-height: 44px;
+  }
+  /* Квадратные иконки-кнопки/крестики — область нажатия по обеим осям. */
+  .btn-circle,
+  .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* F-313: плейсхолдеры — сплошной третичный токен (~5.3:1); было base-content/20 ≈ 1.49:1 */
 .input::placeholder,
 .textarea::placeholder,

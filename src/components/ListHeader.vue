@@ -228,6 +228,13 @@ defineEmits<{
   text-decoration: none;
 }
 
+/* A-06 (F-520): тач-цель ≥44pt (Apple HIG). Глобальное правило перебивалось scoped-селектором. */
+@media (pointer: coarse) {
+  .action-btn {
+    min-height: 44px;
+  }
+}
+
 .action-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -326,7 +333,7 @@ defineEmits<{
   .action-btn {
     padding: 0.4375rem 0.625rem;
     font-size: 0.6875rem;
-    min-height: 2.5rem; /* Сохраняем минимальный размер для кликабельности */
+    min-height: 44px; /* A-06 (F-520): тач-цель ≥44pt (было 2.5rem=40px, перебивало coarse-правило) */
   }
   
   .header-stats {

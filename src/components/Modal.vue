@@ -176,12 +176,19 @@ onBeforeUnmount(() => {
   width: 2.25rem;
   height: 2.25rem;
   flex-shrink: 0;
+  /* A-03 (F-520): на тач-устройствах тач-цель ≥44pt (Apple HIG). На десктопе 36px — мыши хватает. */
   border-radius: 0.375rem;
   border: 1px solid hsl(var(--bc) / 0.25);
   background: hsl(var(--b2));
   color: hsl(var(--bc));
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
+}
+@media (pointer: coarse) {
+  .modal-close-btn {
+    width: 2.75rem;  /* 44px — тач-цель Apple HIG */
+    height: 2.75rem;
+  }
 }
 .modal-close-btn:hover {
   background: color-mix(in oklab, var(--color-error) 12%, hsl(var(--b1)));

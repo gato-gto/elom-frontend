@@ -1450,8 +1450,11 @@ onMounted(() => {
     padding: 0.75rem;
   }
   
+  /* A-06 (F-520): кнопка удаления позиции (btn-xs btn-circle) была 32px даже на тач —
+     нарушение 44pt Apple HIG. Поднимаем до 44px именно на тач-устройствах. */
   .btn-xs {
-    min-height: 2rem;
+    min-height: 44px;
+    min-width: 44px;
     padding: 0.5rem;
   }
 }
