@@ -33,6 +33,11 @@ export const usePermissionsStore = defineStore('permissions', () => {
       return false
     }
   })
+
+  // F-525: права загружены хотя бы раз (или суперюзер — ему права не нужны). Пока false,
+  // навигация не должна показывать «пустое меню»: строится синхронным computed, а fetch —
+  // асинхронный, поэтому при холодной загрузке меню фильтровалось по ещё пустым правам.
+  const ready = computed<boolean>(() => isSuperuser.value || lastFetch.value !== null)
   
   /**
    * Загрузить разрешения пользователя из API
@@ -136,6 +141,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     clearCache,
     
     // Getters (computed)
+    ready,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,

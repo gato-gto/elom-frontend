@@ -1,5 +1,11 @@
 <template>
   <nav class="p-3 w-full animate-slide-in-left">
+    <!-- F-525: пока права грузятся (async), меню не строим по пустым правам — показываем
+         скелетон вместо «пустого меню». Группы ниже сами пусты до загрузки прав. -->
+    <div v-if="!permissionsStore.ready" class="space-y-2" aria-hidden="true" data-testid="nav-loading">
+      <div v-for="i in 6" :key="i" class="h-8 rounded-md bg-base-300/40 animate-pulse"></div>
+    </div>
+
     <!-- Business Operations -->
     <div v-if="businessOperations.length > 0" class="mb-4">
       <h3 class="text-xs font-semibold text-subtle uppercase tracking-wider mb-3 flex items-center">

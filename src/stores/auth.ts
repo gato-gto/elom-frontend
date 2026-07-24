@@ -3,6 +3,7 @@ import {defineStore} from 'pinia'
 import api from '@/api/client'
 import {endpoints} from '@/api/endpoints'
 import { parseApiError } from '@/utils/errorHandler'
+import { usePermissionsStore } from '@/stores/permissions'
 import type { Me } from '@/api/types/employees'
 
 type Tokens = { access: string; refresh: string }
@@ -113,6 +114,9 @@ export const useAuthStore = defineStore('auth', {
         logout(withRedirect = false) {
             this.me = null
             this.clearTokens()
+            // F-525: чистим кэш прав. Без этого при logout БЕЗ перезагрузки (withRedirect=false)
+            // in-memory права оставались, и следующий пользователь мог увидеть старое меню.
+            try { usePermissionsStore().clearCache() } catch { /* стор мог быть не готов */ }
             this.initialized = true
             if (withRedirect) {
                 const current = encodeURIComponent(location.pathname + location.search)
