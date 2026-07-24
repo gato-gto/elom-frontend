@@ -114,6 +114,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useMaterialsStore, getMaterialsInStock } from '@/stores/materials'
 import type { Material } from '@/api/types/materials'
+import { computeDropdownPosition } from '@/utils/dropdownPosition'
 
 const props = defineProps<{
   modelValue?: number | null
@@ -151,39 +152,32 @@ const loading = ref(false)
 const searchTimeout = ref<NodeJS.Timeout>()
 const isUserTyping = ref(false) // Флаг для отслеживания активного ввода пользователя
 let searchSeq = 0 // токен для отбрасывания устаревших (out-of-order) ответов поиска
+// F-518: реактивный «тик» пересчёта позиции. dropdownStyle кэшируется и не реагирует на
+// getBoundingClientRect сам по себе — при скролле/resize инкрементируем тик, чтобы меню
+// пересчитало координаты без грубого off/on-моргания.
+const positionTick = ref(0)
 
 const hasError = computed(() => !!props.error)
 const isSuccess = computed(() => !!props.isSuccess)
 
 // Calculate dropdown position - simplified with teleport
 const dropdownStyle = computed(() => {
+  void positionTick.value // F-518: dep — пересчёт при скролле/resize
   if (!searchInput.value || !showDropdown.value) {
     return {}
   }
-  
-  const rect = searchInput.value.getBoundingClientRect()
-  const viewportHeight = window.innerHeight
-  const dropdownHeight = 240 // max-h-60 = 240px
-  
-  // Check if there's enough space below
-  const spaceBelow = viewportHeight - rect.bottom
-  const spaceAbove = rect.top
-  
-  let top = rect.bottom + 4 // 4px gap
-  let maxHeight = Math.min(dropdownHeight, spaceBelow - 8)
-  
-  // If not enough space below, position above
-  if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
-    top = rect.top - Math.min(dropdownHeight, spaceAbove - 8)
-    maxHeight = Math.min(dropdownHeight, spaceAbove - 8)
-  }
-  
+
+  // F-518: расчёт вынесен в чистую computeDropdownPosition (см. utils/dropdownPosition.ts) —
+  // по умолчанию меню открывается ПОД полем и лишь ограничивает высоту; вверх откидывается,
+  // только когда снизу реально мало места. Раньше улетало вверх при любом < 240px снизу.
+  const pos = computeDropdownPosition(searchInput.value.getBoundingClientRect(), window.innerHeight)
+
   return {
     position: 'fixed' as const,
-    top: `${top}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    maxHeight: `${maxHeight}px`,
+    top: `${pos.top}px`,
+    left: `${pos.left}px`,
+    width: `${pos.width}px`,
+    maxHeight: `${pos.maxHeight}px`,
     zIndex: 9999
   }
 })
@@ -358,21 +352,20 @@ function handleClickOutside(event: Event) {
   }
 }
 
-// Handle window resize to recalculate position
-function handleResize() {
-  // Force reactivity update for dropdown position
+// F-518: пересчёт позиции при скролле/resize — просто инкремент тика (dropdownStyle
+// подхватит и пересчитает getBoundingClientRect). Без off/on-моргания, как было раньше.
+function handleReposition() {
   if (showDropdown.value) {
-    showDropdown.value = false
-    nextTick(() => {
-      showDropdown.value = true
-    })
+    positionTick.value++
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  window.addEventListener('resize', handleResize)
-  window.addEventListener('scroll', handleResize)
+  window.addEventListener('resize', handleReposition)
+  // capture:true — ловим скролл ЛЮБОГО контейнера (тело модалки скроллится и не поднимает
+  // событие до window без capture), иначе меню «отрывалось» от поля при прокрутке формы.
+  window.addEventListener('scroll', handleReposition, true)
   
   // Load initial material if modelValue is set
   if (props.modelValue) {
@@ -382,8 +375,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-  window.removeEventListener('resize', handleResize)
-  window.removeEventListener('scroll', handleResize)
+  window.removeEventListener('resize', handleReposition)
+  window.removeEventListener('scroll', handleReposition, true)
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value)
   }
