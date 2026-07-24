@@ -663,7 +663,11 @@
     position: fixed;
     top: 0;
     left: 0;
+    /* APPLE-3 (F-514): dvh с фолбэком vh — мобильный drawer не прыгает под адресной строкой iOS. */
     height: 100vh;
+    height: 100dvh;
+    /* APPLE-1 (F-514): шапка сайдбара не уходит под часы/чёлку при открытом drawer. */
+    padding-top: env(safe-area-inset-top);
     z-index: 50;
     transform: translateX(-100%);
     transition: transform 0.3s ease-in-out;

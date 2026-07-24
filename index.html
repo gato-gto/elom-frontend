@@ -9,13 +9,17 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover: включает env(safe-area-inset-*). Без него инсеты на iOS всегда 0,
+         и весь safe-area-код (баннеры PwaStatus, нижняя навигация, отступы main) не работает. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/svg+xml" sizes="16x16" href="/favicon-16x16.svg" />
     <link rel="icon" type="image/svg+xml" sizes="32x32" href="/favicon-32x32.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg" />
+    <!-- APPLE-2 (F-514): PNG, а не SVG — iOS не поддерживает SVG для иконки на домашнем экране.
+         Квадрат без прозрачности: iOS сам накладывает маску скругления. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <!-- манифест инжектит vite-plugin-pwa (manifest.webmanifest) -->
 
     <!-- Theme color for mobile browsers — copper (фирменный акцент) -->

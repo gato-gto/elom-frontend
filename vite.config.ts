@@ -32,8 +32,12 @@ export default defineConfig({
                 lang: 'ru',
                 categories: ['business', 'productivity'],
                 icons: [
-                    {src: '/android-chrome-192x192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable'},
-                    {src: '/android-chrome-512x512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable'},
+                    // APPLE-2 (F-514): PNG-иконки первыми — iOS/часть Android плохо берут SVG-maskable.
+                    // Квадратные без прозрачности → корректно работают как purpose 'any' и 'maskable'.
+                    {src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any'},
+                    {src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any'},
+                    {src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable'},
+                    {src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable'},
                     {src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml'},
                 ],
             },

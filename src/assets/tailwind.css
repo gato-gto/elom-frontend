@@ -193,6 +193,11 @@ html, body, #app {
        Декоративные границы карточек/разделителей остаются на border-base-300. */
     .border-control { border-color: hsl(var(--control-border)); }
 
+    /* APPLE-3 (F-514): высота на весь экран без прыжка под адресной строкой iOS.
+       Две декларации — vh как фолбэк для Safari <15.4 (в target есть safari14), dvh
+       перекрывает где поддерживается. Заменяет Tailwind min-h-screen (=100vh). */
+    .min-h-screen-dvh { min-height: 100vh; min-height: 100dvh; }
+
     /* F-313: удалены мёртвые .text-gray-70/.text-gray-60 (0 использований, хардкод-серый). */
 
     /* Responsive tables like Bootstrap's .table-responsive */
@@ -278,6 +283,27 @@ html, body, #app {
     .mobile-nav {
         /* Безопасная зона для iPhone */
         padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* APPLE-1 (F-514): отступы основного контента с учётом safe-area (только мобильные —
+       на lg действует lg:p-4 из шаблона, брейкпоинты не пересекаются).
+       Верх: max(базовый, инсет) — контент не уходит под часы/чёлку (status-bar-style
+       black-translucent). Низ: базовый запас под фиксированную .mobile-nav ПЛЮС инсет
+       home-indicator (иначе панель ~98px перекрывала бы последние строки при pb-20=80px). */
+    @media (max-width: 1023px) {
+        .app-main {
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+            padding-top: max(0.25rem, env(safe-area-inset-top));
+            padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+        }
+    }
+    @media (min-width: 640px) and (max-width: 1023px) {
+        .app-main {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: max(1rem, env(safe-area-inset-top));
+        }
     }
     
     /* Улучшенные тени для мобильной навигации */

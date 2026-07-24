@@ -591,7 +591,12 @@
     display: flex;
     flex-direction: column;
     animation: slideUp 0.3s ease;
+    /* APPLE-3 (F-514): dvh вместо vh — не прыгает под адресной строкой iOS (фолбэк vh для Safari <15.4). */
     max-height: 100vh;
+    max-height: 100dvh;
+    /* APPLE-1 (F-514): шапка меню не уходит под часы/чёлку, низ — над home-indicator. */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
     overflow: hidden;
   }
   

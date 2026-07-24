@@ -1,7 +1,7 @@
 <template>
-  <div class="login-bg min-h-screen relative">
+  <div class="login-bg min-h-screen-dvh relative">
     <!-- Main content -->
-    <div class="relative min-h-screen flex items-center justify-center p-4">
+    <div class="relative min-h-screen-dvh flex items-center justify-center p-4">
       <div class="w-full max-w-md">
         <!-- Brand section -->
         <div class="text-center mb-7">

@@ -432,7 +432,9 @@ onUnmounted(() => {
   max-width: 100%;
   /* Убираем скролл при просмотре, но оставляем возможность прокрутки если нужно */
   overflow-y: auto;
+  /* APPLE-3 (F-514): dvh с фолбэком vh — не подрезается под адресной строкой iOS. */
   max-height: calc(100vh - 4rem);
+  max-height: calc(100dvh - 4rem);
 }
 
 .actions-bar {

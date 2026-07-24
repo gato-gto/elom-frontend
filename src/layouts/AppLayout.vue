@@ -6,8 +6,10 @@
     <div class="drawer-content flex flex-col">
       
       
-      <!-- Page content -->
-      <main class="flex-1 p-1 sm:p-4 bg-base-200 pb-20 lg:pb-4">
+      <!-- Page content. APPLE-1 (F-514): отступы учитывают safe-area. Мобильные правила и
+           lg:p-4 живут в непересекающихся брейкпоинтах (max-width:1023 vs min-width:1024),
+           поэтому не конфликтуют по специфичности. -->
+      <main class="app-main flex-1 bg-base-200 lg:p-4">
         <router-view />
       </main>
     </div>

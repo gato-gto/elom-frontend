@@ -11,11 +11,26 @@
  *    форму без пропса → ПУСТАЯ форма редактирования, которую можно отправить (риск сохранить не то).
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
+import { resolve, join } from 'node:path'
 
 const ROOT = process.cwd()
 const routerSrc = readFileSync(resolve(ROOT, 'src/router/index.ts'), 'utf8')
+
+/** Рекурсивно собирает исходники src с нужными расширениями (для сканов по всему проекту). */
+function collectSources(exts: string[]): string {
+  const acc: string[] = []
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name)
+      const st = statSync(p)
+      if (st.isDirectory()) { walk(p) }
+      else if (exts.some(e => name.endsWith(e))) { acc.push(readFileSync(p, 'utf8')) }
+    }
+  }
+  walk(resolve(ROOT, 'src'))
+  return acc.join('\n')
+}
 
 /** Компоненты, которые роутер монтирует как страницы: `component: X` + их lazy-import путь. */
 function routeTargets(): Array<{ name: string; file: string }> {
@@ -101,4 +116,30 @@ describe('ARCH · правило 1 — форма не берёт данные �
       ).toBe(false)
     },
   )
+})
+
+describe('ARCH · правило — молча не действующий механизм снабжён проверкой действия (APPLE-1/F-514)', () => {
+  /**
+   * Класс дефекта «механизм написан, но молча не работает»: немой catch (F-504), мёртвая
+   * сортировка (200 без эффекта), мёртвая safe-area (env(safe-area-inset) без viewport-fit=cover).
+   * Здесь — исполнимая проверка для safe-area: если хоть одно правило использует
+   * env(safe-area-inset), то index.html ОБЯЗАН включать viewport-fit=cover, иначе инсеты на iOS
+   * всегда 0 и весь отступ-под-чёлку/home-indicator тихо не действует.
+   */
+  it('env(safe-area-inset) ⟹ viewport-fit=cover в index.html', () => {
+    const usesSafeArea = /env\(\s*safe-area-inset/.test(collectSources(['.css', '.vue']))
+    const html = readFileSync(resolve(ROOT, 'index.html'), 'utf8')
+    // Смотрим ИМЕННО тег <meta name="viewport">, а не любое упоминание строки в файле —
+    // иначе комментарий со словами «viewport-fit=cover» обманул бы страж (как image/* раньше).
+    const viewportMeta = html.match(/<meta[^>]*name=["']viewport["'][^>]*>/i)?.[0] ?? ''
+    const hasViewportFit = /viewport-fit\s*=\s*cover/.test(viewportMeta)
+    if (usesSafeArea) {
+      expect(
+        hasViewportFit,
+        'Код использует env(safe-area-inset-*), но в index.html нет viewport-fit=cover — ' +
+        'на iOS инсеты тогда всегда 0, и safe-area-отступы молча не работают (APPLE-1). ' +
+        'Либо верните viewport-fit=cover, либо уберите неработающий safe-area-код.',
+      ).toBe(true)
+    }
+  })
 })
