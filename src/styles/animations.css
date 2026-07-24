@@ -144,14 +144,17 @@ th:hover {
   
 }
 
-/* Поддержка reduced motion */
+/* A-13 (F-524): Поддержка prefers-reduced-motion — ГЛОБАЛЬНО.
+   Раньше отключались только .btn и .loading-overlay, а переходы модалок, слайды навигации и
+   прочее продолжали двигаться. Это канонический a11y-сброс (единственное место, где !important
+   идиоматичен — он должен перебить любую локальную анимацию). */
 @media (prefers-reduced-motion: reduce) {
-  
-  .btn {
-    transition: none;
-  }
-  
-  .loading-overlay {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

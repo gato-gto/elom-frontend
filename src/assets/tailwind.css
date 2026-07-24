@@ -129,6 +129,21 @@
 
 /* DaisyUI короткие base-переменные (используются кастомным CSS через hsl(var(--bX))) */
 @layer base {
+  /* A-12 (F-524): убираем серую вспышку тапа iOS; тактильный отклик даём через :active. */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (pointer: coarse) {
+    a:active,
+    button:active,
+    .btn:active,
+    [role="button"]:active,
+    .action-btn:active,
+    .mobile-nav-item:active {
+      opacity: 0.7;
+    }
+  }
+
   :root {
     --bc: 200 20% 15%;
     --b1: 0 0% 100%;
