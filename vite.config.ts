@@ -26,7 +26,9 @@ export default defineConfig({
                 description: 'Система учёта материалов и закупок для строительных объектов',
                 start_url: '/',
                 display: 'standalone',
-                orientation: 'portrait-primary',
+                // A-09 (F-521): разрешаем ландшафт (бриф требует его поддержки; на объекте телефон
+                // держат боком). Раньше portrait-primary блокировал ротацию в standalone.
+                orientation: 'any',
                 background_color: '#F4F7F8', // graphite-50 (светлый фон приложения)
                 theme_color: '#B0500F',      // copper-600 — фирменный акцент
                 lang: 'ru',

@@ -281,8 +281,10 @@ html, body, #app {
 
     /* Мобильная навигация - улучшения */
     .mobile-nav {
-        /* Безопасная зона для iPhone */
+        /* Безопасная зона для iPhone: низ — home-indicator; бока — чёлка в ландшафте (A-04). */
         padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
 
     /* APPLE-1 (F-514): отступы основного контента с учётом safe-area (только мобильные —
@@ -292,16 +294,18 @@ html, body, #app {
        home-indicator (иначе панель ~98px перекрывала бы последние строки при pb-20=80px). */
     @media (max-width: 1023px) {
         .app-main {
-            padding-left: 0.25rem;
-            padding-right: 0.25rem;
+            /* A-04 (F-521): боковые инсеты для ЛАНДШАФТА — в горизонтальной ориентации чёлка
+               слева/справа, и без этого контент уходит под неё. В портрете инсеты = 0. */
+            padding-left: max(0.25rem, env(safe-area-inset-left));
+            padding-right: max(0.25rem, env(safe-area-inset-right));
             padding-top: max(0.25rem, env(safe-area-inset-top));
             padding-bottom: calc(5rem + env(safe-area-inset-bottom));
         }
     }
     @media (min-width: 640px) and (max-width: 1023px) {
         .app-main {
-            padding-left: 1rem;
-            padding-right: 1rem;
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
             padding-top: max(1rem, env(safe-area-inset-top));
         }
     }
