@@ -8,9 +8,13 @@
     
     <!-- Input -->
     <input
-      v-if="type === 'input' || type === 'text' || type === 'email' || type === 'password' || type === 'number' || type === 'date'"
+      v-if="type === 'input' || type === 'text' || type === 'email' || type === 'password' || type === 'number' || type === 'date' || type === 'tel'"
       :value="modelValue"
       :type="getInputType()"
+      :inputmode="resolvedInputMode"
+      :autocapitalize="resolvedAutocapitalize"
+      :autocorrect="resolvedAutocorrect"
+      :spellcheck="resolvedSpellcheck"
       :name="uniqueFieldName"
       class="input input-bordered w-full transition-all duration-200 hover:border-primary focus:border-primary focus:outline-offset-0"
       :class="[
@@ -274,7 +278,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 
 // Generate unique field name to prevent browser autocomplete recognition
 const uniqueFieldName = `field_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`
@@ -286,7 +290,7 @@ interface Option {
 
 interface Props {
   modelValue?: any
-  type?: 'input' | 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'file' | 'checkbox' | 'radio' | 'switch' | 'range' | 'multiselect' | 'search'
+  type?: 'input' | 'text' | 'email' | 'password' | 'number' | 'date' | 'tel' | 'textarea' | 'select' | 'file' | 'checkbox' | 'radio' | 'switch' | 'range' | 'multiselect' | 'search'
   inputType?: string
   label?: string
   placeholder?: string
@@ -310,6 +314,10 @@ interface Props {
   step?: number | string
   maxlength?: number
   autocomplete?: string
+  /** A-05 (F-522): iOS-клавиатура. Явное значение перекрывает авто-вывод по типу. */
+  inputmode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url' | 'none'
+  /** A-08 (F-522): поле-код (артикул/№/инвентарный) — iOS не должен капитализировать/исправлять. */
+  code?: boolean
 }
 
 interface Emits {
@@ -338,8 +346,30 @@ const getInputType = () => {
   if (props.type === 'password') { return 'password' }
   if (props.type === 'number') { return 'number' }
   if (props.type === 'date') { return 'date' }
+  if (props.type === 'tel') { return 'tel' }
+  if (props.type === 'search') { return 'search' }
   return props.inputType
 }
+
+// A-05/A-08/A-10 (F-522): iOS-корректные атрибуты ввода.
+// Кодовые/спец-типы не должны автокапитализироваться/автокорректироваться (артикулы, e-mail, коды).
+const CODE_TYPES = ['number', 'email', 'password', 'tel', 'search', 'url']
+const isCodeLike = computed(() =>
+  !!props.code || CODE_TYPES.includes(String(props.type)) || CODE_TYPES.includes(String(props.inputType)),
+)
+type InputMode = 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url' | 'none'
+const resolvedInputMode = computed<InputMode | undefined>(() => {
+  if (props.inputmode) { return props.inputmode }
+  switch (props.type) {
+    case 'number': return 'decimal' // цифры + разделитель для цены/дробных
+    case 'tel': return 'tel'
+    case 'email': return 'email'
+    default: return undefined
+  }
+})
+const resolvedAutocapitalize = computed(() => (isCodeLike.value ? 'off' : undefined))
+const resolvedAutocorrect = computed(() => (isCodeLike.value ? 'off' : undefined))
+const resolvedSpellcheck = computed<boolean | undefined>(() => (isCodeLike.value ? false : undefined))
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement

@@ -159,7 +159,7 @@
                     <div>
                       <input 
                         v-model="item.quantity" 
-                        type="number" 
+                        type="number" inputmode="decimal" 
                         step="0.000001" 
                         min="0.000001" 
                         class="input input-bordered input-sm w-full"
@@ -266,7 +266,7 @@
                       </label>
                       <input 
                         v-model="item.quantity" 
-                        type="number" 
+                        type="number" inputmode="decimal" 
                         step="0.000001" 
                         min="0.000001" 
                         class="input input-bordered input-sm w-full"

@@ -233,7 +233,7 @@
                     <div>
                       <input 
                         v-model="it.quantity" 
-                        type="number" 
+                        type="number" inputmode="decimal" 
                         step="0.001" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -249,7 +249,7 @@
                     <div>
                       <input 
                         v-model="it.price" 
-                        type="number" 
+                        type="number" inputmode="decimal" 
                         step="0.01" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -356,7 +356,7 @@
                       </label>
                       <input 
                         v-model="it.quantity" 
-                        type="number" 
+                        type="number" inputmode="decimal" 
                         step="0.001" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -376,7 +376,7 @@
                       </label>
                       <input 
                         v-model="it.price" 
-                        type="number" 
+                        type="number" inputmode="decimal" 
                         step="0.01" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -798,6 +798,7 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
     {
       key: 'invoice_number',
       type: 'input',
+      code: true, // A-08 (F-522): iOS не капитализирует/не исправляет код
       label: '№ накладной/чека',
       placeholder: 'A-12345',
       order: 5,

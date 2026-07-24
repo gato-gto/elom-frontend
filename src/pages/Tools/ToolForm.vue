@@ -71,6 +71,7 @@ const formConfig = computed<GenericFormConfig<ToolRequest>>(() => ({
     {
       key: 'inventory_number',
       type: 'input',
+      code: true, // A-08 (F-522): iOS не капитализирует/не исправляет код
       label: 'Инвентарный номер',
       placeholder: 'INV001',
       required: true,

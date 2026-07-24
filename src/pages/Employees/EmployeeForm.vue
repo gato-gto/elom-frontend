@@ -172,7 +172,7 @@ const formConfig = computed<GenericFormConfig<EmployeeRequest>>(() => ({
     },
     {
       key: 'phone',
-      type: 'input' as const,
+      type: 'tel' as const,
       label: 'Телефон',
       placeholder: '+998 XX XXX XX XX',
       order: 5,

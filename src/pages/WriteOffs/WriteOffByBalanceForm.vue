@@ -51,7 +51,7 @@
                 <span class="text-sm font-mono">{{ balanceFor(row)?.unit_code || '—' }}</span>
               </td>
               <td>
-                <input v-model="row.actual_balance" type="number" step="0.000001" min="0"
+                <input v-model="row.actual_balance" type="number" inputmode="decimal" step="0.000001" min="0"
                        placeholder="0" class="input input-bordered input-sm w-full text-right" />
                 <div v-if="balanceFor(row)" class="text-xs text-muted mt-1 text-right">
                   Книжный остаток:

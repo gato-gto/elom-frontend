@@ -122,7 +122,7 @@ export interface GenericListConfig<T = any> {
 // GenericForm types
 export interface FieldConfig {
   key: string
-  type: 'input' | 'textarea' | 'select' | 'date' | 'number' | 'checkbox' | 'file' | 'multiselect' | 'password' | 'email' | 'text' | 'switch' | 'search' | 'custom'
+  type: 'input' | 'textarea' | 'select' | 'date' | 'number' | 'checkbox' | 'file' | 'multiselect' | 'password' | 'email' | 'text' | 'switch' | 'search' | 'tel' | 'custom'
   label: string
   placeholder?: string
   required?: boolean
@@ -151,6 +151,11 @@ export interface FieldConfig {
   condition?: () => boolean // Условие для отображения поля
   customClass?: string // Дополнительные CSS классы для поля
   autocomplete?: string // Значение атрибута autocomplete для браузера
+  // A-05 (F-522): iOS-клавиатура. По типу выводится автоматически (number→decimal, tel→tel…),
+  // это — явное перекрытие.
+  inputmode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url' | 'none'
+  // A-08 (F-522): поле-код (артикул/№/инвентарный) — iOS не капитализирует/не исправляет.
+  code?: boolean
 }
 
 export interface FormSection {

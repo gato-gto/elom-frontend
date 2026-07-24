@@ -19,7 +19,7 @@
     <!-- Number Input -->
     <input
       v-else-if="type === 'number'"
-      type="number"
+      type="number" inputmode="decimal"
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"

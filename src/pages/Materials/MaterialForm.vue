@@ -94,6 +94,7 @@ const formConfig = computed<GenericFormConfig<MaterialRequest & { photo?: File }
     {
       key: 'sku',
       type: 'input',
+      code: true, // A-08 (F-522): iOS не капитализирует/не исправляет код
       label: 'SKU (Артикул)',
       placeholder: 'Введите артикул или код материала',
       order: 2,

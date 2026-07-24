@@ -41,6 +41,8 @@
                 :switchLabel="field.switchLabel"
                 :customClass="field.customClass"
                 :autocomplete="field.autocomplete"
+                :inputmode="field.inputmode"
+                :code="field.code"
                 :class="{
                   'md:col-span-2': field.width === 'full'
                 }"
@@ -88,6 +90,8 @@
                 :switchLabel="field.switchLabel"
                 :customClass="field.customClass"
                 :autocomplete="field.autocomplete"
+                :inputmode="field.inputmode"
+                :code="field.code"
                 :class="{
                   'md:col-span-2': field.width === 'full'
                 }"

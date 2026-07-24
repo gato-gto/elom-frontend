@@ -90,7 +90,7 @@ const formConfig = computed<GenericFormConfig<PurchaseSupplierCreateRequest>>(()
     },
     {
       key: 'phone',
-      type: 'input',
+      type: 'tel',
       label: 'Телефон',
       placeholder: '+998 90 123 45 67',
       order: 4,
