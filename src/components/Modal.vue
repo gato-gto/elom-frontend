@@ -41,6 +41,7 @@
 
 <script setup lang="ts">
 import { computed, watch, ref, nextTick, onBeforeUnmount } from 'vue'
+import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
 
 interface Props {
   modelValue: boolean
@@ -134,17 +135,23 @@ function onKeydown(e: KeyboardEvent) {
 // обработчик клавиш вообще: не работали ни Escape, ни focus-trap (watch без immediate
 // не срабатывает, если значение не менялось). `wasOpen === undefined` — это первый
 // (immediate) вызов: тогда ветку закрытия не выполняем, чтобы не увести фокус при монтировании.
+let scrollLocked = false
+
 watch(
   () => props.modelValue,
   async (isOpen, wasOpen) => {
     if (isOpen) {
       lastActive = document.activeElement as HTMLElement | null
       document.addEventListener('keydown', onKeydown)
+      // A-02 (F-519): блокируем прокрутку фона — иначе на iOS он ползёт под модалкой.
+      lockBodyScroll()
+      scrollLocked = true
       await nextTick()
       const items = focusables()
       ;(items[0] || modalBox.value)?.focus()
     } else if (wasOpen !== undefined) {
       document.removeEventListener('keydown', onKeydown)
+      if (scrollLocked) { unlockBodyScroll(); scrollLocked = false }
       lastActive?.focus?.()
       lastActive = null
     }
@@ -152,7 +159,11 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  // страховка: если модалку размонтировали открытой — снять блокировку.
+  if (scrollLocked) { unlockBodyScroll(); scrollLocked = false }
+})
 </script>
 
 <style scoped>
