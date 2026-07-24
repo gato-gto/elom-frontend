@@ -203,6 +203,18 @@ function handleMultiselectChange(event: Event) {
   color: hsl(var(--bc));
 }
 
+/* APPLE-4 (F-516): на мобильных поля фильтров ≥16px — иначе iOS зумит страницу при фокусе.
+   Замерено ВЖИВУЮ под ролью на проде: .filter-input/.filter-select рендерились 14px → зум.
+   Правило в scoped-стилях компонента (та же специфичность, что базовое, но позже в каскаде),
+   иначе глобальное правило не перебивало scoped-селектор. Десктоп остаётся на 14px (плотность). */
+@media (max-width: 1023px) {
+  .filter-input,
+  .filter-select,
+  .filter-textarea {
+    font-size: 16px;
+  }
+}
+
 /* F-313: плейсхолдеры фильтр-полей — сплошной третичный токен (не наследуют .input-правило) */
 .filter-input::placeholder,
 .filter-textarea::placeholder {

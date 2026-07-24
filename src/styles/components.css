@@ -178,6 +178,18 @@
   border-color: hsl(var(--control-border));
 }
 
+/* APPLE-4 (F-516): на мобильных поля ввода ≥16px — иначе iOS зумит страницу при фокусе.
+   Замерено ВЖИВУЮ под ролью на проде: .input/.select рендерились 14px → зум на iPhone.
+   Десктоп оставляем на 14px (плотность; зума там нет — брейкпоинты не пересекаются). */
+@media (max-width: 1023px) {
+  .input,
+  .textarea,
+  .select,
+  .file-input {
+    font-size: 16px;
+  }
+}
+
 /* F-313: плейсхолдеры — сплошной третичный токен (~5.3:1); было base-content/20 ≈ 1.49:1 */
 .input::placeholder,
 .textarea::placeholder,
