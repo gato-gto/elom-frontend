@@ -2,8 +2,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="boltFill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="100%" stop-color="#0ea5e9"/>
+      <stop offset="0%" stop-color="#C86A1E"/>
+      <stop offset="100%" stop-color="#B0500F"/>
     </linearGradient>
   </defs>
   
@@ -15,6 +15,6 @@
        L24 64
        H0
        L28 32
-       H8 Z" fill="url(#boltFill)" stroke="#0369a1" stroke-width="2" stroke-linejoin="round"/>
+       H8 Z" fill="url(#boltFill)" stroke="#7A360A" stroke-width="2" stroke-linejoin="round"/>
 </svg>
 

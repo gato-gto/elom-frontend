@@ -2,12 +2,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0c4a6e"/>
-      <stop offset="100%" stop-color="#075985"/>
+      <stop offset="0%" stop-color="#C4611C"/>
+      <stop offset="100%" stop-color="#8A3D0B"/>
     </linearGradient>
     <linearGradient id="boltFill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="100%" stop-color="#0ea5e9"/>
+      <stop offset="0%" stop-color="#FCF4EA"/>
+      <stop offset="100%" stop-color="#F2E0C9"/>
     </linearGradient>
   </defs>
   
@@ -23,7 +23,7 @@
          L45 140
          H0
          L52.5 70
-         H15 Z" fill="url(#boltFill)" stroke="#7dd3fc" stroke-width="3" stroke-linejoin="round"/>
+         H15 Z" fill="url(#boltFill)" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/>
   </g>
 </svg>
 
