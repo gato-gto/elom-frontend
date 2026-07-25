@@ -1,32 +1,30 @@
 <template>
-  <div class="archive-periods space-y-6">
-    <!-- Header -->
-    <header>
-      <h1 class="text-xl font-semibold">Архивные периоды</h1>
-      <p class="text-sm text-muted mt-1 max-w-3xl">
-        Закрытие периода (месяц × объект) делает данные периода — закупки, движения остатков и
-        списания — архивными и только для чтения. Открытие периода снимает архив. Балансы при этом
-        сохраняются (архив — про неизменяемость истории, не про обнуление остатков).
-      </p>
-    </header>
+  <div class="list-container space-y-6">
+    <!-- F-526: единый заголовок как на остальных страницах (ListHeader), вместо кастомного <h1>. -->
+    <ListHeader
+      title="Архивные периоды"
+      subtitle="Закрытие месяца по объекту делает данные периода (закупки, движения, списания) архивными — только для чтения. Балансы сохраняются."
+      icon="inventory_2"
+      :show-create="false"
+    />
 
     <!-- Закрыть период — только для держателей stock.edit (иначе контрол скрыт, не «обманка») -->
-    <section v-if="canEdit" class="rounded border border-base-300 p-4">
+    <section v-if="canEdit" class="rounded-lg border border-base-300 p-4">
       <h2 class="text-sm font-medium mb-3">Закрыть период</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-end">
         <label class="block">
           <span class="block text-xs mb-1 text-muted">Объект</span>
-          <select v-model="form.object" class="select select-bordered select-sm w-full">
+          <select v-model="form.object" class="select select-bordered w-full">
             <option :value="0" disabled>— выберите объект —</option>
             <option v-for="o in objectOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </label>
         <label class="block">
           <span class="block text-xs mb-1 text-muted">Месяц</span>
-          <input v-model="form.month" type="month" class="input input-bordered input-sm w-full" />
+          <input v-model="form.month" type="month" class="input input-bordered w-full" />
         </label>
         <button
-          class="btn btn-sm btn-primary"
+          class="btn btn-primary"
           :disabled="!form.object || !form.month || busy"
           @click="askClose"
         >
@@ -36,10 +34,10 @@
     </section>
 
     <!-- Список закрытых периодов -->
-    <section class="rounded border border-base-300 overflow-hidden">
+    <section class="rounded-lg border border-base-300 overflow-hidden">
       <div class="px-4 py-3 border-b border-base-300 flex items-center justify-between">
         <h2 class="text-sm font-medium">Закрытые периоды</h2>
-        <button class="btn btn-ghost btn-xs" :disabled="store.loading" @click="refresh">Обновить</button>
+        <button class="btn btn-ghost btn-sm" :disabled="store.loading" @click="refresh">Обновить</button>
       </div>
 
       <div v-if="store.error" class="px-4 py-3 text-sm text-error border-b border-base-300">{{ store.error }}</div>
@@ -48,25 +46,26 @@
       <div v-else-if="store.items.length === 0" class="p-8 text-center text-sm text-subtle">
         Пока нет закрытых периодов
       </div>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="text-left text-xs text-muted border-b border-base-300">
+      <!-- F-526: стандартная таблица .modern-table как на остальных экранах (вместо кастомной). -->
+      <div v-else class="table-container">
+        <table class="modern-table">
+          <thead>
             <tr>
-              <th class="px-4 py-2 font-medium">Месяц</th>
-              <th class="px-4 py-2 font-medium">Объект</th>
-              <th class="px-4 py-2 font-medium">Закрыт</th>
-              <th class="px-4 py-2 font-medium">Кем</th>
-              <th v-if="canEdit" class="px-4 py-2 font-medium text-right">Действия</th>
+              <th>Месяц</th>
+              <th>Объект</th>
+              <th>Закрыт</th>
+              <th>Кем</th>
+              <th v-if="canEdit" class="text-right">Действия</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in store.items" :key="p.id" class="border-b border-base-200 last:border-0">
-              <td class="px-4 py-2 whitespace-nowrap font-mono">{{ formatMonth(p.month) }}</td>
-              <td class="px-4 py-2">{{ p.object_name }}</td>
-              <td class="px-4 py-2 text-muted whitespace-nowrap font-mono">{{ formatDateTime(p.closed_at) }}</td>
-              <td class="px-4 py-2 text-muted">{{ p.closed_by_name || '—' }}</td>
-              <td v-if="canEdit" class="px-4 py-2 text-right">
-                <button class="btn btn-xs btn-outline" :disabled="busy" @click="askReopen(p)">Открыть</button>
+            <tr v-for="p in store.items" :key="p.id">
+              <td class="whitespace-nowrap font-mono">{{ formatMonth(p.month) }}</td>
+              <td>{{ p.object_name }}</td>
+              <td class="text-muted whitespace-nowrap font-mono">{{ formatDateTime(p.closed_at) }}</td>
+              <td class="text-muted">{{ p.closed_by_name || '—' }}</td>
+              <td v-if="canEdit" class="text-right">
+                <button class="btn btn-sm btn-outline" :disabled="busy" @click="askReopen(p)">Открыть</button>
               </td>
             </tr>
           </tbody>
@@ -104,6 +103,7 @@ import { parseApiError } from '@/utils/errorHandler'
 import { formatDateTime } from '@/utils/formatters'
 import type { SiteObject } from '@/api/types'
 import Modal from '@/components/Modal.vue'
+import ListHeader from '@/components/ListHeader.vue'
 
 const store = useArchivePeriodsStore()
 const objectsStore = useObjectsStore()
