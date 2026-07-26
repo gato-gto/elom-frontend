@@ -444,6 +444,20 @@
     height: 1.75rem;
   }
 }
+/* F-579: тач-цель ≥44px на coarse-устройствах (iPad и пр.). .nav-toggle-btn — не .btn, поэтому
+   общий coarse-пол из components.css её не покрывал → на iPad было 32px (регресс F-578 vs
+   прежней btn-circle). Ставим 44px явно; идёт ПОСЛЕ 1536-правила, чтобы победить и на больших
+   тач-экранах. */
+@media (pointer: coarse) {
+  .nav-toggle-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .nav-toggle-btn svg {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
 
 /* Стили для групп навигации */
 .nav-group {
