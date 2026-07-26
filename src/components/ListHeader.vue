@@ -298,7 +298,7 @@ defineEmits<{
 /* stat value is DATA → monospace, per the design language */
 .stat-value {
   font-size: 0.875rem;
-  color: hsl(var(--p));
+  color: hsl(var(--p-text)); /* H-2 (F-591): читаемая медь на тёмном (было hsl(var(--p)) = 3.51:1) */
   font-weight: 600;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-variant-numeric: tabular-nums;
