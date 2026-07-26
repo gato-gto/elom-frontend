@@ -93,6 +93,8 @@ export interface BaseStoreConfig<T, C, U> {
   entityNamePlural: string
   defaultOrdering?: string
   defaultPageSize?: number
+  // FE-6/F-564: кастомная метка для selectOptions (напр. ФИО сотрудника вместо item.name).
+  labelFn?: (item: T) => string
 }
 
 export interface BaseStoreState<T> {
@@ -168,7 +170,7 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
     const selectOptions = computed(() => {
       return items.value.map(item => ({
         value: item.id,
-        label: item.name || item.title || `Item ${item.id}`
+        label: config.labelFn ? config.labelFn(item) : (item.name || item.title || `Item ${item.id}`)
       }))
     })
 
