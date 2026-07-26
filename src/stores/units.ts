@@ -14,7 +14,7 @@ export const useUnitsStore = createBaseStore<Unit, UnitRequest, PatchedUnitReque
   endpoint: endpoints.units,
   entityName: 'units',
   entityNamePlural: 'единицы измерения',
-  defaultOrdering: 'code'
+  defaultOrdering: '-id'
 })
 
 // ============================================================================

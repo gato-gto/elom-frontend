@@ -29,7 +29,7 @@ export const useToolsStore = defineStore('tools', () => {
   })
   const filters = ref({
     search: '',
-    ordering: 'inventory_number',
+    ordering: '-created_at',
     condition: '',
     in_stock: '',
     current_holder: '',
@@ -249,7 +249,7 @@ export const useToolsStore = defineStore('tools', () => {
   const resetFilters = async () => {
     filters.value = {
       search: '',
-      ordering: 'inventory_number',
+      ordering: '-created_at',
       condition: '',
       in_stock: '',
       current_holder: '',

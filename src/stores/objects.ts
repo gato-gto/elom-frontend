@@ -17,7 +17,7 @@ export const useObjectsStore = createBaseStore<SiteObject, ObjectRequest, Patche
   endpoint: endpoints.objects,
   entityName: 'objects',
   entityNamePlural: 'объекты',
-  defaultOrdering: 'name'
+  defaultOrdering: '-id'
 })
 
 // ============================================================================

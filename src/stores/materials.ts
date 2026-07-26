@@ -18,7 +18,7 @@ export const useMaterialsStore = createBaseStore<Material, MaterialRequest, Patc
   endpoint: endpoints.materials,
   entityName: 'materials',
   entityNamePlural: 'материалы',
-  defaultOrdering: 'name'
+  defaultOrdering: '-id'
 })
 
 // ============================================================================

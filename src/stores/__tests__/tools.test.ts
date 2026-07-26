@@ -47,7 +47,7 @@ describe('Tools Store', () => {
       
       expect(store.filters).toEqual({
         search: '',
-        ordering: 'inventory_number',
+        ordering: '-created_at',
         condition: '',
         in_stock: '',
         current_holder: '',
@@ -413,7 +413,7 @@ describe('Tools Store', () => {
       
       expect(result).toEqual(mockResponse.tools)
       expect(mockedApi.post).toHaveBeenCalledWith(endpoints.tools.bulkCreate, bulkData)
-      expect(mockedApi.get).toHaveBeenCalledWith(endpoints.tools.list + '?page=1&page_size=20&ordering=inventory_number')
+      expect(mockedApi.get).toHaveBeenCalledWith(endpoints.tools.list + '?page=1&page_size=20&ordering=-created_at')
     })
 
     it('should set filters', async () => {
@@ -462,7 +462,7 @@ describe('Tools Store', () => {
       
       expect(store.filters).toEqual({
         search: '',
-        ordering: 'inventory_number',
+        ordering: '-created_at',
         condition: '',
         in_stock: '',
         current_holder: '',

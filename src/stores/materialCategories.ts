@@ -11,7 +11,7 @@ export const useMaterialCategoriesStore = createBaseStore<MaterialCategory, any,
   endpoint: endpoints.materialCategories,
   entityName: 'materialCategories',
   entityNamePlural: 'категории материалов',
-  defaultOrdering: 'name'
+  defaultOrdering: '-id'
 })
 
 // ============================================================================

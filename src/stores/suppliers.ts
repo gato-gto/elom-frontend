@@ -14,7 +14,7 @@ export const useSuppliersStore = createBaseStore<PurchaseSupplier, PurchaseSuppl
   endpoint: endpoints.suppliers,
   entityName: 'suppliers',
   entityNamePlural: 'поставщики',
-  defaultOrdering: 'name'
+  defaultOrdering: '-id'
 })
 
 // ============================================================================
