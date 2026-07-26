@@ -32,12 +32,15 @@
       <aside class="sidebar min-h-full w-64">
         <!-- Logo/Brand -->
         <div class="sidebar-header h-16 flex items-center justify-between p-4">
-          <div class="flex items-center gap-2">
+          <!-- F-577: брендинг «ELOM / Energy Life» скрыт по просьбе владельца (пока не нужно).
+               Раскомментировать блок ниже, чтобы вернуть. -->
+          <!-- <div class="flex items-center gap-2">
             <div>
               <h2 class="sidebar-logo text-lg font-bold">ELOM</h2>
               <p class="sidebar-subtitle text-xs">Energy Life</p>
             </div>
-          </div>
+          </div> -->
+          <span></span>
           <!-- F-565: свернуть меню (только desktop) -->
           <button
             class="hidden lg:flex items-center justify-center text-white/70 hover:text-white p-1 rounded transition-colors"
