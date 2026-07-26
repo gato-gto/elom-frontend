@@ -1,90 +1,183 @@
 <template>
-  <Modal :size="'5xl'" :model-value="isOpen" title="Внести остатки (инвентаризация)" @close="$emit('close')">
-    <div class="space-y-4">
-      <p class="text-sm text-muted">
-        Введите ФАКТИЧЕСКИЙ остаток по каждому материалу — система вычислит расход
-        (книжный остаток − факт) и оформит списания на разницу. Единица берётся из материала.
-        В списке материалов — только то, что есть в наличии на выбранном объекте
-        (можно списать); сначала выберите объект.
-      </p>
+  <Modal :size="'6xl'" :model-value="isOpen" title="Внести остатки (инвентаризация)" @close="$emit('close')">
+    <div class="space-y-6">
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+        <p class="text-sm text-muted">
+          Введите ФАКТИЧЕСКИЙ остаток по каждому материалу — система вычислит расход
+          (книжный остаток − факт) и оформит списания на разницу. Единица берётся из материала.
+          В списке материалов — только то, что есть в наличии на выбранном объекте
+          (можно списать); сначала выберите объект.
+        </p>
 
-      <!-- Общие поля: дата + объект -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="form-control">
-          <label class="label"><span class="label-text font-medium">Дата инвентаризации <span class="text-error">*</span></span></label>
-          <input v-model="date" type="date" class="input input-bordered w-full"
-                 :class="{ 'input-error': topErrors.date }" />
-          <span v-if="topErrors.date" class="text-error text-xs mt-1">{{ topErrors.date }}</span>
+        <!-- Общие поля: дата + объект -->
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="form-control w-full">
+            <label class="label">
+              <span class="label-text font-medium">Дата инвентаризации</span>
+              <span class="label-text-alt text-primary font-semibold">*</span>
+            </label>
+            <input v-model="date" type="date" class="input input-bordered w-full"
+                   :class="{ 'input-error': topErrors.date }" />
+            <div v-if="topErrors.date" class="label">
+              <span class="label-text-alt text-error">{{ topErrors.date }}</span>
+            </div>
+          </div>
+          <div class="form-control w-full">
+            <label class="label">
+              <span class="label-text font-medium">Объект</span>
+              <span class="label-text-alt text-primary font-semibold">*</span>
+            </label>
+            <select v-model="objectId" class="select select-bordered w-full" :class="{ 'select-error': topErrors.object }">
+              <option :value="0" disabled>— выберите объект —</option>
+              <option v-for="o in objectOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+            <div v-if="topErrors.object" class="label">
+              <span class="label-text-alt text-error">{{ topErrors.object }}</span>
+            </div>
+          </div>
         </div>
-        <div class="form-control">
-          <label class="label"><span class="label-text font-medium">Объект <span class="text-error">*</span></span></label>
-          <select v-model="objectId" class="select select-bordered w-full" :class="{ 'select-error': topErrors.object }">
-            <option :value="0" disabled>— выберите объект —</option>
-            <option v-for="o in objectOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-          <span v-if="topErrors.object" class="text-error text-xs mt-1">{{ topErrors.object }}</span>
-        </div>
-      </div>
 
-      <!-- Позиции (массив материалов) -->
-      <div class="overflow-x-auto">
-        <table class="table table-sm w-full">
-          <thead>
-            <tr>
-              <th class="w-[45%]">Материал</th>
-              <th class="w-[15%]">Ед.</th>
-              <th class="w-[30%] text-right">Фактический остаток</th>
-              <th class="w-[10%]"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, idx) in rows" :key="row._k" :class="{ 'bg-error/5': rowErrors[idx] }">
-              <td>
-                <select v-model="row.material" class="select select-bordered select-sm w-full"
-                        :disabled="!objectId || materialsLoading">
-                  <option :value="null" disabled>{{ materialPlaceholder }}</option>
-                  <option v-for="m in optionsForRow(row)" :key="m.value" :value="m.value">{{ m.label }}</option>
-                </select>
-                <div v-if="rowErrors[idx]" class="text-error text-xs mt-1">{{ rowErrors[idx] }}</div>
-              </td>
-              <td>
-                <span class="text-sm font-mono">{{ balanceFor(row)?.unit_code || '—' }}</span>
-              </td>
-              <td>
-                <input v-model="row.actual_balance" type="number" inputmode="decimal" step="0.000001" min="0"
-                       placeholder="0" class="input input-bordered input-sm w-full text-right" />
-                <div v-if="balanceFor(row)" class="text-xs text-muted mt-1 text-right">
-                  Книжный остаток:
-                  <span class="font-mono">{{ formatNumberClean(Number(balanceFor(row)!.current_balance)) }} {{ balanceFor(row)!.unit_code }}</span>
+        <!-- Позиции -->
+        <div class="space-y-6">
+          <h2 class="text-lg font-semibold text-base-content mb-2">Позиции</h2>
+
+          <!-- Desktop table view -->
+          <div class="hidden md:block overflow-auto">
+            <table class="table w-full">
+              <thead>
+                <tr>
+                  <th style="min-width: 240px">Материал</th>
+                  <th style="min-width: 120px">Ед.</th>
+                  <th style="min-width: 150px">Фактический остаток</th>
+                  <th style="min-width: 150px">Книжный остаток</th>
+                  <th class="text-right" style="min-width: 80px">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, idx) in rows" :key="row._k">
+                  <td>
+                    <div>
+                      <MaterialSearchSelect
+                        v-model="row.material"
+                        placeholder="— выберите материал —"
+                        size="sm"
+                        :disabled="!objectId || materialsLoading"
+                        :object-id="objectId || null"
+                        :date="date || null"
+                        :filter-by-balance="true"
+                        :exclude-materials="addedMaterialIds.filter(id => id !== row.material)"
+                        :class="{ 'border-error': rowErrors[idx] }"
+                      />
+                      <div v-if="rowErrors[idx]" class="text-error text-xs mt-1">{{ rowErrors[idx] }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="text-sm text-muted font-mono p-2">{{ balanceFor(row)?.unit_code || '—' }}</div>
+                  </td>
+                  <td>
+                    <input v-model="row.actual_balance" type="number" inputmode="decimal" step="0.000001" min="0"
+                           placeholder="0.000000" class="input input-bordered input-sm w-full" />
+                  </td>
+                  <td>
+                    <div v-if="balanceFor(row)" class="text-sm">
+                      <div class="font-mono">{{ formatNumberClean(Number(balanceFor(row)!.current_balance)) }}</div>
+                      <div class="text-xs text-muted">{{ balanceFor(row)!.unit_code }}</div>
+                    </div>
+                    <div v-else class="text-sm text-subtle">—</div>
+                  </td>
+                  <td class="text-right">
+                    <button type="button" class="btn btn-error btn-xs" :disabled="rows.length === 1" @click="removeRow(idx)">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile card view -->
+          <div class="md:hidden space-y-4">
+            <div v-for="(row, idx) in rows" :key="row._k" class="bg-base-200 rounded-lg p-2">
+              <div class="flex justify-between items-start mb-3">
+                <h3 class="font-medium text-sm">Позиция {{ idx + 1 }}</h3>
+                <button type="button" class="btn btn-error btn-xs" :disabled="rows.length === 1" @click="removeRow(idx)">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <label class="label"><span class="label-text text-xs">Материал</span></label>
+                  <MaterialSearchSelect
+                    v-model="row.material"
+                    placeholder="— выберите материал —"
+                    size="sm"
+                    :disabled="!objectId || materialsLoading"
+                    :object-id="objectId || null"
+                    :date="date || null"
+                    :filter-by-balance="true"
+                    :exclude-materials="addedMaterialIds.filter(id => id !== row.material)"
+                    :class="{ 'border-error': rowErrors[idx] }"
+                  />
+                  <div v-if="rowErrors[idx]" class="text-error text-xs mt-1">{{ rowErrors[idx] }}</div>
                 </div>
-              </td>
-              <td class="text-right">
-                <button type="button" class="btn btn-error btn-xs" :disabled="rows.length === 1"
-                        @click="removeRow(idx)">✕</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <div>
+                  <label class="label"><span class="label-text text-xs">Единица измерения</span></label>
+                  <div class="text-sm text-muted font-mono p-2 rounded border">{{ balanceFor(row)?.unit_code || '—' }}</div>
+                </div>
+                <div>
+                  <label class="label"><span class="label-text text-xs">Фактический остаток</span></label>
+                  <input v-model="row.actual_balance" type="number" inputmode="decimal" step="0.000001" min="0"
+                         placeholder="0.000000" class="input input-bordered input-sm w-full" />
+                </div>
+                <div>
+                  <label class="label"><span class="label-text text-xs">Книжный остаток</span></label>
+                  <div v-if="balanceFor(row)" class="text-sm font-mono p-2 rounded border">
+                    {{ formatNumberClean(Number(balanceFor(row)!.current_balance)) }} {{ balanceFor(row)!.unit_code }}
+                  </div>
+                  <div v-else class="text-sm text-subtle p-2 rounded border">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div v-if="objectId && !materialsLoading && stockMaterials.length === 0"
-           class="text-sm text-muted">
-        На этом объекте нет материалов в наличии — списывать нечего.
-      </div>
+          <!-- Пусто -->
+          <div v-if="objectId && !materialsLoading && stockMaterials.length === 0" class="text-sm text-muted">
+            На этом объекте нет материалов в наличии — списывать нечего.
+          </div>
 
-      <button type="button" class="btn btn-outline btn-sm"
-              :disabled="!objectId || materialsLoading || stockMaterials.length === 0"
-              @click="addRow">+ Добавить материал</button>
+          <!-- Add item button -->
+          <div class="mt-4">
+            <button type="button" class="btn btn-sm btn-primary w-full"
+                    :disabled="!objectId || materialsLoading || stockMaterials.length === 0"
+                    @click="addRow">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Добавить материал
+            </button>
+          </div>
 
-      <div v-if="topErrors.form" class="alert alert-error text-sm py-2">{{ topErrors.form }}</div>
+          <!-- Общая ошибка -->
+          <div v-if="topErrors.form" class="alert alert-error">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ topErrors.form }}</span>
+          </div>
+        </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" class="btn btn-ghost" :disabled="submitting" @click="$emit('close')">Отмена</button>
-        <button type="button" class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
-          <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
-          Оформить списания
-        </button>
-      </div>
+        <!-- Кнопки -->
+        <div class="flex justify-end gap-2 pt-4">
+          <button type="button" class="btn btn-ghost" :disabled="submitting" @click="$emit('close')">Отмена</button>
+          <button type="submit" class="btn btn-primary" :disabled="submitting" :class="{ 'loading': submitting }">
+            {{ submitting ? 'Сохранение...' : 'Оформить списания' }}
+          </button>
+        </div>
+      </form>
     </div>
   </Modal>
 </template>
@@ -96,6 +189,7 @@ import { getMaterialsInStock } from '@/stores/materials'
 import type { SiteObject } from '@/api/types'
 import type { MaterialBalance } from '@/api/types/stocks'
 import Modal from '@/components/Modal.vue'
+import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { useUiStore } from '@/stores/ui'
 import { parseApiError } from '@/utils/errorHandler'
 import { formatNumberClean } from '@/utils/formatters'
@@ -127,21 +221,11 @@ const materialsLoading = ref(false)
 const objectOptions = computed(() => objectsStore.items.map((o: SiteObject) => ({ value: o.id, label: o.name })))
 const stockMap = computed(() => new Map(stockMaterials.value.map(m => [m.material_id, m])))
 
-const materialPlaceholder = computed(() => {
-  if (!objectId.value) { return '— сначала выберите объект —' }
-  if (materialsLoading.value) { return 'Загрузка…' }
-  return '— выберите материал —'
-})
-
-// Опции для строки: материалы в наличии, минус уже выбранные в ДРУГИХ строках (без дублей).
-function optionsForRow(row: Row) {
-  const takenElsewhere = new Set(
-    rows.value.filter(r => r !== row && r.material != null).map(r => r.material as number),
-  )
-  return stockMaterials.value
-    .filter(m => !takenElsewhere.has(m.material_id))
-    .map(m => ({ value: m.material_id, label: m.material_name }))
-}
+// Уже выбранные материалы — чтобы MaterialSearchSelect исключал их из выпадашки (без дублей),
+// как в WriteOffForm (addedMaterialIds).
+const addedMaterialIds = computed(() =>
+  rows.value.map(r => r.material).filter((id): id is number => id != null),
+)
 
 // Книжный остаток (и единица) выбранного в строке материала — для подсказки/единицы.
 function balanceFor(row: Row): MaterialBalance | undefined {
