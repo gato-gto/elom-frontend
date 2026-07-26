@@ -612,6 +612,9 @@ const loadMaterialsByObject = async (objectId: number) => {
   }
 }
 
+// F-596: подпись сотрудника — «Имя Фамилия», fallback username (как везде, [[elom-ui-copy-conventions]]).
+const empLabel = (e: any): string => (e ? `${e.first_name || ''} ${e.last_name || ''}`.trim() || e.username : '')
+
 const loadEmployeesByObject = async (objectId: number) => {
   employeesLoading.value = true
   try {
@@ -635,7 +638,7 @@ const loadEmployeesByObject = async (objectId: number) => {
     const responsibleList = [
       { value: 0, label: '— выберите ответственного —' },
       ...getResponsibleEmployees()
-        .map((emp: any) => ({ value: emp.id, label: emp.username }))
+        .map((emp: any) => ({ value: emp.id, label: empLabel(emp) }))
     ]
 
     if (!objectId) {
@@ -655,7 +658,7 @@ const loadEmployeesByObject = async (objectId: number) => {
         if (!alreadyInList) {
           responsibleList.push({ 
             value: objectResponsible.id, 
-            label: `${objectResponsible.username} (ответственный за объект)` 
+            label: `${empLabel(objectResponsible)} (ответственный за объект)` 
           })
         }
       }
@@ -667,7 +670,7 @@ const loadEmployeesByObject = async (objectId: number) => {
       if (currentResponsible && !responsibleList.some(item => item.value === props.initial!.responsible)) {
         responsibleList.push({ 
           value: currentResponsible.id, 
-          label: `${currentResponsible.username} (текущий ответственный)` 
+          label: `${empLabel(currentResponsible)} (текущий ответственный)` 
         })
       }
     }
