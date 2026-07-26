@@ -18,7 +18,7 @@
             Возможно объект был удалён или у вас нет доступа к его просмотру.
           </p>
           <button class="btn btn-primary" @click="router.push('/objects')">
-            Вернуться к списку объектов
+            Список
           </button>
         </div>
       </div>
@@ -74,7 +74,7 @@
                 <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Назад к списку
+                Назад
               </button>
             </div>
           </div>
