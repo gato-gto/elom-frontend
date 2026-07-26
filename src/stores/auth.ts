@@ -1,6 +1,6 @@
 // src/stores/auth.ts
 import {defineStore} from 'pinia'
-import api from '@/api/client'
+import api, { refreshAccessToken } from '@/api/client'
 import {endpoints} from '@/api/endpoints'
 import { parseApiError } from '@/utils/errorHandler'
 import { usePermissionsStore } from '@/stores/permissions'
@@ -91,24 +91,13 @@ export const useAuthStore = defineStore('auth', {
             await permissionsStore.fetchPermissions()
         },
 
+        // FE-1: делегируем в ЕДИНУЮ точку refresh (client.ts). Раньше здесь был второй
+        // независимый поток через `api` без общего лока — при ротации refresh-токена он
+        // конфликтовал с рефрешем из интерцептора и выкидывал пользователя. Общий лок
+        // isRefreshing/refreshPromise теперь один на всё приложение. Чтение/запись токенов
+        // внутри refreshAccessToken идут через тот же стор (localStorage + Pinia).
         async refreshTokens(): Promise<string | null> {
-            try {
-                if (!this.refreshToken) {return null}
-                const {data} = await api.post<Tokens>(endpoints.auth.refresh, {refresh: this.refreshToken})
-                // simplejwt может возвращать только access или пару; учитываем оба
-                if ((data as any).refresh) {
-                    this.setTokens({access: data.access, refresh: (data as any).refresh})
-                } else {
-                    this.setTokens({access: data.access, refresh: this.refreshToken})
-                }
-                return this.accessToken
-            } catch (e: any) {
-                // Если refresh token истек, очищаем все токены
-                if (e?.response?.status === 401) {
-                    this.clearTokens()
-                }
-                return null
-            }
+            return refreshAccessToken()
         },
 
         logout(withRedirect = false) {

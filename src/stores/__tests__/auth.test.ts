@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from '../auth'
-import api from '@/api/client'
+import api, { refreshAccessToken } from '@/api/client'
 
 // Mock API client
 vi.mock('@/api/client', () => ({
@@ -10,7 +10,9 @@ vi.mock('@/api/client', () => ({
     post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
-  }
+  },
+  // FE-1: единая точка refresh; auth.refreshTokens делегирует сюда.
+  refreshAccessToken: vi.fn(),
 }))
 
 // Mock localStorage
@@ -137,37 +139,26 @@ describe('Auth Store', () => {
     expect(api.get).toHaveBeenCalledWith('http://localhost:8000/api/v1/users/me')
   })
 
-  it('refreshes tokens successfully', async () => {
+  // FE-1: refreshTokens делегирует в ЕДИНУЮ точку refreshAccessToken (общий лок),
+  // а не рефрешит вторым независимым потоком через api.post.
+  it('делегирует refresh в единую точку refreshAccessToken (FE-1)', async () => {
     const store = useAuthStore()
-    store.setTokens({ access: 'old-token', refresh: 'refresh-token' })
-    
-    const mockResponse = {
-      data: {
-        access: 'new-access-token'
-      }
-    }
-    
-    vi.mocked(api.post).mockResolvedValue(mockResponse)
-    
+    vi.mocked(refreshAccessToken).mockResolvedValue('new-access-token')
+
     const newToken = await store.refreshTokens()
-    
+
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1)
     expect(newToken).toBe('new-access-token')
-    expect(store.accessToken).toBe('new-access-token')
-    expect(api.post).toHaveBeenCalledWith('http://localhost:8000/api/v1/auth/token/refresh/', {
-      refresh: 'refresh-token'
-    })
+    // второго независимого потока через api.post больше нет
+    expect(api.post).not.toHaveBeenCalled()
   })
 
-  it('handles token refresh failure', async () => {
+  it('возвращает null, когда единый refresh не удался', async () => {
     const store = useAuthStore()
-    store.setTokens({ access: 'old-token', refresh: 'invalid-refresh-token' })
-    
-    vi.mocked(api.post).mockRejectedValue(new Error('Invalid refresh token'))
-    
+    vi.mocked(refreshAccessToken).mockResolvedValue(null)
+
     const newToken = await store.refreshTokens()
-    
+
     expect(newToken).toBeNull()
-    expect(store.accessToken).toBe('old-token')
-    expect(store.refreshToken).toBe('invalid-refresh-token')
   })
 })

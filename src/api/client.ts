@@ -73,25 +73,19 @@ const api: AxiosInstance = axios.create({
     headers: {'X-Requested-With': 'XMLHttpRequest'},
 })
 
-// ---- Refresh очередь --------------------------------------------------------
+// ---- Единая точка refresh (общий лок для ВСЕХ вызывающих) -------------------
+// FE-1: refresh реализован только здесь. auth.refreshTokens() делегирует сюда, чтобы не было
+// второго независимого потока без общего лока — иначе при ротации refresh-токена в SimpleJWT
+// один поток инвалидировал бы токен другого и пользователя выкидывало бы на пустом месте.
+// FE-7: удалена мёртвая очередь subscribers/onRefreshed — синхронизация идёт через refreshPromise.
 let isRefreshing = false
 let refreshPromise: Promise<string | null> | null = null
-let subscribers: Array<(token: string | null) => void> = []
-
-function subscribeTokenRefresh(cb: (t: string | null) => void) {
-    subscribers.push(cb)
-}
-
-function onRefreshed(token: string | null) {
-    subscribers.forEach((cb) => cb(token))
-    subscribers = []
-}
 
 /**
- * Обновление access-токена.
- * ВАЖНО: возвращает строго string | null (исправление TS2322).
+ * Обновление access-токена. Возвращает строго string | null.
+ * Единственная точка refresh в приложении (общий лок isRefreshing/refreshPromise).
  */
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
     const refresh = getRefreshToken()
     if (!refresh) { return null }
 
@@ -185,8 +179,10 @@ api.interceptors.response.use(
         if (response?.status === 401 && config && !(config as any)._retry) {
             (config as any)._retry = true
             
-            // Если это запрос на refresh, не пытаемся обновить токен
-            if (config.url?.includes('/token/refresh/')) {
+            // FE-2: на auth-эндпоинтах (логин /auth/token/, refresh, verify) 401 означает
+            // неверные креды или мёртвый refresh, а НЕ «истёкшую сессию рабочего запроса».
+            // Не рефрешим и НЕ показываем «Сессия истекла» — ошибку логина покажет auth.login.
+            if (config.url?.includes('/auth/token')) {
                 return Promise.reject(error)
             }
             
