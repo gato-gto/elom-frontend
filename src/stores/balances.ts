@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { createBaseStore } from './base'
+import { handleApiErrorAsync, parseApiError } from '@/utils/errorHandler'
 import type { MaterialBalance, ObjectBalance } from '@/api/types/stocks'
 
 // Создаём базовый store
@@ -81,7 +82,11 @@ export const fetchBalancesList = async (params?: {
       Object.assign(extendedFilters.value, params)
     }
   } catch (error: any) {
-    store.error = 'Ошибка загрузки остатков'
+    // EH-FE-2 (F-544): не глушить сбой в статичную строку без тоста (класс F-538).
+    // Пробрасываем реальный detail и показываем тост, как базовый стор — иначе
+    // 403/500/сеть на «Остатках» выглядят как молча пустой список.
+    store.error = parseApiError(error).detail
+    await handleApiErrorAsync(error, { operation: 'dataLoading', entity: 'остатки' })
     throw error
   } finally {
     store.loading = false

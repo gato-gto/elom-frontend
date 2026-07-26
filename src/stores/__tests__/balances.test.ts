@@ -2,9 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useBalancesStore, fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '../balances'
 import api from '@/api/client'
+import { handleApiErrorAsync } from '@/utils/errorHandler'
 
 // Mock API client
 vi.mock('@/api/client')
+
+// EH-FE-2 (F-544): keep REAL parseApiError (store relies on it for `error`),
+// stub the async toast side-effect so we can assert it fires on load failure.
+vi.mock('@/utils/errorHandler', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/errorHandler')>()
+  return { ...actual, handleApiErrorAsync: vi.fn() }
+})
 
 describe('Balances Store', () => {
   beforeEach(() => {
@@ -114,24 +122,23 @@ describe('Balances Store', () => {
     expect(filters.value.date).toBeTruthy()
   })
 
-  it('handles API errors correctly', async () => {
+  it('handles API errors correctly — surfaces real detail + toast, not a swallowed static string', async () => {
     const errorResponse = {
       response: {
+        status: 500,
         data: {
           detail: 'Error loading balances'
         }
       }
     }
-    
+
     vi.mocked(api.get).mockRejectedValue(errorResponse)
-    
-    try {
-      await fetchBalancesList()
-    } catch (error) {
-      expect(error).toBe(errorResponse)
-    }
-    
-    expect(useBalancesStore().error).toBe('Ошибка загрузки остатков')
+
+    await expect(fetchBalancesList()).rejects.toBe(errorResponse)
+
+    // EH-FE-2: реальный detail от бэка (не статичная строка), и тост показан (класс F-538).
+    expect(useBalancesStore().error).toBe('Error loading balances')
+    expect(handleApiErrorAsync).toHaveBeenCalledOnce()
     expect(useBalancesStore().loading).toBe(false)
   })
 
