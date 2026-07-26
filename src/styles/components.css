@@ -241,6 +241,32 @@
   }
 }
 
+/* F-569: размер иконочных row-action кнопок (GenericList). Отдельный класс, а не btn-sm/btn-md,
+   чтобы не воевать со специфичностью DaisyUI-вариантов. База 32px (в самый раз на desktop < Full HD),
+   на Full HD и крупнее (≥1536px) — 40px + иконка крупнее: owner заметил, что на больших экранах
+   32px выглядят мелко, а на меньших — норм. Тач-минимум 44px даёт правило pointer:coarse выше. */
+.row-action-btn {
+  height: 2rem;
+  width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+}
+.row-action-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+@media (min-width: 1536px) {
+  .row-action-btn {
+    height: 2.5rem;
+    width: 2.5rem;
+    min-height: 2.5rem;
+  }
+  .row-action-btn svg {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
 /* F-562: пагинация использует .pagination-btn (не .btn), поэтому мимо правила F-520 —
    номера/навигация страниц рендерились 32×32. Поднимаем до 44px на тач-устройствах И на
    узких экранах (аудит замеряет узкий вьюпорт; десктоп с мышью на широком экране не трогаем). */

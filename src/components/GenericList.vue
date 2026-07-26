@@ -140,9 +140,10 @@
                       <button
                         v-if="canPerformActionOnItem(action, item, config, permissions)"
                         :class="[
-                          'btn btn-xs',
-                          actionIconPath(action) ? 'btn-square' : '',
-                          action.class || 'btn-outline',
+                          'btn',
+                          actionIconPath(action)
+                            ? ['btn-square row-action-btn', actionBtnClass(action)]
+                            : ['btn-sm', action.class || 'btn-outline'],
                           action.disabled && action.disabled(item) ? 'btn-disabled' : ''
                         ]"
                         :disabled="action.disabled && action.disabled(item)"
@@ -150,9 +151,12 @@
                         :aria-label="action.label"
                         @click="handleAction(action.key, item)"
                       >
-                        <!-- F-566: типовые строковые действия — иконкой (компактно на узких desktop);
-                             label остаётся в title/aria. Нестандартные действия — текстом как раньше. -->
-                        <svg v-if="actionIconPath(action)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- F-566/F-569: типовые действия — иконкой (компактно на узких desktop);
+                             F-569: без обводки (btn-ghost), крупнее (w-5) и с семантическим цветом —
+                             owner: outline избыточна, иконки были мелкие/бледные. Label в title/aria.
+                             Нестандартные действия — текстом как раньше. -->
+                        <!-- Размер иконки задаётся .row-action-btn svg (адаптивно, F-569). -->
+                        <svg v-if="actionIconPath(action)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="actionIconPath(action)" />
                         </svg>
                         <span v-else>{{ action.label }}</span>
@@ -407,11 +411,31 @@ const ACTION_ICONS: Record<string, string> = {
   delete: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
   view: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
   open: 'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14',
+  // F-569: Одобрить = галочка, Отклонить = крестик (по просьбе owner)
+  approve: 'M5 13l4 4L19 7',
+  reject: 'M6 18L18 6M6 6l12 12',
   issue: 'M13 7l5 5m0 0l-5 5m5-5H6',
   return: 'M11 17l-5-5m0 0l5-5m-5 5h12',
 }
 function actionIconPath(action: any): string {
   return action.iconPath || ACTION_ICONS[action.key] || ''
+}
+
+// F-569: btn-soft (DaisyUI v5) — мягкий семантический фон + насыщенная иконка того же тона.
+// Owner: без обводки, фон кнопки должен ОТЛИЧАТЬСЯ от цвета иконки (контраст). Удаление/отклонение
+// красные, одобрение зелёное, выдача — янтарная, возврат/редактирование — синие, просмотр — нейтральный.
+const ACTION_BTN: Record<string, string> = {
+  delete: 'btn-soft btn-error',
+  reject: 'btn-soft btn-error',
+  approve: 'btn-soft btn-success',
+  issue: 'btn-soft btn-warning',
+  return: 'btn-soft btn-info',
+  edit: 'btn-soft btn-info',
+  view: 'btn-soft',
+  open: 'btn-soft',
+}
+function actionBtnClass(action: any): string {
+  return action.btnClass || ACTION_BTN[action.key] || 'btn-soft'
 }
 
 const MONO_KEY_RE = /^(id|date|created_at|updated_at|closed_at|month|quantity|quantity_signed|qty|price|amount|total|sum|sku|purchase_no|invoice_number|inventory_number|code|balance|current_balance|current_stock|target_balance|expires_at|assigned_at)$/i
