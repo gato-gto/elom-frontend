@@ -398,6 +398,7 @@ import { useUiStore } from '@/stores/ui'
 import { formatNumberClean } from '@/utils/formatters'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
+import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
 import type { 
   WriteOff, 
   WriteOffCreateRequest, 
@@ -559,7 +560,7 @@ function getItemsGeneralError(): string {
 // Function to clear duplicate material errors
 function clearItemsDuplicateErrors() {
   Object.keys(itemErrors).forEach(key => {
-    if (key.startsWith('items[') && itemErrors[key] && itemErrors[key].includes('Нельзя добавлять один материал несколько раз')) {
+    if (key.startsWith('items[') && itemErrors[key]?.startsWith(DUPLICATE_MATERIAL_MESSAGE)) {
       delete itemErrors[key]
     }
   })
@@ -801,7 +802,7 @@ const handleSubmit = async () => {
       const duplicateMaterial = loadedMaterialsByObject.value.find(m => m.id === duplicates[0]) || 
                                 materialsStore.items.find(m => m.id === duplicates[0])
       const duplicateName = duplicateMaterial?.name || 'материал'
-      itemErrors[`items[0].material`] = `Нельзя добавлять один материал несколько раз: ${duplicateName}`
+      itemErrors[`items[0].material`] = `${DUPLICATE_MATERIAL_MESSAGE}: ${duplicateName}`
       isSubmitting.value = false
       return
     }

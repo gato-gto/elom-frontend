@@ -1,5 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import type { Ref } from 'vue'
+import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
 
 /**
  * Базовый интерфейс для элемента позиции (материал + количество)
@@ -161,7 +162,7 @@ export function useItemsForm<T extends BaseItem>(
   function clearItemsDuplicateErrors() {
     // Удаляем ошибки дублирования материалов
     Object.keys(itemErrors).forEach(key => {
-      if (key.includes('.material') && itemErrors[key]?.includes('несколько раз')) {
+      if (key.includes('.material') && itemErrors[key]?.startsWith(DUPLICATE_MATERIAL_MESSAGE)) {
         delete itemErrors[key]
       }
     })
@@ -191,7 +192,7 @@ export function useItemsForm<T extends BaseItem>(
       const firstIndex = items.value.findIndex(item => item.material === duplicateId)
       
       if (firstIndex !== -1) {
-        itemErrors[`items[${firstIndex}].material`] = 'Нельзя добавлять один материал несколько раз'
+        itemErrors[`items[${firstIndex}].material`] = DUPLICATE_MATERIAL_MESSAGE
       }
       
       return false

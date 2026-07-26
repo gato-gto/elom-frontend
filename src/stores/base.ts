@@ -225,12 +225,10 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         
         // ✅ Обработка ошибки 404 для несуществующей страницы пагинации
         if (err?.response?.status === 404) {
-          const errorDetail = parsedError.detail?.toLowerCase() || ''
-          const isInvalidPage = errorDetail.includes('неправильная страница') || 
-                                errorDetail.includes('invalid page') ||
-                                errorDetail.includes('page') && errorDetail.includes('not found')
-          
-          if (isInvalidPage && pagination.value.page > 1) {
+          // EH-FE-4 (F-553): 404 на списке со страницей > 1 = выход за границы пагинации
+          // (напр. удалили последнюю запись на последней странице). Условие машинное
+          // (status + page), без разбора текста ошибки — хрупкого к локали/формулировке DRF.
+          if (pagination.value.page > 1) {
             // Автоматически перенаправляем на первую страницу
             pagination.value.page = 1
             // Повторяем запрос с первой страницей
