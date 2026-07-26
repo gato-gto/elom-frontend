@@ -1,15 +1,29 @@
 <template>
   <div class="filter-panel">
-    <div class="filter-header">
+    <!-- F-585: на мобиле шапка сворачивает фильтры (иначе панель съедала весь первый экран до
+         данных). На десктопе всегда развёрнуто, шапка не интерактивна. -->
+    <div
+      class="filter-header"
+      :class="{ 'filter-header-toggle': true }"
+      role="button"
+      :aria-expanded="!collapsed"
+      tabindex="0"
+      @click="toggle"
+      @keydown.enter.prevent="toggle"
+      @keydown.space.prevent="toggle"
+    >
       <h2 class="filter-title">
         <svg class="filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
         </svg>
         Фильтры и поиск
       </h2>
+      <svg class="filter-chevron" :class="{ 'filter-chevron-open': !collapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
     </div>
-    
-    <div class="filter-content">
+
+    <div v-show="!collapsed" class="filter-content">
       <div class="filter-grid" :class="gridClass">
         <slot />
       </div>
@@ -33,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 interface Props {
   columns?: number
@@ -45,9 +59,25 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
-// const emit = defineEmits<{ // Не используется
-//   reset: []
-// }>()
+// F-585: сворачиваемость фильтров ТОЛЬКО на мобиле (<768px). На десктопе всегда развёрнуто
+// (mq не совпадает → collapsed=false, toggle игнорируется). Слушаем resize, чтобы при переходе
+// mobile↔desktop состояние было корректным.
+const collapsed = ref(false)
+let mq: MediaQueryList | null = null
+function applyMq() {
+  if (mq) { collapsed.value = mq.matches }
+}
+function toggle() {
+  if (mq && mq.matches) { collapsed.value = !collapsed.value }
+}
+onMounted(() => {
+  mq = window.matchMedia('(max-width: 767px)')
+  applyMq()
+  mq.addEventListener('change', applyMq)
+})
+onUnmounted(() => {
+  mq?.removeEventListener('change', applyMq)
+})
 
 const gridClass = computed(() => {
   const cols = props.columns
@@ -104,6 +134,39 @@ const gridClass = computed(() => {
   width: 1.25rem;
   height: 1.25rem;
   color: hsl(var(--p));
+}
+
+/* F-585: шапка-переключатель. Десктоп — не интерактивна (курсор обычный, шеврон скрыт). */
+.filter-header-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: default;
+  user-select: none;
+}
+.filter-header-toggle:focus-visible {
+  outline: 2px solid hsl(var(--p) / 0.5);
+  outline-offset: -2px;
+}
+.filter-chevron {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: hsl(var(--tx-2));
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  display: none;
+}
+.filter-chevron-open {
+  transform: rotate(180deg);
+}
+@media (max-width: 767px) {
+  .filter-header-toggle {
+    cursor: pointer;
+  }
+  .filter-chevron {
+    display: block;
+  }
 }
 
 .filter-content {
