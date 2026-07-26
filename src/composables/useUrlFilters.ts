@@ -136,13 +136,29 @@ export function useUrlFilters(store: any, getFilterConfigs: () => FilterConfig[]
     return q
   }
 
-  /** Применить состояние из URL к стору БЕЗ запроса (запрос сделает страница/следующий fetch). */
+  /** Применить состояние из URL к стору. URL — источник истины: присутствующие фильтры применяем,
+   *  а сконфигурированные фильтры (+search), которых в URL НЕТ, СБРАСЫВАЕМ. Иначе при переходе на
+   *  менее отфильтрованный URL (напр. Объект→Списания?object=X, затем «Списания» из навигации →
+   *  /writeoffs) старый фильтр «залипал» в store.filters и показывался в UI при пустом запросе
+   *  (F-590). Раньше был ранний выход на пустом URL + аддитивный Object.assign — отсюда рассинхрон. */
   function applyFromUrl(triggerFetch: boolean) {
     const { patch, page } = parseQuery()
-    if (Object.keys(patch).length === 0 && !page) { return false }
+    const cfgs = configByKey()
+    if (!store.filters) { store.filters = {} }
     syncing = true
-    Object.assign(store.filters, patch)
-    if (page && store.pagination) { store.pagination.page = page }
+    // config-фильтры + search: применяем из URL или сбрасываем (отсутствующие) к «все» ('').
+    const clearable = [...Object.keys(cfgs), 'search']
+    for (const key of clearable) {
+      if (key in patch) {
+        store.filters[key] = patch[key]
+      } else if (store.filters[key] !== undefined && store.filters[key] !== '' && store.filters[key] !== null) {
+        store.filters[key] = ''
+      }
+    }
+    // ordering применяем из URL, если задан; НЕ сбрасываем (сортировка живёт и по клику колонки).
+    if ('ordering' in patch) { store.filters.ordering = patch.ordering }
+    // page: из URL либо на первую (свежий переход без ?page → страница 1).
+    if (store.pagination) { store.pagination.page = page && page > 0 ? page : 1 }
     syncing = false
     if (triggerFetch && typeof store.fetchList === 'function') { store.fetchList() }
     return true
