@@ -421,6 +421,30 @@
   margin: 0.5rem 0;
 }
 
+/* F-577: кнопки «Свернуть меню» / «Показать меню» — ТОЧНО в размер .row-action-btn (единый
+   стандарт иконок, «среднее» 2rem по слову владельца): 32px по умолчанию, 40px + иконка крупнее
+   на Full HD и выше (≥1536). Owner: «Показать меню» была мелкой на большом экране — теперь как
+   остальные адаптивные иконки. */
+.nav-toggle-btn {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+.nav-toggle-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+@media (min-width: 1536px) {
+  .nav-toggle-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .nav-toggle-btn svg {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
 /* Стили для групп навигации */
 .nav-group {
   margin: 1rem 0;

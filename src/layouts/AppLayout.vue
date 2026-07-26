@@ -11,9 +11,9 @@
         @click="sidebarCollapsed = false"
         title="Показать меню"
         aria-label="Показать меню"
-        class="hidden lg:flex btn btn-sm btn-circle btn-primary shadow-lg fixed top-3 left-3 z-40"
+        class="nav-toggle-btn hidden lg:flex items-center justify-center bg-primary text-white rounded-full shadow-lg hover:brightness-110 transition fixed top-3 left-3 z-40"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
@@ -30,30 +30,22 @@
     <div class="drawer-side">
       <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
       <aside class="sidebar min-h-full w-64">
-        <!-- Logo/Brand -->
-        <div class="sidebar-header h-16 flex items-center justify-between p-4">
-          <!-- F-577: брендинг «ELOM / Energy Life» скрыт по просьбе владельца (пока не нужно).
-               Раскомментировать блок ниже, чтобы вернуть. -->
-          <!-- <div class="flex items-center gap-2">
-            <div>
-              <h2 class="sidebar-logo text-lg font-bold">ELOM</h2>
-              <p class="sidebar-subtitle text-xs">Energy Life</p>
-            </div>
-          </div> -->
-          <span></span>
-          <!-- F-565: свернуть меню (только desktop) -->
+        <!-- F-577: без шапки/брендинга «ELOM / Energy Life» (скрыто по просьбе владельца).
+             Осталась только компактная кнопка сворачивания — тонкая полоса, видна на всех
+             разрешениях (desktop сворачивает сайдбар, мобайл закрывает drawer). -->
+        <div class="flex justify-end px-2 pt-2 pb-1">
           <button
-            class="hidden lg:flex items-center justify-center text-white/70 hover:text-white p-1 rounded transition-colors"
-            @click="sidebarCollapsed = true"
+            class="nav-toggle-btn flex items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            @click="collapseSidebar"
             title="Свернуть меню"
             aria-label="Свернуть меню"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>
         </div>
-        
+
         <!-- Auto-generated navigation menu -->
         <AutoNavigation />
         
@@ -135,6 +127,18 @@ const auth = useAuthStore()
 // (там своя нижняя навигация; lg:drawer-open работает только с ≥1024px).
 const sidebarCollapsed = ref(localStorage.getItem('elom_sidebar_collapsed') === '1')
 watch(sidebarCollapsed, (v) => localStorage.setItem('elom_sidebar_collapsed', v ? '1' : '0'))
+
+// F-577: одна кнопка на все разрешения. На desktop (lg+) сворачиваем постоянный сайдбар;
+// на мобиле закрываем drawer, НЕ меняя desktop-состояние collapsed (иначе сворачивание на
+// телефоне «прилипало» бы к десктопу через localStorage).
+function collapseSidebar() {
+  if (window.matchMedia('(min-width: 1024px)').matches) {
+    sidebarCollapsed.value = true
+  } else {
+    const t = document.getElementById('drawer-toggle') as HTMLInputElement | null
+    if (t) { t.checked = false }
+  }
+}
 const ui = useUiStore()
 const permissionsStore = usePermissionsStore()
 
