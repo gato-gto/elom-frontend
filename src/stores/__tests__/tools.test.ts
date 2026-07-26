@@ -265,26 +265,26 @@ describe('Tools Store', () => {
       expect(mockedApi.post).toHaveBeenCalledWith(endpoints.tools.list, newTool)
     })
 
-    it('EH-FE-1: create success lands in the rendered ui.toasts channel', async () => {
+    it('F-557: create does NOT toast from the store (component owns success/error toast)', async () => {
       const store = useToolsStore()
       const ui = useUiStore()
       mockedApi.post.mockResolvedValueOnce({ data: { id: 9, inventory_number: 'T9', name: 'T', condition: 'good', is_in_stock: true } })
 
       await store.create({ inventory_number: 'T9', name: 'T', category: 'C', brand: 'B' } as any)
 
-      // единый канал ToastCenter (useUiStore().toasts), а не невидимый useNotifications
-      expect(ui.toasts.some(t => t.type === 'success' && t.text.includes('добавлен'))).toBe(true)
+      // F-545 regression fix: страница (ToolForm/List) показывает «Инструмент сохранён»,
+      // стор НЕ тостит — иначе два стека тостов.
+      expect(ui.toasts.length).toBe(0)
     })
 
-    it('EH-FE-1: create failure emits NO static error toast (handleApiErrorAsync owns it)', async () => {
+    it('F-557: create failure sets store.error and rethrows, no store toast', async () => {
       const store = useToolsStore()
       const ui = useUiStore()
       mockedApi.post.mockRejectedValueOnce({ response: { status: 400, data: { detail: 'bad' } } })
 
       await expect(store.create({ inventory_number: 'T9', name: 'T' } as any)).rejects.toBeTruthy()
 
-      // никакой статичной «Ошибка при добавлении инструмента» во втором канале
-      expect(ui.toasts.some(t => t.type === 'error')).toBe(false)
+      expect(ui.toasts.length).toBe(0)      // тост покажет компонент (handleFormError)
       expect(store.error).toBe('bad')
     })
 

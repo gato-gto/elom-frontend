@@ -337,7 +337,10 @@ onMounted(async () => {
     }
     
   } catch (error) {
-    await handleLoadingError(error, 'balances')
+    // F-557: тост при сбое загрузки уже показывает стор (fetchBalancesList→handleApiErrorAsync),
+    // который к тому же покрывает пути фильтра/сортировки из GenericList (там catch нет).
+    // Здесь только логируем — иначе двойной тост (регресс F-544).
+    console.error('Ошибка загрузки остатков:', error)
   }
 })
 </script>

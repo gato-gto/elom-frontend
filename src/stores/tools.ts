@@ -141,14 +141,12 @@ export const useToolsStore = defineStore('tools', () => {
       const { data } = await api.post<Tool>(endpoints.tools.list, payload)
       items.value.unshift(data)
       pagination.value.count++
-      useUiStore().toast({ type: 'success', text: 'Инструмент успешно добавлен' })
       return data
     } catch (err: any) {
-      // EH-FE-1 (F-545): ошибку показывает handleApiErrorAsync (конкретный detail) —
-      // не плодим статичную «Ошибка при …» во втором, не отрисованном канале.
-      const parsedError = parseApiError(err)
-      error.value = parsedError.detail
-      await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
+      // F-557: тост успеха/ошибки принадлежит компоненту (ToolForm→handleFormError,
+      // List.vue→onSaved). Стор только ставит error и пробрасывает — иначе ДВОЙНОЙ тост
+      // (регресс F-545: стор тостил в ui.toast, и страница тоже).
+      error.value = parseApiError(err).detail
       throw err
     } finally {
       loading.value = false
@@ -168,12 +166,10 @@ export const useToolsStore = defineStore('tools', () => {
       if (current.value?.id === id) {
         current.value = data
       }
-      useUiStore().toast({ type: 'success', text: 'Инструмент успешно обновлён' })
       return data
     } catch (err: any) {
-      const parsedError = parseApiError(err)
-      error.value = parsedError.detail
-      await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
+      // F-557: тост у компонента (ToolForm→handleFormError). Стор не тостит (иначе двойной).
+      error.value = parseApiError(err).detail
       throw err
     } finally {
       loading.value = false
@@ -191,11 +187,9 @@ export const useToolsStore = defineStore('tools', () => {
       if (current.value?.id === id) {
         current.value = null
       }
-      useUiStore().toast({ type: 'success', text: 'Инструмент успешно удалён' })
     } catch (err: any) {
-      const parsedError = parseApiError(err)
-      error.value = parsedError.detail
-      await handleApiErrorAsync(err, { operation: 'delete', entity: 'tools' })
+      // F-557: тост у компонента (List.vue→handleDeleteError). Стор не тостит (иначе двойной).
+      error.value = parseApiError(err).detail
       throw err
     } finally {
       loading.value = false
