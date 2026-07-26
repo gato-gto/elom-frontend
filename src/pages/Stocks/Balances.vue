@@ -19,7 +19,7 @@
         <div class="flex items-center gap-2">
           <button 
             @click="toggleExpanded(item.object_id)"
-            class="btn btn-ghost btn-xs p-1"
+            class="btn btn-ghost btn-xs btn-square"
             :class="{ 'rotate-90': expandedRows.has(item.object_id) }"
           >
             <svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

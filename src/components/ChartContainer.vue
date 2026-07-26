@@ -27,7 +27,7 @@
           <button 
             v-if="showDownload"
             @click="downloadChart"
-            class="btn btn-sm btn-outline"
+            class="btn btn-sm btn-outline btn-square"
             title="Скачать график"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,7 +38,7 @@
           <button 
             v-if="showFullscreen"
             @click="toggleFullscreen"
-            class="btn btn-sm btn-outline"
+            class="btn btn-sm btn-outline btn-square"
             title="Полноэкранный режим"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
