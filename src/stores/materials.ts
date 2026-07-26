@@ -37,8 +37,10 @@ export const getMaterialsByObject = async (objectId: number): Promise<Material[]
 
     return data
   } catch (error: any) {
+    // FE-12: НЕ возвращаем [] — иначе сбой выглядит как «нет материалов» и молча блокирует
+    // списание. Пробрасываем: вызывающий (WriteOffForm) покажет ошибку, отличив её от «пусто».
     console.error('Error getting materials by object:', error)
-    return []
+    throw error
   }
 }
 

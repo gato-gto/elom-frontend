@@ -607,8 +607,11 @@ const loadMaterialsByObject = async (objectId: number) => {
     const materials = await getMaterialsByObject(objectId)
     loadedMaterialsByObject.value = materials
   } catch (error) {
+    // FE-12: показываем ошибку, а не молча пустой список — иначе пользователь думает, что на
+    // объекте нет материалов, тогда как это сбой загрузки.
     console.error('Error loading materials by object:', error)
     loadedMaterialsByObject.value = []
+    ui.toast({ type: 'error', text: 'Не удалось загрузить материалы объекта. Проверьте соединение и повторите.' })
   } finally {
     materialsLoading.value = false
   }
