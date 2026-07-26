@@ -132,7 +132,6 @@ const listConfig = computed<GenericListConfig<ToolIssue>>(() => ({
   emptySubtitle: 'Выдайте инструмент со страницы "Инструменты"',
   filterColumns: 3,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'tool_inventory_number', label: 'Название', sortable: true, sortKey: 'tool__inventory_number' },
     { key: 'issued_to_name', label: 'Кому', sortable: true, sortKey: 'issued_to' },
     { key: 'issued_at', label: 'Дата выдачи', sortable: true },

@@ -122,7 +122,6 @@ const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
   emptySubtitle: 'Создайте первый объект для начала работы',
   filterColumns: 4,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'address', label: 'Адрес', sortable: true },
     { key: 'responsible', label: 'Ответственный', sortable: true },

@@ -206,7 +206,6 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
   emptySubtitle: 'Создайте первое списание для начала работы',
   filterColumns: 4,
   columns: [
-    { key: 'id', label: 'ID', sortable: false },
     { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
     { key: 'object', label: 'Объект', sortable: false },
     { key: 'material', label: 'Материал', sortable: false },

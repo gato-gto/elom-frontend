@@ -103,7 +103,6 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
   emptySubtitle: 'Создайте первую единицу измерения для начала работы',
   filterColumns: 3,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'code', label: 'Код', sortable: true },
     { key: 'smart_conversion', label: 'Умная конвертация', sortable: false }

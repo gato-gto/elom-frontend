@@ -148,7 +148,6 @@ const listConfig = computed(() => ({
   emptySubtitle: 'Создайте первую закупку для начала работы',
   filterColumns: 4,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'date', label: 'Дата', sortable: true, formatter: (value: any) => formatDate(value) },
     { key: 'purchase_no', label: '№ закупки', sortable: true },
     { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name

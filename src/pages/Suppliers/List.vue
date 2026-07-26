@@ -131,7 +131,6 @@ const listConfig = computed<GenericListConfig<PurchaseSupplier>>(() => ({
   emptySubtitle: 'Создайте первого поставщика для начала работы',
   filterColumns: 3,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'contact_person', label: 'Контактное лицо', sortable: true },
     { key: 'phone', label: 'Телефон', sortable: true },

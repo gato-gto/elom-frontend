@@ -143,7 +143,6 @@ const listConfig = computed<GenericListConfig<Material>>(() => ({
   emptySubtitle: 'Создайте первый материал для начала работы',
   filterColumns: 3,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'sku', label: 'SKU', sortable: true },
     { key: 'category_name', label: 'Категория', sortable: false }

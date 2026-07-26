@@ -117,7 +117,6 @@ const listConfig = computed<GenericListConfig<MaterialCategory>>(() => ({
   emptySubtitle: 'Создайте первую категорию для организации материалов',
   filterColumns: 2,
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'parent_name', label: 'Родительская категория', sortable: false },
     { key: 'materials_count', label: 'Материалов', sortable: false },

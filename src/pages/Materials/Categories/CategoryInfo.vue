@@ -258,7 +258,6 @@ const materialsListConfig = computed<GenericListConfig<Material>>(() => ({
   emptySubtitle: 'В этой категории пока нет материалов',
   filterColumns: 0, // Убираем фильтры - показываем только материалы категории
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'name', label: 'Название', sortable: true },
     { key: 'sku', label: 'SKU', sortable: true },
     { key: 'unit_code', label: 'Единица', sortable: true }

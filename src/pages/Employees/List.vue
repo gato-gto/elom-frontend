@@ -102,7 +102,6 @@ const listConfig = computed<GenericListConfig<Employee>>(() => ({
   // ✅ RBAC: Указываем ресурс для автоматического определения permissions
   resource: 'employees',
   columns: [
-    { key: 'id', label: 'ID', sortable: true },
     { key: 'username', label: 'Логин', sortable: true },
     { key: 'first_name', label: 'Имя', sortable: true },
     { key: 'last_name', label: 'Фамилия', sortable: true },
