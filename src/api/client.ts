@@ -206,36 +206,10 @@ api.interceptors.response.use(
             return api(config)
         }
 
-        // Обработка других ошибок
-        if (response?.status && response.status >= 500) {
-            try {
-                const ui = uiStoreSafe()
-                if (ui?.toast) {
-                    ui.toast({ type: 'error', text: 'Ошибка сервера. Попробуйте позже.' })
-                }
-            } catch {
-                // Игнорируем ошибки UI
-            }
-        } else if (response?.status === 403) {
-            try {
-                const ui = uiStoreSafe()
-                if (ui?.toast) {
-                    ui.toast({ type: 'error', text: 'Недостаточно прав для выполнения операции.' })
-                }
-            } catch {
-                // Игнорируем ошибки UI
-            }
-        } else if (response?.status === 404) {
-            try {
-                const ui = uiStoreSafe()
-                if (ui?.toast) {
-                    ui.toast({ type: 'error', text: 'Запрашиваемый ресурс не найден.' })
-                }
-            } catch {
-                // Игнорируем ошибки UI
-            }
-        }
-
+        // FE-3: интерцептор БОЛЬШЕ НЕ показывает тосты для 403/404/500 — иначе на каждую такую
+        // ошибку было ДВА тоста (здесь + handleApiErrorAsync в catch стора, часто с разным текстом).
+        // Единый слой тостов — handleApiErrorAsync (там конкретный detail от бэка). Интерцептор
+        // отвечает только за 401-refresh и офлайн-блок мутаций.
         return Promise.reject(error)
     }
 )

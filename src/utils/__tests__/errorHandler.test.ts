@@ -60,7 +60,9 @@ describe('ErrorHandlers', () => {
       const result = await ErrorHandlers.formValidation(error)
 
       expect(result.fieldErrors).toEqual({})
-      expect(result.detail).toBe('Network error')
+      // FE-4: error.message ('Network error') НЕ утекает пользователю — локализованный текст по типу
+      expect(result.detail).toBe('Ошибка сети. Проверьте подключение к интернету')
+      expect(result.detail).not.toBe('Network error')
       expect(result.statusCode).toBe(0)
     })
 
@@ -75,7 +77,8 @@ describe('ErrorHandlers', () => {
       const result = await ErrorHandlers.formValidation(error)
 
       expect(result.fieldErrors).toEqual({})
-      expect(result.detail).toBe('Произошла неизвестная ошибка')
+      // FE-4: fallback по типу ошибки (validation), а не общий текст
+      expect(result.detail).toBe('Ошибка валидации данных')
       expect(result.statusCode).toBe(400)
     })
   })
@@ -138,7 +141,8 @@ describe('ErrorHandlers', () => {
 
       const result = await ErrorHandlers.delete(error)
 
-      expect(result.detail).toBe('Delete error')
+      expect(result.detail).toBe('Ошибка сети. Проверьте подключение к интернету')
+      expect(result.detail).not.toBe('Delete error')
       expect(result.statusCode).toBe(0)
     })
   })
@@ -226,7 +230,8 @@ describe('parseApiError', () => {
 
     const result = parseApiError(error)
 
-    expect(result.detail).toBe('Network error')
+    expect(result.detail).toBe('Ошибка сети. Проверьте подключение к интернету')
+    expect(result.detail).not.toBe('Network error')
     expect(result.statusCode).toBe(0)
     expect(result.errorType).toBe('network')
   })
@@ -246,5 +251,23 @@ describe('parseApiError', () => {
     expect(result.detail).toBe('Internal server error')
     expect(result.statusCode).toBe(500)
     expect(result.errorType).toBe('server_error')
+  })
+  // FE-5: detail может прийти НЕ строкой — обработчик не должен падать на detail.toLowerCase()
+  it('FE-5: не падает и извлекает сообщение, если detail пришёл списком (DRF)', () => {
+    const error = { response: { status: 400, data: { detail: ['Поле обязательно', 'ещё'] } } }
+    const result = parseApiError(error)
+    expect(result.detail).toBe('Поле обязательно')
+  })
+
+  it('FE-5: не падает, если detail — объект (берёт fallback по типу)', () => {
+    const error = { response: { status: 400, data: { detail: { foo: 'bar' } } } }
+    expect(() => parseApiError(error)).not.toThrow()
+    expect(typeof parseApiError(error).detail).toBe('string')
+  })
+
+  // FE-13: 401 распознаётся как permission (раньше падал в unknown)
+  it('FE-13: 401 → errorType permission', () => {
+    const result = parseApiError({ response: { status: 401, data: {} } })
+    expect(result.errorType).toBe('permission')
   })
 })

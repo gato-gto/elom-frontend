@@ -222,7 +222,8 @@ describe('Tools Store', () => {
       
       await expect(store.fetchList()).rejects.toThrow('API Error')
       expect(store.loading).toBe(false)
-      expect(store.error).toBe('API Error')
+      // FE-4: локализованный текст сетевой ошибки, не утечка Error.message
+      expect(store.error).toBe('Ошибка сети. Проверьте подключение к интернету')
     })
 
     it('should fetch one tool', async () => {

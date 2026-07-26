@@ -480,8 +480,9 @@ describe('Base Store', () => {
 
       await expect(store.fetchList()).rejects.toBeTruthy()
 
-      // No response.detail => parseApiError falls back to the JS Error message.
-      expect(store.error).toBe('Generic error')
+      // FE-4: сетевая ошибка без response → локализованный текст, а НЕ утечка JS Error.message.
+      expect(store.error).toBe('Ошибка сети. Проверьте подключение к интернету')
+      expect(store.error).not.toBe('Generic error')
     })
   })
 })

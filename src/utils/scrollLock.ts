@@ -40,7 +40,8 @@ export function unlockBodyScroll(): void {
   body.style.width = ''
   body.style.overflow = ''
   // Вернуть прокрутку туда, где пользователь был до открытия.
-  window.scrollTo(0, savedScrollY)
+  // try/catch: в jsdom (тесты) window.scrollTo кидает «Not implemented».
+  try { window.scrollTo(0, savedScrollY) } catch { /* среда без реального скролла */ }
 }
 
 /** Только для тестов: сбросить состояние между кейсами. */

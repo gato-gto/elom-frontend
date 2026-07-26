@@ -1,4 +1,5 @@
 import type { ParsedApiError, ErrorType, ErrorDisplayConfig, ErrorContext } from '@/api/types/errors'
+import { ERROR_MESSAGES, STATUS_TO_ERROR_TYPE } from '@/api/types/errors'
 
 /**
  * Парсит вложенные ошибки валидации
@@ -99,9 +100,21 @@ export function parseApiError(error: any, context?: ErrorContext): ParsedApiErro
   
   // Получаем данные ответа
   const data = error?.response?.data || {}
-  
-  // Парсим детали ошибки
-  let detail = data?.detail || error?.message || 'Произошла неизвестная ошибка'
+
+  // FE-5: `detail` может прийти НЕ строкой (DRF отдаёт non_field_errors списком/объектом) —
+  // тогда `detail.toLowerCase()` ниже падал «ошибкой при обработке ошибки». Приводим безопасно.
+  // FE-4: НЕ используем `error.message` как текст пользователю (это англ. «Network Error» /
+  // «Request failed with status code 500») — только локализованный fallback по типу; техн.
+  // message остаётся в originalError для лога.
+  const rawDetail = data?.detail
+  let detail: string
+  if (typeof rawDetail === 'string' && rawDetail.trim()) {
+    detail = rawDetail
+  } else if (Array.isArray(rawDetail) && typeof rawDetail[0] === 'string') {
+    detail = rawDetail[0]
+  } else {
+    detail = extractFirstErrorMessage(data?.errors) || ERROR_MESSAGES[errorType] || ERROR_MESSAGES.unknown
+  }
   const rawErrors = data?.errors || {}
   const fieldErrors = parseNestedErrors(rawErrors)
   
@@ -203,22 +216,9 @@ function getErrorType(status: number, error: any): ErrorType {
   if (status === 0 || !error?.response) {
     return 'network'
   }
-  
-  switch (status) {
-    case 400:
-      return 'validation'
-    case 403:
-      return 'permission'
-    case 404:
-      return 'not_found'
-    case 500:
-    case 502:
-    case 503:
-    case 504:
-      return 'server_error'
-    default:
-      return 'unknown'
-  }
+  // FE-13: единая таблица статус→тип (включает 401→permission и 422→validation, которых
+  // раньше не было в switch). Один источник истины вместо двух расходящихся трактовок.
+  return STATUS_TO_ERROR_TYPE[status] || 'unknown'
 }
 
 /**
