@@ -254,8 +254,9 @@
   padding: 0;
 }
 .row-action-btn svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  /* F-582: иконка чуть меньше (owner) — 20px в 32px-кнопке, больше воздуха. Было 24px. */
+  width: 1.25rem;
+  height: 1.25rem;
 }
 @media (min-width: 1536px) {
   .row-action-btn {
@@ -264,8 +265,8 @@
     min-height: 2.5rem;
   }
   .row-action-btn svg {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 }
 

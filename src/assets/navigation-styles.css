@@ -433,8 +433,9 @@
   flex-shrink: 0;
 }
 .nav-toggle-btn svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  /* F-582: иконка чуть меньше (owner) — 20px в 32px-кнопке; как .row-action-btn. Было 24px. */
+  width: 1.25rem;
+  height: 1.25rem;
 }
 @media (min-width: 1536px) {
   .nav-toggle-btn {
@@ -442,8 +443,8 @@
     height: 2.5rem;
   }
   .nav-toggle-btn svg {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 }
 /* F-579: тач-цель ≥44px на coarse-устройствах (iPad и пр.). .nav-toggle-btn — не .btn, поэтому
@@ -456,8 +457,8 @@
     height: 2.75rem;
   }
   .nav-toggle-btn svg {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
   /* F-580: на тач-устройствах строки навигации остаются удобными (≥44px), даже когда
      десктопная база стала плотнее. */
