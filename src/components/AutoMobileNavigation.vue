@@ -382,12 +382,14 @@
           topItems.push(firstItem)
         }
         usedNames.add(firstItem.name)
-        if (topItems.length >= 5) {break}
+        // F-581: макс 4 основных пункта (+ «Еще» = 5 всего) — стандарт iOS tab-bar (Apple HIG).
+        // 6 пунктов на 393px налезали друг на друга («СписанияПоставщики»); лишний уходит в «Еще».
+        if (topItems.length >= 4) {break}
       }
     }
-    
-    // Если не набрали 5, добавляем остальные по порядку (order)
-    if (topItems.length < 5) {
+
+    // Если не набрали 4, добавляем остальные по порядку (order)
+    if (topItems.length < 4) {
       const remaining = navigationItems.value
         .filter(item => !usedNames.has(item.name))
         .sort((a, b) => {
@@ -396,12 +398,12 @@
           }
           return a.title.localeCompare(b.title)
         })
-        .slice(0, 5 - topItems.length)
-      
+        .slice(0, 4 - topItems.length)
+
       topItems.push(...remaining)
     }
-    
-    return topItems.slice(0, 5)
+
+    return topItems.slice(0, 4)
   })
   
   // Business Operations
@@ -529,7 +531,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0.5rem;
+    /* F-581: уже по горизонтали — больше места подписи (чтобы «Материалы» помещалось без «…»). */
+    padding: 0.5rem 0.25rem;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
     color: hsl(var(--tx-2));
@@ -558,10 +561,16 @@
   }
   
   .mobile-nav-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     text-align: center;
     line-height: 1;
+    /* F-581: не даём длинным подписям налезать на соседей — обрезаем в пределах ячейки
+       (страховка; при 5 пунктах на 393px обычные подписи помещаются целиком). */
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .mobile-nav-more {
