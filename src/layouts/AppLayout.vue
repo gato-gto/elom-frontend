@@ -1,15 +1,27 @@
 <template>
-  <div class="drawer lg:drawer-open">
+  <div class="drawer" :class="{ 'lg:drawer-open': !sidebarCollapsed }">
     <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
-    
+
     <!-- Main content -->
     <div class="drawer-content flex flex-col">
-      
-      
+
+      <!-- F-565: показать свёрнутое меню (только desktop; на мобиле — нижняя навигация) -->
+      <button
+        v-if="sidebarCollapsed"
+        @click="sidebarCollapsed = false"
+        title="Показать меню"
+        aria-label="Показать меню"
+        class="hidden lg:flex btn btn-sm btn-circle btn-primary shadow-lg fixed top-3 left-3 z-40"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
       <!-- Page content. APPLE-1 (F-514): отступы учитывают safe-area. Мобильные правила и
            lg:p-4 живут в непересекающихся брейкпоинтах (max-width:1023 vs min-width:1024),
            поэтому не конфликтуют по специфичности. -->
-      <main class="app-main flex-1 bg-base-200 lg:p-4">
+      <main class="app-main flex-1 bg-base-200 lg:p-4" :class="{ 'lg:pl-16': sidebarCollapsed }">
         <router-view />
       </main>
     </div>
@@ -26,7 +38,17 @@
               <p class="sidebar-subtitle text-xs">Energy Life</p>
             </div>
           </div>
-          
+          <!-- F-565: свернуть меню (только desktop) -->
+          <button
+            class="hidden lg:flex items-center justify-center text-white/70 hover:text-white p-1 rounded transition-colors"
+            @click="sidebarCollapsed = true"
+            title="Свернуть меню"
+            aria-label="Свернуть меню"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+          </button>
         </div>
         
         <!-- Auto-generated navigation menu -->
@@ -93,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissionsStore } from '@/stores/permissions'
@@ -106,6 +128,12 @@ import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+
+// F-565: сворачиваемое боковое меню на DESKTOP. Мотив — узкие desktop-экраны (< Full HD):
+// свёрнутое меню отдаёт всю ширину контенту. Состояние персистентно. На мобиле не влияет
+// (там своя нижняя навигация; lg:drawer-open работает только с ≥1024px).
+const sidebarCollapsed = ref(localStorage.getItem('elom_sidebar_collapsed') === '1')
+watch(sidebarCollapsed, (v) => localStorage.setItem('elom_sidebar_collapsed', v ? '1' : '0'))
 const ui = useUiStore()
 const permissionsStore = usePermissionsStore()
 
