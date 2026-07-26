@@ -104,8 +104,8 @@
               <td class="col-material">{{ item.material_name || '—' }}</td>
               <td class="col-unit">{{ item.unit_code || '—' }}</td>
               <td class="col-quantity font-mono">{{ formatNumberClean(item.quantity) }}</td>
-              <td class="col-price font-mono">{{ formatCurrency(item.price) }}</td>
-              <td class="col-amount font-mono">{{ formatCurrency(item.amount) }}</td>
+              <td class="col-price font-mono">{{ formatNumber(item.price) }}<span class="cur-code"> UZS</span></td>
+              <td class="col-amount font-mono">{{ formatNumber(item.amount) }}<span class="cur-code"> UZS</span></td>
             </tr>
           </tbody>
           <tfoot>
@@ -113,7 +113,7 @@
               <td colspan="3" class="total-label">ИТОГО:</td>
               <td class="total-quantity font-mono">{{ formatNumberClean(totalQuantity) }}</td>
               <td class="total-price">—</td>
-              <td class="total-amount font-mono">{{ formatCurrency(purchase.total_amount) }}</td>
+              <td class="total-amount font-mono">{{ formatNumber(purchase.total_amount) }}<span class="cur-code"> UZS</span></td>
             </tr>
           </tfoot>
         </table>
@@ -252,7 +252,7 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
-import { formatDate, formatCurrency, formatNumberClean } from '@/utils/formatters'
+import { formatDate, formatNumber, formatNumberClean } from '@/utils/formatters'
 import { useEmployeesStore } from '@/stores/employees'
 
 interface Props {
@@ -588,8 +588,27 @@ onUnmounted(() => {
 
 .invoice-table {
   width: 100%;
+  /* F-586: table-layout:fixed → таблица НИКОГДА не шире контейнера (модалки), на любой ширине.
+     Числовые колонки nowrap, а «Наименование» переносится — так ничего не обрезается и числа не
+     ломаются. На узких экранах ниже уменьшаем шрифт/паддинги, чтобы числа влезли в свои колонки. */
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.875rem;
+}
+
+/* Числа (кол-во/цена/сумма) — в одну строку; наименование — переносится. */
+.invoice-table .col-quantity,
+.invoice-table .col-price,
+.invoice-table .col-amount,
+.invoice-table .total-quantity,
+.invoice-table .total-price,
+.invoice-table .total-amount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.invoice-table .col-material {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .invoice-table thead {
@@ -659,6 +678,49 @@ onUnmounted(() => {
 .total-amount {
   text-align: right;
   font-size: 1rem;
+}
+
+/* F-586: узкие экраны (телефон / full-screen модалка ≤639px) — компактнее, чтобы 6 колонок
+   влезли и числа не резались. Больше ширины числовым колонкам, меньше — служебным. Печать это
+   НЕ трогает (там свой @media print, документ остаётся полноразмерным). */
+@media (max-width: 639px) {
+  /* Меньше «бумажных» полей — таблице больше ширины. */
+  .invoice-paper {
+    padding: 0.75rem;
+  }
+  .invoice-table {
+    font-size: 0.75rem;
+  }
+  .invoice-table th,
+  .invoice-table td {
+    padding: 0.3rem 0.35rem;
+  }
+  .invoice-table th {
+    font-size: 0.6rem;
+  }
+  .col-number { width: 6%; }
+  .col-material { width: 28%; }
+  .col-unit { width: 9%; }
+  .col-quantity { width: 15%; }
+  .col-price { width: 20%; }
+  .col-amount { width: 22%; }
+  .total-quantity,
+  .total-price,
+  .total-amount {
+    font-size: 0.8rem;
+  }
+  /* На узком экране «UZS» в ячейках прячем — валюта указана в шапке накладной; так «120 000»
+     помещается без обрезки. <span> по умолчанию inline (десктоп), а печать форсит суффикс ниже. */
+  .cur-code {
+    display: none;
+  }
+}
+
+/* Суффикс валюты остаётся в ПЕЧАТИ (документ полноразмерный, с «UZS») и на десктопе. */
+@media print {
+  .cur-code {
+    display: inline !important;
+  }
 }
 
 /* Комментарий */
