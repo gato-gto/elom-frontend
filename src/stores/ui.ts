@@ -6,6 +6,7 @@ export type Toast = {
     type?: 'success' | 'error' | 'info'
     text: string
     timeout?: number
+    _ts?: number   // F-558: время добавления — для подавления мгновенных дублей
 }
 type ToastInput = Omit<Toast, 'id'>
 
@@ -26,12 +27,23 @@ export const useUiStore = defineStore('ui', {
             this.pending = Math.max(0, this.pending - 1)
         },
         toast(t: ToastInput) {
+            const type = t.type ?? 'info'
+            const now = Date.now()
+            // F-558: подавляем СЛУЧАЙНЫЕ дубли — стор и страница нередко тостят один и тот же
+            // текст подряд (напр. сбой загрузки списка: base.ts fetchList + onMounted страницы).
+            // Пропускаем, если такой же текст+тип уже показан в последние 800мс. Осознанные
+            // повторы (клики пользователя) разнесены во времени сильнее и не подавляются.
+            const dup = this.toasts.some(
+                (x) => x.text === t.text && x.type === type && now - (x._ts ?? 0) < 800,
+            )
+            if (dup) { return }
             const id = this._seq++
             const toast: Toast = {
                 id,
                 text: t.text,
-                type: t.type ?? 'info',
+                type,
                 timeout: t.timeout ?? 3500,
+                _ts: now,
             }
             this.toasts.push(toast)
             setTimeout(() => this.remove(id), toast.timeout)
