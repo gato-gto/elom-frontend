@@ -43,8 +43,8 @@ DELETE /objects/{id}/                      # Delete object
 GET    /materials/                         # List materials
 POST   /materials/                         # Create material
 PUT    /materials/{id}/                    # Update material
-POST   /materials/{id}/upload_photo/       # Upload photo
-DELETE /materials/{id}/delete_photo/       # Delete photo
+POST   /materials/{id}/upload-photo/       # Upload photo (DOC-5: было upload_photo)
+DELETE /materials/{id}/photo/              # Delete photo (DOC-5: было delete_photo)
 ```
 
 ### Purchases
@@ -241,5 +241,8 @@ Controls whether operations create StockSnapshot records:
 
 ---
 
-**Last Updated:** November 27, 2025  
-**Version:** 3.5
+**Last Updated:** 2026-07-26 (сверено с кодом)  
+**Version:** 3.6
+
+> ⚠️ Это ЧАСТИЧНАЯ шпаргалка (подмножество API). Полный контракт — сгенерированный
+> `api_schema.yaml` / живой `/api/schema/`. Не источник истины.

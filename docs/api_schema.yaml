@@ -67,6 +67,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: year
         schema:
@@ -367,6 +373,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -707,6 +719,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: search
         schema:
@@ -903,6 +921,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -1190,6 +1214,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: parent
         schema:
@@ -1441,9 +1471,410 @@ paths:
       - Material Categories
       security:
       - jwtAuth: []
+      deprecated: true
       responses:
         '200':
           description: Дерево категорий
+  /api/v1/material-requests/:
+    get:
+      operationId: material_requests_list
+      description: Получить пагинированный список заявок на материалы с поддержкой
+        фильтрации и сортировки.
+      summary: Список заявок на материалы
+      parameters:
+      - in: query
+        name: approved_by
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: 'Фильтр: дата от (YYYY-MM-DD)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: 'Фильтр: дата до (YYYY-MM-DD)'
+      - in: query
+        name: is_archived
+        schema:
+          type: boolean
+        description: 'Фильтр: архивировано'
+      - in: query
+        name: material
+        schema:
+          type: integer
+        description: 'Фильтр: ID материала'
+      - in: query
+        name: object
+        schema:
+          type: integer
+        description: 'Фильтр: ID объекта'
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: requested_by
+        schema:
+          type: integer
+        description: 'Фильтр: ID заявителя'
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: 'Фильтр: статус заявки (pending, approved, rejected, fulfilled)'
+      tags:
+      - Material Requests
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaterialRequestRecordList'
+          description: ''
+        '401':
+          description: Не авторизован
+    post:
+      operationId: material_requests_create
+      description: |-
+        ViewSet для управления заявками на материалы.
+
+        **Действия:**
+        - list, create, retrieve, update, partial_update, destroy — стандартные CRUD операции
+        - approve — одобрить заявку
+        - reject — отклонить заявку
+        - fulfill — выполнить заявку
+
+        **Права доступа:**
+        - admin/manager/warehouse — полный доступ
+        - brigadier/requester — могут создавать и редактировать свои заявки
+      summary: Создать заявку на материал
+      tags:
+      - Material Requests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+  /api/v1/material-requests/{id}/:
+    get:
+      operationId: material_requests_retrieve
+      description: |-
+        ViewSet для управления заявками на материалы.
+
+        **Действия:**
+        - list, create, retrieve, update, partial_update, destroy — стандартные CRUD операции
+        - approve — одобрить заявку
+        - reject — отклонить заявку
+        - fulfill — выполнить заявку
+
+        **Права доступа:**
+        - admin/manager/warehouse — полный доступ
+        - brigadier/requester — могут создавать и редактировать свои заявки
+      summary: Получить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '404':
+          description: Заявка не найдена
+    put:
+      operationId: material_requests_update
+      description: |-
+        ViewSet для управления заявками на материалы.
+
+        **Действия:**
+        - list, create, retrieve, update, partial_update, destroy — стандартные CRUD операции
+        - approve — одобрить заявку
+        - reject — отклонить заявку
+        - fulfill — выполнить заявку
+
+        **Права доступа:**
+        - admin/manager/warehouse — полный доступ
+        - brigadier/requester — могут создавать и редактировать свои заявки
+      summary: Обновить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '404':
+          description: Заявка не найдена
+    patch:
+      operationId: material_requests_partial_update
+      description: |-
+        ViewSet для управления заявками на материалы.
+
+        **Действия:**
+        - list, create, retrieve, update, partial_update, destroy — стандартные CRUD операции
+        - approve — одобрить заявку
+        - reject — отклонить заявку
+        - fulfill — выполнить заявку
+
+        **Права доступа:**
+        - admin/manager/warehouse — полный доступ
+        - brigadier/requester — могут создавать и редактировать свои заявки
+      summary: Частично обновить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialRequestRecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialRequestRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialRequestRecordRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '404':
+          description: Заявка не найдена
+    delete:
+      operationId: material_requests_destroy
+      description: |-
+        ViewSet для управления заявками на материалы.
+
+        **Действия:**
+        - list, create, retrieve, update, partial_update, destroy — стандартные CRUD операции
+        - approve — одобрить заявку
+        - reject — отклонить заявку
+        - fulfill — выполнить заявку
+
+        **Права доступа:**
+        - admin/manager/warehouse — полный доступ
+        - brigadier/requester — могут создавать и редактировать свои заявки
+      summary: Удалить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Заявка удалена
+        '404':
+          description: Заявка не найдена
+  /api/v1/material-requests/{id}/approve/:
+    post:
+      operationId: material_requests_approve
+      description: Одобрить заявку на материал
+      summary: Одобрить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '403':
+          description: Нет прав на одобрение
+        '404':
+          description: Заявка не найдена
+  /api/v1/material-requests/{id}/fulfill/:
+    post:
+      operationId: material_requests_fulfill
+      description: Выполнить заявку на материал
+      summary: Выполнить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MaterialRequestRecordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '403':
+          description: Нет прав на выполнение
+        '404':
+          description: Заявка не найдена
+  /api/v1/material-requests/{id}/reject/:
+    post:
+      operationId: material_requests_reject
+      description: Отклонить заявку на материал
+      summary: Отклонить заявку на материал
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this material request.
+        required: true
+      tags:
+      - Material Requests
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialRequestRecord'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '403':
+          description: Нет прав на отклонение
+        '404':
+          description: Заявка не найдена
   /api/v1/materials/:
     get:
       operationId: materials_list
@@ -1522,6 +1953,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: search
         schema:
@@ -1553,6 +1990,9 @@ paths:
       - Materials
       requestBody:
         content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MaterialRequest'
@@ -1618,6 +2058,9 @@ paths:
       - Materials
       requestBody:
         content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MaterialRequest'
@@ -1657,6 +2100,9 @@ paths:
       - Materials
       requestBody:
         content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMaterialRequest'
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedMaterialRequest'
@@ -1839,6 +2285,7 @@ paths:
       - Materials
       security:
       - jwtAuth: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -1930,6 +2377,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: created_by
+        schema:
+          type: number
+      - in: query
         name: is_active
         schema:
           type: boolean
@@ -1948,6 +2399,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -2225,6 +2682,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: purchase
         schema:
@@ -2481,97 +2944,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/purchase-items/bulk-create/:
-    post:
-      operationId: purchase_items_bulk_create_create
-      description: Создать несколько позиций закупки за один запрос
-      summary: Массовое создание позиций
-      parameters:
-      - in: query
-        name: is_archived
-        schema:
-          type: boolean
-      - in: query
-        name: material
-        schema:
-          type: number
-      - in: query
-        name: max_amount
-        schema:
-          type: number
-      - in: query
-        name: max_quantity
-        schema:
-          type: number
-      - in: query
-        name: min_amount
-        schema:
-          type: number
-      - in: query
-        name: min_quantity
-        schema:
-          type: number
-      - in: query
-        name: object
-        schema:
-          type: number
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - in: query
-        name: purchase
-        schema:
-          type: number
-      - in: query
-        name: purchase_date_from
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: purchase_date_to
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: supplier
-        schema:
-          type: string
-      - in: query
-        name: unit
-        schema:
-          type: number
-      tags:
-      - Purchase Items
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PurchaseItemBulkCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PurchaseItemBulkCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PurchaseItemBulkCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedPurchaseItemList'
-          description: ''
   /api/v1/purchase-items/bulk-update/:
     patch:
       operationId: purchase_items_bulk_update_partial_update
@@ -2616,6 +2988,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -2671,6 +3049,7 @@ paths:
       - Purchase Items
       security:
       - jwtAuth: []
+      deprecated: true
       responses:
         '200':
           description: Статистика
@@ -2885,6 +3264,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: created_by
+        schema:
+          type: number
+      - in: query
         name: currency
         schema:
           type: string
@@ -2944,6 +3327,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -3306,6 +3695,48 @@ paths:
           description: No response body
         '400':
           description: Archived purchase is read-only
+  /api/v1/purchases/{id}/approve/:
+    post:
+      operationId: purchases_approve
+      description: Изменяет статус закупки с 'new' на 'completed'. Доступно только
+        для admin/manager/warehouse.
+      summary: Одобрить заявку (закупку)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+        '400':
+          description: Заявка уже одобрена или отменена
+        '403':
+          description: Нет прав на одобрение
+        '404':
+          description: Закупка не найдена
   /api/v1/purchases/{id}/duplicate/:
     post:
       operationId: purchases_duplicate_create
@@ -3377,8 +3808,8 @@ paths:
   /api/v1/purchases/{id}/photos/{photo_id}/:
     patch:
       operationId: purchases_photos_partial_update
-      description: Обновить метаданные фото закупки
-      summary: Обновить фото
+      description: PATCH — обновить метаданные фото; DELETE — удалить фото.
+      summary: Обновить или удалить фото
       parameters:
       - in: path
         name: id
@@ -3413,12 +3844,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/PurchasePhoto'
           description: ''
+        '204':
+          description: No response body
         '400':
           description: Archived purchase is read-only
+        '404':
+          description: Photo not found
     delete:
       operationId: purchases_photos_destroy
-      description: Удалить фото закупки
-      summary: Удалить фото
+      description: PATCH — обновить метаданные фото; DELETE — удалить фото.
+      summary: Обновить или удалить фото
       parameters:
       - in: path
         name: id
@@ -3436,10 +3871,18 @@ paths:
       security:
       - jwtAuth: []
       responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasePhoto'
+          description: ''
         '204':
           description: No response body
         '400':
           description: Archived purchase is read-only
+        '404':
+          description: Photo not found
   /api/v1/purchases/{id}/photos/{photo_id}/set-cover/:
     post:
       operationId: purchases_photos_set_cover_create
@@ -3570,6 +4013,36 @@ paths:
           description: Uploaded
         '400':
           description: Archived purchase is read-only
+  /api/v1/purchases/{id}/reject/:
+    post:
+      operationId: purchases_reject
+      description: Изменяет статус закупки с 'new' на 'cancelled'. Доступно только
+        для admin/manager/warehouse.
+      summary: Отклонить заявку (закупку)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - Purchases
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+        '400':
+          description: Заявка уже одобрена или отменена
+        '403':
+          description: Нет прав на отклонение
+        '404':
+          description: Закупка не найдена
   /api/v1/purchases/{id}/validate/:
     get:
       operationId: purchases_validate_retrieve
@@ -3778,9 +4251,701 @@ paths:
       - Purchases
       security:
       - jwtAuth: []
+      deprecated: true
       responses:
         '200':
           description: Анализ поставщиков
+  /api/v1/rbac/my-permissions/:
+    get:
+      operationId: rbac_my_permissions_retrieve
+      description: "\n    Получить все разрешения текущего авторизованного пользователя.\n\
+        \    \n    **Возвращает:**\n    - Список всех разрешений пользователя (с учетом\
+        \ ролей и персональных переопределений)\n    - Список ролей пользователя (только\
+        \ для отображения в UI, не для логики доступа)\n    \n    **Используется фронтендом\
+        \ для:**\n    - Проверки доступа к функциям и маршрутам\n    - Условного отображения\
+        \ элементов UI (кнопки, формы, меню)\n    - Адаптации интерфейса под права\
+        \ пользователя\n    \n    **Примечание:**\n    - Суперпользователи (is_superuser=True)\
+        \ получают все разрешения автоматически\n    - Разрешения вычисляются с учетом\
+        \ иерархии ролей (родительские роли)\n    - Персональные переопределения (UserPermissionOverride)\
+        \ имеют приоритет над ролями\n    "
+      summary: Мои разрешения
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissionsResponse'
+              examples:
+                ПримерОтвета:
+                  value:
+                    permissions:
+                    - id: 1
+                      codename: materials.create
+                      resource: materials
+                      action: create
+                      name: Создание материалов
+                    - id: 2
+                      codename: purchases.view
+                      resource: purchases
+                      action: view
+                      name: Просмотр закупок
+                    roles:
+                    - id: 1
+                      name: admin
+                      display_name: Администратор
+                      is_system: true
+                  summary: Пример ответа
+          description: ''
+        '401':
+          description: Не авторизован
+  /api/v1/rbac/permissions/:
+    get:
+      operationId: rbac_permissions_list
+      description: "\n        Получить список всех активных разрешений в системе.\n\
+        \        \n        Разрешения определяют конкретные действия над ресурсами\
+        \ (например, materials.create, purchases.view).\n        Управление разрешениями\
+        \ происходит через Django Admin.\n        "
+      summary: Список разрешений
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+        description: Фильтр по действию (view, create, edit, delete и т.д.)
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Фильтр по активности (true/false)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: resource, action, name (используйте ''-'' для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: resource
+        schema:
+          type: string
+        description: Фильтр по ресурсу (materials, purchases, objects и т.д.)
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по названию, коду или описанию
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPermissionList'
+              examples:
+                ПримерОтвета:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - - id: 1
+                        codename: materials.create
+                        name: Создание материалов
+                        resource: materials
+                        action: create
+                        description: Разрешение на создание новых материалов
+                        is_active: true
+                      - id: 2
+                        codename: purchases.view
+                        name: Просмотр закупок
+                        resource: purchases
+                        action: view
+                        description: Разрешение на просмотр закупок
+                        is_active: true
+                  summary: Пример ответа
+          description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.view)
+  /api/v1/rbac/permissions/{id}/:
+    get:
+      operationId: rbac_permissions_retrieve
+      description: Получить детальную информацию о конкретном разрешении по ID
+      summary: Получить разрешение
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Разрешение.
+        required: true
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.view)
+        '404':
+          description: Разрешение не найдено
+  /api/v1/rbac/roles/:
+    get:
+      operationId: rbac_roles_list
+      description: "\n        Получить список всех активных ролей в системе.\n   \
+        \     \n        Роль объединяет набор разрешений и может быть назначена пользователям.\n\
+        \        Поддерживается иерархия ролей через поле parent.\n        "
+      summary: Список ролей
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Фильтр по активности (true/false)
+      - in: query
+        name: is_system
+        schema:
+          type: boolean
+        description: Фильтр по системным ролям (true/false)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: display_name, name, created_at (используйте ''-''
+          для desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по имени, отображаемому названию или описанию
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleList'
+              examples:
+                ПримерОтвета:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - - id: 1
+                        name: admin
+                        display_name: Администратор
+                        description: Полный доступ ко всем функциям системы
+                        permissions:
+                        - id: 1
+                          codename: materials.create
+                          name: Создание материалов
+                        - id: 2
+                          codename: purchases.view
+                          name: Просмотр закупок
+                        parent: null
+                        is_system: true
+                        is_active: true
+                        created_at: '2025-01-01T00:00:00Z'
+                        updated_at: '2025-01-01T00:00:00Z'
+                  summary: Пример ответа
+          description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_roles)
+    post:
+      operationId: rbac_roles_create
+      description: "\n        Создать новую роль с разрешениями.\n        \n     \
+        \   При создании можно указать:\n        - name: уникальное имя роли (например,\
+        \ 'custom_role')\n        - display_name: отображаемое название\n        -\
+        \ permission_ids: список ID разрешений для назначения\n        - parent: ID\
+        \ родительской роли (опционально, для иерархии)\n        "
+      summary: Создать роль
+      tags:
+      - RBAC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  name: custom_role
+                  display_name: Кастомная роль
+                  description: Описание роли
+                  permission_ids:
+                  - 1
+                  - 2
+                  - 3
+                  parent: null
+                  is_active: true
+                summary: Пример запроса
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    name: custom_role
+                    display_name: Кастомная роль
+                    description: Описание роли
+                    permission_ids:
+                    - 1
+                    - 2
+                    - 3
+                    parent: null
+                    is_active: true
+                  summary: Пример запроса
+          description: ''
+        '400':
+          description: Ошибка валидации (например, роль с таким именем уже существует)
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_roles)
+  /api/v1/rbac/roles/{id}/:
+    get:
+      operationId: rbac_roles_retrieve
+      description: Получить детальную информацию о роли с полным списком разрешений
+      summary: Получить роль
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль.
+        required: true
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_roles)
+        '404':
+          description: Роль не найдена
+    put:
+      operationId: rbac_roles_update
+      description: "\n        Обновить роль и её разрешения.\n        \n        Можно\
+        \ изменить:\n        - display_name, description\n        - permission_ids\
+        \ (список разрешений)\n        - parent (родительская роль)\n        - is_active\
+        \ (активность)\n        \n        Системные роли (is_system=True) нельзя изменять.\n\
+        \        "
+      summary: Обновить роль
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль.
+        required: true
+      tags:
+      - RBAC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+        '400':
+          description: Ошибка валидации
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_roles) или попытка
+            изменить системную роль
+        '404':
+          description: Роль не найдена
+    patch:
+      operationId: rbac_roles_partial_update
+      description: |-
+        ViewSet для управления ролями
+
+        Требуется разрешение: rbac.manage_roles
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль.
+        required: true
+      tags:
+      - rbac
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    delete:
+      operationId: rbac_roles_destroy
+      description: "\n        Удалить роль (деактивировать).\n        \n        Системные\
+        \ роли (is_system=True) нельзя удалить.\n        При удалении роль помечается\
+        \ как неактивная (is_active=False).\n        "
+      summary: Удалить роль
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль.
+        required: true
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Роль удалена (деактивирована)
+        '400':
+          description: Нельзя удалить системную роль
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_roles)
+        '404':
+          description: Роль не найдена
+  /api/v1/rbac/user-roles/:
+    get:
+      operationId: rbac_user_roles_list
+      description: "\n        Получить список всех назначенных ролей пользователям.\n\
+        \        \n        Роль либо назначена (есть запись), либо не назначена (запись\
+        \ удалена).\n        Поле is_active удалено для упрощения логики.\n      \
+        \  "
+      summary: Список ролей пользователей
+      parameters:
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: assigned_at, user__username (используйте ''-'' для
+          desc)'
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: integer
+        description: Фильтр по ID роли
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поиск по имени пользователя или названию роли
+      - in: query
+        name: user
+        schema:
+          type: integer
+        description: Фильтр по ID пользователя
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserRoleList'
+              examples:
+                ПримерОтвета:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - - id: 1
+                        user: 1
+                        user_username: admin
+                        role:
+                          id: 1
+                          name: admin
+                          display_name: Администратор
+                          is_system: true
+                        role_id: 1
+                        assigned_at: '2025-01-01T00:00:00Z'
+                        assigned_by: 1
+                        expires_at: null
+                  summary: Пример ответа
+          description: ''
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_user_roles)
+    post:
+      operationId: rbac_user_roles_create
+      description: "\n        Назначить роль пользователю.\n        \n        Параметры:\n\
+        \        - user: ID пользователя\n        - role_id: ID роли для назначения\n\
+        \        - expires_at: дата истечения роли (опционально, если не указана -\
+        \ роль бессрочная)\n        \n        Если роль уже назначена пользователю,\
+        \ вернется ошибка валидации.\n        "
+      summary: Назначить роль пользователю
+      tags:
+      - RBAC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  user: 1
+                  role_id: 2
+                  expires_at: null
+                summary: Пример запроса
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRoleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRole'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    user: 1
+                    role_id: 2
+                    expires_at: null
+                  summary: Пример запроса
+          description: ''
+        '400':
+          description: Ошибка валидации (например, роль уже назначена)
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_user_roles)
+  /api/v1/rbac/user-roles/{id}/:
+    get:
+      operationId: rbac_user_roles_retrieve
+      description: |-
+        ViewSet для управления ролями пользователей
+
+        Требуется разрешение: rbac.manage_user_roles
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль пользователя.
+        required: true
+      tags:
+      - rbac
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRole'
+          description: ''
+    put:
+      operationId: rbac_user_roles_update
+      description: |-
+        ViewSet для управления ролями пользователей
+
+        Требуется разрешение: rbac.manage_user_roles
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль пользователя.
+        required: true
+      tags:
+      - rbac
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRoleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRole'
+          description: ''
+    patch:
+      operationId: rbac_user_roles_partial_update
+      description: |-
+        ViewSet для управления ролями пользователей
+
+        Требуется разрешение: rbac.manage_user_roles
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль пользователя.
+        required: true
+      tags:
+      - rbac
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRoleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRoleRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRole'
+          description: ''
+    delete:
+      operationId: rbac_user_roles_destroy
+      description: "\n        Отозвать роль у пользователя (физически удалить связь).\n\
+        \        \n        После удаления пользователь теряет все разрешения, связанные\
+        \ с этой ролью.\n        "
+      summary: Отозвать роль у пользователя
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Роль пользователя.
+        required: true
+      tags:
+      - RBAC
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Роль отозвана (удалена)
+        '401':
+          description: Не авторизован
+        '403':
+          description: Нет прав доступа (требуется rbac.manage_user_roles)
+        '404':
+          description: Связь пользователь-роль не найдена
   /api/v1/reports/purchases/by-material/:
     get:
       operationId: reports_purchases_by_material_retrieve
@@ -4229,6 +5394,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: responsible
         schema:
@@ -4610,6 +5781,12 @@ paths:
         schema:
           type: integer
         description: ID объекта (опционально)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Сортировка: object_name | total_materials, префикс «-» для убывания
+          (F-405). Неизвестное значение → 400, чтобы параметр не был «мёртвым».'
       tags:
       - Stock
       security:
@@ -4691,10 +5868,58 @@ paths:
       summary: Список поставщиков
       parameters:
       - in: query
+        name: created_from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_to
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: has_contact_person
+        schema:
+          type: boolean
+      - in: query
+        name: has_email
+        schema:
+          type: boolean
+      - in: query
+        name: has_phone
+        schema:
+          type: boolean
+      - in: query
         name: is_active
         schema:
           type: boolean
         description: Фильтр по активности
+      - in: query
+        name: last_purchase_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: last_purchase_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: max_purchases
+        schema:
+          type: number
+      - in: query
+        name: max_total_amount
+        schema:
+          type: number
+      - in: query
+        name: min_purchases
+        schema:
+          type: number
+      - in: query
+        name: min_total_amount
+        schema:
+          type: number
       - name: ordering
         required: false
         in: query
@@ -4705,6 +5930,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -4861,103 +6092,83 @@ paths:
   /api/v1/tool-issues/:
     get:
       operationId: tool_issues_list
-      description: Получить журнал выдач инструментов с фильтрацией
+      description: Получить журнал выдач инструментов с фильтрацией и поиском. Поддерживает
+        пагинацию.
       summary: Список выдач инструментов
       parameters:
+      - in: query
+        name: is_open
+        schema:
+          type: boolean
+        description: Активна (не возвращена)
       - in: query
         name: is_returned
         schema:
           type: boolean
-        description: Фильтр возвращенных (true/false)
+        description: Фильтр возвращенных (true) или активных (false) выдач
       - in: query
         name: issue_condition
         schema:
           type: string
-          enum:
-          - after_repair
-          - broken
-          - good
-          - lost
-          - needs_repair
-          - new
-        description: |-
-          Состояние при выдаче
-
-          * `new` - Новый
-          * `good` - Хорошее
-          * `after_repair` - После ремонта
-          * `needs_repair` - Требует ремонта
-          * `broken` - Сломан
-          * `lost` - Утерян
+        description: 'Фильтр по состоянию при выдаче: new, good, after_repair, needs_repair,
+          broken, lost'
       - in: query
         name: issued_at_from
         schema:
           type: string
-        description: Дата выдачи от (YYYY-MM-DD)
+        description: 'Дата выдачи от (формат: YYYY-MM-DD или YYYY-MM-DDTHH:MM:SS)'
       - in: query
         name: issued_at_to
         schema:
           type: string
-        description: Дата выдачи до (YYYY-MM-DD)
+        description: 'Дата выдачи до (формат: YYYY-MM-DD или YYYY-MM-DDTHH:MM:SS)'
       - in: query
         name: issued_by
         schema:
           type: integer
-        description: Фильтр по выдавшему (ID)
+        description: Фильтр по выдавшему (ID пользователя)
       - in: query
         name: issued_to
         schema:
           type: integer
-        description: Фильтр по получателю (ID)
+        description: Фильтр по получателю (ID пользователя)
       - in: query
         name: object
         schema:
           type: integer
-        description: Фильтр по объекту (ID)
+        description: Фильтр по объекту (ID объекта)
       - in: query
         name: ordering
         schema:
           type: string
-        description: 'Сортировка: issued_at|return_date (используйте ''-'' для desc)'
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+        description: 'Сортировка: issued_at, return_date, duration_days (используйте
+          ''-'' для desc)'
+      - in: query
+        name: page
         schema:
           type: integer
+        description: Номер страницы для пагинации
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Количество элементов на странице
       - in: query
         name: return_condition
         schema:
           type: string
-          nullable: true
-          enum:
-          - after_repair
-          - broken
-          - good
-          - lost
-          - needs_repair
-          - new
-        description: |-
-          Состояние при возврате
-
-          * `new` - Новый
-          * `good` - Хорошее
-          * `after_repair` - После ремонта
-          * `needs_repair` - Требует ремонта
-          * `broken` - Сломан
-          * `lost` - Утерян
+        description: 'Фильтр по состоянию при возврате: new, good, after_repair, needs_repair,
+          broken, lost'
       - in: query
         name: return_date_from
         schema:
           type: string
-          format: date-time
-        description: Дата возврата от
+        description: 'Дата возврата от (формат: YYYY-MM-DD или YYYY-MM-DDTHH:MM:SS)'
       - in: query
         name: return_date_to
         schema:
           type: string
-          format: date-time
-        description: Дата возврата до
+        description: 'Дата возврата до (формат: YYYY-MM-DD или YYYY-MM-DDTHH:MM:SS)'
       - name: search
         required: false
         in: query
@@ -4973,9 +6184,9 @@ paths:
         name: tool_inventory_number
         schema:
           type: string
-        description: Фильтр по инвентарному номеру
+        description: Фильтр по инвентарному номеру инструмента (частичное совпадение)
       tags:
-      - Tools
+      - Tool Issues
       security:
       - jwtAuth: []
       responses:
@@ -4984,18 +6195,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedToolIssueList'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - tool: 1
+                      is_returned: false
+                      ordering: -issued_at
+                  summary: Пример запроса
           description: ''
     post:
       operationId: tool_issues_create
-      description: Создать запись о выдаче инструмента сотруднику
+      description: "\n        Создать запись о выдаче инструмента сотруднику.\n  \
+        \      \n        Поле `issued_by` устанавливается автоматически (текущий пользователь).\n\
+        \        Инструмент должен быть доступен (не выдан другому сотруднику).\n\
+        \        "
       summary: Выдать инструмент
       tags:
-      - Tools
+      - Tool Issues
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ToolIssueRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  tool: 1
+                  issued_to: 5
+                  object: 2
+                  issue_condition: good
+                  issue_comment: Выдача на объект для работ
+                summary: Пример запроса
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ToolIssueRequest'
@@ -5011,11 +6245,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolIssue'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    tool: 1
+                    issued_to: 5
+                    object: 2
+                    issue_condition: good
+                    issue_comment: Выдача на объект для работ
+                  summary: Пример запроса
           description: ''
+        '400':
+          description: Ошибка валидации (например, инструмент уже выдан)
   /api/v1/tool-issues/{id}/:
     get:
       operationId: tool_issues_retrieve
-      description: Получить детальную информацию о выдаче инструмента
+      description: Получить детальную информацию о выдаче инструмента по ID
       summary: Получить выдачу
       parameters:
       - in: path
@@ -5025,7 +6270,7 @@ paths:
         description: A unique integer value identifying this Выдача инструмента.
         required: true
       tags:
-      - Tools
+      - Tool Issues
       security:
       - jwtAuth: []
       responses:
@@ -5034,10 +6279,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolIssue'
+              examples:
+                ПримерОтвета:
+                  value:
+                    id: 1
+                    tool: 1
+                    tool_name: Перфоратор Makita HR2470
+                    tool_inventory_number: INV001
+                    issued_by: 1
+                    issued_by_name: Администратор
+                    issued_to: 5
+                    issued_to_name: Иванов Петр
+                    issued_at: '2024-01-15T10:30:00Z'
+                    object: 2
+                    object_name: ЖК Солнечный
+                    issue_condition: good
+                    issue_condition_display: Хорошее
+                    issue_comment: ''
+                    return_date: null
+                    return_condition: null
+                    return_condition_display: null
+                    return_comment: ''
+                    is_returned: false
+                    duration_days: 5
+                    created_at: '2024-01-15T10:30:00Z'
+                    updated_at: '2024-01-15T10:30:00Z'
+                  summary: Пример ответа
           description: ''
+        '404':
+          description: Выдача не найдена
     put:
       operationId: tool_issues_update
-      description: Обновление выдач запрещено. Используйте action return для возврата.
+      description: Обновление выдач запрещено для сохранения истории. Используйте
+        action `return` для возврата инструмента.
       summary: Обновить выдачу (запрещено)
       parameters:
       - in: path
@@ -5047,7 +6321,7 @@ paths:
         description: A unique integer value identifying this Выдача инструмента.
         required: true
       tags:
-      - Tools
+      - Tool Issues
       requestBody:
         content:
           application/json:
@@ -5067,7 +6341,8 @@ paths:
           description: Обновление выдач запрещено
     patch:
       operationId: tool_issues_partial_update
-      description: Обновление выдач запрещено. Используйте action return для возврата.
+      description: Обновление выдач запрещено для сохранения истории. Используйте
+        action `return` для возврата инструмента.
       summary: Частичное обновление выдачи (запрещено)
       parameters:
       - in: path
@@ -5077,7 +6352,7 @@ paths:
         description: A unique integer value identifying this Выдача инструмента.
         required: true
       tags:
-      - Tools
+      - Tool Issues
       requestBody:
         content:
           application/json:
@@ -5096,7 +6371,8 @@ paths:
           description: Обновление выдач запрещено
     delete:
       operationId: tool_issues_destroy
-      description: Удаление выдач запрещено для сохранения истории
+      description: Удаление выдач запрещено для сохранения полной истории движений
+        инструментов.
       summary: Удалить выдачу (запрещено)
       parameters:
       - in: path
@@ -5106,7 +6382,7 @@ paths:
         description: A unique integer value identifying this Выдача инструмента.
         required: true
       tags:
-      - Tools
+      - Tool Issues
       security:
       - jwtAuth: []
       responses:
@@ -5117,7 +6393,9 @@ paths:
       operationId: tool_issues_return_create
       description: "\n        Оформить возврат инструмента на склад.\n        \n \
         \       Обязательно указать состояние при возврате.\n        После возврата\
-        \ инструмент становится доступен для новой выдачи.\n        "
+        \ инструмент становится доступен для новой выдачи.\n        Автоматически\
+        \ обновляется состояние инструмента и очищаются поля current_holder и current_object.\n\
+        \        "
       summary: Оформить возврат инструмента
       parameters:
       - in: path
@@ -5127,12 +6405,39 @@ paths:
         description: A unique integer value identifying this Выдача инструмента.
         required: true
       tags:
-      - Tools
+      - Tool Issues
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ToolReturnRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  return_condition: good
+                  return_comment: Инструмент в хорошем состоянии
+                summary: Пример запроса
+              ПримерОтвета:
+                value:
+                  id: 1
+                  tool: 1
+                  tool_name: Перфоратор Makita HR2470
+                  tool_inventory_number: INV001
+                  issued_by: 1
+                  issued_by_name: Администратор
+                  issued_to: 5
+                  issued_to_name: Иванов Петр
+                  issued_at: '2024-01-15T10:30:00Z'
+                  return_date: '2024-01-20T14:00:00Z'
+                  object: 2
+                  object_name: ЖК Солнечный
+                  issue_condition: good
+                  issue_condition_display: Хорошее
+                  return_condition: good
+                  return_condition_display: Хорошее
+                  is_returned: true
+                  duration_days: 5
+                summary: Пример ответа
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ToolReturnRequest'
@@ -5148,15 +6453,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolIssue'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    return_condition: good
+                    return_comment: Инструмент в хорошем состоянии
+                  summary: Пример запроса
+                ПримерОтвета:
+                  value:
+                    id: 1
+                    tool: 1
+                    tool_name: Перфоратор Makita HR2470
+                    tool_inventory_number: INV001
+                    issued_by: 1
+                    issued_by_name: Администратор
+                    issued_to: 5
+                    issued_to_name: Иванов Петр
+                    issued_at: '2024-01-15T10:30:00Z'
+                    return_date: '2024-01-20T14:00:00Z'
+                    object: 2
+                    object_name: ЖК Солнечный
+                    issue_condition: good
+                    issue_condition_display: Хорошее
+                    return_condition: good
+                    return_condition_display: Хорошее
+                    is_returned: true
+                    duration_days: 5
+                  summary: Пример ответа
           description: ''
         '400':
-          description: Ошибка валидации
+          description: Ошибка валидации или инструмент уже возвращен
+        '404':
+          description: Выдача не найдена
   /api/v1/tool-issues/active/:
     get:
       operationId: tool_issues_active_list
-      description: Получить список всех невозвращенных инструментов
+      description: Получить список всех невозвращенных инструментов (активные выдачи).
+        Поддерживает пагинацию.
       summary: Список активных выдач
       parameters:
+      - in: query
+        name: is_open
+        schema:
+          type: boolean
+        description: Активна (не возвращена)
       - in: query
         name: is_returned
         schema:
@@ -5221,6 +6561,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: return_condition
         schema:
@@ -5271,7 +6617,7 @@ paths:
           type: string
         description: Инвентарный номер
       tags:
-      - Tools
+      - Tool Issues
       security:
       - jwtAuth: []
       responses:
@@ -5280,43 +6626,118 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedToolIssueList'
+              examples:
+                ПримерОтвета:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - results:
+                      - id: 1
+                        tool: 1
+                        tool_name: Перфоратор Makita HR2470
+                        tool_inventory_number: INV001
+                        issued_to: 5
+                        issued_to_name: Иванов Петр
+                        issued_at: '2024-01-15T10:30:00Z'
+                        return_date: null
+                        is_returned: false
+                        duration_days: 5
+                      count: 1
+                      next: null
+                      previous: null
+                  summary: Пример ответа
           description: ''
+  /api/v1/tool-issues/issue/:
+    post:
+      operationId: tool_issues_issue_create
+      description: "\n        Выдать инструмент сотруднику.\n        \n        Алиас\
+        \ для стандартного метода create. Автоматически устанавливает issued_by (текущий\
+        \ пользователь).\n        Инструмент должен быть доступен (не выдан другому\
+        \ сотруднику).\n        "
+      summary: Выдать инструмент
+      tags:
+      - Tool Issues
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  tool: 1
+                  issued_to: 5
+                  object: 2
+                  issue_condition: good
+                  issue_comment: Выдача на объект для работ
+                summary: Пример запроса
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolIssueRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolIssue'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    tool: 1
+                    issued_to: 5
+                    object: 2
+                    issue_condition: good
+                    issue_comment: Выдача на объект для работ
+                  summary: Пример запроса
+          description: ''
+        '400':
+          description: Ошибка валидации (например, инструмент уже выдан)
   /api/v1/tools/:
     get:
       operationId: tools_list
-      description: Получить список всех инструментов с фильтрацией и поиском
+      description: Получить список всех инструментов с фильтрацией и поиском. Поддерживает
+        пагинацию.
       summary: Список инструментов
       parameters:
       - in: query
         name: brand
         schema:
           type: string
-        description: Фильтр по марке
+        description: Фильтр по марке (частичное совпадение)
       - in: query
         name: category
         schema:
           type: string
-        description: Фильтр по категории
+        description: Фильтр по категории (частичное совпадение)
       - in: query
         name: condition
         schema:
           type: string
-        description: Фильтр по состоянию
+        description: 'Фильтр по состоянию: new, good, after_repair, needs_repair,
+          broken, lost'
       - in: query
         name: current_holder
         schema:
           type: integer
-        description: Фильтр по текущему держателю (ID)
+        description: Фильтр по текущему держателю (ID пользователя)
       - in: query
         name: current_object
         schema:
           type: integer
-        description: Фильтр по текущему объекту (ID)
+        description: Фильтр по текущему объекту (ID объекта)
       - in: query
         name: in_stock
         schema:
           type: boolean
-        description: Только инструменты на складе (true/false)
+        description: Только инструменты на складе (true) или выданные (false)
       - in: query
         name: inventory_number
         schema:
@@ -5325,14 +6746,18 @@ paths:
         name: ordering
         schema:
           type: string
-        description: 'Сортировка: inventory_number|name|condition (используйте ''-''
-          для desc)'
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+        description: 'Сортировка: inventory_number, name, condition, created_at (используйте
+          ''-'' для desc)'
+      - in: query
+        name: page
         schema:
           type: integer
+        description: Номер страницы для пагинации
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Количество элементов на странице
       - in: query
         name: search
         schema:
@@ -5348,10 +6773,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedToolList'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?page=4
+                    previous: http://api.example.org/accounts/?page=2
+                    results:
+                    - search: перфоратор
+                      condition: good
+                      in_stock: true
+                      ordering: -created_at
+                  summary: Пример запроса
           description: ''
     post:
       operationId: tools_create
-      description: Добавить новый инструмент в систему
+      description: Добавить новый инструмент в систему. Инвентарный номер должен быть
+        уникальным.
       summary: Создать инструмент
       tags:
       - Tools
@@ -5360,6 +6798,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ToolRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  inventory_number: INV002
+                  name: Дрель Bosch GSR 120-LI
+                  category: Дрель, Аккумуляторная
+                  brand: Bosch
+                  condition: new
+                summary: Пример запроса
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ToolRequest'
@@ -5375,11 +6822,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tool'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    inventory_number: INV002
+                    name: Дрель Bosch GSR 120-LI
+                    category: Дрель, Аккумуляторная
+                    brand: Bosch
+                    condition: new
+                  summary: Пример запроса
           description: ''
+        '400':
+          description: Ошибка валидации (например, дубликат инвентарного номера)
   /api/v1/tools/{id}/:
     get:
       operationId: tools_retrieve
-      description: Получить детальную информацию об инструменте
+      description: Получить детальную информацию об инструменте по ID
       summary: Получить инструмент
       parameters:
       - in: path
@@ -5398,10 +6856,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tool'
+              examples:
+                ПримерОтвета:
+                  value:
+                    id: 1
+                    inventory_number: INV001
+                    name: Перфоратор Makita HR2470
+                    category: Перфоратор, SDS-Plus
+                    brand: Makita
+                    current_holder: 5
+                    current_holder_name: Иванов Петр
+                    current_object: 2
+                    current_object_name: ЖК Солнечный
+                    condition: good
+                    condition_display: Хорошее
+                    is_in_stock: false
+                    status_display: 'У Иванов Петр (объект: ЖК Солнечный)'
+                    created_at: '2024-01-15T10:30:00Z'
+                    updated_at: '2024-01-15T10:30:00Z'
+                  summary: Пример ответа
           description: ''
+        '404':
+          description: Инструмент не найден
     put:
       operationId: tools_update
-      description: Полное обновление данных инструмента
+      description: Полное обновление данных инструмента. Все поля обязательны.
       summary: Обновить инструмент
       parameters:
       - in: path
@@ -5433,9 +6912,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Tool'
           description: ''
+        '400':
+          description: Ошибка валидации
+        '404':
+          description: Инструмент не найден
     patch:
       operationId: tools_partial_update
-      description: Частичное обновление данных инструмента
+      description: Частичное обновление данных инструмента. Можно указать только изменяемые
+        поля.
       summary: Частичное обновление инструмента
       parameters:
       - in: path
@@ -5451,6 +6935,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedToolRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  name: Перфоратор Makita HR2470 (обновлено)
+                  condition: needs_repair
+                summary: Пример запроса
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedToolRequest'
@@ -5465,10 +6955,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tool'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    name: Перфоратор Makita HR2470 (обновлено)
+                    condition: needs_repair
+                  summary: Пример запроса
           description: ''
+        '400':
+          description: Ошибка валидации
+        '404':
+          description: Инструмент не найден
     delete:
       operationId: tools_destroy
-      description: Удалить инструмент из системы (только если нет истории выдач)
+      description: Удалить инструмент из системы. Удаление возможно только если у
+        инструмента нет истории выдач.
       summary: Удалить инструмент
       parameters:
       - in: path
@@ -5483,82 +6984,19 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Инструмент успешно удален
+        '400':
+          description: Нельзя удалить инструмент с историей выдач
+        '404':
+          description: Инструмент не найден
   /api/v1/tools/bulk-create/:
     post:
       operationId: tools_bulk_create_create
       description: "\n        Создать несколько инструментов за один запрос.\n   \
         \     \n        Опционально можно сразу выдать все созданные инструменты одному\
-        \ сотруднику.\n        "
+        \ сотруднику.\n        При массовой выдаче можно указать общее состояние для\
+        \ всех инструментов или индивидуальное для каждого.\n        "
       summary: Массовое создание инструментов
-      parameters:
-      - in: query
-        name: brand
-        schema:
-          type: string
-        description: Марка
-      - in: query
-        name: category
-        schema:
-          type: string
-        description: Категория
-      - in: query
-        name: condition
-        schema:
-          type: string
-          enum:
-          - after_repair
-          - broken
-          - good
-          - lost
-          - needs_repair
-          - new
-        description: |-
-          Состояние
-
-          * `new` - Новый
-          * `good` - Хорошее
-          * `after_repair` - После ремонта
-          * `needs_repair` - Требует ремонта
-          * `broken` - Сломан
-          * `lost` - Утерян
-      - in: query
-        name: current_holder
-        schema:
-          type: integer
-        description: Текущий держатель (ID)
-      - in: query
-        name: current_object
-        schema:
-          type: integer
-        description: Текущий объект (ID)
-      - in: query
-        name: in_stock
-        schema:
-          type: boolean
-        description: На складе
-      - in: query
-        name: inventory_number
-        schema:
-          type: string
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: search
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
       tags:
       - Tools
       requestBody:
@@ -5566,6 +7004,52 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ToolBulkCreateRequest'
+            examples:
+              ПримерЗапросаБезВыдачи:
+                value:
+                  tools:
+                  - inventory_number: INV003
+                    name: Шуруповерт DeWalt DCD791
+                    category: Шуруповерт, Аккумуляторный
+                    brand: DeWalt
+                    condition: new
+                  - inventory_number: INV004
+                    name: Болгарка Makita GA5030
+                    category: Болгарка, УШМ
+                    brand: Makita
+                    condition: good
+                  auto_issue: false
+                summary: Пример запроса без выдачи
+              ПримерЗапросаСАвтоматическойВыдачей:
+                value:
+                  tools:
+                  - inventory_number: INV005
+                    name: Лобзик Bosch PST 700 E
+                    category: Лобзик
+                    brand: Bosch
+                    condition: new
+                    issue_condition: new
+                  auto_issue: true
+                  issued_to: 5
+                  object: 2
+                  issue_condition: new
+                  issue_comment: Выдача на объект
+                summary: Пример запроса с автоматической выдачей
+              ПримерОтвета:
+                value:
+                  tools:
+                  - id: 3
+                    inventory_number: INV003
+                    name: Шуруповерт DeWalt DCD791
+                    category: Шуруповерт, Аккумуляторный
+                    brand: DeWalt
+                    condition: new
+                    current_holder: null
+                    current_object: null
+                    is_in_stock: true
+                  created_count: 2
+                  issued_count: 0
+                summary: Пример ответа
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ToolBulkCreateRequest'
@@ -5577,24 +7061,24 @@ paths:
       - jwtAuth: []
       responses:
         '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedToolList'
-          description: ''
+          description: 'Успешное создание. Возвращает объект с полями: tools (массив
+            созданных инструментов), created_count (количество созданных), issued_count
+            (количество выданных)'
         '400':
           description: Ошибка валидации
   /api/v1/tools/categories/:
     get:
       operationId: tools_categories_retrieve
-      description: Получить список уникальных категорий для автодополнения
+      description: Получить список уникальных категорий для автодополнения. Категории
+        извлекаются из всех инструментов и парсятся по запятым.
       summary: Автодополнение категорий
       parameters:
       - in: query
         name: q
         schema:
           type: string
-        description: Поисковый запрос (первые буквы категории)
+        description: Поисковый запрос (первые буквы категории). Если не указан, возвращаются
+          все категории.
       tags:
       - Tools
       security:
@@ -5605,6 +7089,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolCategoryAutocomplete'
+              examples:
+                ПримерЗапроса:
+                  value:
+                    q: перф
+                  summary: Пример запроса
+                ПримерОтвета:
+                  value:
+                    categories:
+                    - Перфоратор
+                    - Перфоратор SDS-Max
+                    - Перфоратор SDS-Plus
+                  summary: Пример ответа
           description: ''
   /api/v1/units/:
     get:
@@ -5634,6 +7130,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: search
         schema:
@@ -5654,7 +7156,8 @@ paths:
           description: Не авторизован
     post:
       operationId: units_create
-      description: Создать новую единицу измерения. Требуется роль admin или director.
+      description: Создать новую единицу измерения. Требуется роль admin, manager
+        или warehouse.
       summary: Создать единицу измерения
       tags:
       - Units
@@ -5714,7 +7217,8 @@ paths:
           description: Единица не найдена
     put:
       operationId: units_update
-      description: Полное обновление единицы измерения. Требуется роль admin или director.
+      description: Полное обновление единицы измерения. Требуется роль admin, manager
+        или warehouse.
       summary: Полное обновление единицы измерения
       parameters:
       - in: path
@@ -5756,8 +7260,8 @@ paths:
           description: Единица не найдена
     patch:
       operationId: units_partial_update
-      description: Частичное обновление единицы измерения. Требуется роль admin или
-        director.
+      description: Частичное обновление единицы измерения. Требуется роль admin, manager
+        или warehouse.
       summary: Частичное обновление единицы измерения
       parameters:
       - in: path
@@ -5798,7 +7302,7 @@ paths:
           description: Единица не найдена
     delete:
       operationId: units_destroy
-      description: Удалить единицу измерения. Требуется роль admin или director.
+      description: Удалить единицу измерения. Требуется роль admin, manager или warehouse.
       summary: Удалить единицу измерения
       parameters:
       - in: path
@@ -5848,7 +7352,10 @@ paths:
                     email: director@elom.uz
                     first_name: Иван
                     last_name: Директоров
-                    role: director
+                    roles:
+                    - id: 1
+                      name: admin
+                      display_name: Администратор
                     is_active: true
                   summary: 'Пример ответа: Директор'
                 ПримерОтвета:Бригадир:
@@ -5858,7 +7365,10 @@ paths:
                     email: brigadier1@elom.uz
                     first_name: Азиз
                     last_name: Бригадиров
-                    role: brigadier
+                    roles:
+                    - id: 4
+                      name: brigadier
+                      display_name: Бригадир/Инженер
                     is_active: true
                   summary: 'Пример ответа: Бригадир'
           description: ''
@@ -5874,6 +7384,10 @@ paths:
         name: comment
         schema:
           type: string
+      - in: query
+        name: created_by
+        schema:
+          type: number
       - in: query
         name: date_after
         schema:
@@ -5927,6 +7441,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -6278,6 +7798,64 @@ paths:
           description: No response body
         '400':
           description: Archived data is read-only
+  /api/v1/writeoffs/from-balance/:
+    post:
+      operationId: writeoffs_from_balance_create
+      description: Создать списание из фактического остатка (инвентаризация) — одна
+        позиция.
+      tags:
+      - writeoffs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOff'
+          description: ''
+  /api/v1/writeoffs/from-balance-bulk/:
+    post:
+      operationId: writeoffs_from_balance_bulk_create
+      description: |-
+        Массовая инвентаризация (F-268): массив позиций {material, target_balance, comment?} на
+        ОДИН объект и дату. Атомарно — либо создаются ВСЕ списания, либо ни одного. Ошибки строк
+        возвращаются построчно (400 с индексом), без 500 и без частичного сохранения.
+      tags:
+      - writeoffs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOff'
+          description: ''
 components:
   schemas:
     ArchivePeriod:
@@ -6385,22 +7963,6 @@ components:
     BlankEnum:
       enum:
       - ''
-    ConditionEnum:
-      enum:
-      - new
-      - good
-      - after_repair
-      - needs_repair
-      - broken
-      - lost
-      type: string
-      description: |-
-        * `new` - Новый
-        * `good` - Хорошее
-        * `after_repair` - После ремонта
-        * `needs_repair` - Требует ремонта
-        * `broken` - Сломан
-        * `lost` - Утерян
     CurrentStageEnum:
       enum:
       - acceptance
@@ -6446,10 +8008,20 @@ components:
           title: Активный
           description: Отметьте, если пользователь должен считаться активным. Уберите
             эту отметку вместо удаления учётной записи.
-        role:
-          type: string
+        roles:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+            description: Роль пользователя из RBAC
+          description: Список ролей пользователя
+          readOnly: true
         phone:
           type: string
+        profile_id:
+          type: integer
+          readOnly: true
         assigned_object_ids:
           type: array
           items:
@@ -6457,7 +8029,8 @@ components:
             minimum: 1
       required:
       - id
-      - role
+      - profile_id
+      - roles
       - username
     EmployeeRequest:
       type: object
@@ -6488,9 +8061,6 @@ components:
           title: Активный
           description: Отметьте, если пользователь должен считаться активным. Уберите
             эту отметку вместо удаления учётной записи.
-        role:
-          type: string
-          minLength: 1
         phone:
           type: string
         assigned_object_ids:
@@ -6501,9 +8071,7 @@ components:
         password:
           type: string
           writeOnly: true
-          minLength: 1
       required:
-      - role
       - username
     Material:
       type: object
@@ -6530,8 +8098,7 @@ components:
           type: string
           readOnly: true
         photo_url:
-          type: string
-          format: uri
+          type: integer
           readOnly: true
         is_active:
           type: boolean
@@ -6729,6 +8296,153 @@ components:
       required:
       - default_unit
       - name
+    MaterialRequestRecord:
+      type: object
+      description: Сериализатор для заявок на материалы
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+          description: Дата заявки
+        object:
+          type: integer
+          description: Объект
+        object_name:
+          type: string
+          readOnly: true
+        material:
+          type: integer
+          description: Материал
+        material_name:
+          type: string
+          readOnly: true
+        unit:
+          type: integer
+          description: Единица измерения
+        unit_code:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество материала
+        requested_by:
+          type: integer
+          readOnly: true
+          description: Кто подал заявку
+        requested_by_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/MaterialRequestStatusEnum'
+          readOnly: true
+          description: |-
+            Статус заявки
+
+            * `pending` - Ожидает
+            * `approved` - Одобрено
+            * `rejected` - Отклонено
+            * `fulfilled` - Выполнено
+        status_display:
+          type: string
+          readOnly: true
+        comment:
+          type: string
+          description: Комментарий к заявке
+        approved_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто одобрил заявку
+        approved_by_name:
+          type: string
+          readOnly: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Дата одобрения
+        is_archived:
+          type: boolean
+          readOnly: true
+          description: Архивировано
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - approved_at
+      - approved_by
+      - approved_by_name
+      - created_at
+      - date
+      - id
+      - is_archived
+      - material
+      - material_name
+      - object
+      - object_name
+      - quantity
+      - requested_by
+      - requested_by_name
+      - status
+      - status_display
+      - unit
+      - unit_code
+      - updated_at
+    MaterialRequestRecordRequest:
+      type: object
+      description: Сериализатор для заявок на материалы
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата заявки
+        object:
+          type: integer
+          description: Объект
+        material:
+          type: integer
+          description: Материал
+        unit:
+          type: integer
+          description: Единица измерения
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество материала
+        comment:
+          type: string
+          description: Комментарий к заявке
+      required:
+      - date
+      - material
+      - object
+      - quantity
+      - unit
+    MaterialRequestStatusEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - fulfilled
+      type: string
+      description: |-
+        * `pending` - Ожидает
+        * `approved` - Одобрено
+        * `rejected` - Отклонено
+        * `fulfilled` - Выполнено
     MaterialStats:
       type: object
       description: Сериализатор для статистики материалов
@@ -6783,6 +8497,10 @@ components:
         id:
           type: integer
           readOnly: true
+        profile_id:
+          type: integer
+          description: Получить ID профиля без загрузки удаленного поля role
+          readOnly: true
         username:
           type: string
           title: Имя пользователя
@@ -6803,18 +8521,43 @@ components:
           format: email
           title: Адрес электронной почты
           maxLength: 254
-        role:
-          type: string
+        roles:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+            description: Роль пользователя из RBAC
+          description: Список ролей пользователя
+          readOnly: true
+        is_superuser:
+          type: boolean
+          readOnly: true
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+        assigned_object_ids:
+          type: array
+          items:
+            type: integer
+          description: Список ID назначенных объектов
           readOnly: true
       required:
+      - assigned_object_ids
       - id
-      - role
+      - is_superuser
+      - profile_id
+      - roles
       - username
     NullEnum:
       enum:
       - null
     Object:
       type: object
+      description: Проставляет created_by/updated_by из request.user. Подмешивать
+        ПЕРВЫМ.
       properties:
         id:
           type: integer
@@ -6867,15 +8610,13 @@ components:
           readOnly: true
         key_person_name:
           type: string
-          description: Ключевое лицо (Имя прораба)
-          maxLength: 128
+          default: ''
         key_person_contacts:
           type: string
           description: Контакты ключевого лица
         date_start:
           type: string
           format: date
-          readOnly: true
           description: Дата начала работ
         date_end:
           type: string
@@ -6890,16 +8631,37 @@ components:
           type: string
           format: date-time
           readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто создал запись (пусто — автор неизвестен, напр. импорт)
+        created_by_name:
+          type: string
+          readOnly: true
+        updated_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто изменил запись последним
+        updated_by_name:
+          type: string
+          readOnly: true
       required:
       - created_at
+      - created_by
+      - created_by_name
       - current_stage_display
-      - date_start
       - id
       - name
       - responsible_name
       - updated_at
+      - updated_by
+      - updated_by_name
     ObjectRequest:
       type: object
+      description: Проставляет created_by/updated_by из request.user. Подмешивать
+        ПЕРВЫМ.
       properties:
         name:
           type: string
@@ -6944,13 +8706,15 @@ components:
             * `handover` - Сдача
         key_person_name:
           type: string
-          minLength: 1
-          description: Ключевое лицо (Имя прораба)
-          maxLength: 128
+          default: ''
         key_person_contacts:
           type: string
           minLength: 1
           description: Контакты ключевого лица
+        date_start:
+          type: string
+          format: date
+          description: Дата начала работ
         date_end:
           type: string
           format: date
@@ -7073,6 +8837,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Material'
+    PaginatedMaterialRequestRecordList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialRequestRecord'
     PaginatedObjectList:
       type: object
       required:
@@ -7096,6 +8883,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Object'
+    PaginatedPermissionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
     PaginatedPurchaseItemList:
       type: object
       required:
@@ -7188,6 +8998,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PurchaseSupplier'
+    PaginatedRoleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
     PaginatedStockSnapshotList:
       type: object
       required:
@@ -7280,6 +9113,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Unit'
+    PaginatedUserRoleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRole'
     PaginatedWriteOffList:
       type: object
       required:
@@ -7340,9 +9196,6 @@ components:
           title: Активный
           description: Отметьте, если пользователь должен считаться активным. Уберите
             эту отметку вместо удаления учётной записи.
-        role:
-          type: string
-          minLength: 1
         phone:
           type: string
         assigned_object_ids:
@@ -7353,7 +9206,6 @@ components:
         password:
           type: string
           writeOnly: true
-          minLength: 1
     PatchedMaterialCategoryRequest:
       type: object
       properties:
@@ -7391,8 +9243,35 @@ components:
           type: string
         manufacturer:
           type: string
+    PatchedMaterialRequestRecordRequest:
+      type: object
+      description: Сериализатор для заявок на материалы
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата заявки
+        object:
+          type: integer
+          description: Объект
+        material:
+          type: integer
+          description: Материал
+        unit:
+          type: integer
+          description: Единица измерения
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество материала
+        comment:
+          type: string
+          description: Комментарий к заявке
     PatchedObjectRequest:
       type: object
+      description: Проставляет created_by/updated_by из request.user. Подмешивать
+        ПЕРВЫМ.
       properties:
         name:
           type: string
@@ -7437,13 +9316,15 @@ components:
             * `handover` - Сдача
         key_person_name:
           type: string
-          minLength: 1
-          description: Ключевое лицо (Имя прораба)
-          maxLength: 128
+          default: ''
         key_person_contacts:
           type: string
           minLength: 1
           description: Контакты ключевого лица
+        date_start:
+          type: string
+          format: date
+          description: Дата начала работ
         date_end:
           type: string
           format: date
@@ -7506,7 +9387,8 @@ components:
           type: boolean
     PatchedPurchaseRequest:
       type: object
-      description: Миксин для валидации закупок
+      description: Проставляет created_by/updated_by из request.user. Подмешивать
+        ПЕРВЫМ.
       properties:
         date:
           type: string
@@ -7531,7 +9413,7 @@ components:
           type: boolean
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
           description: |-
             Статус закупки
 
@@ -7575,6 +9457,42 @@ components:
         is_active:
           type: boolean
           description: Активен ли поставщик
+    PatchedRoleRequest:
+      type: object
+      description: |-
+        Сериализатор для Role (Роль)
+
+        Роль объединяет набор разрешений и может быть назначена пользователям.
+        Поддерживает иерархию ролей через поле parent.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Уникальное имя роли (например, 'admin', 'manager', 'brigadier')
+        display_name:
+          type: string
+          minLength: 1
+          description: Отображаемое название роли (например, 'Администратор', 'Управляющий')
+        description:
+          type: string
+          description: Описание роли и её назначения
+        permission_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+          description: Список ID разрешений для назначения роли (при создании/обновлении)
+        parent:
+          type: integer
+          nullable: true
+          description: ID родительской роли (для иерархии ролей). Роль наследует все
+            разрешения родителя.
+        is_active:
+          type: boolean
+          default: true
+          description: Активна ли роль (неактивные роли нельзя назначить пользователям).
+            Необязательно при создании — по умолчанию роль активна (F-251).
     PatchedStockSnapshotRequest:
       type: object
       description: Сериализатор для журнала движений материалов (Unified Ledger Model)
@@ -7649,7 +9567,7 @@ components:
           description: Объект (на какой выдали, необязательно)
         issue_condition:
           allOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           description: |-
             Состояние при выдаче (обязательно)
 
@@ -7679,7 +9597,7 @@ components:
             * `broken` - Сломан
             * `lost` - Утерян
           oneOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         return_comment:
@@ -7708,6 +9626,18 @@ components:
           type: string
           description: Марка/производитель (необязательно)
           maxLength: 128
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/ToolConditionEnum'
+          description: |-
+            Текущее состояние инструмента
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
     PatchedUnitRequest:
       type: object
       properties:
@@ -7719,6 +9649,27 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+    PatchedUserRoleRequest:
+      type: object
+      description: |-
+        Сериализатор для UserRole (Связь пользователя и роли)
+
+        Представляет назначение роли пользователю. Роль либо назначена (есть запись),
+        либо не назначена (запись удалена). Поле is_active удалено для упрощения логики.
+      properties:
+        user:
+          type: integer
+          description: ID пользователя, которому назначается роль
+        role_id:
+          type: integer
+          writeOnly: true
+          description: ID роли для назначения (при создании/обновлении)
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата истечения роли (опционально). Если не указана, роль действует
+            бессрочно.
     PatchedWriteOffRequest:
       type: object
       description: Сериализатор для списаний материалов
@@ -7765,9 +9716,84 @@ components:
         is_archived:
           type: boolean
           description: Архивировано
+    Permission:
+      type: object
+      description: |-
+        Сериализатор для Permission (Разрешение)
+
+        Разрешение определяет конкретное действие над ресурсом (например, materials.create, purchases.view).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        codename:
+          type: string
+          description: Уникальный код разрешения (например, 'materials.create', 'purchases.view')
+        name:
+          type: string
+          description: Человекочитаемое название разрешения
+        resource:
+          type: string
+          description: Ресурс, к которому относится разрешение (materials, purchases,
+            objects и т.д.)
+        action:
+          type: string
+          description: Действие, которое разрешено (view, create, edit, delete, approve
+            и т.д.)
+        description:
+          type: string
+          description: Подробное описание разрешения
+        is_active:
+          type: boolean
+          description: Активно ли разрешение (неактивные разрешения не применяются)
+      required:
+      - action
+      - codename
+      - id
+      - is_active
+      - name
+      - resource
+    PermissionRequest:
+      type: object
+      description: |-
+        Сериализатор для Permission (Разрешение)
+
+        Разрешение определяет конкретное действие над ресурсом (например, materials.create, purchases.view).
+      properties:
+        codename:
+          type: string
+          minLength: 1
+          description: Уникальный код разрешения (например, 'materials.create', 'purchases.view')
+        name:
+          type: string
+          minLength: 1
+          description: Человекочитаемое название разрешения
+        resource:
+          type: string
+          minLength: 1
+          description: Ресурс, к которому относится разрешение (materials, purchases,
+            objects и т.д.)
+        action:
+          type: string
+          minLength: 1
+          description: Действие, которое разрешено (view, create, edit, delete, approve
+            и т.д.)
+        description:
+          type: string
+          description: Подробное описание разрешения
+        is_active:
+          type: boolean
+          description: Активно ли разрешение (неактивные разрешения не применяются)
+      required:
+      - action
+      - codename
+      - is_active
+      - name
+      - resource
     Purchase:
       type: object
-      description: Миксин для валидации закупок
+      description: Проставляет created_by/updated_by из request.user. Подмешивать
+        ПЕРВЫМ.
       properties:
         id:
           type: integer
@@ -7808,7 +9834,7 @@ components:
           type: boolean
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
           description: |-
             Статус закупки
 
@@ -7817,13 +9843,16 @@ components:
             * `cancelled` - Отмена
         cover_photo_url:
           type: string
-          format: uri
           readOnly: true
         purchase_no:
           type: string
           default: ''
           description: Номер закупки (уникальный в пределах ответственного)
           maxLength: 64
+        has_report_photos:
+          type: boolean
+          readOnly: true
+          default: false
         items:
           type: array
           items:
@@ -7841,10 +9870,29 @@ components:
           type: string
           format: date-time
           readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто создал запись (пусто — автор неизвестен, напр. импорт)
+        created_by_name:
+          type: string
+          readOnly: true
+        updated_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто изменил запись последним
+        updated_by_name:
+          type: string
+          readOnly: true
       required:
       - cover_photo_url
       - created_at
+      - created_by
+      - created_by_name
       - date
+      - has_report_photos
       - id
       - items
       - object
@@ -7856,6 +9904,8 @@ components:
       - supplier_name
       - total_amount
       - updated_at
+      - updated_by
+      - updated_by_name
     PurchaseBulkArchiveRequest:
       type: object
       description: Сериализатор для массового архивирования закупок
@@ -7914,7 +9964,7 @@ components:
           maxLength: 64
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
           description: |-
             Статус закупки
 
@@ -8002,16 +10052,6 @@ components:
       - unit
       - unit_code
       - updated_at
-    PurchaseItemBulkCreateRequest:
-      type: object
-      description: Сериализатор для массового создания позиций закупки
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/PurchaseItemCreateRequest'
-      required:
-      - items
     PurchaseItemCreateRequest:
       type: object
       description: Сериализатор для создания позиции закупки
@@ -8088,7 +10128,6 @@ components:
           readOnly: true
         url:
           type: string
-          format: uri
           readOnly: true
         is_cover:
           type: boolean
@@ -8184,7 +10223,8 @@ components:
       - purchase
     PurchaseRequest:
       type: object
-      description: Миксин для валидации закупок
+      description: Проставляет created_by/updated_by из request.user. Подмешивать
+        ПЕРВЫМ.
       properties:
         date:
           type: string
@@ -8209,7 +10249,7 @@ components:
           type: boolean
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
           description: |-
             Статус закупки
 
@@ -8231,6 +10271,16 @@ components:
       - object
       - responsible
       - supplier
+    PurchaseStatusEnum:
+      enum:
+      - new
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `new` - Новая
+        * `completed` - Выполнено
+        * `cancelled` - Отмена
     PurchaseSupplier:
       type: object
       description: Сериализатор для поставщиков с дополнительной статистикой
@@ -8398,6 +10448,154 @@ components:
           description: Активен ли поставщик
       required:
       - name
+    Role:
+      type: object
+      description: |-
+        Сериализатор для Role (Роль)
+
+        Роль объединяет набор разрешений и может быть назначена пользователям.
+        Поддерживает иерархию ролей через поле parent.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Уникальное имя роли (например, 'admin', 'manager', 'brigadier')
+        display_name:
+          type: string
+          description: Отображаемое название роли (например, 'Администратор', 'Управляющий')
+        description:
+          type: string
+          description: Описание роли и её назначения
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+          readOnly: true
+          description: Список всех разрешений роли (включая разрешения родительской
+            роли)
+        parent:
+          type: integer
+          nullable: true
+          description: ID родительской роли (для иерархии ролей). Роль наследует все
+            разрешения родителя.
+        is_system:
+          type: boolean
+          readOnly: true
+          description: Системная роль (нельзя удалить или изменить)
+        is_active:
+          type: boolean
+          default: true
+          description: Активна ли роль (неактивные роли нельзя назначить пользователям).
+            Необязательно при создании — по умолчанию роль активна (F-251).
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - display_name
+      - id
+      - is_system
+      - name
+      - permissions
+      - updated_at
+    RoleLite:
+      type: object
+      description: |-
+        Упрощенный сериализатор для Role (для вложенных объектов)
+
+        Используется в UserRoleSerializer и UserPermissionsResponseSerializer
+        для отображения базовой информации о роли без полного списка разрешений.
+      properties:
+        id:
+          type: integer
+          description: ID роли
+        name:
+          type: string
+          description: Уникальное имя роли
+        display_name:
+          type: string
+          description: Отображаемое название роли
+        is_system:
+          type: boolean
+          description: Системная роль (нельзя удалить)
+      required:
+      - display_name
+      - id
+      - is_system
+      - name
+    RoleLiteRequest:
+      type: object
+      description: |-
+        Упрощенный сериализатор для Role (для вложенных объектов)
+
+        Используется в UserRoleSerializer и UserPermissionsResponseSerializer
+        для отображения базовой информации о роли без полного списка разрешений.
+      properties:
+        id:
+          type: integer
+          description: ID роли
+        name:
+          type: string
+          minLength: 1
+          description: Уникальное имя роли
+        display_name:
+          type: string
+          minLength: 1
+          description: Отображаемое название роли
+        is_system:
+          type: boolean
+          description: Системная роль (нельзя удалить)
+      required:
+      - display_name
+      - id
+      - is_system
+      - name
+    RoleRequest:
+      type: object
+      description: |-
+        Сериализатор для Role (Роль)
+
+        Роль объединяет набор разрешений и может быть назначена пользователям.
+        Поддерживает иерархию ролей через поле parent.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Уникальное имя роли (например, 'admin', 'manager', 'brigadier')
+        display_name:
+          type: string
+          minLength: 1
+          description: Отображаемое название роли (например, 'Администратор', 'Управляющий')
+        description:
+          type: string
+          description: Описание роли и её назначения
+        permission_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+          description: Список ID разрешений для назначения роли (при создании/обновлении)
+        parent:
+          type: integer
+          nullable: true
+          description: ID родительской роли (для иерархии ролей). Роль наследует все
+            разрешения родителя.
+        is_active:
+          type: boolean
+          default: true
+          description: Активна ли роль (неактивные роли нельзя назначить пользователям).
+            Необязательно при создании — по умолчанию роль активна (F-251).
+      required:
+      - display_name
+      - name
     SourceTypeEnum:
       enum:
       - purchase_item
@@ -8420,16 +10618,6 @@ components:
         * `delivery_fixed` - Delivery Fixed
         * `post_rough` - Post Rough
         * `handover` - Handover
-    StatusEnum:
-      enum:
-      - new
-      - completed
-      - cancelled
-      type: string
-      description: |-
-        * `new` - Новая
-        * `completed` - Выполнено
-        * `cancelled` - Отмена
     StockSnapshot:
       type: object
       description: Сериализатор для журнала движений материалов (Unified Ledger Model)
@@ -8689,8 +10877,7 @@ components:
           readOnly: true
         condition:
           allOf:
-          - $ref: '#/components/schemas/ConditionEnum'
-          readOnly: true
+          - $ref: '#/components/schemas/ToolConditionEnum'
           description: |-
             Текущее состояние инструмента
 
@@ -8718,7 +10905,6 @@ components:
           format: date-time
           readOnly: true
       required:
-      - condition
       - condition_display
       - created_at
       - current_holder
@@ -8759,7 +10945,7 @@ components:
           description: На какой объект ID (если auto_issue=True)
         issue_condition:
           allOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           description: |-
             Состояние при выдаче (одно на все или индивидуально)
 
@@ -8786,6 +10972,22 @@ components:
           description: Список уникальных категорий
       required:
       - categories
+    ToolConditionEnum:
+      enum:
+      - new
+      - good
+      - after_repair
+      - needs_repair
+      - broken
+      - lost
+      type: string
+      description: |-
+        * `new` - Новый
+        * `good` - Хорошее
+        * `after_repair` - После ремонта
+        * `needs_repair` - Требует ремонта
+        * `broken` - Сломан
+        * `lost` - Утерян
     ToolIssue:
       type: object
       description: Сериализатор для выдачи инструмента
@@ -8800,6 +11002,12 @@ components:
           type: string
           readOnly: true
         tool_inventory_number:
+          type: string
+          readOnly: true
+        tool_category:
+          type: string
+          readOnly: true
+        tool_brand:
           type: string
           readOnly: true
         issued_by:
@@ -8829,7 +11037,7 @@ components:
           readOnly: true
         issue_condition:
           allOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           description: |-
             Состояние при выдаче (обязательно)
 
@@ -8862,7 +11070,7 @@ components:
             * `broken` - Сломан
             * `lost` - Утерян
           oneOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         return_condition_display:
@@ -8872,6 +11080,9 @@ components:
           type: string
           description: Комментарий при возврате
         is_returned:
+          type: boolean
+          readOnly: true
+        is_open:
           type: boolean
           readOnly: true
         duration_days:
@@ -8889,6 +11100,7 @@ components:
       - created_at
       - duration_days
       - id
+      - is_open
       - is_returned
       - issue_condition
       - issue_condition_display
@@ -8900,6 +11112,8 @@ components:
       - object_name
       - return_condition_display
       - tool
+      - tool_brand
+      - tool_category
       - tool_inventory_number
       - tool_name
       - updated_at
@@ -8919,7 +11133,7 @@ components:
           description: Объект (на какой выдали, необязательно)
         issue_condition:
           allOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           description: |-
             Состояние при выдаче (обязательно)
 
@@ -8949,7 +11163,7 @@ components:
             * `broken` - Сломан
             * `lost` - Утерян
           oneOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         return_comment:
@@ -8982,6 +11196,18 @@ components:
           type: string
           description: Марка/производитель (необязательно)
           maxLength: 128
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/ToolConditionEnum'
+          description: |-
+            Текущее состояние инструмента
+
+            * `new` - Новый
+            * `good` - Хорошее
+            * `after_repair` - После ремонта
+            * `needs_repair` - Требует ремонта
+            * `broken` - Сломан
+            * `lost` - Утерян
       required:
       - inventory_number
       - name
@@ -8991,7 +11217,7 @@ components:
       properties:
         return_condition:
           allOf:
-          - $ref: '#/components/schemas/ConditionEnum'
+          - $ref: '#/components/schemas/ToolConditionEnum'
           description: |-
             Состояние при возврате (обязательно)
 
@@ -9044,6 +11270,98 @@ components:
       required:
       - code
       - name
+    UserPermissionsResponse:
+      type: object
+      description: |-
+        Сериализатор для ответа /rbac/my-permissions/
+
+        Возвращает все разрешения и роли текущего пользователя.
+        Используется фронтендом для проверки доступа и условного отображения UI.
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+          description: Список всех разрешений пользователя (с учетом ролей и персональных
+            переопределений)
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleLite'
+          description: Список ролей пользователя (только для отображения в UI, не
+            для логики доступа)
+      required:
+      - permissions
+      - roles
+    UserRole:
+      type: object
+      description: |-
+        Сериализатор для UserRole (Связь пользователя и роли)
+
+        Представляет назначение роли пользователю. Роль либо назначена (есть запись),
+        либо не назначена (запись удалена). Поле is_active удалено для упрощения логики.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          description: ID пользователя, которому назначается роль
+        user_username:
+          type: string
+          readOnly: true
+          description: Имя пользователя (только для чтения)
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleLite'
+          readOnly: true
+          description: Информация о роли (только для чтения)
+        assigned_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Дата и время назначения роли (автоматически)
+        assigned_by:
+          type: integer
+          readOnly: true
+          description: ID пользователя, который назначил роль (автоматически)
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата истечения роли (опционально). Если не указана, роль действует
+            бессрочно.
+      required:
+      - assigned_at
+      - assigned_by
+      - id
+      - role
+      - user
+      - user_username
+    UserRoleRequest:
+      type: object
+      description: |-
+        Сериализатор для UserRole (Связь пользователя и роли)
+
+        Представляет назначение роли пользователю. Роль либо назначена (есть запись),
+        либо не назначена (запись удалена). Поле is_active удалено для упрощения логики.
+      properties:
+        user:
+          type: integer
+          description: ID пользователя, которому назначается роль
+        role_id:
+          type: integer
+          writeOnly: true
+          description: ID роли для назначения (при создании/обновлении)
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата истечения роли (опционально). Если не указана, роль действует
+            бессрочно.
+      required:
+      - role_id
+      - user
     WriteOff:
       type: object
       description: Сериализатор для списаний материалов
@@ -9118,8 +11436,26 @@ components:
           type: string
           format: date-time
           readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто создал запись (пусто — автор неизвестен, напр. импорт)
+        created_by_name:
+          type: string
+          readOnly: true
+        updated_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Кто изменил запись последним
+        updated_by_name:
+          type: string
+          readOnly: true
       required:
       - created_at
+      - created_by
+      - created_by_name
       - current_balance
       - date
       - id
@@ -9132,6 +11468,8 @@ components:
       - unit
       - unit_code
       - updated_at
+      - updated_by
+      - updated_by_name
     WriteOffRequest:
       type: object
       description: Сериализатор для списаний материалов
