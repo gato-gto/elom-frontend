@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useMaterialsStore, uploadPhoto } from '../materials'
+import { useMaterialsStore, uploadPhoto, searchMaterials } from '../materials'
+import { handleApiErrorAsync } from '@/utils/errorHandler'
 import api from '@/api/client'
+
+// EH-FE-10 (F-552): keep real parseApiError, stub the async toast to assert it fires.
+vi.mock('@/utils/errorHandler', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/errorHandler')>()
+  return { ...actual, handleApiErrorAsync: vi.fn() }
+})
 // import { endpoints } from '@/api/endpoints' // Не используется
 
 // Mock API client and endpoints
@@ -243,4 +250,14 @@ describe('Materials Store', () => {
     expect(store.filters.search).toBe('')
     expect(store.filters.category).toBe('')
   })
+
+  describe('EH-FE-10: search failure is surfaced', () => {
+    it('searchMaterials error → toast shown, returns [] (not silent empty)', async () => {
+      vi.mocked(api.get).mockRejectedValueOnce({ response: { status: 500, data: { detail: 'boom' } } })
+      const res = await searchMaterials('гвозд')
+      expect(res).toEqual([])
+      expect(handleApiErrorAsync).toHaveBeenCalledOnce()
+    })
+  })
+
 })

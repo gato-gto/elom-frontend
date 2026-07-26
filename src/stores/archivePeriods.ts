@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
+import { parseApiError } from '@/utils/errorHandler'
 
 export interface ArchivePeriod {
   id: number
@@ -30,7 +31,8 @@ export const useArchivePeriodsStore = defineStore('archivePeriods', () => {
       const { data } = await api.get(endpoints.archivePeriods.list)
       items.value = Array.isArray(data) ? data : (data?.results ?? [])
     } catch (e: any) {
-      error.value = e?.response?.data?.detail || 'Не удалось загрузить архивные периоды'
+      // EH-FE-9 (F-552): единый parseApiError вместо сырого data.detail.
+      error.value = parseApiError(e).detail
       throw e
     } finally {
       loading.value = false

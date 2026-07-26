@@ -275,7 +275,10 @@ onMounted(async () => {
     try {
       await rbacStore.fetchRoles()
     } catch (error) {
+      // EH-FE-6 (F-552): не молчать — иначе список ролей пуст без объяснения, и админ
+      // не понимает, почему нельзя назначить роль (рядом user-roles уже тостит).
       console.error('Failed to fetch roles:', error)
+      ui.toast({ type: 'error', text: `Не удалось загрузить список ролей: ${parseApiError(error).detail}` })
     }
   }
 

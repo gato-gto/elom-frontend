@@ -207,6 +207,7 @@ import type { Tool, ToolIssue } from '@/api/types/tools'
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import { formatDate as formatDateUtil } from '@/utils/formatters'
+import { handleApiErrorAsync } from '@/utils/errorHandler'
 
 const props = defineProps<{
   tool: Tool | null
@@ -291,7 +292,9 @@ async function fetchHistory() {
     const { data } = await api.get(endpoints.toolIssues.list + query)
     history.value = data.results || data
   } catch (error) {
-    console.error('Failed to fetch history:', error)
+    // EH-FE-7 (F-552): сбой загрузки истории больше не выглядит как «история пуста» —
+    // показываем тост (интерцептор по FE-3 больше не тостит).
+    await handleApiErrorAsync(error, { operation: 'dataLoading', entity: 'история инструмента' })
     history.value = []
   } finally {
     loading.value = false

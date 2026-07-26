@@ -4,7 +4,7 @@
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import { createBaseStore } from './base'
-import { parseApiError } from '@/utils/errorHandler'
+import { parseApiError, handleApiErrorAsync } from '@/utils/errorHandler'
 import type {
   Material,
   MaterialRequest,
@@ -150,7 +150,9 @@ export const searchMaterials = async (query: string): Promise<Material[]> => {
     // API может возвращать либо объект с results, либо массив
     return Array.isArray(data) ? data : (data?.results || [])
   } catch (error: any) {
-    console.error('Error searching materials:', error)
+    // EH-FE-10 (F-552): показать тост, чтобы сбой поиска не выглядел как «ничего не найдено»
+    // (как в base.ts search перед return []).
+    await handleApiErrorAsync(error, { operation: 'search', entity: 'материалы' })
     return []
   }
 }

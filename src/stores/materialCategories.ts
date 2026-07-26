@@ -4,6 +4,7 @@
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { createBaseStore } from './base'
+import { handleApiErrorAsync } from '@/utils/errorHandler'
 import type { MaterialCategory, MaterialCategoryLite } from '@/api/types/common'
 
 // Создаём store
@@ -25,7 +26,8 @@ export const fetchLite = async (): Promise<MaterialCategoryLite[]> => {
     // API может возвращать либо массив, либо объект с results
     return Array.isArray(data) ? data : (data?.results || [])
   } catch (error: any) {
-    console.error('Error fetching lite categories:', error)
+    // EH-FE-10 (F-552): тост, чтобы сбой не выглядел как пустой список категорий.
+    await handleApiErrorAsync(error, { operation: 'dataLoading', entity: 'категории' })
     return []
   }
 }

@@ -247,7 +247,12 @@ async function loadStockMaterials() {
     if (my === loadToken) { stockMaterials.value = res }
   } catch (error) {
     // fail-closed: не удалось проверить остатки — не предлагаем ничего (список пуст).
-    if (my === loadToken) { stockMaterials.value = [] }
+    // EH-FE-8 (F-552): но с явным сигналом — иначе пустой список выглядит как «нечего
+    // списывать», а не как сбой (класс F-538). Тост только для актуального запроса.
+    if (my === loadToken) {
+      stockMaterials.value = []
+      ui.toast({ type: 'error', text: 'Не удалось проверить остатки — попробуйте ещё раз' })
+    }
     console.error('Error loading in-stock materials:', error)
   } finally {
     if (my === loadToken) { materialsLoading.value = false }

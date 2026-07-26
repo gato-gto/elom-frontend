@@ -69,7 +69,9 @@ export const deletePhoto = async (id: number, photoId: number) => {
         await store.fetchOne(id)
         return true
     } catch (error: any) {
-        store.error = error?.response?.data?.detail || 'Ошибка удаления фото'
+        // EH-FE-9 (F-552): через parseApiError — безопасное приведение не-строкового detail,
+        // локализованный fallback по типу и разбор errors (а не сырой data.detail).
+        store.error = parseApiError(error).detail
         throw error
     } finally {
         store.loading = false
