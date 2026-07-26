@@ -17,7 +17,24 @@ vi.mock('@/api/client', () => ({ default: { post } }))
 
 import WriteOffByBalanceForm from '@/pages/WriteOffs/WriteOffByBalanceForm.vue'
 
-const stub = { global: { stubs: { Modal: { template: '<div><slot /></div>' } } } }
+// F-549: выбор материала теперь через MaterialSearchSelect (поисковый), а не нативный <select>
+// с optionsForRow. Стабим его как записывающий props компонент — фильтрацию по наличию/дате/
+// дедупликацию он делает сам (объект-id/filter-by-balance/exclude-materials), поэтому на уровне
+// формы проверяем, что ему передан правильный контракт, а не сам список опций.
+const MaterialSearchSelectStub = {
+  name: 'MaterialSearchSelect',
+  props: ['modelValue', 'disabled', 'objectId', 'date', 'filterByBalance', 'excludeMaterials', 'placeholder', 'size'],
+  emits: ['update:modelValue'],
+  template: '<div class="mss-stub"></div>',
+}
+const stub = {
+  global: {
+    stubs: {
+      Modal: { template: '<div><slot /></div>' },
+      MaterialSearchSelect: MaterialSearchSelectStub,
+    },
+  },
+}
 const bal = (id: number, name: string, balance: string, unit = 'шт') => ({
   material_id: id, material_name: name, unit_code: unit, current_balance: balance,
   total_purchased: '0', total_written_off: '0',
@@ -37,26 +54,35 @@ describe('WriteOffByBalanceForm — только материалы в нали�
   it('выбор материала заблокирован, пока не выбран объект', () => {
     getMaterialsInStock.mockResolvedValue([])
     const wrapper = mount(WriteOffByBalanceForm, { props: { isOpen: true }, ...stub })
-    const select = wrapper.find('tbody select')
-    expect(select.exists()).toBe(true)
-    expect(select.attributes('disabled')).toBeDefined()
+    const picker = wrapper.findComponent(MaterialSearchSelectStub)
+    expect(picker.exists()).toBe(true)
+    expect(picker.props('disabled')).toBe(true)
     expect(getMaterialsInStock).not.toHaveBeenCalled()
   })
 
-  it('после выбора объекта опции = материалы в наличии на этом объекте', async () => {
+  it('после выбора объекта пикеру передан контракт фильтрации по наличию (object/date/filter-by-balance)', async () => {
     getMaterialsInStock.mockResolvedValue([bal(1, 'Кабель', '10'), bal(2, 'Труба', '3')])
-    const { vm } = await mountWithObject(7)
+    const { wrapper } = await mountWithObject(7)
+    // книжный остаток по-прежнему грузим для подсказки
     expect(getMaterialsInStock).toHaveBeenCalledWith(7, expect.any(String))
-    expect(vm.optionsForRow(vm.rows[0]).map((o: any) => o.label)).toEqual(['Кабель', 'Труба'])
+    const picker = wrapper.findComponent(MaterialSearchSelectStub)
+    expect(picker.props('objectId')).toBe(7)
+    expect(picker.props('filterByBalance')).toBe(true)
+    expect(picker.props('disabled')).toBe(false)
+    expect(picker.props('date')).toEqual(expect.any(String))
   })
 
-  it('материал, уже выбранный в другой строке, исключается (без дублей)', async () => {
+  it('материал, уже выбранный в другой строке, исключается через exclude-materials (без дублей)', async () => {
     getMaterialsInStock.mockResolvedValue([bal(1, 'Кабель', '10'), bal(2, 'Труба', '3')])
-    const { vm } = await mountWithObject(7)
+    const { wrapper, vm } = await mountWithObject(7)
     vm.rows[0].material = 1
     vm.addRow()
     await nextTick()
-    expect(vm.optionsForRow(vm.rows[1]).map((o: any) => o.value)).toEqual([2])
+    // второй пикер в desktop-таблице (индекс 1) должен исключать материал 1, выбранный в строке 0
+    const pickers = wrapper.findAllComponents(MaterialSearchSelectStub)
+    // desktop-строки идут первыми; берём пикер второй строки
+    const secondRowPicker = pickers[1]
+    expect(secondRowPicker.props('excludeMaterials')).toContain(1)
   })
 
   it('смена ОБЪЕКТА сбрасывает строки и перезагружает материалы', async () => {
