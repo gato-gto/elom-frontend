@@ -417,16 +417,20 @@ const handleSubmit = async () => {
   Object.keys(itemErrors).forEach(key => delete itemErrors[key])
   
   try {
-    // Валидация: должна быть хотя бы одна позиция
-    if (items.value.length === 0) {
+    // FE-2/F-563: пустая хвостовая строка (без названия И без единицы) — не позиция.
+    // Раньше валидировали ВСЕ строки с early-return → пустой плейсхолдер блокировал сохранение,
+    // а фильтр пропуска пустых ниже уже не выполнялся.
+    const isEmptyMaterialRow = (it: any) => (!it.name || !it.name.trim()) && (!it.default_unit || it.default_unit === 0)
+    if (items.value.every(isEmptyMaterialRow)) {
       errors.value.non_field_errors = ['Добавьте хотя бы один материал']
       isSubmitting.value = false
       return
     }
-    
-    // Валидация: проверка обязательных полей для каждой позиции
+
+    // Валидация: проверка обязательных полей ТОЛЬКО для заполненных позиций
     const invalidItems: number[] = []
     items.value.forEach((item, index) => {
+      if (isEmptyMaterialRow(item)) { return }  // пропускаем пустой плейсхолдер
       if (!item.name || item.name.trim() === '') {
         itemErrors[`items[${index}].name`] = 'Название материала обязательно'
         invalidItems.push(index)

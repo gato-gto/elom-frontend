@@ -102,6 +102,25 @@ describe('WriteOffForm.vue', () => {
     // Проверяем что баланс загружен (может быть в разных форматах)
     expect(html.includes('12.5') || html.includes('12,5') || text.includes('12.5') || text.includes('12,5')).toBe(true)
   })
+
+  // FE-3/F-563: раньше отправка одних пустых строк давала «Списание создано» при НУЛЕ записей
+  // (guard items.length===0 не срабатывал; фильтр давал [] → Promise.all([]) резолвился).
+  it('FE-3: submit with only the empty placeholder row emits NO success and shows an error', async () => {
+    const wrapper = mount(WriteOffForm, {
+      props: { isOpen: true, initial: null },
+      global: { stubs: { Modal: ModalStub, MaterialSearchSelect: MaterialSearchSelectStub } }
+    })
+    await wrapper.vm.$nextTick()
+    const vm = wrapper.vm as any
+    vm.formData.object = 1
+    vm.formData.responsible = 10
+    // items содержит только пустой плейсхолдер (материал не выбран, кол-во 0)
+    await vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.emitted('success')).toBeFalsy()               // НЕ ложный успех
+    expect(vm.errors.non_field_errors?.length).toBeTruthy()      // явная ошибка «добавьте позицию»
+  })
 })
 
 

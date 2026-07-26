@@ -737,8 +737,13 @@ const onItemMaterialChange = async (item: WriteOffItem, material: Material | nul
     // материала при смене материала → неверная единица/конвертация/баланс. Как в PurchaseForm.
     if (material.default_unit) {
       item.unit = material.default_unit
+    } else {
+      // FE-5/F-563: нет единицы по умолчанию → сбрасываем и предупреждаем (не оставляем unit=0
+      // или единицу от прошлого материала молча — «на мобиле единица не подгружается»).
+      item.unit = 0
+      ui.toast({ type: 'error', text: `У материала «${material.name || ''}» не задана единица измерения — укажите её в карточке материала` })
     }
-    
+
     // Загружаем баланс для выбранного материала
     if (formData.value.object && item.material) {
       const index = items.value.findIndex(i => i._k === item._k)
@@ -785,9 +790,15 @@ const handleSubmit = async () => {
   Object.keys(itemErrors).forEach(key => delete itemErrors[key])
   
   try {
-    // Валидация: должна быть хотя бы одна позиция
-    if (items.value.length === 0) {
-      errors.value.non_field_errors = ['Добавьте хотя бы одну позицию списания']
+    // FE-3/F-563: считаем только ЗАПОЛНЕННЫЕ позиции (материал+единица+кол-во>0). Плейсхолдерная
+    // строка присутствует всегда, поэтому старый guard items.length===0 не срабатывал → при
+    // отправке одних пустых строк фильтр давал [] → Promise.all([]) резолвился → тост «Списание
+    // создано» ПРИ НУЛЕ созданных записей (ложный успех / потеря данных).
+    const filledItems = items.value.filter(
+      item => item.material && item.unit && parseFloat(String(item.quantity)) > 0,
+    )
+    if (filledItems.length === 0) {
+      errors.value.non_field_errors = ['Добавьте хотя бы одну заполненную позицию (материал, единица, количество > 0)']
       isSubmitting.value = false
       return
     }
@@ -833,9 +844,7 @@ const handleSubmit = async () => {
       // редактировании сохранялась ТОЛЬКО items[0], остальные позиции молча
       // терялись. Теперь: первую позицию обновляем как текущую запись, остальные
       // добавленные позиции создаём как новые списания — данные не теряются.
-      const validItems = items.value.filter(
-        item => item.material && item.unit && parseFloat(item.quantity) > 0,
-      )
+      const validItems = filledItems
       const first = validItems[0]
       if (first) {
         const updateData: WriteOffUpdateRequest = {
@@ -862,9 +871,8 @@ const handleSubmit = async () => {
       )
       await Promise.all(extraCreates)
     } else {
-      // Создание - создаем множественные WriteOff записи
-      const createPromises = items.value
-        .filter(item => item.material && item.unit && parseFloat(item.quantity) > 0)
+      // Создание - создаем множественные WriteOff записи (только заполненные — FE-3)
+      const createPromises = filledItems
         .map(item => {
           const writeOffData: WriteOffCreateRequest = {
             date: formData.value.date,

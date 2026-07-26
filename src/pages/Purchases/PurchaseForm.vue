@@ -920,10 +920,24 @@ const initialData = computed(() => {
  * Валидация позиций закупки
  * @returns Объект с ошибками валидации (пустой если ошибок нет)
  */
+// FE-1/F-563: хвостовая пустая строка-плейсхолдер (без материала и с кол-вом ≤0) — НЕ позиция.
+// Раньше и валидация, и отправка её учитывали → ложная «исправьте ошибки» и отправка пустой строки.
+function isEmptyPurchaseItem(item: any): boolean {
+  const q = parseFloat(typeof item.quantity === 'string' ? item.quantity : String(item.quantity ?? 0))
+  return !item.material && !item.material_name && (!item.quantity || isNaN(q) || q <= 0)
+}
+
 function validatePurchaseItems(): Record<string, string> {
   const validationErrors: Record<string, string> = {}
-  
+
+  // FE-1: валидируем ТОЛЬКО заполненные позиции; если ни одной — просим добавить.
+  if (items.value.every(isEmptyPurchaseItem)) {
+    validationErrors['items'] = 'Добавьте хотя бы одну позицию'
+    return validationErrors
+  }
+
   items.value.forEach((item, idx) => {
+    if (isEmptyPurchaseItem(item)) { return }  // пропускаем пустой плейсхолдер
     // Проверка материала
     if (!item.material && !item.material_name) {
       validationErrors[`items[${idx}].material`] = 'Материал обязателен'
@@ -960,7 +974,8 @@ function preparePurchaseData(data: PurchaseRequest): PurchaseRequest {
     status: data.status,
     currency: data.currency || 'UZS',
     comment: data.comment,
-    items: items.value.map((item) => {
+    // FE-1: отправляем только заполненные позиции — без пустого хвостового плейсхолдера.
+    items: items.value.filter((item) => !isEmptyPurchaseItem(item)).map((item) => {
       const itemData: any = {
         unit: item.unit,
         quantity: item.quantity,
@@ -1174,6 +1189,12 @@ function onMaterialChange(item: PurchaseItem, material: Material | null) {
     item.isNewMaterial = false
     if (material.default_unit) {
       item.unit = material.default_unit
+    } else {
+      // FE-5/F-563: единица — производное поле (руками не выбирается). Если у материала нет
+      // единицы по умолчанию — подставить нечего: сбрасываем и явно предупреждаем, а не молча
+      // оставляем unit=0 (это и была «на мобиле единица не подгружается»).
+      item.unit = 0
+      ui.toast({ type: 'error', text: `У материала «${material.name || ''}» не задана единица измерения — укажите её в карточке материала` })
     }
   } else {
     // Материал сброшен
@@ -1227,6 +1248,9 @@ function onMaterialInput(item: PurchaseItem, query: string) {
       item.isNewMaterial = false
       if (exactMatch.default_unit) {
         item.unit = exactMatch.default_unit
+      } else {
+        item.unit = 0
+        ui.toast({ type: 'error', text: `У материала «${exactMatch.name || ''}» не задана единица измерения — укажите её в карточке материала` })
       }
       recalc(item)
     } else {

@@ -268,12 +268,17 @@ const filteredCategories = computed(() => {
   return categories.value.filter(cat => cat.toLowerCase().includes(search))
 })
 
+// FE-4/F-563: пустая хвостовая строка (без инв.номера И без названия) — не инструмент,
+// не должна блокировать «Сохранить». Валидируем/отправляем только начатые строки.
+const isEmptyTool = (t: any) => !t.inventory_number?.trim() && !t.name?.trim()
+
 // Validation
 const isValid = computed(() => {
-  if (tools.value.length === 0) {return false}
-  
-  // Check all tools have required fields
-  for (const tool of tools.value) {
+  const filled = tools.value.filter(t => !isEmptyTool(t))
+  if (filled.length === 0) {return false}
+
+  // Все НАЧАТЫЕ строки должны быть полными
+  for (const tool of filled) {
     if (!tool.inventory_number?.trim() || !tool.name?.trim()) {
       return false
     }
@@ -319,7 +324,7 @@ async function handleSubmit() {
   
   try {
     const payload: ToolBulkCreateRequest = {
-      tools: tools.value.map(t => ({
+      tools: tools.value.filter(t => !isEmptyTool(t)).map(t => ({
         inventory_number: t.inventory_number.trim(),
         name: t.name.trim(),
         category: t.category?.trim() || '',
