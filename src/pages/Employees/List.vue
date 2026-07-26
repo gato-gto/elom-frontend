@@ -44,7 +44,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useEmployeesStore } from '@/stores/employees'
-import { useRbacStore } from '@/stores/rbac'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -58,7 +57,6 @@ import GenericList from '@/components/GenericList.vue'
 import EmployeeCard from '@/components/cards/EmployeeCard.vue'
 
 const employeesStore = useEmployeesStore()
-const rbacStore = useRbacStore()
 const ui = useUiStore()
 
 // Error handling
@@ -169,16 +167,8 @@ async function onSaved() {
   modalOpen.value = false
   ui.toast({ type: 'success', text: 'Сотрудник сохранен' })
   // ✅ RBAC: Перезагружаем список сотрудников для отображения обновленных ролей
+  // (колонка «Роли» — из item.roles ответа /employees/; каталог /rbac/roles/ здесь не нужен).
   await employeesStore.fetchList()
-  // Также перезагружаем роли из RBAC, если они были изменены (для будущего использования)
-  if (rbacStore.roles.length === 0) {
-    try {
-      await rbacStore.fetchRoles()
-    } catch (error) {
-      // Игнорируем ошибки загрузки ролей - это не критично
-      console.warn('Failed to refresh roles after save:', error)
-    }
-  }
 }
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
@@ -227,17 +217,10 @@ async function handleDelete(employee: Employee) {
 // Lifecycle
 onMounted(async () => {
   try {
-    // ✅ Загружаем роли из RBAC (если нужно для будущего фильтра)
-    // Сейчас фильтр по ролям удален, но роли могут понадобиться для других целей
-    if (rbacStore.roles.length === 0) {
-      try {
-        await rbacStore.fetchRoles()
-      } catch (rbacError) {
-        // Игнорируем ошибки загрузки ролей - это не критично для отображения списка
-        console.warn('Failed to load roles:', rbacError)
-      }
-    }
-    
+    // F-559: роли из RBAC-каталога здесь НЕ нужны — колонка «Роли» рендерится из
+    // item.roles (встроены в ответ /employees/), а фильтр по ролям давно удалён.
+    // Прежний ungated fetchRoles() бил в /rbac/roles/ и давал 403 (+console error)
+    // всем не-admin ролям при простом просмотре списка сотрудников.
     await employeesStore.fetchList()
   } catch (error) {
     await handleLoadingError(error, 'employees')
