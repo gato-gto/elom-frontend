@@ -17,6 +17,7 @@ export interface ParsedApiError {
 
 export type ErrorType =
     | 'validation'      // 400 - Ошибки валидации
+    | 'auth'            // 401 - Требуется вход / сессия истекла (EH-FE-14)
     | 'permission'      // 403 - Недостаточно прав
     | 'not_found'       // 404 - Ресурс не найден
     | 'server_error'    // 500+ - Ошибки сервера
@@ -45,6 +46,7 @@ export interface ErrorContext {
 // Error messages mapping
 export const ERROR_MESSAGES = {
     validation: 'Ошибка валидации данных',
+    auth: 'Требуется вход. Войдите снова.',
     permission: 'Недостаточно прав для выполнения данного действия',
     not_found: 'Запрашиваемый ресурс не найден',
     server_error: 'Внутренняя ошибка сервера',
@@ -55,7 +57,7 @@ export const ERROR_MESSAGES = {
 // HTTP status to error type mapping
 export const STATUS_TO_ERROR_TYPE: Record<number, ErrorType> = {
     400: 'validation',
-    401: 'permission',
+    401: 'auth',        // EH-FE-14: 401 — аутентификация/сессия, НЕ 403-права
     403: 'permission',
     404: 'not_found',
     422: 'validation',

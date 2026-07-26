@@ -6,6 +6,7 @@ import { endpoints } from '@/api/endpoints'
 import { parseApiError } from '@/utils/errorHandler'
 import type { Permission, Role, UserPermissionsResponse } from '@/api/types/rbac'
 import { useAuthStore } from './auth'
+import { useUiStore } from './ui'
 
 /**
  * Store для управления разрешениями пользователя
@@ -72,7 +73,12 @@ export const usePermissionsStore = defineStore('permissions', () => {
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
       console.error('Failed to fetch permissions:', err)
-      // При ошибке не очищаем кэш - используем старые данные
+      // При ошибке не очищаем кэш - используем старые данные.
+      // EH-FE-15 (F-555): но на ПЕРВОЙ загрузке (кэша нет) молчание = пользователь без прав
+      // и с пустой навигацией без объяснения — даём явный сигнал. Фоновые refresh тихие.
+      if (!lastFetch.value) {
+        useUiStore().toast({ type: 'error', text: 'Не удалось загрузить права — часть функций может быть скрыта' })
+      }
     } finally {
       loading.value = false
     }

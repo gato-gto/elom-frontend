@@ -73,8 +73,12 @@ export const useAuthStore = defineStore('auth', {
                 await this.fetchMe()
                 return true
             } catch (e: any) {
+                // EH-FE-12 (F-555): вход, 401 = неверные учётные данные — свой локализованный
+                // текст вместо passthrough англ. DRF detail («No active account found…»).
                 const parsedError = parseApiError(e)
-                this.error = parsedError.detail
+                this.error = e?.response?.status === 401
+                    ? 'Неверный логин или пароль'
+                    : parsedError.detail
                 this.clearTokens()
                 return false
             } finally {

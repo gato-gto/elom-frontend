@@ -265,9 +265,16 @@ describe('parseApiError', () => {
     expect(typeof parseApiError(error).detail).toBe('string')
   })
 
-  // FE-13: 401 распознаётся как permission (раньше падал в unknown)
-  it('FE-13: 401 → errorType permission', () => {
+  // EH-FE-14 (F-555): 401 = аутентификация/сессия (тип 'auth'), НЕ 403-права.
+  // Без detail fallback теперь «Требуется вход…», а не «Недостаточно прав…».
+  it('EH-FE-14: 401 → errorType auth (not permission)', () => {
     const result = parseApiError({ response: { status: 401, data: {} } })
+    expect(result.errorType).toBe('auth')
+    expect(result.detail).toBe('Требуется вход. Войдите снова.')
+  })
+
+  it('403 → errorType permission', () => {
+    const result = parseApiError({ response: { status: 403, data: {} } })
     expect(result.errorType).toBe('permission')
   })
 })

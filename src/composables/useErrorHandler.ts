@@ -4,7 +4,7 @@
  */
 
 import { ref, computed } from 'vue'
-import { handleApiErrorAsync, ErrorHandlers } from '@/utils/errorHandler'
+import { handleApiErrorAsync, parseApiError, ErrorHandlers } from '@/utils/errorHandler'
 import type { ParsedApiError } from '@/api/types/errors'
 
 export function useErrorHandler() {
@@ -46,14 +46,19 @@ export function useErrorHandler() {
     }
   ): Promise<ParsedApiError> => {
     const { operation, entity, entityId, showToast = true } = options
+    const ctx = { operation, entity, entityId }
 
-    const parsedError = await handleApiErrorAsync(error, {
-      operation,
-      entity,
-      entityId
-    })
+    // EH-FE-11 (F-555): реально учитываем showToast. При showToast:false тост подавляем
+    // ТОЛЬКО когда есть ошибки полей (форма их отрендерит сама — не дублируем сигнал).
+    // Если полей нет (500/сеть/права) — всё равно тостим, чтобы не оставить пользователя
+    // без объяснения. Раньше опция игнорировалась и тост показывался всегда.
+    let parsedError = showToast
+      ? await handleApiErrorAsync(error, ctx)
+      : parseApiError(error, ctx)
+    if (!showToast && Object.keys(parsedError.fieldErrors).length === 0) {
+      parsedError = await handleApiErrorAsync(error, ctx)
+    }
 
-    // Устанавливаем ошибки полей
     if (Object.keys(parsedError.fieldErrors).length > 0) {
       setFieldErrors(parsedError.fieldErrors)
     }

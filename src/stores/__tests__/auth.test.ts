@@ -120,6 +120,18 @@ describe('Auth Store', () => {
     expect(store.refreshToken).toBeNull()
   })
 
+  it('EH-FE-12: 401 login shows a localized message, not the English DRF detail', async () => {
+    const store = useAuthStore()
+    vi.mocked(api.post).mockRejectedValue({
+      response: { status: 401, data: { detail: 'No active account found with the given credentials' } },
+    })
+
+    const result = await store.login('testuser', 'wrongpassword')
+
+    expect(result).toBe(false)
+    expect(store.error).toBe('Неверный логин или пароль')
+  })
+
   it('fetches user profile successfully', async () => {
     const store = useAuthStore()
     const mockUser = {
