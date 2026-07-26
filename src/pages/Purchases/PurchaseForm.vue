@@ -190,7 +190,7 @@
                       :class="{ 'border-error': getItemFieldError(idx, 'material') }"
                       :is-success="!!(it.isNewMaterial && it.material_name && !getItemFieldError(idx, 'material'))"
                       :exclude-materials="addedMaterialIds.filter(id => id !== it.material)"
-                      :allow-custom="!isEdit"
+                      :allow-custom="true"
                       @change="onMaterialChange(it, $event)"
                       @custom-material="onCustomMaterial(it, $event)"
                       @input="onMaterialInput(it, $event)"
@@ -204,7 +204,7 @@
                     <div>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-muted p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="it.material && !it.isNewMaterial" class="text-sm text-muted p-2 bg-base-200 rounded border" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
@@ -216,14 +216,14 @@
                           { 'select-error': getItemFieldError(idx, 'unit') },
                           { 'select-success': it.isNewMaterial && it.material_name && it.unit && it.unit > 0 && !getItemFieldError(idx, 'unit') }
                         ]"
-                        :disabled="!it.isNewMaterial && !isEdit"
+                        :disabled="!it.isNewMaterial"
                       >
                         <option :value="0">— выберите единицу —</option>
                         <option v-for="unit in units" :key="unit.id" :value="unit.id">
                           {{ unit.code }} ({{ unit.name }})
                         </option>
                       </select>
-                      <input v-if="(it.material && !it.isNewMaterial) || isEdit" type="hidden" v-model.number="it.unit" />
+                      <input v-if="it.material && !it.isNewMaterial" type="hidden" v-model.number="it.unit" />
                       <div v-if="getItemFieldError(idx, 'unit')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'unit') }}
                       </div>
@@ -307,7 +307,7 @@
                         :class="{ 'border-error': getItemFieldError(idx, 'material') }"
                         :is-success="!!(it.isNewMaterial && it.material_name && !getItemFieldError(idx, 'material'))"
                         :exclude-materials="addedMaterialIds.filter(id => id !== it.material)"
-                        :allow-custom="!isEdit"
+                        :allow-custom="true"
                         @change="onMaterialChange(it, $event)"
                         @custom-material="onCustomMaterial(it, $event)"
                         @input="onMaterialInput(it, $event)"
@@ -324,7 +324,7 @@
                       </label>
                       <!-- Если материал выбран из списка - показываем единицу (disabled) -->
                       <!-- При редактировании всегда disabled -->
-                      <div v-if="(it.material && !it.isNewMaterial) || isEdit" class="text-sm text-muted p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
+                      <div v-if="it.material && !it.isNewMaterial" class="text-sm text-muted p-2  rounded border bg-base-200" :class="{ 'border-error bg-error/10': getItemFieldError(idx, 'unit') }">
                         {{ getUnitName(it.unit) || '—' }}
                       </div>
                       <!-- Если новый материал (или материал не выбран) и не редактирование - выпадающий список единиц -->
@@ -336,14 +336,14 @@
                           { 'select-error': getItemFieldError(idx, 'unit') },
                           { 'select-success': it.isNewMaterial && it.material_name && it.unit && it.unit > 0 && !getItemFieldError(idx, 'unit') }
                         ]"
-                        :disabled="!it.isNewMaterial && !isEdit"
+                        :disabled="!it.isNewMaterial"
                       >
                         <option :value="0">— выберите единицу —</option>
                         <option v-for="unit in units" :key="unit.id" :value="unit.id">
                           {{ unit.code }} ({{ unit.name }})
                         </option>
                       </select>
-                      <input v-if="(it.material && !it.isNewMaterial) || isEdit" type="hidden" v-model.number="it.unit" />
+                      <input v-if="it.material && !it.isNewMaterial" type="hidden" v-model.number="it.unit" />
                       <div v-if="getItemFieldError(idx, 'unit')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'unit') }}
                       </div>
@@ -1178,11 +1178,8 @@ function onMaterialChange(item: PurchaseItem, material: Material | null) {
 }
 
 function onCustomMaterial(item: PurchaseItem, materialName: string) {
-  // При редактировании не разрешаем создавать новые материалы
-  if (isEdit.value) {
-    return
-  }
-  
+  // F-594: создание нового материала из позиции доступно И в редактировании (owner). Раньше здесь
+  // был ранний выход по isEdit — он и блокировал «Создать» в форме редактирования закупки.
   // Пользователь ввёл новый материал
   item.material = undefined
   item.material_name = materialName.trim()
