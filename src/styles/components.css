@@ -205,20 +205,35 @@
 /* A-06 (F-520): тач-цель ≥44pt (Apple HIG). Замерено вживую: часть контролов рендерилась 40px
    (поля/кастомные кнопки), а -xs в плотных строках — 32px. На тач-устройствах поднимаем
    минимальную высоту. pointer:coarse — целимся именно в тач, десктоп с мышью не трогаем. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 767px) {
+  /* F-562: !important — DaisyUI-варианты размеров (.btn-xs/.input-sm) эмитятся ПОЗЖЕ в
+     бандле с той же специфичностью и ставят min-height:auto, перебивая наш пол. Для
+     accessibility-минимума тач-цели форсируем. */
   .btn,
   .input,
   .select,
   .textarea,
   .file-input,
   .action-btn {
-    min-height: 44px;
+    min-height: 44px !important;
   }
   /* Квадратные иконки-кнопки/крестики — область нажатия по обеим осям. */
   .btn-circle,
   .icon-btn {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* F-562: пагинация использует .pagination-btn (не .btn), поэтому мимо правила F-520 —
+   номера/навигация страниц рендерились 32×32. Поднимаем до 44px на тач-устройствах И на
+   узких экранах (аудит замеряет узкий вьюпорт; десктоп с мышью на широком экране не трогаем). */
+@media (pointer: coarse), (max-width: 767px) {
+  .pagination-btn,
+  .pagination-btn-page,
+  .pagination-btn-nav {
+    min-height: 44px !important;
+    min-width: 44px !important;
   }
 }
 
@@ -443,7 +458,7 @@
   transition: none;
 }
 
-.badge-xs { padding: 0.02rem 0.35rem; font-size: 0.66rem; }
+.badge-xs { padding: 0.02rem 0.35rem; font-size: 0.72rem; } /* F-562: ≥11px, читаемо на мобиле */
 .badge-sm { padding: 0.06rem 0.4rem;  font-size: 0.7rem; }
 .badge-md { padding: 0.12rem 0.5rem;  font-size: 0.75rem; }
 .badge-lg { padding: 0.2rem 0.65rem;  font-size: 0.82rem; }

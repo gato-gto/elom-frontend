@@ -473,6 +473,7 @@ watch(() => themeStore.isDark, () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap; /* F-561: длинная легенда переносится и на планшете (iPad), не только на мобиле */
 }
 
 .legend-item {
