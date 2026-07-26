@@ -63,7 +63,9 @@ const props = withDefaults(defineProps<Props>(), {
 // (mq не совпадает → collapsed=false, toggle игнорируется). Слушаем resize, чтобы при переходе
 // mobile↔desktop состояние было корректным.
 const collapsed = ref(false)
-let mq: MediaQueryList | null = null
+// ReturnType<typeof matchMedia> вместо голого MediaQueryList — no-undef в этой eslint-конфигурации
+// не знает DOM-lib типы (TS их проверяет), а window — известный глобал.
+let mq: ReturnType<typeof window.matchMedia> | null = null
 function applyMq() {
   if (mq) { collapsed.value = mq.matches }
 }
