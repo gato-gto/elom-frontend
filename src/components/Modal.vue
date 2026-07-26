@@ -167,6 +167,24 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* F-571: на мобильных модалка во весь экран — без отступов от краёв и без лишнего вложенного
+   скролла. owner: отступы от основного окна на мобиле бессмысленны, из-за них box плавает с
+   зазором и своим внутренним скроллом. Убираем margin/скругление, тянем на всю ширину и до
+   100dvh — единственный скролл принадлежит самому .modal-box. */
+@media (max-width: 639px) {
+  .modal-box {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 100dvh !important;
+  }
+  /* box уже 100% ширины (w-full); убираем возможный внешний зазор грид-контейнера */
+  .modal {
+    padding: 0 !important;
+  }
+}
+
 /* F-300: чётко заметный крестик закрытия (был btn-ghost — почти невидим).
    Обведённый, с ховером и copper-фокусом, по дизайн-языку. */
 .modal-close-btn {
