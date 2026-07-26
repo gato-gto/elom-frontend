@@ -184,30 +184,6 @@
       
       <!-- Mobile: Cards View -->
       <template v-else>
-        <!-- F-593: сортировка на мобиле — паритет с сортируемыми колонками desktop (у карточек
-             нет кликабельных заголовков). Поле + переключатель направления, тот же handleSort. -->
-        <div v-if="sortableColumns.length > 0" class="mobile-sort">
-          <svg class="mobile-sort-ico" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4 4m0 0l4-4m-4 4V4" />
-          </svg>
-          <select class="mobile-sort-select" :value="sortBy" @change="onMobileSortField(($event.target as HTMLSelectElement).value)">
-            <option value="">Без сортировки</option>
-            <option v-for="col in sortableColumns" :key="col.key" :value="col.sortKey || col.key">{{ col.label }}</option>
-          </select>
-          <button
-            v-if="sortBy"
-            type="button"
-            class="mobile-sort-dir"
-            :title="sortOrder === 'asc' ? 'По возрастанию' : 'По убыванию'"
-            :aria-label="sortOrder === 'asc' ? 'По возрастанию' : 'По убыванию'"
-            @click="handleSort(sortBy)"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path v-if="sortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
         <template v-if="store.items.length > 0">
           <component
             v-for="(item, index) in store.items"
@@ -490,19 +466,6 @@ async function handleSort(key: string) {
   await props.store.setFilters({ ordering })
 }
 
-// F-593: сортировка на мобиле — те же сортируемые колонки, что и в desktop-таблице.
-const sortableColumns = computed(() => (props.config.columns || []).filter((c) => c.sortable !== false))
-function onMobileSortField(key: string) {
-  if (!key) {
-    // «Без сортировки» — сброс к дефолту
-    sortBy.value = ''
-    sortOrder.value = 'asc'
-    props.store.setFilters({ ordering: '' })
-    return
-  }
-  if (key !== sortBy.value) { handleSort(key) }  // новая колонка → asc + перезагрузка
-}
-
 // Расчет общего количества страниц с учетом фактического количества элементов
 function calculateTotalPages(): number {
   const { count, pageSize } = props.store.pagination
@@ -652,44 +615,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* F-593: панель сортировки на мобиле (карточный вид). Компактная, липкая сверху не делаем —
-   просто над списком. Тач-цели ≥44 (min-height). */
-.mobile-sort {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.25rem 0.75rem;
-}
-.mobile-sort-ico {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: hsl(var(--tx-2));
-  flex-shrink: 0;
-}
-.mobile-sort-select {
-  flex: 1;
-  min-height: 44px;
-  padding: 0 0.75rem;
-  border: 1px solid hsl(var(--control-border));
-  border-radius: 0.5rem;
-  background: hsl(var(--b1));
-  color: hsl(var(--bc));
-  font-size: 0.9375rem;
-}
-.mobile-sort-dir {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border: 1px solid hsl(var(--control-border));
-  border-radius: 0.5rem;
-  background: hsl(var(--b1));
-  color: hsl(var(--p-text));
-}
-.mobile-sort-dir:hover {
-  border-color: hsl(var(--p));
-  background: hsl(var(--b2));
-}
+/* Стили уже определены в глобальных CSS файлах */
 </style>
