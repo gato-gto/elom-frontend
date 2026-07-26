@@ -646,21 +646,28 @@ const loadEmployeesByObject = async (objectId: number) => {
       return
     }
 
-    // Получаем объект для поиска его ответственного
+    // Получаем объект для поиска его ответственного.
+    // ROOT-CAUSE бага «ответственный не подгружается по объекту»: Object.responsible — это
+    // EmployeeProfile.id (profile_id), а WriteOff.responsible и опции формы работают в
+    // пространстве User.id (emp.id). Мостом служит emp.profile_id — сравнивать/присваивать
+    // profile_id напрямую в User-поле нельзя, иначе value не совпадёт ни с одной опцией и
+    // select покажет плейсхолдер (ровно этот баг). В PurchaseForm ответственного вычисляет
+    // бэкенд из объекта, поэтому там этой ловушки нет; здесь выбор ручной — маппим сами.
     const selectedObject = objectsStore.items.find((obj: any) => obj.id === objectId)
-    const objectResponsibleId = selectedObject?.responsible
-    
-    // Если у объекта есть ответственный, проверяем есть ли он в списке
-    if (objectResponsibleId) {
-      const objectResponsible = employeesStore.items.find((emp: any) => emp.id === objectResponsibleId)
-      if (objectResponsible) {
-        const alreadyInList = responsibleList.some(item => item.value === objectResponsibleId)
-        if (!alreadyInList) {
-          responsibleList.push({ 
-            value: objectResponsible.id, 
-            label: `${empLabel(objectResponsible)} (ответственный за объект)` 
-          })
-        }
+    const objectResponsibleProfileId = selectedObject?.responsible
+    const objectResponsibleEmp = objectResponsibleProfileId
+      ? employeesStore.items.find((emp: any) => emp.profile_id === objectResponsibleProfileId)
+      : undefined
+    const objectResponsibleUserId = objectResponsibleEmp?.id ?? null
+
+    // Если у объекта есть ответственный и его нет в списке — добавляем (в пространстве User.id)
+    if (objectResponsibleEmp && objectResponsibleUserId) {
+      const alreadyInList = responsibleList.some(item => item.value === objectResponsibleUserId)
+      if (!alreadyInList) {
+        responsibleList.push({
+          value: objectResponsibleUserId,
+          label: `${empLabel(objectResponsibleEmp)} (ответственный за объект)`
+        })
       }
     }
     
@@ -681,10 +688,11 @@ const loadEmployeesByObject = async (objectId: number) => {
     const objectEmployees = getByObject(objectId)
     const brigadiers = objectEmployees.filter((emp: any) => canBeResponsible(emp))
 
-    // Автозаполнение ответственного, если не изменен пользователем
+    // Автозаполнение ответственного, если не изменён пользователем.
+    // objectResponsibleUserId уже в пространстве User.id — совпадёт с value опции.
     if (!userModifiedFields.value.responsible) {
-      if (objectResponsibleId) {
-        formData.value.responsible = objectResponsibleId
+      if (objectResponsibleUserId) {
+        formData.value.responsible = objectResponsibleUserId
       } else if (brigadiers.length > 0) {
         formData.value.responsible = brigadiers[0].id
       }
