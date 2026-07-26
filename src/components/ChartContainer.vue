@@ -186,11 +186,16 @@ const isFullscreen = ref(false)
 // F-065: последний конфиг — чтобы пересобрать график с цветами новой темы
 let lastChartConfig: ChartConfiguration | null = null
 
+// F-065/F-575: тема графика берётся из РЕАКТИВНОГО стора (единый источник правды),
+// а НЕ из DOM-класса .dark. Класс в момент создания графика мог отставать от isDark
+// (тултип в тёмной теме получал светлые «дневные» цвета — тёмный бокс на тёмном фоне).
+const themeStore = useThemeStore()
+
 // Chart configuration
-// F-065: цвета осей/сетки/тултипа зависят от темы (в тёмной чёрный тултип и
-// светлая сетка выглядели инородно). Читаем текущую тему из класса .dark.
+// Цвета осей/сетки/тултипа зависят от темы (в тёмной чёрный тултип и светлая сетка
+// выглядели инородно). В тёмной теме тултип светлый (контраст с тёмным графиком).
 function getThemeColors() {
-  const dark = document.documentElement.classList.contains('dark')
+  const dark = themeStore.isDark
   return {
     grid: dark ? 'rgba(212, 219, 223, 0.10)' : 'rgba(28, 40, 46, 0.10)',
     ticks: dark ? '#AAB6BD' : '#5C6B74',          // graphite-300 / graphite-500
@@ -292,6 +297,28 @@ const daisyColors = [
   '#4E7C6F'  // muted teal-green
 ]
 
+// F-575: ГЛУБОКИЙ мёрж опций. Раньше был поверхностный { ...base, ...config.options }:
+// page-конфиг (createLineChartConfig) задаёт свой plugins.tooltip (только callbacks, без цветов),
+// поэтому он ЦЕЛИКОМ перекрывал темизированный tooltip из getDefaultOptions → тултип всегда
+// падал на дефолт Chart.js (тёмный бокс) и НЕ следовал теме (в тёмной теме тёмный-на-тёмном).
+// Мёржим plugins.tooltip/legend по-отдельности: цвета из base (тема) + колбэки/формат из страницы.
+function mergeChartOptions(config: ChartConfiguration): ChartOptions {
+  const base = getDefaultOptions() as any
+  const o = (config.options || {}) as any
+  const bp = base.plugins || {}
+  const op = o.plugins || {}
+  return {
+    ...base,
+    ...o,
+    plugins: {
+      ...bp,
+      ...op,
+      tooltip: { ...(bp.tooltip || {}), ...(op.tooltip || {}) },
+      legend: { ...(bp.legend || {}), ...(op.legend || {}) },
+    },
+  }
+}
+
 // Methods
 function createChart(config: ChartConfiguration) {
   if (!chartCanvas.value) { return }
@@ -309,13 +336,10 @@ function createChart(config: ChartConfiguration) {
     ctx.clearRect(0, 0, chartCanvas.value.width, chartCanvas.value.height)
   }
 
-  // Merge with default options
+  // Merge with default options (deep for plugins — F-575)
   const finalConfig = {
     ...config,
-    options: {
-      ...getDefaultOptions(),
-      ...config.options
-    }
+    options: mergeChartOptions(config)
   }
 
   try {
@@ -336,13 +360,10 @@ function updateChart(config: ChartConfiguration) {
     return
   }
 
-  // Merge with default options
+  // Merge with default options (deep for plugins — F-575)
   const finalConfig = {
     ...config,
-    options: {
-      ...getDefaultOptions(),
-      ...config.options
-    }
+    options: mergeChartOptions(config)
   }
 
   try {
@@ -410,7 +431,7 @@ onUnmounted(() => {
 // F-065: при смене темы пересобираем график, чтобы применились цвета сетки/
 // осей/тултипа новой темы (options запекаются при создании — update() их не меняет).
 // Следим за РЕАКТИВНЫМ isDark из стора (класс .dark на DOM сам по себе не реактивен).
-const themeStore = useThemeStore()
+// themeStore объявлен выше (у getThemeColors).
 watch(() => themeStore.isDark, () => {
   if (chartInstance.value && lastChartConfig) {
     createChart(lastChartConfig)
