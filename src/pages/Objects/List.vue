@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Object } from '@/api/types'
+import type { SiteObject } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -74,7 +74,7 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
 // State
 const modalOpen = ref(false)
-const current = ref<Object | null>(null)
+const current = ref<SiteObject | null>(null)
 
 // ✅ RBAC: используем permissions
 const { can, canExportReports } = usePermissions()
@@ -105,7 +105,7 @@ const responsibleOptions = computed(() => [
 ])
 
 // GenericList configuration
-const listConfig = computed<GenericListConfig<Object>>(() => ({
+const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
   title: 'Объекты',
   subtitle: 'Управление строительными объектами и их характеристиками',
   icon: 'M3 21h18v-2H3v2zM5 10h14V8H5v2zm0-4h14V4H5v2z',
@@ -166,8 +166,8 @@ const listConfig = computed<GenericListConfig<Object>>(() => ({
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
-      disabled: (item: Object) => !canEdit.value || !item.is_active,
-      confirm: (item: Object) =>
+      disabled: (item: SiteObject) => !canEdit.value || !item.is_active,
+      confirm: (item: SiteObject) =>
         `Удалить объект "${item.name}"? Если у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
     }
   ],
@@ -188,7 +188,7 @@ function openCreate() {
   modalOpen.value = true
 }
 
-function openEdit(object: Object) {
+function openEdit(object: SiteObject) {
   current.value = object
   modalOpen.value = true
 }
@@ -214,7 +214,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   }
 }
 
-async function handleAction(action: string, item: Object) {
+async function handleAction(action: string, item: SiteObject) {
   switch (action) {
     case 'view':
       router.push({ name: 'ObjectInfo', params: { id: item.id } })
@@ -228,7 +228,7 @@ async function handleAction(action: string, item: Object) {
   }
 }
 
-async function handleDelete(object: Object) {
+async function handleDelete(object: SiteObject) {
   const confirmMessage =
     `Удалить объект "${object.name}"?\n\nЕсли у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
   if (!confirm(confirmMessage)) {return}

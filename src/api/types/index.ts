@@ -51,10 +51,4 @@ export type { MaterialCategory, MaterialCategoryLite } from './common';
 export type { PaginatedResponse, ApiError, PaginationState } from './common';
 export type { SmartQuantity } from './common';
 
-// Legacy pagination types
-export interface PageResponse<T> {
-  count: number;
-  next?: string;
-  previous?: string;
-  results: T[];
-}
+// FE-9: локальный дубль PageResponse убран — тип реэкспортируется из ./common (идентичен PaginatedResponse)

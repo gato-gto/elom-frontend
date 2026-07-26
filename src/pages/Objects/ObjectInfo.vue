@@ -292,7 +292,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Object as SiteObject } from '@/api/types'
+import type { SiteObject as SiteObject } from '@/api/types'
 import { useObjectsStore } from '@/stores/objects'
 import { usePurchasesStore } from '@/stores/purchases'
 import { getByObject as getPurchasesByObject } from '@/stores/purchases'

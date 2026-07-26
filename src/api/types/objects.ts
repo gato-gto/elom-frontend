@@ -23,7 +23,7 @@ export interface SiteObject {
 }
 
 // Alias for backward compatibility
-export type Object = SiteObject;
+// FE-14: алиас Object убран (тень над глобальным Object) — используем SiteObject напрямую
 
 export interface ObjectRequest {
   name: string;
@@ -72,6 +72,6 @@ export interface PaginatedObjectList {
   count: number;
   next?: string;
   previous?: string;
-  results: Object[];
+  results: SiteObject[];
 }
 

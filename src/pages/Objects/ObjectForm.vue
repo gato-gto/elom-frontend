@@ -19,13 +19,13 @@ import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore, getBrigadierOptions, getResponsibleEmployees } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
-import type { Object, ObjectRequest } from '@/api/types'
+import type { SiteObject, ObjectRequest } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 
 const props = defineProps<{
-  initial?: Object | null
+  initial?: SiteObject | null
 }>()
 
 const emit = defineEmits<{

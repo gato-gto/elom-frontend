@@ -53,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import { endpoints } from '@/api/endpoints'
 import { ref, computed, onMounted } from 'vue'
 import { useUnitsStore } from '@/stores/units'
 import { usePermissions } from '@/composables/usePermissions'
@@ -95,7 +96,7 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'units',
-  exportUrl: '/api/v1/units/',
+  exportUrl: endpoints.units.list, // FE-8: было хардкод '/api/v1/units/'
   loadingText: 'Загрузка единиц измерения...',
   emptyText: 'Нет единиц измерения',
   emptyTitle: 'Нет единиц измерения',

@@ -5,7 +5,7 @@ import { endpoints } from '@/api/endpoints'
 import { createBaseStore } from './base'
 import { parseApiError } from '@/utils/errorHandler'
 import type { 
-  Object, 
+  SiteObject, 
   ObjectRequest, 
   PatchedObjectRequest,
   ObjectResponsible
@@ -13,7 +13,7 @@ import type {
 import api from '@/api/client'
 
 // Создаём store
-export const useObjectsStore = createBaseStore<Object, ObjectRequest, PatchedObjectRequest>({
+export const useObjectsStore = createBaseStore<SiteObject, ObjectRequest, PatchedObjectRequest>({
   endpoint: endpoints.objects,
   entityName: 'objects',
   entityNamePlural: 'объекты',
@@ -47,6 +47,6 @@ export const fetchResponsibles = async (): Promise<ObjectResponsible[]> => {
 
 export const getActiveObjects = () => {
   const store = useObjectsStore()
-  return store.items.filter((item: Object) => item.is_active)
+  return store.items.filter((item: SiteObject) => item.is_active)
 }
 
