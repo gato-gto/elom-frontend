@@ -240,6 +240,7 @@ import { useUrlFilters } from '@/composables/useUrlFilters'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
 import { actionIconPath, actionBtnClass } from '@/utils/actionIcons'
+import { formatDate } from '@/utils/formatters'
 import { filterActionsByPermissions, getListPermissions, canPerformActionOnItem } from '@/utils/permissions'
 import type {
   GenericListConfig,
@@ -435,12 +436,20 @@ function getColumnValue(item: any, column: ColumnConfig) {
   return item[displayKey]
 }
 
+// UI-C6 (F-587): date-колонки без своего formatter раньше падали в String(value) и рендерили
+// СЫРОЙ ISO («2026-01-10T01:18:…+05:00»). Класс-фикс: авто-formatDate для date-ключей с ISO-значением
+// (покрывает Categories.created_at, Tools/Issues.issued_at и любые будущие date-колонки). Явный
+// column.formatter всегда в приоритете.
+const DATE_COL_KEY_RE = /^(created_at|updated_at|closed_at|reopened_at|issued_at|returned_at|assigned_at|expires_at|date|start_date|end_date|invoice_date)$/i
 function formatColumnValue(value: any, column: ColumnConfig, item: any) {
   if (column.formatter) {
     return column.formatter(value, item)
   }
   if (value === null || value === undefined) {
     return '—'
+  }
+  if (typeof value === 'string' && DATE_COL_KEY_RE.test(column.key) && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    return formatDate(value)
   }
   return String(value)
 }
