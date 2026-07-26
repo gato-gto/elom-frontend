@@ -16,11 +16,31 @@
       <slot name="extra"/>
     </div>
 
-    <!-- Действия -->
+    <!-- Действия. F-584: иконочные чипы «как в десктоп» (общая система @/utils/actionIcons);
+         нестандартные действия без иконки — текстом. Тач-цель ≥44px даёт .row-action-btn на coarse. -->
       <div v-if="actions && actions.length > 0" class="card-actions justify-end mt-4">
-        <button v-for="action in actions" :key="action.key" class="btn btn-sm" :class="action.class || 'btn-outline'" :disabled="action.disabled" :title="action.tooltip" @click="$emit('action', action.key)">
-          <component :is="action.icon" v-if="action.icon" class="w-4 h-4 mr-1"/>
-          <span>{{ action.label }}</span>
+        <button
+          v-for="action in actions"
+          :key="action.key"
+          :class="[
+            'btn',
+            actionIconPath(action)
+              ? ['btn-square row-action-btn', actionBtnClass(action)]
+              : ['btn-sm', action.class || 'btn-outline'],
+            action.disabled ? 'btn-disabled' : ''
+          ]"
+          :disabled="action.disabled"
+          :title="action.tooltip || action.label"
+          :aria-label="action.label"
+          @click="$emit('action', action.key)"
+        >
+          <svg v-if="actionIconPath(action)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="actionIconPath(action)" />
+          </svg>
+          <template v-else>
+            <component :is="action.icon" v-if="action.icon" class="w-4 h-4 mr-1"/>
+            <span>{{ action.label }}</span>
+          </template>
         </button>
       </div>
 
@@ -47,6 +67,8 @@
 </template>
 
 <script setup lang="ts">
+import { actionIconPath, actionBtnClass } from '@/utils/actionIcons'
+
 interface CardAction {
   key: string
   label: string

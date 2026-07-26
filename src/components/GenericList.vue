@@ -239,6 +239,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useUrlFilters } from '@/composables/useUrlFilters'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
+import { actionIconPath, actionBtnClass } from '@/utils/actionIcons'
 import { filterActionsByPermissions, getListPermissions, canPerformActionOnItem } from '@/utils/permissions'
 import type {
   GenericListConfig,
@@ -404,37 +405,8 @@ const isCardVisible = (index: number): boolean => {
 // F-566: иконки для типовых строковых действий (edit/delete/view/open/issue/return).
 // Компактные кнопки-иконки на узких desktop; текст остаётся в title/aria (доступность).
 // Нестандартный action без иконки рендерится текстом как раньше. Явный action.iconPath приоритетен.
-const ACTION_ICONS: Record<string, string> = {
-  edit: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
-  delete: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
-  view: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
-  open: 'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14',
-  // F-569: Одобрить = галочка, Отклонить = крестик (по просьбе owner)
-  approve: 'M5 13l4 4L19 7',
-  reject: 'M6 18L18 6M6 6l12 12',
-  issue: 'M13 7l5 5m0 0l-5 5m5-5H6',
-  return: 'M11 17l-5-5m0 0l5-5m-5 5h12',
-}
-function actionIconPath(action: any): string {
-  return action.iconPath || ACTION_ICONS[action.key] || ''
-}
-
-// F-569: btn-soft (DaisyUI v5) — мягкий семантический фон + насыщенная иконка того же тона.
-// Owner: без обводки, фон кнопки должен ОТЛИЧАТЬСЯ от цвета иконки (контраст). Удаление/отклонение
-// красные, одобрение зелёное, выдача — янтарная, возврат/редактирование — синие, просмотр — нейтральный.
-const ACTION_BTN: Record<string, string> = {
-  delete: 'btn-soft btn-error',
-  reject: 'btn-soft btn-error',
-  approve: 'btn-soft btn-success',
-  issue: 'btn-soft btn-warning',
-  return: 'btn-soft btn-info',
-  edit: 'btn-soft btn-info',
-  view: 'btn-soft',
-  open: 'btn-soft',
-}
-function actionBtnClass(action: any): string {
-  return action.btnClass || ACTION_BTN[action.key] || 'btn-soft'
-}
+// F-584: карта иконок/классов действий вынесена в @/utils/actionIcons (общая с MobileCard,
+// чтобы мобильные карточки рисовали те же чипы). actionIconPath/actionBtnClass импортированы выше.
 
 const MONO_KEY_RE = /^(id|date|created_at|updated_at|closed_at|month|quantity|quantity_signed|qty|price|amount|total|sum|sku|purchase_no|invoice_number|inventory_number|code|balance|current_balance|current_stock|target_balance|expires_at|assigned_at)$/i
 function isMonoColumn(column: ColumnConfig): boolean {
