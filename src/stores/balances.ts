@@ -48,6 +48,12 @@ export const fetchBalancesList = async (params?: {
     if (extendedFilters.value.date) {
       apiParams.append('date', extendedFilters.value.date)
     }
+    // F-583: отправляем ordering (BE by-objects поддерживает object_name|total_materials, ±) —
+    // раньше не клали, поэтому сортировка из UI была мёртвой (PROJECT_STATE «Осталось у B»).
+    const ordering = store.filters?.ordering
+    if (ordering) {
+      apiParams.append('ordering', String(ordering))
+    }
 
     const response = await api.get(`${endpoints.stockSnapshots.byObjects}?${apiParams}`)
     
@@ -98,7 +104,9 @@ export const setBalancesFilters = async (newFilters: any) => {
   Object.assign(extendedFilters.value, newFilters)
   store.filters = {
     ...extendedFilters.value,
-    ordering: store.filters?.ordering || 'object_name'
+    // F-583: НЕ перетираем НОВОЕ ordering старым — оно уже в extendedFilters после Object.assign
+    // (сортировка из GenericList приходит как { ordering }); иначе сохраняем текущее / дефолт.
+    ordering: (extendedFilters.value as any).ordering || store.filters?.ordering || 'object_name'
   }
   store.pagination.page = 1
   await fetchBalancesList()
