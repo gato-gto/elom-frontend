@@ -58,6 +58,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useObjectsStore, fetchResponsibles } from '@/stores/objects'
 import { usePermissions } from '@/composables/usePermissions'
+import { useEditQuery } from '@/composables/useEditQuery'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
 import ObjectForm from './ObjectForm.vue'
@@ -68,6 +69,8 @@ import ObjectCard from '@/components/cards/ObjectCard.vue'
 const router = useRouter()
 const objectsStore = useObjectsStore()
 const ui = useUiStore()
+// F-592: ?edit=<id> открывает форму редактирования (как на Purchases/Materials/… — паритет диплинков).
+useEditQuery(objectsStore, openEdit)
 
 // Error handling
 const { handleLoadingError, handleDeleteError } = useErrorHandler()

@@ -114,6 +114,7 @@ import ToolCard from '@/components/cards/ToolCard.vue'
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import { usePermissions } from '@/composables/usePermissions'
+import { useEditQuery } from '@/composables/useEditQuery'
 
 // ✅ RBAC: проверка через permissions
 const { can, canExportReports } = usePermissions()
@@ -121,6 +122,8 @@ const canEdit = computed(() => can('tools', 'edit'))
 
 // Stores
 const toolsStore = useToolsStore()
+// F-592: ?edit=<id> открывает форму редактирования инструмента (паритет диплинков).
+useEditQuery(toolsStore, openEdit)
 const _toolIssuesStore = useToolIssuesStore()
 const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
