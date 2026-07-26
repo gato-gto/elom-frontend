@@ -72,7 +72,9 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  /* F-580: плотнее по вертикали на десктопе (owner: сократить отступы между строк). Мобилка
+     (<1023px) переопределяет обратно на 0.75rem ниже; coarse-тачскрины держат min-height:44. */
+  padding: 0.5rem 0.875rem;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   font-weight: 500;
@@ -456,6 +458,11 @@
   .nav-toggle-btn svg {
     width: 1.75rem;
     height: 1.75rem;
+  }
+  /* F-580: на тач-устройствах строки навигации остаются удобными (≥44px), даже когда
+     десктопная база стала плотнее. */
+  .nav-link {
+    min-height: 44px;
   }
 }
 
