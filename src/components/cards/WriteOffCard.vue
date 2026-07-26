@@ -38,14 +38,14 @@
         <div>
           <span class="text-muted">Остаток до списания:</span>
           <span class="font-medium ml-2 text-info font-mono">
-            {{ formatQuantity(writeOff.current_balance) }} {{ writeOff.unit_code }}
+            {{ getBalanceBefore() }} {{ writeOff.unit_code }}
           </span>
         </div>
         
         <div>
           <span class="text-muted">Остаток после списания:</span>
           <span class="font-medium ml-2 text-success font-mono">
-            {{ formatQuantity(getBalanceAfter()) }} {{ writeOff.unit_code }}
+            {{ formatQuantity(writeOff.current_balance) }} {{ writeOff.unit_code }}
           </span>
         </div>
         
@@ -110,10 +110,15 @@ const formatQuantity = (quantity: string) => {
   return formatNumberClean(parseFloat(quantity))
 }
 
-const getBalanceAfter = () => {
+// current_balance с бэкенда = остаток НА ДАТУ списания, УЖЕ включающий это списание
+// (Σ снапшотов date__lte, снапшот списания входит), т.е. это остаток ПОСЛЕ списания.
+// Значит «до» = current + qty. Раньше карточка показывала current как «до», а «после»
+// = current − qty (двойное вычитание): на Баку выходило 9 500 000 против верных
+// 9 750 000 в /balances — карточка противоречила странице остатков.
+const getBalanceBefore = () => {
   const current = parseFloat(props.writeOff.current_balance)
   const writeOffQty = parseFloat(props.writeOff.quantity)
-  return formatNumberClean(current - writeOffQty)
+  return formatNumberClean(current + writeOffQty)
 }
 
 const getStageLabel = (stage: string) => {
