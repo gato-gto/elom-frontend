@@ -65,26 +65,6 @@
         class="fixed z-50 bg-base-100 text-base-content border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         :style="dropdownStyle"
       >
-          <!-- No results -->
-          <div v-if="searchResults.length === 0 && searchQuery.length >= 2" class="p-3">
-            <div class="text-sm text-muted mb-2">Материалы не найдены</div>
-            <!-- Предложение создать новый материал -->
-            <button
-              v-if="allowCustom && searchQuery.length >= 2"
-              type="button"
-              class="w-full px-3 py-2 text-left hover:bg-base-200 focus:bg-base-200 focus:outline-none border-t border-base-300 mt-2 pt-2"
-              @mousedown.prevent
-              @click="selectCustomMaterial"
-            >
-              <div class="font-medium text-primary flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Создать
-              </div>
-            </button>
-          </div>
-          
           <!-- Results -->
           <button
             v-for="material in searchResults"
@@ -98,6 +78,29 @@
             <div class="font-medium">{{ material.name }}</div>
             <div v-if="material.category_name" class="text-xs text-muted">
               {{ material.category_name }}
+            </div>
+          </button>
+
+          <!-- Нет совпадений — подсказка -->
+          <div v-if="searchResults.length === 0 && searchQuery.length >= 2" class="px-3 py-2 text-sm text-muted">
+            Материалы не найдены
+          </div>
+
+          <!-- F-594: «Создать «<имя>»» ВСЕГДА доступно при вводе ≥2 симв. (а не только при 0 совпадений),
+               чтобы завести новый материал прямо из позиции, даже если имя частично совпадает с
+               существующим — не заходя в отдельный раздел «Материалы». Показываем введённое имя. -->
+          <button
+            v-if="allowCustom && searchQuery.trim().length >= 2"
+            type="button"
+            class="w-full px-3 py-2 text-left hover:bg-base-200 focus:bg-base-200 focus:outline-none border-t border-base-300"
+            @mousedown.prevent
+            @click="selectCustomMaterial"
+          >
+            <div class="font-medium text-primary flex items-center gap-2">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="truncate">Создать «{{ searchQuery.trim() }}»</span>
             </div>
           </button>
       </div>
