@@ -28,18 +28,20 @@ const DEVICE_MATRIX = [
   { name: 'desktop-1366', engine: chromium, ctx: { viewport: { width: 1366, height: 900 } } },
 ]
 
-// route: path; optional openModal: selector to click (e.g. a "Новая заявка" button) before shot
+// route: path; modal:true => navigating to a /create route auto-opens the form modal.
+const _lists = ['/purchases', '/writeoffs', '/balances', '/stocks', '/tools_index', '/tools_issues',
+  '/materials', '/material_categories', '/objects', '/suppliers', '/units', '/employees',
+  '/archive-periods', '/rbac/roles', '/reports/by-period', '/reports/by-object',
+  '/reports/by-material', '/reports/by-responsible']
+const _forms = [['/purchases/create', 'form-purchase'], ['/writeoffs/create', 'form-writeoff'],
+  ['/materials/create', 'form-material'], ['/objects/create', 'form-object'],
+  ['/suppliers/create', 'form-supplier'], ['/units/create', 'form-unit'],
+  ['/material_categories/create', 'form-category'], ['/employees/create', 'form-employee'],
+  ['/rbac/roles/create', 'form-role']]
 const ROUTES = [
   { path: '/login', auth: false, label: 'login' },
-  { path: '/purchases', label: 'purchases-list' },
-  { path: '/purchases', label: 'purchase-create', openModal: 'button:has-text("Новая")' },
-  { path: '/writeoffs', label: 'writeoffs-list' },
-  { path: '/writeoffs', label: 'writeoff-create', openModal: 'button:has-text("Новое списание")' },
-  { path: '/balances', label: 'balances' },
-  { path: '/tools_index', label: 'tools' },
-  { path: '/materials', label: 'materials' },
-  { path: '/objects', label: 'objects' },
-  { path: '/employees', label: 'employees' },
+  ..._lists.map(p => ({ path: p, label: p.replace(/^\//, '').replace(/\//g, '-') })),
+  ..._forms.map(([p, label]) => ({ path: p, label, modal: true })),
 ]
 
 const CHECK = `() => {
@@ -95,15 +97,10 @@ for (const dev of DEVICE_MATRIX) {
     const cBefore = consoleErrors.length, fBefore = failedReq.length
     try {
       await page.goto(BASE + route.path, { waitUntil: 'networkidle', timeout: 25000 })
-      await page.waitForTimeout(600)
-      if (route.openModal) {
-        const btn = await page.$(route.openModal)
-        if (btn) { await btn.click().catch(() => {}); await page.waitForTimeout(900) }
-        else { routes[route.label] = { skipped: 'openModal button not found' }; continue }
-      }
+      await page.waitForTimeout(route.modal ? 1300 : 600)  // modal routes auto-open a form
     } catch (e) { routes[route.label] = { error: String(e).slice(0, 90) }; continue }
     const checks = await page.evaluate(eval('(' + CHECK + ')')).catch(() => null)
-    await page.screenshot({ path: `${OUT}/${dev.name}__${route.label}.png`, fullPage: !route.openModal }).catch(() => {})
+    await page.screenshot({ path: `${OUT}/${dev.name}__${route.label}.png`, fullPage: !route.modal }).catch(() => {})
     routes[route.label] = {
       overflow: checks?.overflow, overflowPx: checks?.overflowPx, wideEls: checks?.wideEls,
       smallTargets: checks?.smallTargets, smallSample: checks?.smallSample, tinyText: checks?.tinyText,
