@@ -8,8 +8,7 @@ import { parseApiError, handleApiErrorAsync } from '@/utils/errorHandler'
 import type {
   Material,
   MaterialRequest,
-  PatchedMaterialRequest,
-  PaginatedMaterialList
+  PatchedMaterialRequest
 } from '@/api/types'
 import type { MaterialBalance, BalancesByObjectsResponse } from '@/api/types/stocks'
 
@@ -138,17 +137,14 @@ export const deletePhoto = async (id: number) => {
 
 export const searchMaterials = async (query: string): Promise<Material[]> => {
   try {
-    const queryParams = {
-      search: query,
-      page_size: 20,
-      ordering: 'name'
-    }
+    // F-413: специализированный /materials/search/ (MaterialLiteSerializer — с default_unit
+    // для автоподстановки единицы FE-5, лёгкий, с limit) вместо тяжёлого /materials/?search=.
+    // Возвращает массив (без пагинации); контракт: ?q=&limit=.
+    const queryString = buildQuery({ q: query, limit: 20 })
+    const { data } = await api.get<Material[]>(endpoints.materials.search + queryString)
 
-    const queryString = buildQuery(queryParams)
-    const { data } = await api.get<PaginatedMaterialList>(endpoints.materials.list + queryString)
-    
-    // API может возвращать либо объект с results, либо массив
-    return Array.isArray(data) ? data : (data?.results || [])
+    // Эндпоинт отдаёт массив; на всякий случай поддерживаем и {results}
+    return Array.isArray(data) ? data : ((data as any)?.results || [])
   } catch (error: any) {
     // EH-FE-10 (F-552): показать тост, чтобы сбой поиска не выглядел как «ничего не найдено»
     // (как в base.ts search перед return []).
