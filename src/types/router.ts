@@ -1,7 +1,5 @@
 // Router types and interfaces
 
-import type { UserRole } from '@/api/types/common'
-
 // Route meta information
 export interface RouteMeta {
   title?: string

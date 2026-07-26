@@ -158,7 +158,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const rbacStore = useRbacStore()
-const { can, canManageUserRoles } = usePermissions()
+const { canManageUserRoles } = usePermissions()
 const permissionsStore = usePermissionsStore()
 
 // Проверка прав доступа - используем computed напрямую
@@ -257,7 +257,7 @@ const isRoleSystem = (role: Role): boolean => {
   return role?.is_system === true
 }
 
-const getCheckboxDisabled = (role: Role): boolean => {
+const getCheckboxDisabled = (_role: Role): boolean => {
   // Системные роли можно назначать пользователям, но нельзя редактировать/удалять сами роли
   // Поэтому проверяем только права доступа и props.disabled
   // Если canManageRoles.value === undefined, считаем что права еще не загружены, блокируем
@@ -296,18 +296,18 @@ const handleDivClick = (role: Role, event: MouseEvent) => {
   }
 }
 
-const handleCheckboxChange = (role: Role, event: Event) => {
+const handleCheckboxChange = (role: Role, _event: Event) => {
   const disabled = getCheckboxDisabled(role)
   if (!disabled) {
     toggleRole(role.id)
   }
 }
 
-const handleCheckboxClick = (role: Role, event: MouseEvent) => {
+const handleCheckboxClick = (_role: Role, _event: MouseEvent) => {
   // Don't prevent default - let the checkbox change naturally
 }
 
-const handleLabelClick = (role: Role, event: MouseEvent) => {
+const handleLabelClick = (_role: Role, _event: MouseEvent) => {
   // Label click will naturally trigger checkbox change, so we don't need to do anything here
   // But we stop propagation to prevent div click handler from firing
 }

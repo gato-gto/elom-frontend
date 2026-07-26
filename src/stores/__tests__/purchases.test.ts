@@ -106,7 +106,7 @@ describe('Purchases Store', () => {
   })
 
   it('uploads photo successfully', async () => {
-    const store = usePurchasesStore()
+    const _store = usePurchasesStore()
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
     const mockPurchaseResponse = {
       data: {

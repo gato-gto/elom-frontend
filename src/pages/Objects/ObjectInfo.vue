@@ -290,7 +290,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { SiteObject as SiteObject } from '@/api/types'
 import { useObjectsStore } from '@/stores/objects'
@@ -312,7 +312,7 @@ const router = useRouter()
 const objectsStore = useObjectsStore()
 const purchasesStore = usePurchasesStore()
 const writeOffsStore = useWriteOffsStore()
-const authStore = useAuthStore()
+const _authStore = useAuthStore()
 const { can } = usePermissions()
 const { handleLoadingError } = useErrorHandler()
 

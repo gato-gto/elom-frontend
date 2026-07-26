@@ -308,7 +308,7 @@ function removeTool(index: number) {
   tools.value.splice(index, 1)
 }
 
-function onCategoryInput(event: Event, index: number) {
+function onCategoryInput(event: Event, _index: number) {
   const input = event.target as HTMLInputElement
   const value = input.value
   

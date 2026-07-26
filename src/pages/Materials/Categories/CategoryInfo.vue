@@ -223,7 +223,6 @@ import { usePermissions } from '@/composables/usePermissions'
 import GenericList from '@/components/GenericList.vue'
 import MaterialCard from '@/components/cards/MaterialCard.vue'
 import { formatDate } from '@/utils/formatters'
-import type { MaterialCategory } from '@/api/types'
 import type { Material } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 const route = useRoute()

@@ -1,4 +1,4 @@
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { GenericFormConfig, UseGenericFormOptions, UseGenericFormReturn } from '@/types/generic'
 import { useErrorHandler } from './useErrorHandler'
 
@@ -171,10 +171,6 @@ export function useGenericForm<T extends Record<string, any>>(
     return form.value[key]
   }
 
-  function hasFieldError(key: string): boolean {
-    return !!errors.value[key]
-  }
-
   function getFieldError(key: string): string {
     // Проверяем прямую ошибку
     if (errors.value[key]) {
@@ -202,10 +198,6 @@ export function useGenericForm<T extends Record<string, any>>(
 
   function isFieldTouched(key: string): boolean {
     return touched.value.has(key)
-  }
-
-  function isFieldDirty(key: string): boolean {
-    return form.value[key] !== options.initialData?.[key]
   }
 
   // Watch for form changes to update dirty state

@@ -156,8 +156,8 @@ export class BrowserSupportChecker {
     if (!this.isFullySupported()) {
       const browserInfo = this.getBrowserInfo();
       const missingFeatures = Object.entries(this.support)
-        .filter(([_, supported]) => !supported)
-        .map(([feature, _]) => feature);
+        .filter(([, supported]) => !supported)
+        .map(([feature]) => feature);
 
       console.warn(`⚠️ Browser Compatibility Warning:
         Browser: ${browserInfo.name} ${browserInfo.version}

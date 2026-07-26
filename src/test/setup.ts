@@ -96,7 +96,7 @@ Object.defineProperty(window, '__piniaStores', {
 config.global.mocks = {
   $t: (key: string) => key,
   $tc: (key: string) => key,
-  $te: (key: string) => true,
+  $te: () => true,
   $d: (value: any) => value,
   $n: (value: any) => value,
 }

@@ -240,11 +240,9 @@ import { useUrlFilters } from '@/composables/useUrlFilters'
 import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
 import { filterActionsByPermissions, getListPermissions, canPerformActionOnItem } from '@/utils/permissions'
-import type { 
-  GenericListConfig, 
-  ColumnConfig, 
-  FilterConfig, 
-  ActionConfig 
+import type {
+  GenericListConfig,
+  ColumnConfig
 } from '@/types/generic'
 
 // Components
@@ -281,7 +279,7 @@ const emit = defineEmits<{
 
 // Composables
 const { isMobile } = useResponsiveTable()
-const { handleLoadingError, handleExportError } = useErrorHandler()
+const { handleExportError } = useErrorHandler()
 const permissions = usePermissions()
 
 // ✅ RBAC: Фильтрованные действия на основе permissions

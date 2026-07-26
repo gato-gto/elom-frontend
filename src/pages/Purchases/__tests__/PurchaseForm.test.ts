@@ -2,12 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PurchaseForm from '../PurchaseForm.vue'
-import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
-import { useObjectsStore } from '@/stores/objects'
-import { useSuppliersStore } from '@/stores/suppliers'
-import { useUnitsStore } from '@/stores/units'
-import { useEmployeesStore } from '@/stores/employees'
 
 // Mock router
 vi.mock('vue-router', () => ({
@@ -99,8 +94,8 @@ describe('PurchaseForm', () => {
         }
       })
 
-      const vm = wrapper.vm as any
-      
+      const _vm = wrapper.vm as any
+
       // Create item with new material but no unit
       const testItem = {
         material: null,
@@ -140,7 +135,7 @@ describe('PurchaseForm', () => {
 
   describe('Purchase Number Generation', () => {
     it('allows empty purchase_no for backend generation', async () => {
-      const wrapper = mount(PurchaseForm, {
+      const _wrapper = mount(PurchaseForm, {
         global: {
           stubs: {
             MaterialSearchSelect: true,
@@ -194,11 +189,6 @@ describe('PurchaseForm', () => {
         }
       })
 
-      const vm = wrapper.vm as any
-
-      // Check items initialization
-      const items = typeof vm.items === 'object' && vm.items.value ? vm.items.value : vm.items
-      
       // Component should initialize with at least one item or handle empty items
       expect(wrapper.exists()).toBe(true)
     })

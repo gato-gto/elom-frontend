@@ -186,15 +186,9 @@ describe('WriteOff Business Logic', () => {
     it('shows only materials available on selected object', () => {
       // According to business logic, materials for write-off should come from
       // completed purchases on the selected object
-      const objectId = 1
       const materialsOnObject = [
         { id: 1, name: 'Цемент', balance: 100 },
         { id: 2, name: 'Песок', balance: 50 }
-      ]
-      const allMaterials = [
-        { id: 1, name: 'Цемент', balance: 100 },
-        { id: 2, name: 'Песок', balance: 50 },
-        { id: 3, name: 'Щебень', balance: 0 } // Not on this object
       ]
       
       // Filter to only show materials with balance > 0 on object
@@ -390,7 +384,7 @@ describe('WriteOff Business Logic', () => {
 
   describe('Bulk Write-off', () => {
     it('creates multiple write-offs for same object', async () => {
-      const store = useWriteOffsStore()
+      const _store = useWriteOffsStore()
       const items = [
         { material: 1, quantity: '10.00', unit: 1 },
         { material: 2, quantity: '20.00', unit: 2 },

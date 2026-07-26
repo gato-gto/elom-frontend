@@ -1,5 +1,5 @@
 import type { RouteRecordNormalized } from 'vue-router'
-import type { NavigationItem, AppRouteRecordRaw } from '@/types/router'
+import type { NavigationItem } from '@/types/router'
 import { usePermissionsStore } from '@/stores/permissions'
 import { useAuthStore } from '@/stores/auth'
 

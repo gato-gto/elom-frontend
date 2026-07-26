@@ -18,7 +18,7 @@ vi.mock('@/stores/employees', () => ({
     items: [{ id: 10, username: 'brigadier1', role: 'brigadier' }],
     fetchList: vi.fn().mockResolvedValue(undefined)
   }),
-  getByObject: (_objectId: number) => [{ id: 10, username: 'brigadier1', role: 'brigadier' }]
+  getByObject: () => [{ id: 10, username: 'brigadier1', role: 'brigadier' }]
 }))
 
 vi.mock('@/stores/units', () => ({
@@ -33,7 +33,7 @@ vi.mock('@/stores/materials', () => ({
     items: [{ id: 100, name: 'Цемент', default_unit: 5 }],
     fetchList: vi.fn().mockResolvedValue(undefined)
   }),
-  getMaterialsByObject: async (_objectId: number) => [{ id: 100, name: 'Цемент', default_unit: 5 }]
+  getMaterialsByObject: async () => [{ id: 100, name: 'Цемент', default_unit: 5 }]
 }))
 
 vi.mock('@/api/client', () => {

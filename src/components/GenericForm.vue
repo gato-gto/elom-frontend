@@ -146,7 +146,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import type { GenericFormConfig, FieldConfig } from '@/types/generic'
+import type { GenericFormConfig } from '@/types/generic'
 import { useGenericForm, useFormSections } from '@/composables/useGenericForm'
 import FormField from './FormField.vue'
 
@@ -175,19 +175,11 @@ const emit = defineEmits<{
 // Use composables
 const {
   form,
-  errors,
   isSubmitting,
   isDirty,
-  isValid,
   submit: submitForm,
-  reset: resetForm,
   setFieldValue,
-  setFieldError,
-  clearErrors,
-  validate,
-  getFieldValue,
-  getFieldError,
-  isFieldTouched
+  getFieldError
 } = useGenericForm({
   initialData: props.initialData,
   config: props.config,
@@ -198,16 +190,8 @@ const {
 })
 
 const {
-  activeSection,
   sections,
-  currentSection,
-  sectionErrors,
-  hasSectionErrors,
-  nextSection,
-  previousSection,
-  goToSection,
-  getSectionFields,
-  validateSection
+  getSectionFields
 } = useFormSections(props.config)
 
 // Computed
@@ -228,10 +212,6 @@ async function submit() {
   } catch (error) {
     console.error('Form submission error:', error)
   }
-}
-
-function reset() {
-  resetForm()
 }
 
 function handleCancel() {

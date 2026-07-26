@@ -27,7 +27,7 @@
       </template>
 
       <!-- Custom column for status with badge -->
-      <template #column-is_active="{ item, value }">
+      <template #column-is_active="{ value }">
         <div class="badge" :class="value ? 'badge-success' : 'badge-error'">
           {{ value ? 'Активный' : 'Неактивный' }}
         </div>

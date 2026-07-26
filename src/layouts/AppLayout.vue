@@ -116,16 +116,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissionsStore } from '@/stores/permissions'
-import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
 import AutoNavigation from '@/components/AutoNavigation.vue'
 import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
 
-const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -137,16 +135,7 @@ watch(sidebarCollapsed, (v) => localStorage.setItem('elom_sidebar_collapsed', v 
 const ui = useUiStore()
 const permissionsStore = usePermissionsStore()
 
-// Computed properties
-const pageTitle = computed(() => {
-  return (route.meta.title as string) || 'ELOM'
-})
 const theme = useThemeStore()
-
-// Current page title
-const currentPageTitle = computed(() => {
-  return (route.meta.title as string) || 'ELOM'
-})
 
 // User initials for avatar
 const userInitials = computed(() => {
@@ -165,10 +154,6 @@ const roleDisplayName = computed(() => {
   }
   return 'Роль не задана'
 })
-
-// ✅ RBAC: проверка через permissions
-const { can } = usePermissions()
-const canManageUsers = computed(() => can('employees', 'edit'))
 
 // Theme state
 const isDark = computed(() => theme.isDark)

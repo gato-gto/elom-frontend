@@ -107,7 +107,7 @@ export function isActionVisible<T>(
 export function enrichActionWithPermissions<T>(
   action: ActionConfig<T>,
   config: GenericListConfig,
-  permissions: ReturnType<typeof usePermissions>
+  _permissions: ReturnType<typeof usePermissions>
 ): ActionConfig<T> {
   // Если у действия уже есть permission, не меняем его
   if (action.permission || action.anyPermission || action.allPermissions) {
@@ -196,7 +196,6 @@ export function isItemOwnedByUser<T>(item: T, userId?: number): boolean {
   // (на бэкенде для requester это важно: obj.responsible == user && obj.status == 'new')
   const responsible = (item as any).responsible
   if (responsible !== undefined && responsible !== null) {
-    const responsibleId = typeof responsible === 'object' ? responsible.id : responsible
     // Если responsible не указан или равен текущему пользователю - элемент "свой"
     // Если responsible указан и не равен текущему пользователю - элемент может быть не "свой"
     // Но так как объект принадлежит пользователю, считаем элемент "своим"

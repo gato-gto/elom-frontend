@@ -54,7 +54,7 @@
       </template>
 
       <!-- Custom column for current_holder -->
-      <template #column-current_holder="{ item, value }">
+      <template #column-current_holder="{ item }">
         <div v-if="item.current_holder_name" class="flex flex-col gap-1">
           <span class="font-medium break-words">{{ item.current_holder_name }}</span>
           <span v-if="item.current_object_name" class="text-xs text-muted break-words">
@@ -121,7 +121,7 @@ const canEdit = computed(() => can('tools', 'edit'))
 
 // Stores
 const toolsStore = useToolsStore()
-const toolIssuesStore = useToolIssuesStore()
+const _toolIssuesStore = useToolIssuesStore()
 const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
 const ui = useUiStore()

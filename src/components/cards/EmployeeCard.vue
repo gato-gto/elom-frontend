@@ -110,7 +110,6 @@ import { User } from '@/api/types/employees'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate } from '@/utils/formatters'
-import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
 
 interface Props {
   employee: User & {

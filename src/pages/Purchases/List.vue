@@ -23,7 +23,7 @@
       </template>
 
       <!-- Custom column for responsible with name lookup -->
-      <template #column-responsible="{ item, value }">
+      <template #column-responsible="{ item }">
         <span>{{ item.responsible_name || responsibleName(item.responsible) || '—' }}</span>
       </template>
 
@@ -57,8 +57,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useEditQuery } from '@/composables/useEditQuery'
-import type { Purchase, SiteObject, Employee } from '@/api/types'
-import type { GenericListConfig } from '@/types/generic'
+import type { Purchase, Employee } from '@/api/types'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'

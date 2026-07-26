@@ -42,9 +42,6 @@ onMounted(async () => {
   }
 })
 
-function handlePrint() {
-  window.print()
-}
 </script>
 
 <style scoped>

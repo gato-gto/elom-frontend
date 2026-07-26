@@ -36,7 +36,7 @@
       </template>
 
       <!-- Custom column for type (Приход/Расход) -->
-      <template #column-type="{ item, value }">
+      <template #column-type="{ item }">
         <span 
           :class="parseFloat(item.quantity_signed) >= 0 ? 'badge badge-success badge-xs' : 'badge badge-error badge-xs'"
         >
@@ -45,21 +45,21 @@
       </template>
 
       <!-- Custom column for stage -->
-      <template #column-stage="{ item, value }">
+      <template #column-stage="{ value }">
         <span class="badge badge-outline badge-xs">
           {{ getStageDisplayName(value) }}
         </span>
       </template>
 
       <!-- Custom column for source -->
-      <template #column-source="{ item, value }">
+      <template #column-source="{ item }">
         <span class="text-xs text-muted">
           {{ item.source_description || `${getSourceTypeDisplayName(item.source_type)} #${item.source_id}` }}
         </span>
       </template>
 
       <!-- Custom column for responsible -->
-      <template #column-responsible="{ item, value }">
+      <template #column-responsible="{ value }">
         <span>{{ responsibleName(value) ?? '—' }}</span>
       </template>
     </GenericList>

@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import type { UserRole } from '@/api/types/common'
-import type { RouteMeta } from '@/types/router'
 
 // Lazy load components with webpack chunk names for better caching
 const Login = () => import(/* webpackChunkName: "auth" */ '@/pages/Login.vue')

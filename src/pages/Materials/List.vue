@@ -107,7 +107,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useEditQuery } from '@/composables/useEditQuery'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
-const router = useRouter()
+const _router = useRouter()
 const materialsStore = useMaterialsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 

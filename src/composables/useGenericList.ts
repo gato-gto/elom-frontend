@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import type { GenericListConfig, UseGenericListOptions, UseGenericListReturn } from '@/types/generic'
+import type { UseGenericListOptions, UseGenericListReturn } from '@/types/generic'
 import { useErrorHandler } from './useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { debounce } from '@/utils/debounce'
@@ -56,7 +56,7 @@ export function useGenericList<T extends Record<string, any>>(
     options.store.resetFilters()
   }
 
-  function handleAction(action: string, item: T) {
+  function handleAction(_action: string, _item: T) {
     // This will be handled by the parent component
     // The composable just provides the method signature
   }
@@ -110,7 +110,7 @@ export function useGenericList<T extends Record<string, any>>(
 /**
  * Composable for managing list filters with persistence
  */
-export function useListFilters<T extends Record<string, any>>(
+export function useListFilters(
   store: any,
   filterKey: string = 'listFilters'
 ) {
@@ -151,7 +151,7 @@ export function useListFilters<T extends Record<string, any>>(
   // Watch for filter changes and save them
   watch(
     () => store.filters,
-    (_newFilters: Record<string, any>) => {
+    () => {
       saveFilters()
     },
     { deep: true }

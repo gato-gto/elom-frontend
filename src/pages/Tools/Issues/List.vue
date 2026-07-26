@@ -24,7 +24,7 @@
       </template>
 
       <!-- Custom column for issued_at -->
-      <template #column-issued_at="{ item, value }">
+      <template #column-issued_at="{ value }">
         <div class="flex flex-col gap-0.5">
           <span class="text-sm font-medium font-mono">{{ formatDate(value) }}</span>
           <span class="text-xs text-muted">{{ formatTime(value) }}</span>
@@ -32,7 +32,7 @@
       </template>
 
       <!-- Custom column for return_date -->
-      <template #column-return_date="{ item, value }">
+      <template #column-return_date="{ value }">
         <div v-if="value" class="flex flex-col gap-0.5">
           <span class="text-sm font-medium">{{ formatDate(value) }}</span>
           <span class="text-xs text-muted">{{ formatTime(value) }}</span>
@@ -56,7 +56,7 @@
       </template>
 
       <!-- Custom column for status -->
-      <template #column-is_open="{ item, value }">
+      <template #column-is_open="{ value }">
         <div class="badge" :class="value ? 'badge-warning' : 'badge-success'">
           {{ value ? 'Активна' : 'Закрыта' }}
         </div>

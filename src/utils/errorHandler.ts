@@ -91,7 +91,7 @@ function extractFirstErrorMessage(errors: any): string | null {
 /**
  * Парсит ошибку API и возвращает структурированную информацию
  */
-export function parseApiError(error: any, context?: ErrorContext): ParsedApiError {
+export function parseApiError(error: any, _context?: ErrorContext): ParsedApiError {
   // Определяем статус код
   const status = error?.response?.status || 0
   

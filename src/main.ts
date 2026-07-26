@@ -35,8 +35,8 @@ themeStore.initTheme()
 import {useAuthStore} from '@/stores/auth'
 import {useUiStore} from '@/stores/ui'
 
-const auth = useAuthStore()
-const ui = useUiStore()
+const _auth = useAuthStore()
+const _ui = useUiStore()
 
 // Регистрируем stores для доступа из API клиента
 if (!window.__piniaStores) {window.__piniaStores = {}}

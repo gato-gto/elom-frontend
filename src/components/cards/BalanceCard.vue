@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { ObjectBalance, MaterialBalance } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import { formatNumberClean } from '@/utils/formatters'

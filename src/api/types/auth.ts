@@ -1,6 +1,5 @@
 // Authentication and user types
 
-import type { UserRole } from './common';
 
 export interface LoginRequest {
   username: string;

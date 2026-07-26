@@ -160,10 +160,10 @@ import {computed, onMounted, ref, watch, nextTick} from 'vue'
 import api from '@/api/client'
 import endpoints, {buildQuery} from '@/api/endpoints'
 import type {PageResponse, ReportByObjectQuery, SiteObject, Employee, Material, ObjectReportRow, ObjectReportResponse} from '@/api/types'
-import {formatDate, formatCurrency, formatNumber} from '@/utils/formatters'
+import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
-import { createBarChartConfig, getColor, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
+import { createBarChartConfig, getColor, getChartHeight, truncateLabel } from '@/utils/chartUtils'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -194,19 +194,6 @@ const materials = ref<Material[]>([])
 
 // Chart
 const chartContainer = ref<InstanceType<typeof ChartContainer>>()
-
-const objMap = computed(() => new Map(objects.value.map((o: SiteObject) => [o.id, o.name])))
-const matMap = computed(() => new Map(materials.value.map(m => [m.id, m.name])))
-
-function objectName(id?: number) {
-  return id ? objMap.value.get(id) : undefined
-}
-
-function materialName(id?: number) {
-  return id ? matMap.value.get(id) : undefined
-}
-
-const isPaginated = computed(() => count.value > rows.value.length)
 
 // Filter options
 const objectOptions = computed(() => [
@@ -275,11 +262,6 @@ async function fetchReport() {
   }
 }
 
-function reload(p = currentPage.value) {
-  currentPage.value = p;
-  fetchReport()
-}
-
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
     const data = rows.value
@@ -309,18 +291,6 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 }
 
 // Export functions removed - using centralized useExport composable
-
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
 
 function resetFilters() {
   filters.value = { date_from: undefined, date_to: undefined, object: undefined, responsible: undefined }
@@ -394,7 +364,6 @@ function updateChart() {
   
   const labels = sortedRows.map(row => truncateLabel(row.object_name || 'Неизвестный объект', 15))
   const amounts = sortedRows.map(row => Number(row.total_amount) || 0)
-  const purchases = sortedRows.map(row => Number(row.purchases) || 0)
 
   const config = createBarChartConfig({
     labels,

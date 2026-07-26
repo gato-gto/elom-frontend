@@ -10,7 +10,7 @@
       :reset-on-submit="false"
     >
       <!-- Custom field for RBAC role assignment -->
-      <template #field-roles="{ field, value, error, disabled: fieldDisabled }">
+      <template #field-roles="{ error }">
         <!-- Игнорируем fieldDisabled из формы, используем только проверку разрешений -->
         <RoleAssignment
           :user-id="props.initial?.id"
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useEmployeesStore } from '@/stores/employees'
 import { useRbacStore } from '@/stores/rbac'
 import { useObjectsStore } from '@/stores/objects'
@@ -91,7 +91,7 @@ function toggleObject(id: number) {
 }
 const { handleFormError } = useErrorHandler()
 const { canManageUserRoles } = usePermissions()
-const authStore = useAuthStore()
+const _authStore = useAuthStore()
 
 // RBAC roles state
 const selectedRoleIds = ref<number[]>([])

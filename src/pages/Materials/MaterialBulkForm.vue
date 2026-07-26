@@ -317,9 +317,9 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useUiStore } from '@/stores/ui'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
-import type { Material, MaterialRequest } from '@/api/types'
+import type { Material } from '@/api/types'
 
-const materialsStore = useMaterialsStore()
+const _materialsStore = useMaterialsStore()
 const unitsStore = useUnitsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 const uiStore = useUiStore()
@@ -449,7 +449,7 @@ const handleSubmit = async () => {
     // Создание материалов через FormData (API требует FormData, а не JSON)
     const createPromises = items.value
       .filter(item => item.name && item.name.trim() !== '' && item.default_unit && item.default_unit !== 0)
-      .map(async (item, index) => {
+      .map(async (item) => {
         // Создаем FormData для каждого материала
         const formData = new FormData()
         formData.append('name', item.name.trim())

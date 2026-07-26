@@ -247,10 +247,9 @@ import type { NavigationItem } from '@/types/router'
 
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
-const auth = authStore
+const _authStore = useAuthStore()
 const permissionsStore = usePermissionsStore()
-const { canCreateRequests, hasAnyPermission } = usePermissions()
+const { canCreateRequests } = usePermissions()
 
 // Загружаем permissions при монтировании
 onMounted(() => {

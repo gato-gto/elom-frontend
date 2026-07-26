@@ -11,7 +11,7 @@
       @field-change="onFieldChange"
     >
       <!-- Custom instruction photos field -->
-      <template #field-instruction_photos="{ field, value, error, disabled }">
+      <template #field-instruction_photos="{ field, disabled }">
         <div class=" rounded-lg">
           <div class="">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -82,7 +82,7 @@
       </template>
 
       <!-- Custom report photos field -->
-      <template #field-report_photos="{ field, value, error, disabled }">
+      <template #field-report_photos="{ field, disabled }">
         <div class=" rounded-lg">
           <div class="">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -159,7 +159,7 @@
       </template>
 
       <!-- Custom items field -->
-      <template #field-items="{ field, value, error, disabled }">
+      <template #field-items="{ field, error, disabled }">
         <div class=" ">
           <div class="">
             <div class="mb-4">
@@ -486,7 +486,7 @@ import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
 import { useObjectsStore } from '@/stores/objects'
-import { useEmployeesStore, getResponsibleEmployees } from '@/stores/employees'
+import { useEmployeesStore } from '@/stores/employees'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { useUiStore } from '@/stores/ui'
 import { useNotificationsStore } from '@/stores/notifications'
@@ -495,14 +495,13 @@ import { usePermissions } from '@/composables/usePermissions'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import GenericForm from '@/components/GenericForm.vue'
 import Modal from '@/components/Modal.vue'
-import type { Purchase, PurchaseRequest, PurchaseItemRequest, Employee, Material, PurchasePhoto } from '@/api/types'
+import type { Purchase, PurchaseRequest, Material, PurchasePhoto } from '@/api/types'
 import type { GenericFormConfig } from '@/types/generic'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useItemsForm } from '@/composables/useItemsForm'
 import type { BaseItem } from '@/composables/useItemsForm'
 import api from '@/api/client'
-import { endpoints } from '@/api/endpoints'
-import { calculateItemAmount, calculatePurchaseTotal, formatCurrency } from '@/utils/calculations'
+import { calculateItemAmount, calculatePurchaseTotal } from '@/utils/calculations'
 
 // Props
 const props = defineProps<{
@@ -515,7 +514,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const router = useRouter()
+const _router = useRouter()
 
 const purchasesStore = usePurchasesStore()
 const materialsStore = useMaterialsStore()
@@ -526,7 +525,7 @@ const suppliersStore = useSuppliersStore()
 const ui = useUiStore()
 const notifications = useNotificationsStore()
 const auth = useAuthStore()
-const { handleFormError, errors: formErrors, clearErrors } = useErrorHandler()
+const { handleFormError } = useErrorHandler()
 
 const saving = ref(false)
 const errors = reactive<Record<string, string>>({})
@@ -639,7 +638,6 @@ interface PurchaseItem extends BaseItem {
 
 const {
   items,
-  itemErrors,
   addItem: addItemBase,
   removeItem: removeItemBase,
   getItemFieldError,
@@ -679,7 +677,6 @@ let newMaterialsConfirmResolve: ((value: boolean) => void) | null = null
 const materials = computed(() => materialsStore.items)
 const units = computed(() => unitsStore.items)
 const objects = computed(() => objectsStore.items)
-const employees = computed(() => employeesStore.items)
 const suppliers = computed(() => suppliersStore.items)
 
 // ✅ RBAC: проверяем разрешения вместо роли
@@ -715,36 +712,6 @@ const supplierOptions = computed(() =>
     .filter((supplier: any) => supplier.is_active)
     .map((supplier: any) => ({ value: supplier.id, label: supplier.name }))
 )
-
-const employeeOptions = computed(() => {
-  // Используем централизованную функцию для получения ответственных
-  const brigadiers = [...getResponsibleEmployees()]
-  
-  // Добавляем текущего пользователя, если он еще не в списке
-  if (auth.me && !brigadiers.some((emp: any) => emp.id === auth.me!.id)) {
-    const currentUser = {
-      id: auth.me.id,
-      profile_id: auth.me.profile_id || auth.me.id,
-      first_name: auth.me.first_name,
-      last_name: auth.me.last_name,
-      username: auth.me.username,
-      is_active: true
-    } as Employee
-    brigadiers.unshift(currentUser)
-  }
-  
-  // Сортируем так, чтобы текущий пользователь был первым
-  const sortedEmployees = brigadiers.sort((a, b) => {
-    if (auth.me && a.id === auth.me.id) {return -1}
-    if (auth.me && b.id === auth.me.id) {return 1}
-    return 0
-  })
-  
-  return sortedEmployees.map((emp: Employee) => ({ 
-    value: emp.id, 
-    label: `${emp.first_name || emp.username} ${emp.last_name || ''}`.trim()
-  }))
-})
 
 const statusOptions = [
   { value: 'new', label: 'Новая' },

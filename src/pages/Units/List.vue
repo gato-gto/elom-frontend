@@ -24,7 +24,7 @@
       @export="handleExport"
     >
       <!-- Custom column for code -->
-      <template #column-code="{ item, value }">
+      <template #column-code="{ value }">
         <div class="text-sm text-muted font-mono">{{ value }}</div>
       </template>
 

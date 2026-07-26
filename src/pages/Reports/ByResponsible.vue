@@ -155,7 +155,7 @@ import endpoints, {buildQuery} from '@/api/endpoints'
 import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
-import { createHorizontalBarChartConfig, getColor, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
+import { createHorizontalBarChartConfig, getColor, getChartHeight, truncateLabel } from '@/utils/chartUtils'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -252,18 +252,6 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 }
 
 // Export functions removed - using centralized useExport composable
-
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
 
 function resetFilters() {
   dateFrom.value = undefined

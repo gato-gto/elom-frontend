@@ -190,7 +190,7 @@ export function roundToLargerUnit(
 export function formatValueWithUnit(
   value: number,
   unit: string,
-  precision: number = 2
+  _precision: number = 2
 ): string {
   // Используем умное форматирование без лишних нулей
   const formattedValue = formatNumberClean(value)
@@ -234,8 +234,7 @@ export function autoRoundAndFormat(
  */
 export function getBestUnitRepresentation(
   value: number,
-  unit: string,
-  _precision: number = 2 // Не используется
+  unit: string
 ): SmartConversionResult {
   return smartConvert(value, unit)
 }

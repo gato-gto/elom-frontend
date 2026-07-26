@@ -171,8 +171,8 @@ import type {SiteObject, PageResponse, MaterialReportRow, MaterialReportResponse
 import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
-import { createDoughnutChartConfig, getColors, getChartHeight, formatCurrencyTooltip, truncateLabel } from '@/utils/chartUtils'
-import { exportToCSV, exportToExcel, exportToPDF, downloadFile } from '@/utils/export'
+import { createDoughnutChartConfig, getColors, getChartHeight, truncateLabel } from '@/utils/chartUtils'
+import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
@@ -184,10 +184,6 @@ import ChartContainer from '@/components/ChartContainer.vue'
 
 
 
-type ReportResponse = { 
-  rows: MaterialReportRow[]
-  total_amount?: number 
-}
 
 const dateFrom = ref<string | undefined>()
 const dateTo = ref<string | undefined>()

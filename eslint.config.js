@@ -85,7 +85,14 @@ export default [
       'vue/script-indent': 'off',
       
       // TypeScript rules
-      '@typescript-eslint/no-unused-vars': 'warn',
+      // F-576: honour the `_`-prefix convention — a param/var kept only for call-arity
+      // or a preserved side-effect call is intentionally unused; underscore silences it.
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',

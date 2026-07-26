@@ -1,7 +1,5 @@
 // Supplier types
 
-import type { PaginationParams, SearchParams, OrderingParams } from './common';
-
 export interface PurchaseSupplier {
   id: number;
   name: string;

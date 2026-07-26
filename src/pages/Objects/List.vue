@@ -9,19 +9,19 @@
       @export="handleExport"
     >
       <!-- Custom column for address -->
-      <template #column-address="{ item, value }">
+      <template #column-address="{ value }">
         <span v-if="value">{{ value }}</span>
         <span v-else class="text-subtle">—</span>
       </template>
 
       <!-- Custom column for date_start -->
-      <template #column-date_start="{ item, value }">
+      <template #column-date_start="{ value }">
         <span v-if="value">{{ formatDate(value) }}</span>
         <span v-else class="text-subtle">—</span>
       </template>
 
       <!-- Custom column for date_end -->
-      <template #column-date_end="{ item, value }">
+      <template #column-date_end="{ value }">
         <span v-if="value">{{ formatDate(value) }}</span>
         <span v-else class="text-subtle">—</span>
       </template>
@@ -34,7 +34,7 @@
       </template>
 
       <!-- Custom column for is_active -->
-      <template #column-is_active="{ item, value }">
+      <template #column-is_active="{ value }">
         <div class="badge" :class="value ? 'badge-success' : 'badge-error'">
           {{ value ? 'Активный' : 'Неактивный' }}
         </div>

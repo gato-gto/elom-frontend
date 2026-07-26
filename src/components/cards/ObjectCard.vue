@@ -93,7 +93,7 @@ interface Emits {
 const props = defineProps<Props>()
 defineEmits<Emits>()
 
-const { truncateText } = useMobileCardHelpers()
+useMobileCardHelpers()
 
 const getProjectProgress = () => {
   if (!props.object.date_start || !props.object.date_end) {return null}

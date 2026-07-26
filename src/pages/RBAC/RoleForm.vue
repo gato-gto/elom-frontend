@@ -7,7 +7,7 @@
       :on-cancel="handleCancel"
     >
       <!-- Custom field for permissions -->
-      <template #field-permissions="{ value, error, disabled }">
+      <template #field-permissions="{ error, disabled }">
         <PermissionAssignment
           v-model:selectedPermissionIds="localPermissionIds"
           :disabled="disabled || !canManage"
@@ -19,13 +19,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRbacStore } from '@/stores/rbac'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { parseApiError } from '@/utils/errorHandler'
-import type { GenericFormConfig } from '@/types/generic'
-import type { Role, RoleWithPermissions } from '@/api/types/rbac'
+import type { Role } from '@/api/types/rbac'
 import GenericForm from '@/components/GenericForm.vue'
 import PermissionAssignment from '@/components/PermissionAssignment.vue'
 

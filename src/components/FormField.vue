@@ -396,26 +396,8 @@ const handleFocus = () => {
   emit('focus')
 }
 
-const handleMultiselectChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  const selectedValues = Array.from(target.selectedOptions).map(option => option.value)
-  emit('update:modelValue', selectedValues)
-}
-
-const removeMultiselectValue = (value: any) => {
-  if (Array.isArray(props.modelValue)) {
-    const newValue = props.modelValue.filter(v => v !== value)
-    emit('update:modelValue', newValue)
-  }
-}
-
-const getOptionLabel = (value: any): string => {
-  const option = props.options?.find(opt => opt.value === value)
-  return option?.label || String(value)
-}
-
 // Watch for options changes to force re-render
-watch(() => props.options, (newOptions, oldOptions) => {
+watch(() => props.options, () => {
   // Force re-render when options change
 }, { deep: true, immediate: true })
 

@@ -165,7 +165,7 @@ export interface FormSection {
   order?: number
 }
 
-export interface GenericFormConfig<T = any> {
+export interface GenericFormConfig<_T = any> {
   title: string
   subtitle?: string
   sections?: FormSection[]

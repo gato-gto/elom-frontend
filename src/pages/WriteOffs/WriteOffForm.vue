@@ -403,9 +403,8 @@ import type {
   WriteOff, 
   WriteOffCreateRequest, 
   WriteOffUpdateRequest,
-  SiteObject, 
-  Material, 
-  Employee,
+  SiteObject,
+  Material,
   Unit
 } from '@/api/types'
 
@@ -487,11 +486,6 @@ const hasSingleObject = computed(() => {
   return objects.length === 1
 })
 
-const unitOptions = computed(() => [
-  { value: 0, label: '— выберите единицу —' },
-  ...unitsStore.items.map((unit: Unit) => ({ value: unit.id, label: `${unit.name} (${unit.code})` }))
-])
-
 const responsibleOptions = ref([
   { value: 0, label: '— выберите ответственного —' }
 ])
@@ -567,7 +561,7 @@ function clearItemsDuplicateErrors() {
 }
 
 // Balance functions
-const loadCurrentBalance = async (item: WriteOffItem, index: number) => {
+const loadCurrentBalance = async (item: WriteOffItem, _index: number) => {
   if (!formData.value.object || !item.material) {
     item.currentBalance = null
     return
@@ -756,7 +750,7 @@ const onItemMaterialChange = async (item: WriteOffItem, material: Material | nul
   }
 }
 
-const onItemQuantityChange = async (item: WriteOffItem, index: number) => {
+const onItemQuantityChange = async (item: WriteOffItem, _index: number) => {
   // При изменении количества обновляем баланс, если нужно
   if (formData.value.object && item.material && formData.value.date) {
     // Баланс не зависит от количества списания, но можно обновить для актуальности

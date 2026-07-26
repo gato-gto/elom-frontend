@@ -57,7 +57,7 @@
       </template>
 
       <!-- Custom column for responsible -->
-      <template #column-responsible="{ item, value }">
+      <template #column-responsible="{ value }">
         <span>{{ responsibleName(value) ?? '—' }}</span>
       </template>
 
@@ -122,9 +122,6 @@ const editingWriteOff = ref<WriteOff | null>(null)
 const byBalanceOpen = ref(false)
 
 // Computed properties
-const modalTitle = computed(() => {
-  return editingWriteOff.value ? 'Редактировать списание' : 'Новое списание'
-})
 
 // Computed для справочников
 const objects = computed(() => objectsStore.items)
@@ -175,17 +172,6 @@ function materialName(id?: number) {
 
 function responsibleName(id: number | null | undefined) {
   return id ? eMap.value.get(id) : undefined
-}
-
-function getStageDisplayName(stage: string) {
-  const stageNames: Record<string, string> = {
-    'acceptance': 'Приемка',
-    'request': 'Заявка',
-    'delivery_fixed': 'Доставка',
-    'post_rough': 'После черновых',
-    'handover': 'Сдача'
-  }
-  return stageNames[stage] || stage
 }
 
 // GenericList configuration

@@ -29,7 +29,7 @@
       </template>
 
       <!-- Custom column for statistics -->
-      <template #column-materials_count="{ item, value }">
+      <template #column-materials_count="{ value }">
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
             <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@
       </template>
 
       <!-- Custom column for children count -->
-      <template #column-children_count="{ item, value }">
+      <template #column-children_count="{ value }">
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
             <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">

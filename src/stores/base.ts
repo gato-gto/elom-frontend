@@ -84,7 +84,7 @@ export interface BaseFilters {
   [key: string]: any
 }
 
-export interface BaseStoreConfig<T, C, U> {
+export interface BaseStoreConfig<T> {
   endpoint: {
     list: string
     one: (id: number) => string
@@ -132,7 +132,7 @@ export interface BaseStoreActions<T, C, U> {
 // ============================================================================
 
 export function createBaseStore<T extends { id: number; name?: string; title?: string }, C, U>(
-  config: BaseStoreConfig<T, C, U>
+  config: BaseStoreConfig<T>
 ) {
   return defineStore(config.entityName, () => {
     // ========================================================================

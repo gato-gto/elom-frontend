@@ -34,7 +34,7 @@
       </template>
 
       <!-- Custom column for total materials -->
-      <template #column-total_materials="{ item, value }">
+      <template #column-total_materials="{ value }">
         <div class="text-center">
           <span class="font-semibold text-info font-mono">
             {{ value }}

@@ -1,6 +1,6 @@
 // Purchase types
 
-import type { Currency, Stage, SourceType, PaginationParams, SearchParams, OrderingParams, DateFilterParams } from './common';
+import type { Currency, PaginationParams, SearchParams, OrderingParams, DateFilterParams } from './common';
 
 export interface PurchaseItem {
   id: number;

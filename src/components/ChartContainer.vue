@@ -282,21 +282,6 @@ function getDefaultOptions(): ChartOptions {
   }
 }
 
-// ELOM series palette — copper accent + steel/graphite + domain status hues
-// (derived from DESIGN_LANGUAGE.md; no default blue/violet/indigo/cyan/pink).
-const daisyColors = [
-  '#B0500F', // copper-600 (primary accent)
-  '#3E6B8C', // steel-blue
-  '#1F7A54', // terminal-green
-  '#C77A0A', // signal-amber
-  '#5C6B74', // graphite-500
-  '#B23A2E', // fault-red
-  '#8F400B', // copper-700
-  '#7FA3BE', // steel-blue light
-  '#2C3840', // graphite-700
-  '#4E7C6F'  // muted teal-green
-]
-
 // F-575: ГЛУБОКИЙ мёрж опций. Раньше был поверхностный { ...base, ...config.options }:
 // page-конфиг (createLineChartConfig) задаёт свой plugins.tooltip (только callbacks, без цветов),
 // поэтому он ЦЕЛИКОМ перекрывал темизированный tooltip из getDefaultOptions → тултип всегда

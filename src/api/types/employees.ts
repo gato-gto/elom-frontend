@@ -1,6 +1,6 @@
 // Employee types
 
-import type {UserRole, PaginationParams, SearchParams, OrderingParams} from './common';
+import type {PaginationParams, SearchParams, OrderingParams} from './common';
 
 export interface Employee {
     id: number;

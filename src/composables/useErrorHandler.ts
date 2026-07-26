@@ -85,7 +85,7 @@ export function useErrorHandler() {
   /**
    * Обрабатывает ошибку сохранения
    */
-  const handleSaveError = async (error: any, entity?: string, entityId?: number) => {
+  const handleSaveError = async (error: any, entity?: string, _entityId?: number) => {
     const parsedError = await ErrorHandlers.save(error, entity)
     setFieldErrors(parsedError.fieldErrors)
     return parsedError
@@ -94,14 +94,14 @@ export function useErrorHandler() {
   /**
    * Обрабатывает ошибку удаления
    */
-  const handleDeleteError = async (error: any, entity?: string, entityId?: number) => {
+  const handleDeleteError = async (error: any, entity?: string, _entityId?: number) => {
     return ErrorHandlers.delete(error, entity)
   }
 
   /**
    * Обрабатывает ошибку экспорта
    */
-  const handleExportError = async (error: any, entity?: string) => {
+  const handleExportError = async (error: any, _entity?: string) => {
     return ErrorHandlers.export(error)
   }
 

@@ -95,7 +95,7 @@ describe('useGenericForm', () => {
   })
 
   it('passes validation with correct data', () => {
-    const { form, errors, validate } = useGenericForm({
+    const { errors, validate } = useGenericForm({
       config: mockConfig,
       initialData: { name: 'John', email: 'john@example.com' },
       onSubmit: mockOnSubmit,
@@ -110,7 +110,7 @@ describe('useGenericForm', () => {
   })
 
   it('handles form submission successfully', async () => {
-    const { form, submit } = useGenericForm({
+    const { submit } = useGenericForm({
       config: mockConfig,
       initialData: { name: 'John', email: 'john@example.com' },
       onSubmit: mockOnSubmit,
