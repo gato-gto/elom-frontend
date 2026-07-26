@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useToolsStore } from '@/stores/tools'
+import { useUiStore } from '@/stores/ui'
 import { endpoints } from '@/api/endpoints'
 import api from '@/api/client'
 
@@ -12,14 +13,8 @@ import api from '@/api/client'
 vi.mock('@/api/client')
 const mockedApi = vi.mocked(api)
 
-// Мокаем composables
-vi.mock('@/composables/useNotifications', () => ({
-  useNotifications: () => ({
-    showSuccess: vi.fn(),
-    showError: vi.fn(),
-    showInfo: vi.fn()
-  })
-}))
+// EH-FE-1 (F-545): store больше НЕ использует useNotifications (второй, не отрисованный
+// канал) — успех идёт в единый ui.toast (ToastCenter), ошибку показывает handleApiErrorAsync.
 
 // Keep the REAL parseApiError (the store uses it to populate `error`); stub the toast.
 vi.mock('@/utils/errorHandler', async (importOriginal) => {
@@ -268,6 +263,29 @@ describe('Tools Store', () => {
       expect(store.items).toContainEqual(createdTool)
       expect(store.pagination.count).toBe(1)
       expect(mockedApi.post).toHaveBeenCalledWith(endpoints.tools.list, newTool)
+    })
+
+    it('EH-FE-1: create success lands in the rendered ui.toasts channel', async () => {
+      const store = useToolsStore()
+      const ui = useUiStore()
+      mockedApi.post.mockResolvedValueOnce({ data: { id: 9, inventory_number: 'T9', name: 'T', condition: 'good', is_in_stock: true } })
+
+      await store.create({ inventory_number: 'T9', name: 'T', category: 'C', brand: 'B' } as any)
+
+      // единый канал ToastCenter (useUiStore().toasts), а не невидимый useNotifications
+      expect(ui.toasts.some(t => t.type === 'success' && t.text.includes('добавлен'))).toBe(true)
+    })
+
+    it('EH-FE-1: create failure emits NO static error toast (handleApiErrorAsync owns it)', async () => {
+      const store = useToolsStore()
+      const ui = useUiStore()
+      mockedApi.post.mockRejectedValueOnce({ response: { status: 400, data: { detail: 'bad' } } })
+
+      await expect(store.create({ inventory_number: 'T9', name: 'T' } as any)).rejects.toBeTruthy()
+
+      // никакой статичной «Ошибка при добавлении инструмента» во втором канале
+      expect(ui.toasts.some(t => t.type === 'error')).toBe(false)
+      expect(store.error).toBe('bad')
     })
 
     it('should update tool', async () => {

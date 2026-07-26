@@ -6,7 +6,7 @@ import { ref, computed } from 'vue'
 import api from '@/api/client'
 import { endpoints, buildQuery } from '@/api/endpoints'
 import type { Tool, ToolRequest, ToolBulkCreateRequest, ToolBulkCreateResponse, ToolCategory } from '@/api/types/tools'
-import { useNotifications } from '@/composables/useNotifications'
+import { useUiStore } from '@/stores/ui'
 import { handleApiErrorAsync, parseApiError } from '@/utils/errorHandler'
 import { findById } from '@/utils/arrayHelpers'
 import { getOptimalPageSize } from '@/utils/device'
@@ -136,16 +136,16 @@ export const useToolsStore = defineStore('tools', () => {
   const create = async (payload: ToolRequest): Promise<Tool> => {
     loading.value = true
     error.value = null
-    const { showSuccess, showError } = useNotifications()
 
     try {
       const { data } = await api.post<Tool>(endpoints.tools.list, payload)
       items.value.unshift(data)
       pagination.value.count++
-      showSuccess('Инструмент успешно добавлен')
+      useUiStore().toast({ type: 'success', text: 'Инструмент успешно добавлен' })
       return data
     } catch (err: any) {
-      showError('Ошибка при добавлении инструмента')
+      // EH-FE-1 (F-545): ошибку показывает handleApiErrorAsync (конкретный detail) —
+      // не плодим статичную «Ошибка при …» во втором, не отрисованном канале.
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
@@ -158,7 +158,6 @@ export const useToolsStore = defineStore('tools', () => {
   const update = async (id: number, payload: Partial<ToolRequest>): Promise<Tool> => {
     loading.value = true
     error.value = null
-    const { showSuccess, showError } = useNotifications()
 
     try {
       const { data } = await api.patch<Tool>(endpoints.tools.one(id), payload)
@@ -169,10 +168,9 @@ export const useToolsStore = defineStore('tools', () => {
       if (current.value?.id === id) {
         current.value = data
       }
-      showSuccess('Инструмент успешно обновлён')
+      useUiStore().toast({ type: 'success', text: 'Инструмент успешно обновлён' })
       return data
     } catch (err: any) {
-      showError('Ошибка при обновлении инструмента')
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
@@ -185,7 +183,6 @@ export const useToolsStore = defineStore('tools', () => {
   const remove = async (id: number): Promise<void> => {
     loading.value = true
     error.value = null
-    const { showSuccess, showError } = useNotifications()
 
     try {
       await api.delete(endpoints.tools.one(id))
@@ -194,9 +191,8 @@ export const useToolsStore = defineStore('tools', () => {
       if (current.value?.id === id) {
         current.value = null
       }
-      showSuccess('Инструмент успешно удалён')
+      useUiStore().toast({ type: 'success', text: 'Инструмент успешно удалён' })
     } catch (err: any) {
-      showError('Ошибка при удалении инструмента')
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'delete', entity: 'tools' })
@@ -222,17 +218,15 @@ export const useToolsStore = defineStore('tools', () => {
   const bulkCreate = async (payload: ToolBulkCreateRequest): Promise<Tool[]> => {
     loading.value = true
     error.value = null
-    const { showSuccess, showError } = useNotifications()
 
     try {
       const { data } = await api.post<ToolBulkCreateResponse>(endpoints.tools.bulkCreate, payload)
       // API возвращает { tools: [...], created_count: ..., issued_count: ... }
       const tools = Array.isArray(data) ? data : (data?.tools || [])
-      showSuccess(`Добавлено инструментов: ${Array.isArray(data) ? data.length : data.created_count}`)
+      useUiStore().toast({ type: 'success', text: `Добавлено инструментов: ${Array.isArray(data) ? data.length : data.created_count}` })
       await fetchList()
       return tools
     } catch (err: any) {
-      showError('Ошибка при массовом добавлении инструментов')
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
       await handleApiErrorAsync(err, { operation: 'formValidation', entity: 'tools' })
