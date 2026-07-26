@@ -76,7 +76,7 @@
         <div class="info-row">
           <div class="info-item">
             <span class="info-label">Внёс:</span>
-            <span class="info-value">{{ purchase.created_by_name || 'неизвестно' }}</span>
+            <span class="info-value" :title="purchase.created_by_name ? undefined : 'не задано'">{{ purchase.created_by_name || 'НЗ' }}</span>
           </div>
           <div class="info-item" v-if="purchase.updated_by_name && purchase.updated_by !== purchase.created_by">
             <span class="info-label">Изменил:</span>

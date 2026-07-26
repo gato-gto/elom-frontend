@@ -31,7 +31,7 @@
            показываем это честно, а не подставляем ответственного. -->
       <template #column-created_by__username="{ item }">
         <span v-if="item.created_by_name">{{ item.created_by_name }}</span>
-        <span v-else class="text-xs opacity-60">неизвестно</span>
+        <span v-else class="text-xs opacity-60" title="не задано">НЗ</span>
       </template>
     </GenericList>
 

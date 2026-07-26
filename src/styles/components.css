@@ -21,7 +21,10 @@
    GenericList для дат/чисел/№/кодов) и заголовки — в одну строку; таблица скроллится по горизонтали
    внутри .table-container, а не ломает вёрстку. */
 .modern-table th,
-.modern-table td.font-mono {
+.modern-table td.font-mono,
+.modern-table td.text-right {
+  /* text-right покрывает числовые ячейки отчётов (modern-table без font-mono): «2 250 000 UZS»
+     тоже не должно переноситься. Текстовые колонки (имена материалов/объектов) переносятся как раньше. */
   white-space: nowrap;
 }
 

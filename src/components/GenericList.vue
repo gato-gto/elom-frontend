@@ -137,17 +137,25 @@
                       v-for="action in visibleActions"
                       :key="action.key"
                     >
-                      <button 
+                      <button
                         v-if="canPerformActionOnItem(action, item, config, permissions)"
                         :class="[
                           'btn btn-xs',
+                          actionIconPath(action) ? 'btn-square' : '',
                           action.class || 'btn-outline',
                           action.disabled && action.disabled(item) ? 'btn-disabled' : ''
                         ]"
                         :disabled="action.disabled && action.disabled(item)"
+                        :title="action.label"
+                        :aria-label="action.label"
                         @click="handleAction(action.key, item)"
                       >
-                        {{ action.label }}
+                        <!-- F-566: типовые строковые действия — иконкой (компактно на узких desktop);
+                             label остаётся в title/aria. Нестандартные действия — текстом как раньше. -->
+                        <svg v-if="actionIconPath(action)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="actionIconPath(action)" />
+                        </svg>
+                        <span v-else>{{ action.label }}</span>
                       </button>
                     </template>
                   </div>
@@ -391,6 +399,21 @@ const isCardVisible = (index: number): boolean => {
 
 // D-020: данные (кол-во/цена/id/дата/№/артикул/остаток) — моноширинным (как кабельный журнал).
 // Явный флаг mono, или правое выравнивание (числовые), или ключ-данные по шаблону.
+// F-566: иконки для типовых строковых действий (edit/delete/view/open/issue/return).
+// Компактные кнопки-иконки на узких desktop; текст остаётся в title/aria (доступность).
+// Нестандартный action без иконки рендерится текстом как раньше. Явный action.iconPath приоритетен.
+const ACTION_ICONS: Record<string, string> = {
+  edit: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+  delete: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+  view: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
+  open: 'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14',
+  issue: 'M13 7l5 5m0 0l-5 5m5-5H6',
+  return: 'M11 17l-5-5m0 0l5-5m-5 5h12',
+}
+function actionIconPath(action: any): string {
+  return action.iconPath || ACTION_ICONS[action.key] || ''
+}
+
 const MONO_KEY_RE = /^(id|date|created_at|updated_at|closed_at|month|quantity|quantity_signed|qty|price|amount|total|sum|sku|purchase_no|invoice_number|inventory_number|code|balance|current_balance|current_stock|target_balance|expires_at|assigned_at)$/i
 function isMonoColumn(column: ColumnConfig): boolean {
   return !!column.mono || column.align === 'right' || MONO_KEY_RE.test(column.key)
