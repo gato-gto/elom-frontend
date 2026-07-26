@@ -1,0 +1,119 @@
+/**
+ * ELOM mobile/device UI audit harness (autonomous).
+ *
+ * Emulates a device matrix (iOS/WebKit, Android/Chromium, tablet, desktop) against the
+ * live/staging site, and for each (device × route) captures a screenshot plus automated
+ * responsiveness checks: horizontal overflow, undersized tap targets, console errors,
+ * failed requests. Auth via injected JWT (token file), no prod mutations.
+ *
+ * Run:  node tools/mobile-audit/audit.mjs [--base https://elom.uz] [--tokens /tmp/toks.json] [--out DIR]
+ *   tokens file (optional): {"access":"...","refresh":"..."} — injected into localStorage
+ *   (keys elom_access / elom_refresh). Without it, only public routes (login) are meaningful.
+ *
+ * Tap-target thresholds: 44px (iOS HIG) / 48px (Android Material) — we flag < 44.
+ */
+import { webkit, chromium, devices } from '/opt/elom-frontend/node_modules/playwright/index.mjs'
+import fs from 'fs'
+
+const arg = (k, d) => { const i = process.argv.indexOf(k); return i > -1 ? process.argv[i + 1] : d }
+const BASE = arg('--base', 'https://elom.uz')
+const TOKENS = arg('--tokens', '')
+const OUT = arg('--out', '/tmp/claude-0/-opt/60866a76-1ef8-4cd0-a2b1-96f474b5295d/scratchpad/mobile-audit')
+const TAP_MIN = 44
+
+const DEVICE_MATRIX = [
+  { name: 'iphone-15-pro', engine: webkit, ctx: devices['iPhone 15 Pro'] },      // iOS / Safari
+  { name: 'pixel-7', engine: chromium, ctx: devices['Pixel 7'] },                // Android / Chrome
+  { name: 'ipad-pro-11', engine: webkit, ctx: devices['iPad Pro 11'] },          // tablet
+  { name: 'desktop-1366', engine: chromium, ctx: { viewport: { width: 1366, height: 900 } } },
+]
+
+// route: path; optional openModal: selector to click (e.g. a "Новая заявка" button) before shot
+const ROUTES = [
+  { path: '/login', auth: false, label: 'login' },
+  { path: '/purchases', label: 'purchases-list' },
+  { path: '/purchases', label: 'purchase-create', openModal: 'button:has-text("Новая")' },
+  { path: '/writeoffs', label: 'writeoffs-list' },
+  { path: '/writeoffs', label: 'writeoff-create', openModal: 'button:has-text("Новое списание")' },
+  { path: '/balances', label: 'balances' },
+  { path: '/tools_index', label: 'tools' },
+  { path: '/materials', label: 'materials' },
+  { path: '/objects', label: 'objects' },
+  { path: '/employees', label: 'employees' },
+]
+
+const CHECK = `() => {
+  const vw = document.documentElement.clientWidth
+  const out = { vw, overflow: false, overflowPx: 0, wideEls: [], smallTargets: 0, smallSample: [], tinyText: 0 }
+  const sw = document.documentElement.scrollWidth
+  if (sw > vw + 2) { out.overflow = true; out.overflowPx = sw - vw }
+  const seen = new Set()
+  document.querySelectorAll('*').forEach(el => {
+    const r = el.getBoundingClientRect()
+    if (r.width > vw + 2 && r.height > 4) {
+      const key = el.tagName + '.' + (el.className && el.className.toString ? el.className.toString().slice(0,40) : '')
+      if (!seen.has(key)) { seen.add(key); if (out.wideEls.length < 8) out.wideEls.push({ el: key, w: Math.round(r.width) }) }
+    }
+  })
+  document.querySelectorAll('button, a[href], input:not([type=hidden]), select, [role=button], [role=tab]').forEach(el => {
+    const r = el.getBoundingClientRect()
+    const vis = r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'
+    if (vis && (r.width < ${TAP_MIN} || r.height < ${TAP_MIN})) {
+      out.smallTargets++
+      if (out.smallSample.length < 6) out.smallSample.push({ tag: el.tagName.toLowerCase(), w: Math.round(r.width), h: Math.round(r.height), t: (el.textContent||'').trim().slice(0,24) })
+    }
+  })
+  document.querySelectorAll('p, span, td, label, li').forEach(el => {
+    const fs = parseFloat(getComputedStyle(el).fontSize)
+    if (fs && fs < 11 && (el.textContent||'').trim().length > 2) out.tinyText++
+  })
+  return out
+}`
+
+const token = TOKENS && fs.existsSync(TOKENS) ? JSON.parse(fs.readFileSync(TOKENS, 'utf8')) : null
+fs.mkdirSync(OUT, { recursive: true })
+const report = { base: BASE, generatedFor: DEVICE_MATRIX.map(d => d.name), devices: {} }
+
+for (const dev of DEVICE_MATRIX) {
+  const browser = await dev.engine.launch()
+  const ctx = await browser.newContext(dev.ctx)
+  const page = await ctx.newPage()
+  const consoleErrors = [], failedReq = []
+  page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 160)) })
+  page.on('pageerror', e => consoleErrors.push('PAGEERROR ' + String(e).slice(0, 160)))
+  page.on('requestfailed', r => { const u = r.url(); if (!/sw\.js|\.woff2|\.ttf/.test(u)) failedReq.push(`FAIL ${r.method()} ${u}`) })
+  page.on('response', r => { const s = r.status(); if (s >= 400) failedReq.push(`${s} ${r.request().method()} ${r.url()}`) })
+
+  if (token) {
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' }).catch(() => {})
+    await page.evaluate(([a, r]) => { localStorage.setItem('elom_access', a); localStorage.setItem('elom_refresh', r) }, [token.access, token.refresh])
+  }
+
+  const routes = {}
+  for (const route of ROUTES) {
+    if (route.auth === false ? false : !token) continue
+    const cBefore = consoleErrors.length, fBefore = failedReq.length
+    try {
+      await page.goto(BASE + route.path, { waitUntil: 'networkidle', timeout: 25000 })
+      await page.waitForTimeout(600)
+      if (route.openModal) {
+        const btn = await page.$(route.openModal)
+        if (btn) { await btn.click().catch(() => {}); await page.waitForTimeout(900) }
+        else { routes[route.label] = { skipped: 'openModal button not found' }; continue }
+      }
+    } catch (e) { routes[route.label] = { error: String(e).slice(0, 90) }; continue }
+    const checks = await page.evaluate(eval('(' + CHECK + ')')).catch(() => null)
+    await page.screenshot({ path: `${OUT}/${dev.name}__${route.label}.png`, fullPage: !route.openModal }).catch(() => {})
+    routes[route.label] = {
+      overflow: checks?.overflow, overflowPx: checks?.overflowPx, wideEls: checks?.wideEls,
+      smallTargets: checks?.smallTargets, smallSample: checks?.smallSample, tinyText: checks?.tinyText,
+      consoleErrors: consoleErrors.slice(cBefore), failedReq: failedReq.slice(fBefore),
+    }
+  }
+  report.devices[dev.name] = { viewport: dev.ctx.viewport, routes }
+  await browser.close()
+  console.log(`${dev.name}: audited ${Object.keys(routes).length} routes`)
+}
+
+fs.writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 2))
+console.log('report:', `${OUT}/report.json`)
