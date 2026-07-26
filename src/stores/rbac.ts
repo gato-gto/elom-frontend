@@ -132,41 +132,13 @@ export const useRbacStore = defineStore('rbac', () => {
       
       return data
     } catch (err: any) {
+      // EH-FE-3 (F-546): назначение роли идемпотентно на бэке — повтор возвращает 200 с
+      // существующей записью (успешный путь выше). Прежняя детекция «роль уже назначена»
+      // по ПОДСТРОКЕ текста ошибки (уже/unique/«должны производить массив») удалена как
+      // хрупкая к локали/формулировке. Любая ошибка здесь — настоящая, пробрасываем.
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
-      
-      // Проверяем, если это ошибка unique constraint (роль уже назначена)
-      if (err?.response?.status === 400) {
-        const errorDetail = parsedError.detail
-        const nonFieldErrors = parsedError.fieldErrors['non_field_errors'] || []
-        const isUniqueError = errorDetail.includes('уже') || 
-                             errorDetail.includes('already') || 
-                             errorDetail.includes('unique') ||
-                             errorDetail.includes('уникальн') ||
-                             errorDetail.includes('должны производить массив') ||
-                             nonFieldErrors.some((e: string) => 
-                               e.includes('уже') || 
-                               e.includes('unique') || 
-                               e.includes('уникальн') ||
-                               e.includes('должны производить массив')
-                             )
-        
-        if (isUniqueError) {
-          console.warn('[RBAC Store] Role already assigned (unique constraint), this is expected in some cases')
-          // ✅ Упрощено: если роль уже назначена (unique constraint), перезагружаем роли и возвращаем null
-          // Это нормальная ситуация - код в EmployeeForm.vue просто пропустит эту роль
-          try {
-            await getUserRoles(userId, true)
-          } catch (e) {
-            // Игнорируем ошибку перезагрузки
-          }
-          return null as any
-        }
-      }
-      
-      console.error('[RBAC Store] Failed to assign role:', err)
-      console.error('[RBAC Store] Error response:', err?.response?.data)
-      console.error('[RBAC Store] Parsed error:', parsedError)
+      console.error('[RBAC Store] Failed to assign role:', parsedError)
       throw err
     } finally {
       loading.value = false

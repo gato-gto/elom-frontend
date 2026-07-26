@@ -403,52 +403,16 @@ async function handleSubmit(formData: EmployeeRequest) {
                 await rbacStore.assignRole(userId, roleId)
                 successfullyAdded++
               } catch (assignError: any) {
+                // EH-FE-3 (F-546): дубли-назначения идемпотентны на бэке (200) — сюда
+                // попадают только НАСТОЯЩИЕ ошибки. Хрупкую детекцию «уже назначена» по
+                // подстроке текста убрали; показываем реальную ошибку.
                 const role = rbacStore.getRoleById(roleId)
                 const roleName = role?.display_name || `Роль #${roleId}`
                 const parsedError = parseApiError(assignError)
-                
-                // Проверяем, может роль уже назначена (unique_together constraint)
-                if (assignError?.response?.status === 400) {
-                  const errorDetail = parsedError.detail
-                  const nonFieldErrors = parsedError.fieldErrors['non_field_errors'] || []
-                  
-                  // Проверяем ошибки валидации unique constraint
-                  const isUniqueError = errorDetail.includes('уже') || 
-                                       errorDetail.includes('already') || 
-                                       errorDetail.includes('unique') ||
-                                       errorDetail.includes('уникальн') ||
-                                       errorDetail.includes('должны производить массив') ||
-                                       nonFieldErrors.some((e: string) => 
-                                         e.includes('уже') || 
-                                         e.includes('unique') || 
-                                         e.includes('уникальн') ||
-                                         e.includes('должны производить массив')
-                                       )
-                  
-                  // Если ошибка связана с тем, что роль уже назначена - просто пропускаем
-                  if (isUniqueError) {
-                    console.log(`[EmployeeForm] Role ${roleName} is already assigned (unique constraint), skipping`)
-                    // Синхронизируем кэш
-                    try {
-                      await rbacStore.getUserRoles(userId, true)
-                    } catch (e) {
-                      // Игнорируем ошибку синхронизации
-                    }
-                    continue // Пропускаем эту роль, не показываем ошибку
-                  } else {
-                    // Другая ошибка 400 - показываем пользователю
-                    ui.toast({ 
-                      type: 'error', 
-                      text: `Не удалось назначить роль "${roleName}": ${errorDetail}` 
-                    })
-                  }
-                } else {
-                  // Другие ошибки (403, 404, 500 и т.д.)
-                  ui.toast({ 
-                    type: 'error', 
-                    text: `Не удалось назначить роль "${roleName}": ${parsedError.detail}` 
-                  })
-                }
+                ui.toast({
+                  type: 'error',
+                  text: `Не удалось назначить роль "${roleName}": ${parsedError.detail}`
+                })
               }
             }
           } else {
@@ -470,52 +434,14 @@ async function handleSubmit(formData: EmployeeRequest) {
                 await rbacStore.assignRole(userId, roleId)
                 successfullyAdded++
               } catch (assignError: any) {
+                // EH-FE-3 (F-546): см. выше — дубли идемпотентны, показываем реальную ошибку.
                 const role = rbacStore.getRoleById(roleId)
                 const roleName = role?.display_name || `Роль #${roleId}`
                 const parsedError = parseApiError(assignError)
-                
-                // Проверяем, может роль уже назначена (unique_together constraint)
-                if (assignError?.response?.status === 400) {
-                  const errorDetail = parsedError.detail
-                  const nonFieldErrors = parsedError.fieldErrors['non_field_errors'] || []
-                  
-                  // Проверяем ошибки валидации unique constraint
-                  const isUniqueError = errorDetail.includes('уже') || 
-                                       errorDetail.includes('already') || 
-                                       errorDetail.includes('unique') ||
-                                       errorDetail.includes('уникальн') ||
-                                       errorDetail.includes('должны производить массив') ||
-                                       nonFieldErrors.some((e: string) => 
-                                         e.includes('уже') || 
-                                         e.includes('unique') || 
-                                         e.includes('уникальн') ||
-                                         e.includes('должны производить массив')
-                                       )
-                  
-                  // Если ошибка связана с тем, что роль уже назначена - просто пропускаем
-                  if (isUniqueError) {
-                    console.log(`[EmployeeForm] Role ${roleName} is already assigned (unique constraint), skipping`)
-                    // Синхронизируем кэш
-                    try {
-                      await rbacStore.getUserRoles(userId, true)
-                    } catch (e) {
-                      // Игнорируем ошибку синхронизации
-                    }
-                    continue // Пропускаем эту роль, не показываем ошибку
-                  } else {
-                    // Другая ошибка 400 - показываем пользователю
-                    ui.toast({ 
-                      type: 'error', 
-                      text: `Не удалось назначить роль "${roleName}": ${errorDetail}` 
-                    })
-                  }
-                } else {
-                  // Другие ошибки (403, 404, 500 и т.д.)
-                  ui.toast({ 
-                    type: 'error', 
-                    text: `Не удалось назначить роль "${roleName}": ${parsedError.detail}` 
-                  })
-                }
+                ui.toast({
+                  type: 'error',
+                  text: `Не удалось назначить роль "${roleName}": ${parsedError.detail}`
+                })
               }
             }
           }
