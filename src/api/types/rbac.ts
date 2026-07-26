@@ -42,11 +42,11 @@ export interface UserPermissionsResponse {
 }
 
 /**
- * Связь пользователя с ролью (UserRole)
+ * Связь пользователя с ролью (UserRoleAssignment)
  * 
  * ✅ Упрощено: поле is_active удалено - роль либо назначена (есть запись), либо нет (запись удалена)
  */
-export interface UserRole {
+export interface UserRoleAssignment {
   id: number
   user: number  // ID пользователя
   user_username?: string  // Имя пользователя (для отображения)

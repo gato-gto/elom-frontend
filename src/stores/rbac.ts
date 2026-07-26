@@ -7,14 +7,14 @@ import { ref, computed } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { parseApiError } from '@/utils/errorHandler'
-import type { Role, UserRole, UserRoleRequest, RoleWithPermissions, Permission } from '@/api/types/rbac'
+import type { Role, UserRoleAssignment, UserRoleRequest, RoleWithPermissions, Permission } from '@/api/types/rbac'
 
 export const useRbacStore = defineStore('rbac', () => {
   // ========================================================================
   // State
   // ========================================================================
   const roles = ref<Role[]>([])
-  const userRoles = ref<Record<number, UserRole[]>>({}) // user_id -> UserRole[]
+  const userRoles = ref<Record<number, UserRoleAssignment[]>>({}) // user_id -> UserRoleAssignment[]
   const permissions = ref<Permission[]>([]) // Все разрешения системы
   const roleDetails = ref<Record<number, RoleWithPermissions>>({}) // Кэш деталей ролей с разрешениями
   const loading = ref(false)
@@ -64,7 +64,7 @@ export const useRbacStore = defineStore('rbac', () => {
    * @param userId - ID пользователя
    * @param includeInactive - Не используется (оставлено для обратной совместимости)
    */
-  const fetchUserRoles = async (userId: number, includeInactive: boolean = false): Promise<UserRole[]> => {
+  const fetchUserRoles = async (userId: number, includeInactive: boolean = false): Promise<UserRoleAssignment[]> => {
     loading.value = true
     error.value = null
     
@@ -73,7 +73,7 @@ export const useRbacStore = defineStore('rbac', () => {
       // Загружаем все роли пользователя
       const url = `${endpoints.rbac.userRoles.list}?user=${userId}`
       
-      const { data } = await api.get<{ results?: UserRole[], count?: number } | UserRole[]>(url)
+      const { data } = await api.get<{ results?: UserRoleAssignment[], count?: number } | UserRoleAssignment[]>(url)
       
       // Обрабатываем пагинированный ответ или обычный массив
       const roles = Array.isArray(data) ? data : (data?.results || [])
@@ -93,7 +93,7 @@ export const useRbacStore = defineStore('rbac', () => {
   /**
    * Назначить роль пользователю
    */
-  const assignRole = async (userId: number, roleId: number, expiresAt?: string): Promise<UserRole> => {
+  const assignRole = async (userId: number, roleId: number, expiresAt?: string): Promise<UserRoleAssignment> => {
     loading.value = true
     error.value = null
     
@@ -106,7 +106,7 @@ export const useRbacStore = defineStore('rbac', () => {
       
       console.log('[RBAC Store] Assigning role:', { userId, roleId, payload })
       
-      const { data } = await api.post<UserRole>(
+      const { data } = await api.post<UserRoleAssignment>(
         endpoints.rbac.userRoles.create,
         payload
       )
@@ -210,7 +210,7 @@ export const useRbacStore = defineStore('rbac', () => {
   /**
    * Получить роли пользователя (из кэша или загрузить)
    */
-  const getUserRoles = async (userId: number, forceReload: boolean = false, includeInactive: boolean = true): Promise<UserRole[]> => {
+  const getUserRoles = async (userId: number, forceReload: boolean = false, includeInactive: boolean = true): Promise<UserRoleAssignment[]> => {
     if (!forceReload && userRoles.value[userId]) {
       return userRoles.value[userId]
     }
@@ -265,7 +265,7 @@ export const useRbacStore = defineStore('rbac', () => {
   /**
    * Получить активные роли пользователя
    */
-  const getActiveUserRoles = computed(() => (userId: number): UserRole[] => {
+  const getActiveUserRoles = computed(() => (userId: number): UserRoleAssignment[] => {
     const userRolesList = userRoles.value[userId]
     if (!Array.isArray(userRolesList)) {
       return []
