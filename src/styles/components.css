@@ -18,12 +18,24 @@
 
 .table-container {
   overflow-x: auto;
+  max-width: 100%; /* F-561: не выходить за пределы вьюпорта — скроллим таблицу внутри */
   border-radius: 0.5rem;
   border: 1px solid hsl(var(--b3));
   background-color: hsl(var(--b1));
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--bc) / 0.2) transparent;
+}
+
+/* F-561: DaisyUI .label с длинным label-text-alt (описание поля, напр. «Выберите роли
+   для назначения…») — flex без переноса распирал форму на мобиле. Переносим описание
+   под заголовок вместо горизонтального overflow. */
+.label {
+  flex-wrap: wrap;
+}
+.label .label-text-alt {
+  white-space: normal;
+  word-break: break-word;
 }
 
 .table-container::-webkit-scrollbar {
