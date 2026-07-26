@@ -1,6 +1,6 @@
 <template>
   <div class="dropdown dropdown-end w-full md:w-auto">
-    <div tabindex="0" role="button" class="btn btn-outline btn-sm w-full md:w-auto" :class="{ 'btn-disabled': loading }" :disabled="loading">
+    <div tabindex="0" role="button" class="export-trigger btn btn-outline btn-sm w-full md:w-auto" :class="{ 'btn-disabled': loading }" :disabled="loading">
       <svg v-if="loading" class="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
       </svg>
@@ -82,3 +82,19 @@ function handleExportPDF() {
   emit('export', 'pdf')
 }
 </script>
+
+<style scoped>
+/* H-1 (F-588): btn-outline без --btn-fg рендерил «Экспорт» невидимым (контраст ~1.0 в обеих темах)
+   на ~67 экранах. Явный читаемый base-content + рамка по дизайн-языку (steel/graphite), copper на
+   ховере. :disabled не трогаем — там btn-disabled приглушает штатно. */
+.export-trigger:not(.btn-disabled) {
+  color: hsl(var(--bc)) !important;
+  border-color: hsl(var(--bc) / 0.28) !important;
+  background-color: transparent;
+}
+.export-trigger:not(.btn-disabled):hover {
+  color: hsl(var(--p)) !important;
+  border-color: hsl(var(--p)) !important;
+  background-color: hsl(var(--bc) / 0.06) !important;
+}
+</style>
