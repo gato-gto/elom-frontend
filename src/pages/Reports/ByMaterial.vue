@@ -343,13 +343,13 @@ watch([dateFrom, dateTo, objectId], () => {
 // Watcher для обновления графика при изменении данных
 watch(
   () => rows.value,
-  (newRows, oldRows) => {
-    // Обновляем график только если данные действительно изменились
-    if (newRows.length !== oldRows?.length || JSON.stringify(newRows) !== JSON.stringify(oldRows)) {
-      nextTick(() => {
-        updateChart()
-      })
-    }
+  () => {
+    // F-570b: без guard'а равенства — canvas пере-монтируется при loading-тоггле, chartInstance
+    // держит старый снятый canvas; пропуск перерисовки на идентичных данных оставил бы пустой
+    // график. Один триггер на загрузку — двойного создания нет. (См. ByPeriod.)
+    nextTick(() => {
+      updateChart()
+    })
   },
   { deep: true }
 )

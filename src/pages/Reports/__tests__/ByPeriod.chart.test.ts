@@ -61,4 +61,20 @@ describe('ByPeriod chart single-render (F-570)', () => {
     await flushPromises() // let nextTick + the rows watcher settle
     expect(createChartSpy).toHaveBeenCalledTimes(1)
   })
+
+  // F-570b: a reload returning IDENTICAL data must still redraw. ChartContainer hides the
+  // <canvas> behind v-if="loading", so a reload remounts the canvas; the old equality-guard
+  // skipped the redraw on identical data → permanently blank chart. Guard removed.
+  it('redraws on an identical-data reload (canvas may remount; no equality-guard skip)', async () => {
+    const wrapper = mountPage()
+    await flushPromises()
+    await flushPromises()
+    expect(createChartSpy).toHaveBeenCalledTimes(1)
+    // Second load returns the SAME mocked data (via a re-sort that reloads)
+    const vm = wrapper.vm as any
+    vm.handleSort('total_amount')
+    await flushPromises()
+    await flushPromises()
+    expect(createChartSpy).toHaveBeenCalledTimes(2)
+  })
 })

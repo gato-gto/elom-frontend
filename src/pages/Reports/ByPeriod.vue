@@ -347,13 +347,14 @@ watch([dateFrom, dateTo, period], () => {
 // Watcher для обновления графика при изменении данных
 watch(
   () => rows.value,
-  (newRows, oldRows) => {
-    // Обновляем график только если данные действительно изменились
-    if (newRows.length !== oldRows?.length || JSON.stringify(newRows) !== JSON.stringify(oldRows)) {
-      nextTick(() => {
-        updateChart()
-      })
-    }
+  () => {
+    // F-570b: БЕЗ guard'а равенства данных. ChartContainer прячет <canvas> за v-if="loading",
+    // поэтому при перезагрузке canvas пере-монтируется, а chartInstance держит СТАРЫЙ снятый
+    // canvas — на идентичных данных пропуск перерисовки оставил бы пустой график. Единственный
+    // триггер (один раз на загрузку) — двойного создания графика нет.
+    nextTick(() => {
+      updateChart()
+    })
   },
   { deep: true }
 )
