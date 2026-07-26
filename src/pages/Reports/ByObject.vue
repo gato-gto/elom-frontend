@@ -90,7 +90,7 @@
         />
       </div>
 
-      <table class="modern-table">
+      <div class="overflow-x-auto"><table class="modern-table">
         <thead>
           <tr>
             <th @click="handleSort('object_name')" class="cursor-pointer hover:bg-base-200">
@@ -139,7 +139,7 @@
             </td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
     </div>
 
     <!-- Pagination -->

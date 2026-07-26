@@ -149,7 +149,10 @@ const getEmployeeFullName = () => {
 // ✅ RBAC: Используем роли из RBAC
 const getRoleDisplayName = (): string => {
   if (props.employee.roles && props.employee.roles.length > 0) {
-    return props.employee.roles.map(r => r.display_name).join(', ')
+    // F-561: краткий бейдж (первая роль +N) — полный список ролей всё равно ниже в карточке.
+    // Прежний join(', ') давал 437px-бейдж, ломавший вёрстку карточки на мобиле.
+    const roles = props.employee.roles
+    return roles.length === 1 ? roles[0].display_name : `${roles[0].display_name} +${roles.length - 1}`
   }
   return 'Нет роли'
 }

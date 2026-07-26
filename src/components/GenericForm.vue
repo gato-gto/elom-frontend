@@ -1,5 +1,5 @@
 <template>
-  <form class="grid gap-2 md:gap-4" autocomplete="off" @submit.prevent="submit">
+  <form class="grid gap-2 md:gap-4 min-w-0 w-full max-w-full" autocomplete="off" @submit.prevent="submit">
     <!-- Form Sections as Cards -->
     <div v-if="config.sections && config.sections.length > 0">
       <div
@@ -11,12 +11,12 @@
           <h2 class="card-title text-lg mb-4">{{ section.title }}</h2>
           <p v-if="section.description" class="text-muted text-sm mb-4">{{ section.description }}</p>
 
-          <div class="grid md:grid-cols-2 gap-2 md:gap-4">
+          <div class="grid md:grid-cols-2 gap-2 md:gap-4 min-w-0">
             <template v-for="field in getSectionFields(index)" :key="field.key">
               <!-- Проверяем условие отображения поля -->
               <template v-if="!field.condition || field.condition()">
                 <!-- Custom field slot -->
-                <div v-if="field.type === 'custom'" :class="{ 'md:col-span-2': field.width === 'full' }">
+                <div v-if="field.type === 'custom'" class="min-w-0" :class="{ 'md:col-span-2': field.width === 'full' }">
                   <slot :name="`field-${field.key}`" :field="field" :value="form[field.key]" :error="getFieldError(field.key)" :disabled="field.disabled || isSubmitting" />
                 </div>
               <!-- Regular FormField -->

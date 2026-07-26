@@ -67,7 +67,7 @@
 
     <!-- Table -->
     <div v-else class="table-container">
-      <table class="modern-table">
+      <div class="overflow-x-auto"><table class="modern-table">
         <thead>
           <tr>
             <th>Название</th>
@@ -131,7 +131,7 @@
             </td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
 
       <!-- Empty state -->
       <div v-if="filteredRoles.length === 0 && !rbacStore.loading" class="text-center py-12">

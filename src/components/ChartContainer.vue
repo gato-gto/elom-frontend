@@ -466,6 +466,7 @@ watch(() => themeStore.isDark, () => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap; /* F-561: не переполнять контейнер на планшете (iPad) — переносим легенду/кнопки */
 }
 
 .chart-legend {

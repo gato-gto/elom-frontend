@@ -3,7 +3,7 @@
     <!-- Заголовок с бейджем -->
     <div class="flex items-start justify-between mb-3">
       <h3 class="card-title text-base leading-tight flex-1 min-w-0">{{ title }}</h3>
-      <div v-if="badge" class="badge flex-shrink-0 ml-2" :class="badgeClass">{{ badge }}</div>
+      <div v-if="badge" class="badge ml-2 shrink max-w-[55%] truncate" :class="badgeClass" :title="badge">{{ badge }}</div>
     </div>
 
     <!-- Слот для основного контента -->
