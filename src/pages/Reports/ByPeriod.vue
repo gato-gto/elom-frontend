@@ -252,11 +252,10 @@ async function load() {
       totalItems.value = data.count
       // Вычисляем общую сумму
       total.value = rows.value.reduce((sum: number, row: PeriodReportRow) => sum + row.total_amount, 0)
-      
-      // Update chart after data is loaded
-      nextTick(() => {
-        updateChart()
-      })
+      // F-570: НЕ триггерим график здесь — за отрисовку отвечает единственный watch(rows) ниже.
+      // Двойной вызов (этот + watch) создавал график дважды за тик: первый экземпляр на ещё
+      // не разложенном canvas (300px) уничтожался посреди кадра, и хук Filler звал ctx.save()
+      // на снесённом контексте → uncaught «reading 'save'» + пустой график.
     } else {
       rows.value = []
       totalItems.value = 0

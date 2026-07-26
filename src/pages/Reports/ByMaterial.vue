@@ -249,10 +249,8 @@ async function load() {
       }))
       total.value = rows.value.reduce((sum: number, r: MaterialReportRow) => sum + r.amount_total, 0)
       
-      // Update chart after data is loaded
-      nextTick(() => {
-        updateChart()
-      })
+      // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
+      // график дважды за тик (латентная гонка уничтожения; doughnut её переживал, но чистим). См. ByPeriod.
     } else {
       rows.value = []
       total.value = null

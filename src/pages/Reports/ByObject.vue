@@ -260,10 +260,8 @@ async function fetchReport() {
       rows.value = data.results
       totalItems.value = data.count
       
-      // Update chart after data is loaded
-      nextTick(() => {
-        updateChart()
-      })
+      // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
+      // график дважды за тик (гонка уничтожения → ctx.save на null). См. ByPeriod.
     } else {
       rows.value = []
       totalItems.value = 0

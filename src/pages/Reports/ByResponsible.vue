@@ -212,10 +212,8 @@ async function load() {
       
       total.value = data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
       
-      // Update chart after data is loaded
-      nextTick(() => {
-        updateChart()
-      })
+      // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
+      // график дважды за тик (гонка уничтожения → ctx.save на null). См. ByPeriod.
     } else {
       rows.value = []
       
