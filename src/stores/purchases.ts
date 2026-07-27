@@ -78,6 +78,23 @@ export const deletePhoto = async (id: number, photoId: number) => {
     }
 }
 
+// F-616: догрузка одного фото-отчёта через тот же живой путь, что и форма закупки
+// (PurchasePhotoViewSet.create, поля FormData: file/type/purchase) — НЕ /photos/upload/,
+// который использует лишь юнит-тест. Используется диалогом «Одобрить» в списке: фото-отчёт
+// прикладывается опционально ДО одобрения. Ошибку прокидываем вызывающему (диалог сам решает
+// не одобрять при неудачной загрузке и показать её через parseApiError).
+export const uploadReportPhoto = async (purchaseId: number, file: File): Promise<void> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('type', 'report')
+    formData.append('purchase', String(purchaseId))
+    await api.post('/purchase-photos/', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+}
+
 export const exportToExcel = async (params?: Partial<PurchaseListFilters>) => {
     const store = usePurchasesStore()
     store.loading = true
@@ -166,6 +183,20 @@ export const approvePurchase = async (id: number): Promise<Purchase> => {
     } finally {
         store.loading = false
     }
+}
+
+// F-616: одобрение с опциональным фото-отчётом одним вызовом (диалог «Одобрить» в списке).
+// Фото грузим ДО одобрения; при сбое загрузки approvePurchase НЕ вызывается — не должно быть
+// «одобрено, но обещанное фото не приложилось». approve — фиксирующий шаг после успешных загрузок.
+// Пустой files → обычное одобрение (фото-отчёт необязателен, D-019).
+export const approvePurchaseWithReport = async (
+    purchaseId: number,
+    files: File[] = []
+): Promise<Purchase> => {
+    for (const file of files) {
+        await uploadReportPhoto(purchaseId, file)
+    }
+    return approvePurchase(purchaseId)
 }
 
 export const rejectPurchase = async (id: number, reason?: string): Promise<Purchase> => {

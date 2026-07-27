@@ -175,13 +175,72 @@ describe('Purchases Store', () => {
   it('resets filters correctly', async () => {
     const store = usePurchasesStore()
     vi.mocked(api.get).mockResolvedValue({ data: { count: 0, results: [] } })
-    
+
     await store.setFilters({ search: 'test', status: 'new' })
-    
+
     await store.resetFilters()
-    
+
     expect(store.filters.search).toBe('')
     expect(store.filters.status).toBe('')
+  })
+
+  // F-616: догрузка фото-отчёта + одобрение с опциональным фото-отчётом
+  describe('report photo + approve (F-616)', () => {
+    const file = () => new File(['x'], 'report.jpg', { type: 'image/jpeg' })
+    const postUrls = () => vi.mocked(api.post).mock.calls.map(c => c[0] as string)
+
+    it('uploadReportPhoto posts multipart to /purchase-photos/ with type=report', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { id: 10 } })
+      const { uploadReportPhoto } = await import('../purchases')
+      const f = file()
+      await uploadReportPhoto(7, f)
+
+      expect(api.post).toHaveBeenCalledTimes(1)
+      const [url, body] = vi.mocked(api.post).mock.calls[0]
+      expect(url).toBe('/purchase-photos/')
+      expect(body).toBeInstanceOf(FormData)
+      expect((body as FormData).get('type')).toBe('report')
+      expect((body as FormData).get('purchase')).toBe('7')
+      expect((body as FormData).get('file')).toBe(f)
+    })
+
+    it('approvePurchaseWithReport uploads ALL photos BEFORE approving', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { id: 5 } })
+      vi.mocked(api.get).mockResolvedValue({ data: { id: 5, status: 'completed' } })
+      const { approvePurchaseWithReport } = await import('../purchases')
+
+      await approvePurchaseWithReport(5, [file(), file()])
+
+      const urls = postUrls()
+      // сначала 2 загрузки фото, затем одобрение — approve строго ПОСЛЕ загрузок
+      expect(urls.slice(0, 2)).toEqual(['/purchase-photos/', '/purchase-photos/'])
+      expect(urls[2]).toContain('/purchases/5/')
+      expect(urls[2]).toContain('approve')
+    })
+
+    it('approvePurchaseWithReport does NOT approve when a photo upload fails', async () => {
+      vi.mocked(api.post).mockRejectedValueOnce(new Error('upload failed'))
+      const { approvePurchaseWithReport } = await import('../purchases')
+
+      await expect(approvePurchaseWithReport(5, [file()])).rejects.toThrow('upload failed')
+
+      const urls = postUrls()
+      expect(urls).toEqual(['/purchase-photos/']) // до approve не дошли
+      expect(urls.some(u => u.includes('approve'))).toBe(false)
+    })
+
+    it('approvePurchaseWithReport with no files just approves', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { id: 5 } })
+      vi.mocked(api.get).mockResolvedValue({ data: { id: 5 } })
+      const { approvePurchaseWithReport } = await import('../purchases')
+
+      await approvePurchaseWithReport(5, [])
+
+      const urls = postUrls()
+      expect(urls).toHaveLength(1)
+      expect(urls[0]).toContain('approve')
+      expect(urls.some(u => u === '/purchase-photos/')).toBe(false)
+    })
   })
 })
 

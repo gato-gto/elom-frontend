@@ -46,10 +46,62 @@
 
     <!-- Modal for viewing purchase -->
     <Modal v-model="viewModalOpen" title="Просмотр закупки" size="6xl" :closable="true">
-      <PurchaseInfo 
-        :purchase="viewingPurchase" 
-        @close="viewModalOpen = false" 
+      <PurchaseInfo
+        :purchase="viewingPurchase"
+        @close="viewModalOpen = false"
       />
+    </Modal>
+
+    <!-- F-616: одобрение с опциональным фото-отчётом -->
+    <Modal
+      v-model="approveModalOpen"
+      title="Одобрить закупку"
+      size="lg"
+      :closable="!approveSubmitting"
+      @close="closeApproveModal"
+    >
+      <div class="space-y-4">
+        <p class="text-sm">
+          Одобрение переведёт закупку
+          <span class="font-medium">{{ approvingPurchase?.purchase_no || ('#' + approvingPurchase?.id) }}</span>
+          в статус «Выполнено». При желании приложите фото-отчёт (доказательство закупки) — это необязательно.
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Фото-отчёт (необязательно)</label>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            class="file-input file-input-bordered file-input-sm w-full"
+            :disabled="approveSubmitting"
+            @change="onApproveFilesChange"
+          />
+        </div>
+
+        <div v-if="approveItems.length" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+          <div v-for="(item, index) in approveItems" :key="index" class="relative">
+            <img :src="item.url" :alt="`Фото-отчёт ${index + 1}`" class="w-full h-20 object-cover rounded-lg border" />
+            <button
+              type="button"
+              class="absolute top-1 right-1 btn btn-error btn-xs btn-circle"
+              :disabled="approveSubmitting"
+              aria-label="Убрать фото"
+              @click="removeApproveItem(index)"
+            >✕</button>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <button type="button" class="btn btn-ghost btn-sm" :disabled="approveSubmitting" @click="closeApproveModal">
+          Отмена
+        </button>
+        <button type="button" class="btn btn-success btn-sm" :disabled="approveSubmitting" @click="confirmApprove">
+          <span v-if="approveSubmitting" class="loading loading-spinner loading-xs"></span>
+          {{ approveItems.length ? 'Одобрить с фото' : 'Одобрить' }}
+        </button>
+      </template>
     </Modal>
   </div>
 </template>
@@ -66,7 +118,7 @@ import PurchaseForm from './PurchaseForm.vue'
 import PurchaseInfo from './PurchaseInfo.vue'
 import GenericList from '@/components/GenericList.vue'
 import PurchaseCard from '@/components/cards/PurchaseCard.vue'
-import { usePurchasesStore, approvePurchase, rejectPurchase } from '@/stores/purchases'
+import { usePurchasesStore, approvePurchaseWithReport, rejectPurchase } from '@/stores/purchases'
 import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
@@ -96,6 +148,13 @@ const modalOpen = ref(false)
 const editingPurchase = ref<Purchase | null>(null)
 const viewModalOpen = ref(false)
 const viewingPurchase = ref<Purchase | null>(null)
+
+// F-616: диалог «Одобрить» с опциональным фото-отчётом. approveItems держит File + его
+// object-URL для превью (URL освобождаем при удалении/закрытии, чтобы не течь памятью).
+const approveModalOpen = ref(false)
+const approvingPurchase = ref<Purchase | null>(null)
+const approveItems = ref<{ file: File; url: string }[]>([])
+const approveSubmitting = ref(false)
 
 // Computed properties
 const modalTitle = computed(() => {
@@ -311,7 +370,7 @@ async function handleAction(action: string, item: Purchase) {
       await handleDelete(item)
       break
     case 'approve':
-      await handleApprove(item)
+      openApproveModal(item)
       break
     case 'reject':
       await handleReject(item)
@@ -319,15 +378,56 @@ async function handleAction(action: string, item: Purchase) {
   }
 }
 
-async function handleApprove(purchase: Purchase) {
+// F-616: одобрение через диалог с опциональным фото-отчётом. Открытие — только подготовка
+// состояния; сама загрузка+одобрение в confirmApprove.
+function openApproveModal(purchase: Purchase) {
+  approvingPurchase.value = purchase
+  resetApproveFiles()
+  approveModalOpen.value = true
+}
+
+function onApproveFilesChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  for (const file of Array.from(input.files || [])) {
+    approveItems.value.push({ file, url: URL.createObjectURL(file) })
+  }
+  input.value = '' // позволяем выбрать тот же файл повторно после удаления
+}
+
+function removeApproveItem(index: number) {
+  const [removed] = approveItems.value.splice(index, 1)
+  if (removed) { URL.revokeObjectURL(removed.url) }
+}
+
+function resetApproveFiles() {
+  approveItems.value.forEach(i => URL.revokeObjectURL(i.url))
+  approveItems.value = []
+}
+
+function closeApproveModal() {
+  approveModalOpen.value = false
+  approvingPurchase.value = null
+  resetApproveFiles()
+}
+
+async function confirmApprove() {
+  const purchase = approvingPurchase.value
+  if (!purchase || approveSubmitting.value) { return }
+  approveSubmitting.value = true
   try {
-    await approvePurchase(purchase.id)
-    showSuccess('Заявка успешно одобрена')
+    // Фото-отчёт (опционально) грузится ДО одобрения; при сбое загрузки одобрение не
+    // произойдёт (см. approvePurchaseWithReport). Пользователь увидит ошибку и сможет
+    // повторить или одобрить без фото (фото-отчёт необязателен, D-019).
+    const hadPhotos = approveItems.value.length > 0
+    await approvePurchaseWithReport(purchase.id, approveItems.value.map(i => i.file))
+    showSuccess(hadPhotos ? 'Заявка одобрена, фото-отчёт приложен' : 'Заявка успешно одобрена')
+    closeApproveModal()
     await purchasesStore.fetchList()
   } catch (error: any) {
     const { parseApiError } = await import('@/utils/errorHandler')
-    const parsedError = parseApiError(error)
-    showError(parsedError.detail)
+    showError(parseApiError(error).detail)
+  } finally {
+    approveSubmitting.value = false
   }
 }
 
