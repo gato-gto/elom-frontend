@@ -119,9 +119,10 @@ export interface SmartQuantity {
   unit: string;
   original_value: number;
   original_unit: string;
-  display_value?: number;
-  display_unit?: string;
-  conversion_applied?: boolean;
+  // is_income присылает StockSnapshot.smart_quantity (знак движения); опционален.
+  is_income?: boolean;
+  // F-635: убраны фантомные display_value/display_unit/conversion_applied — бэкенд их НЕ шлёт.
+  // Их наличие в типе маскировало баг: карточки читали display_value → рендерили undefined.
 }
 
 // Re-export Me from employees

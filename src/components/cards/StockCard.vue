@@ -61,12 +61,13 @@
         
         <div v-if="stock.smart_quantity">
           <span class="text-muted">Умная конвертация:</span>
-          <span class="font-medium ml-2">
-            <span class="font-mono">{{ stock.smart_quantity.display_value }}</span> {{ stock.smart_quantity.display_unit }}
-            <span v-if="stock.smart_quantity.conversion_applied" class="text-xs text-info ml-1">
-              (конвертировано)
-            </span>
-          </span>
+          <!-- F-635: было чтение несуществующих display_value/display_unit → пусто. Общий
+               SmartUnitValue как в списках (укрупнённая единица + исходное значение рядом). -->
+          <SmartUnitValue
+            :smart-quantity="stock.smart_quantity"
+            :show-original="true"
+            class-name="font-medium font-mono ml-2"
+          />
         </div>
       </div>
     </template>
@@ -85,6 +86,7 @@
 <script setup lang="ts">
 import { StockSnapshot } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
+import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
 

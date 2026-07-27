@@ -57,12 +57,14 @@
         
         <div v-if="writeOff.smart_quantity">
           <span class="text-muted">Умная конвертация:</span>
-          <span class="font-medium ml-2 font-mono">
-            {{ writeOff.smart_quantity.display_value }} {{ writeOff.smart_quantity.display_unit }}
-            <span v-if="writeOff.smart_quantity.conversion_applied" class="text-xs text-warning ml-1">
-              (конвертировано)
-            </span>
-          </span>
+          <!-- F-635: карточка читала несуществующие smart_quantity.display_value/display_unit
+               (бэкенд шлёт value/unit) → рендерила пусто. Используем общий SmartUnitValue как
+               в списках: показывает укрупнённую единицу + исходное значение рядом. -->
+          <SmartUnitValue
+            :smart-quantity="writeOff.smart_quantity"
+            :show-original="true"
+            class-name="font-medium font-mono ml-2"
+          />
         </div>
       </div>
     </template>
@@ -81,6 +83,7 @@
 <script setup lang="ts">
 import { WriteOff } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
+import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
 
