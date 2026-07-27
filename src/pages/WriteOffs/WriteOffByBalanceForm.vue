@@ -170,10 +170,18 @@
           </div>
         </div>
 
+        <!-- F-642 (#28): период закрыт — пред-предупреждение (submit погашен) -->
+        <div v-if="periodClosed" class="alert alert-warning" role="alert">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm">Период закрыт (архив) — инвентаризация этой датой в закрытый период запрещена. Измените дату или переоткройте период.</span>
+        </div>
+
         <!-- Кнопки -->
         <div class="flex justify-end gap-2 pt-4">
           <button type="button" class="btn btn-ghost" :disabled="submitting" @click="$emit('close')">Отмена</button>
-          <button type="submit" class="btn btn-primary" :disabled="submitting" :class="{ 'loading': submitting }">
+          <button type="submit" class="btn btn-primary" :disabled="submitting || periodClosed" :class="{ 'loading': submitting }">
             {{ submitting ? 'Сохранение...' : 'Оформить списания' }}
           </button>
         </div>
@@ -185,6 +193,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
+import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { getMaterialsInStock } from '@/stores/materials'
 import type { SiteObject } from '@/api/types'
 import type { MaterialBalance } from '@/api/types/stocks'
@@ -200,6 +209,7 @@ const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits<{ close: []; success: [] }>()
 
 const objectsStore = useObjectsStore()
+const archivePeriodsStore = useArchivePeriodsStore()
 const ui = useUiStore()
 
 interface Row { _k: number; material: number | null; actual_balance: string }
@@ -209,6 +219,8 @@ const blankRow = (): Row => ({ _k: ++seq, material: null, actual_balance: '' })
 const today = new Date().toISOString().split('T')[0]
 const date = ref(today)
 const objectId = ref(0)
+// F-642 (#28): пред-предупреждение о закрытом периоде (зеркалит серверный гард D-012/F-619).
+const periodClosed = computed(() => archivePeriodsStore.isPeriodClosed(objectId.value, date.value))
 const rows = ref<Row[]>([blankRow()])
 const rowErrors = ref<Record<number, string>>({})
 const topErrors = ref<{ date?: string; object?: string; form?: string }>({})
@@ -296,6 +308,8 @@ function handleSubmit() {
   clearErrors()
   if (!date.value) {topErrors.value.date = 'Укажите дату'}
   if (!objectId.value) {topErrors.value.object = 'Выберите объект'}
+  // F-642 (#28): защёлка на закрытый период (кнопка уже погашена; на программный submit).
+  if (periodClosed.value) {topErrors.value.date = 'Период закрыт (архив) — измените дату'}
 
   // отбрасываем полностью пустые строки; валидируем заполненные
   const filled = rows.value.filter(r => r.material || (r.actual_balance !== '' && r.actual_balance != null))
@@ -350,5 +364,6 @@ function reset() {
 
 onMounted(() => {
   if (!objectsStore.items.length) {objectsStore.fetchList?.({ page_size: 1000 } as any)}
+  if (!archivePeriodsStore.items.length) {archivePeriodsStore.fetchList()}  // F-642 (#28)
 })
 </script>
