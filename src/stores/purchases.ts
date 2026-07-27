@@ -193,16 +193,28 @@ export const approvePurchase = async (id: number): Promise<Purchase> => {
 // файл из списка на ретрай. Без этого: f1 загрузилось, f2 упало → цикл бросил ДО approve; ретрай
 // слал f1 повторно = ДУБЛИКАТ PurchasePhoto (серверного unique-констрейнта нет), копится с каждым
 // ретраем. Теперь ретрай шлёт только непросохранённые файлы.
+// F-636: одобряем СНАЧАЛА, потом грузим фото-отчёт. Раньше фото грузились ДО approve → при отказе
+// approve (закрытый период 400) фото оставались сиротами на 'new'-закупке, а M3-дедуп убирал их из
+// диалога → ре-селект → дубли (у PurchasePhoto нет серверного unique). Фото-отчёт опционален и
+// догружаем после завершения (F-621), поэтому approve-first безопасен: сбой загрузки НЕ откатывает
+// одобрение (возвращаем счётчики — вызывающий подскажет догрузить), а approve при успехе больше НЕ
+// повторяется на ретрае → дублей нет.
 export const approvePurchaseWithReport = async (
     purchaseId: number,
-    files: File[] = [],
-    onUploaded?: (file: File) => void
-): Promise<Purchase> => {
+    files: File[] = []
+): Promise<{ purchase: Purchase; uploaded: number; failed: number }> => {
+    const purchase = await approvePurchase(purchaseId)   // бросает ТОЛЬКО при отказе одобрения
+    let uploaded = 0
+    let failed = 0
     for (const file of files) {
-        await uploadReportPhoto(purchaseId, file)
-        onUploaded?.(file)
+        try {
+            await uploadReportPhoto(purchaseId, file)
+            uploaded++
+        } catch {
+            failed++
+        }
     }
-    return approvePurchase(purchaseId)
+    return { purchase, uploaded, failed }
 }
 
 export const rejectPurchase = async (id: number, reason?: string): Promise<Purchase> => {

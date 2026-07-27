@@ -204,29 +204,41 @@ describe('Purchases Store', () => {
       expect((body as FormData).get('file')).toBe(f)
     })
 
-    it('approvePurchaseWithReport uploads ALL photos BEFORE approving', async () => {
-      vi.mocked(api.post).mockResolvedValue({ data: { id: 5 } })
+    // F-636: approve-first — иначе сбой approve (закрытый период 400) оставлял бы залитые фото
+    // сиротами на 'new'-закупке, а M3-дедуп + ре-селект давали дубли.
+    it('F-636: approves FIRST, then uploads photos', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { id: 5, status: 'completed' } })
       vi.mocked(api.get).mockResolvedValue({ data: { id: 5, status: 'completed' } })
       const { approvePurchaseWithReport } = await import('../purchases')
 
-      await approvePurchaseWithReport(5, [file(), file()])
+      const res = await approvePurchaseWithReport(5, [file(), file()])
 
       const urls = postUrls()
-      // сначала 2 загрузки фото, затем одобрение — approve строго ПОСЛЕ загрузок
-      expect(urls.slice(0, 2)).toEqual(['/purchase-photos/', '/purchase-photos/'])
-      expect(urls[2]).toContain('/purchases/5/')
-      expect(urls[2]).toContain('approve')
+      expect(urls[0]).toContain('approve')                                  // approve СТРОГО первым
+      expect(urls.slice(1, 3)).toEqual(['/purchase-photos/', '/purchase-photos/'])
+      expect(res).toMatchObject({ uploaded: 2, failed: 0 })
     })
 
-    it('approvePurchaseWithReport does NOT approve when a photo upload fails', async () => {
-      vi.mocked(api.post).mockRejectedValueOnce(new Error('upload failed'))
+    it('F-636: a photo-upload failure does NOT roll back the approve (returns failed count)', async () => {
+      vi.mocked(api.post)
+        .mockResolvedValueOnce({ data: { id: 5, status: 'completed' } })    // approve OK (первым)
+        .mockRejectedValueOnce(new Error('413 too large'))                  // фото падает
+      vi.mocked(api.get).mockResolvedValue({ data: { id: 5, status: 'completed' } })
       const { approvePurchaseWithReport } = await import('../purchases')
 
-      await expect(approvePurchaseWithReport(5, [file()])).rejects.toThrow('upload failed')
+      const res = await approvePurchaseWithReport(5, [file()])
 
-      const urls = postUrls()
-      expect(urls).toEqual(['/purchase-photos/']) // до approve не дошли
-      expect(urls.some(u => u.includes('approve'))).toBe(false)
+      expect(res).toMatchObject({ uploaded: 0, failed: 1 })                 // одобрение НЕ откатано
+      expect(postUrls()[0]).toContain('approve')
+    })
+
+    it('F-636: an approve failure uploads NO photos (no orphans)', async () => {
+      vi.mocked(api.post).mockRejectedValueOnce(new Error('Период закрыт (архив)'))  // approve падает первым
+      const { approvePurchaseWithReport } = await import('../purchases')
+
+      await expect(approvePurchaseWithReport(5, [file(), file()])).rejects.toThrow('Период закрыт')
+
+      expect(postUrls().some(u => u === '/purchase-photos/')).toBe(false)  // ни одного фото не залито
     })
 
     it('approvePurchaseWithReport with no files just approves', async () => {
@@ -234,44 +246,12 @@ describe('Purchases Store', () => {
       vi.mocked(api.get).mockResolvedValue({ data: { id: 5 } })
       const { approvePurchaseWithReport } = await import('../purchases')
 
-      await approvePurchaseWithReport(5, [])
+      const res = await approvePurchaseWithReport(5, [])
 
       const urls = postUrls()
       expect(urls).toHaveLength(1)
       expect(urls[0]).toContain('approve')
-      expect(urls.some(u => u === '/purchase-photos/')).toBe(false)
-    })
-
-    // M3 (FE-hunt): onUploaded зовётся за КАЖДУЮ успешную загрузку → вызывающий убирает файл из
-    // списка, и ретрай после сбоя не шлёт уже сохранённые повторно (нет дублей PurchasePhoto).
-    it('M3: reports each uploaded file via onUploaded before approving', async () => {
-      vi.mocked(api.post).mockResolvedValue({ data: { id: 5 } })
-      vi.mocked(api.get).mockResolvedValue({ data: { id: 5 } })
-      const { approvePurchaseWithReport } = await import('../purchases')
-      const uploaded: string[] = []
-      const f1 = new File(['a'], 'a.jpg', { type: 'image/jpeg' })
-      const f2 = new File(['b'], 'b.jpg', { type: 'image/jpeg' })
-
-      await approvePurchaseWithReport(5, [f1, f2], (f) => uploaded.push(f.name))
-
-      expect(uploaded).toEqual(['a.jpg', 'b.jpg'])
-    })
-
-    it('M3: on a mid-upload failure only succeeded files are reported and approve is NOT called', async () => {
-      vi.mocked(api.post)
-        .mockResolvedValueOnce({ data: { id: 10 } })          // f1 upload OK
-        .mockRejectedValueOnce(new Error('413 too large'))    // f2 upload fails
-      const { approvePurchaseWithReport } = await import('../purchases')
-      const uploaded: string[] = []
-      const f1 = new File(['a'], 'a.jpg', { type: 'image/jpeg' })
-      const f2 = new File(['b'], 'b.jpg', { type: 'image/jpeg' })
-
-      await expect(
-        approvePurchaseWithReport(5, [f1, f2], (f) => uploaded.push(f.name))
-      ).rejects.toThrow('413')
-
-      expect(uploaded).toEqual(['a.jpg'])                       // только f1 отмечен успешным
-      expect(postUrls().some(u => u.includes('approve'))).toBe(false)  // approve не вызван
+      expect(res).toMatchObject({ uploaded: 0, failed: 0 })
     })
   })
 })

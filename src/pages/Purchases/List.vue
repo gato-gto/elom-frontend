@@ -161,6 +161,17 @@ const approveModalOpen = ref(false)
 const approvingPurchase = ref<Purchase | null>(null)
 const approveItems = ref<{ file: File; url: string }[]>([])
 const approveSubmitting = ref(false)
+const rejectSubmitting = ref(false)  // F-636: re-entrancy guard «Отклонить» (как approveSubmitting)
+
+// F-636 (L3): рефреш после успешного действия — его сбой НЕ выдаём за сбой действия, но и не
+// глотаем молча (раньше .catch(()=>{}) → список тихо устаревал): показываем ненавязчивый хинт.
+async function refreshList() {
+  try {
+    await purchasesStore.fetchList()
+  } catch {
+    showError('Действие выполнено, но список мог не обновиться — обновите страницу')
+  }
+}
 
 // Computed properties
 const modalTitle = computed(() => {
@@ -423,41 +434,49 @@ async function confirmApprove() {
   const purchase = approvingPurchase.value
   if (!purchase || approveSubmitting.value) { return }
   approveSubmitting.value = true
-  const hadPhotos = approveItems.value.length > 0
+  const files = approveItems.value.map(i => i.file)
+  let result: { uploaded: number; failed: number }
   try {
-    // Фото-отчёт (опционально) грузится ДО одобрения; при сбое загрузки одобрение не произойдёт.
-    // M3 (FE-hunt): каждый успешно загруженный файл убираем из списка — ретрай после сбоя не
-    // зальёт уже сохранённые повторно (иначе дубли PurchasePhoto без серверного unique).
-    await approvePurchaseWithReport(purchase.id, approveItems.value.map(i => i.file), (file) => {
-      const idx = approveItems.value.findIndex(i => i.file === file)
-      if (idx >= 0) { removeApproveItem(idx) }
-    })
+    // F-636: approvePurchaseWithReport одобряет СНАЧАЛА, потом грузит фото → бросает ТОЛЬКО при
+    // отказе одобрения (тогда фото не грузятся → сирот нет). Сбой отдельных фото НЕ откатывает
+    // одобрение (возвращается failed>0), поэтому это не catch-ветка. Ретрай на сбое одобрения
+    // безопасен (approve ещё не прошёл); дублей нет — при успехе диалог закрываем, фото не
+    // перезаливаются.
+    result = await approvePurchaseWithReport(purchase.id, files)
   } catch (error: any) {
     const { parseApiError } = await import('@/utils/errorHandler')
     showError(parseApiError(error).detail)
-    return
-  } finally {
     approveSubmitting.value = false
+    return   // одобрение не прошло — диалог открыт, фото на месте
   }
-  // L3 (FE-hunt): approve уже прошёл (200) — сбой рефреша списка НЕ должен выдаваться за сбой
-  // одобрения (иначе тост «Ошибка» ПОСЛЕ «Заявка одобрена»). Рефреш вынесен за approve-try.
-  showSuccess(hadPhotos ? 'Заявка одобрена, фото-отчёт приложен' : 'Заявка успешно одобрена')
+  approveSubmitting.value = false
   closeApproveModal()
-  await purchasesStore.fetchList().catch(() => {})
+  if (result.failed > 0) {
+    // Одобрено; часть фото не загрузилась — не блокируем: фото-отчёт догружаем в карточке закупки (F-615).
+    showError(`Заявка одобрена${result.uploaded ? `, приложено фото: ${result.uploaded}` : ''}. Не загрузились: ${result.failed} — догрузите в карточке закупки.`)
+  } else {
+    showSuccess(files.length ? 'Заявка одобрена, фото-отчёт приложен' : 'Заявка успешно одобрена')
+  }
+  // L3 (FE-hunt): рефреш вынесен за approve-try — его сбой не выдаём за сбой одобрения.
+  await refreshList()
 }
 
 async function handleReject(purchase: Purchase) {
+  if (rejectSubmitting.value) { return }  // F-636: без guard быстрый двойной reject бил по уже-отклонённой → шумный BE-error
   const reason = prompt('Причина отклонения (необязательно):')
+  rejectSubmitting.value = true
   try {
     await rejectPurchase(purchase.id, reason || undefined)
   } catch (error: any) {
     const { parseApiError } = await import('@/utils/errorHandler')
     showError(parseApiError(error).detail)
     return
+  } finally {
+    rejectSubmitting.value = false
   }
   // L3 (FE-hunt): отклонение прошло — сбой рефреша не выдаём за сбой отклонения.
   showSuccess('Заявка успешно отклонена')
-  await purchasesStore.fetchList().catch(() => {})
+  await refreshList()
 }
 
 async function handleDelete(purchase: Purchase) {
