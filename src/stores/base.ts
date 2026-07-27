@@ -178,9 +178,15 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
     // Actions
     // ========================================================================
     
+    // F-636 (H12): монотонный токен поколения fetchList — при конкурентных вызовах коммитим
+    // items/pagination ТОЛЬКО из самого свежего запроса. Иначе медленный устаревший ответ
+    // (last-writer-wins) перезатирал список и откатывал fetchOne (строка снова «pending» после
+    // success-тоста). Транзиентно, но видимо при быстрых approve/reject подряд.
+    let fetchListGen = 0
     const fetchList = async (params?: Record<string, any>): Promise<T[]> => {
       loading.value = true
       error.value = null
+      const gen = ++fetchListGen
 
       try {
         const queryParams: Record<string, any> = {
@@ -202,6 +208,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         const query = buildQuery(queryParams)
         const { data } = await api.get(config.endpoint.list + query)
 
+        // H12: более новый fetchList уже стартовал → ответ устарел, список не перезаписываем.
+        if (gen !== fetchListGen) { return items.value }
         items.value = data.results || data
         pagination.value = {
           count: data.count || (Array.isArray(data) ? data.length : 0),
@@ -250,7 +258,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
               
               const query = buildQuery(queryParams)
               const { data } = await api.get(config.endpoint.list + query)
-              
+
+              if (gen !== fetchListGen) { return items.value }
               items.value = data.results || data
               pagination.value = {
                 count: data.count || (Array.isArray(data) ? data.length : 0),
@@ -289,7 +298,8 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         await handleApiErrorAsync(err, { operation: 'dataLoading', entity: config.entityName })
         throw err
       } finally {
-        loading.value = false
+        // H12: только самый свежий запрос управляет спиннером (устаревший не гасит его раньше).
+        if (gen === fetchListGen) { loading.value = false }
       }
     }
 

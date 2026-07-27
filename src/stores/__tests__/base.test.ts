@@ -107,6 +107,32 @@ describe('Base Store', () => {
       expect(store.loading).toBe(false)
     })
 
+    // F-637 (H12): конкурентные fetchList — устаревший (медленный) ответ НЕ перезаписывает новый.
+    it('a slow stale fetchList does NOT overwrite a newer one', async () => {
+      const useTestStore = createBaseStore<TestEntity, TestRequest>({
+        endpoint: { list: '/api/test/', one: (id) => `/api/test/${id}/` },
+        entityName: 'test',
+        entityNamePlural: 'tests'
+      })
+      const store = useTestStore()
+
+      let resolveOld!: (v: any) => void
+      let resolveNew!: (v: any) => void
+      mockedApi.get
+        .mockReturnValueOnce(new Promise(r => { resolveOld = r }) as any)   // 1-й (старый) вызов
+        .mockReturnValueOnce(new Promise(r => { resolveNew = r }) as any)   // 2-й (новый) вызов
+
+      const pOld = store.fetchList()   // gen 1
+      const pNew = store.fetchList()   // gen 2 (новее)
+
+      resolveNew({ data: { count: 1, results: [{ id: 2, name: 'new' }] } })   // новый приходит ПЕРВЫМ
+      await pNew
+      resolveOld({ data: { count: 1, results: [{ id: 1, name: 'stale' }] } }) // старый — вторым (устарел)
+      await pOld
+
+      expect(store.items.map((i: any) => i.id)).toEqual([2])   // новый не перезатёрт устаревшим
+    })
+
     it('should handle error state', async () => {
       const useTestStore = createBaseStore<TestEntity, TestRequest>({
         endpoint: { list: '/api/test/', one: (id) => `/api/test/${id}/` },
