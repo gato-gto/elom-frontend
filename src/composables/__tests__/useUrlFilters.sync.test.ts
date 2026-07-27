@@ -16,7 +16,6 @@ const router = {
 }
 vi.mock('vue-router', () => ({ useRoute: () => route, useRouter: () => router }))
 
-// eslint-disable-next-line import/first
 import { useUrlFilters } from '@/composables/useUrlFilters'
 
 const configs = [
