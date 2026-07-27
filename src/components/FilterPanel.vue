@@ -165,6 +165,10 @@ const gridClass = computed(() => {
 @media (max-width: 767px) {
   .filter-header-toggle {
     cursor: pointer;
+    /* F-622: тач-цель шапки-переключателя фильтров ≥44px (iOS HIG). Была 43px — на 1px
+       ниже порога (mobile-audit). Шапка интерактивна (сворачивает фильтры) только на мобиле,
+       поэтому правим здесь; flex+align-items:center центрирует контент. Общий для всех списков. */
+    min-height: 44px;
   }
   .filter-chevron {
     display: block;
