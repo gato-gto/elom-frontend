@@ -64,4 +64,36 @@ describe('WriteOffForm edit — no position dropped (F-072)', () => {
       items: [expect.objectContaining({ material: 11, quantity: '4' })],
     }))
   })
+
+  // F-634: edit-путь шлёт extras = filledItems.slice(1); построчная ошибка bulk-create приходит в
+  // индексах ЭТОГО (смещённого) массива. Ошибка должна сесть на добавочную позицию (display idx 1),
+  // а НЕ на обновляемую (idx 0) — иначе класс M1 (ошибка на чужой строке) в edit-пути.
+  it('F-634: edit-path bulk error maps to the extra row, not the updated row (off-by-one)', async () => {
+    createBulk.mockRejectedValueOnce({
+      response: { data: { detail: 'Ошибки в позициях', errors: { items: [
+        { index: 0, detail: { __all__: ['Недостаточно остатка'] } },
+      ] } } },
+    })
+    const wrapper = mount(WriteOffForm, {
+      props: { initial: { id: 42, object: 1, responsible: 5, date: '2026-01-01' } },
+      global: { stubs: { PermissionButton: true, MaterialSearchSelect: true } },
+    })
+    await nextTick()
+    const vm = wrapper.vm as unknown as {
+      items: Array<Record<string, unknown>>
+      formData: Record<string, unknown>
+      handleSubmit: () => Promise<void>
+      getItemFieldError: (i: number, f: string) => string | undefined
+    }
+    Object.assign(vm.formData, { object: 1, responsible: 5, date: '2026-01-01', comment: '' })
+    vm.items.splice(0, vm.items.length,
+      { _k: 'a', material: 10, unit: 2, quantity: '3' },   // обновляемая (idx 0)
+      { _k: 'b', material: 11, unit: 2, quantity: '4' },   // добавочная (idx 1) — она в bulk
+    )
+    await nextTick()
+    await vm.handleSubmit()
+    await nextTick()
+    expect(vm.getItemFieldError(1, 'quantity')).toContain('Недостаточно остатка')
+    expect(vm.getItemFieldError(0, 'quantity') || '').toBe('')
+  })
 })

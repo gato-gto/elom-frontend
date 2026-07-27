@@ -832,6 +832,10 @@ const handleSubmit = async () => {
   // M1: соответствие «индекс отправленной позиции → индекс в items.value»; нужно и в catch,
   // поэтому объявлено во внешней области handleSubmit (в try недоступно из catch).
   const filledDisplayIndexes: number[] = []
+  // F-634: карта display-индексов ИМЕННО для массива, отправленного в createBulk. В edit-пути это
+  // filledItems.slice(1) (первая позиция идёт через update), т.е. смещена на 1 относительно
+  // filledDisplayIndexes — иначе построчная ошибка bulk на edit-пути сядет на строку ВЫШЕ (класс M1).
+  let bulkDisplayIndexes: number[] = filledDisplayIndexes
 
   try {
     // FE-3/F-563: считаем только ЗАПОЛНЕННЫЕ позиции (материал+единица+кол-во>0). Плейсхолдерная
@@ -915,6 +919,7 @@ const handleSubmit = async () => {
       // создания: всё-или-ничего, retry не дублирует.
       const extras = validItems.slice(1)
       if (extras.length > 0) {
+        bulkDisplayIndexes = filledDisplayIndexes.slice(1)  // F-634: extras = filledItems.slice(1) → индексы ошибок смещены на 1
         await createBulk({
           object: formData.value.object,
           date: formData.value.date,
@@ -961,8 +966,9 @@ const handleSubmit = async () => {
     if (Array.isArray(bulkItems) && bulkItems.length > 0) {
       for (const row of bulkItems) {
         if (row && typeof row.index === 'number') {
-          // M1: row.index — позиция в отправленном filledItems; переводим в индекс отображения.
-          const displayIdx = filledDisplayIndexes[row.index] ?? row.index
+          // M1/F-634: row.index — позиция в ОТПРАВЛЕННОМ массиве (create: filledItems;
+          // edit: filledItems.slice(1)); bulkDisplayIndexes переводит её в индекс отображения.
+          const displayIdx = bulkDisplayIndexes[row.index] ?? row.index
           applyBulkRowDetail(displayIdx, row.detail)
         }
       }
