@@ -86,6 +86,14 @@
       </div>
     </div>
 
+        <!-- F-640 (#28): период закрыт — пред-предупреждение (submit погашен), как бейдж у закупок -->
+        <div v-if="periodClosed" class="alert alert-warning" role="alert">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm">Период закрыт (архив) — списание этой датой в закрытый период запрещено. Измените дату или переоткройте период.</span>
+        </div>
+
         <!-- Комментарий -->
         <div class="form-control w-full">
           <label class="label">
@@ -370,7 +378,7 @@
           </button>
           <button
             type="submit"
-            :disabled="isSubmitting || items.length === 0"
+            :disabled="isSubmitting || items.length === 0 || periodClosed"
             class="btn btn-primary"
             :class="{ 'loading': isSubmitting }"
           >
@@ -388,6 +396,7 @@ import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { useWriteOffsStore, createBulk } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
+import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
 import { useEmployeesStore, getByObject, getResponsibleEmployees, canBeResponsible } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
@@ -410,6 +419,7 @@ import type {
 
 const writeOffsStore = useWriteOffsStore()
 const objectsStore = useObjectsStore()
+const archivePeriodsStore = useArchivePeriodsStore()
 const materialsStore = useMaterialsStore()
 const employeesStore = useEmployeesStore()
 const unitsStore = useUnitsStore()
@@ -440,6 +450,12 @@ const formData = ref({
   responsible: 0,
   comment: ''
 })
+
+// F-640 (#28): пред-предупреждение о закрытом периоде — зеркалит серверный гард D-012/F-619.
+// Гасим submit и показываем баннер ДО отправки (а не только по BE-400), как у закупок.
+const periodClosed = computed(() =>
+  archivePeriodsStore.isPeriodClosed(formData.value.object, formData.value.date),
+)
 
 // Items - позиции списания
 interface WriteOffItem {
@@ -882,6 +898,14 @@ const handleSubmit = async () => {
       return
     }
 
+    // F-640 (#28): защёлка на случай программного submit при закрытом периоде (кнопка уже погашена).
+    if (periodClosed.value) {
+      errors.value.date = ['Период закрыт (архив) — списание этой датой запрещено. Измените дату.']
+      ui.toast({ type: 'error', text: 'Период закрыт — измените дату' })
+      isSubmitting.value = false
+      return
+    }
+
     // F-306: не отправляем списание больше доступного остатка — сразу подсказываем на клиенте.
     // Бэкенд всё равно проверяет (WriteOff.clean → 400); это UX-ограничение, не замена бэк-проверке.
     const overItems = items.value.filter(
@@ -1134,6 +1158,9 @@ onMounted(async () => {
   }
   if (unitsStore.items.length === 0) {
     promises.push(unitsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
+  }
+  if (archivePeriodsStore.items.length === 0) {
+    promises.push(archivePeriodsStore.fetchList())  // F-640 (#28): для пред-проверки закрытого периода
   }
   
   if (promises.length > 0) {

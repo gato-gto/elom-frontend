@@ -50,5 +50,14 @@ export const useArchivePeriodsStore = defineStore('archivePeriods', () => {
     await fetchList()
   }
 
-  return { items, loading, error, fetchList, close, reopen }
+  // F-640: закрыт ли период (object, месяц указанной даты)? Зеркалит серверный гард
+  // ArchivePeriod.is_closed (D-012/F-619) — для ПРЕД-предупреждения в формах списания/закупки,
+  // чтобы пользователь видел «период закрыт» ДО submit, а не только по BE-400.
+  function isPeriodClosed(objectId: number | null | undefined, date: string | null | undefined): boolean {
+    if (!objectId || !date) { return false }
+    const month = String(date).slice(0, 7) + '-01'   // 'YYYY-MM-DD…' → 'YYYY-MM-01'
+    return items.value.some(p => p.object === Number(objectId) && p.month === month && p.is_closed === true)
+  }
+
+  return { items, loading, error, fetchList, close, reopen, isPeriodClosed }
 })

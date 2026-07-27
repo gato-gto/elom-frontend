@@ -54,4 +54,18 @@ describe('ArchivePeriods Store', () => {
     await expect(store.fetchList()).rejects.toBeTruthy()
     expect(store.error).toBe('boom')
   })
+
+  // F-640 (#28): пред-проверка закрытого периода для форм списания/закупки.
+  it('isPeriodClosed matches (object, month-of-date) only for CLOSED periods', () => {
+    const store = useArchivePeriodsStore()
+    store.items = [
+      { id: 1, month: '2026-08-01', object: 471, object_name: 'Баку', closed_at: '', closed_by: null, closed_by_name: null, is_closed: true },
+      { id: 2, month: '2026-09-01', object: 471, object_name: 'Баку', closed_at: '', closed_by: null, closed_by_name: null, is_closed: false }, // переоткрыт
+    ] as any
+    expect(store.isPeriodClosed(471, '2026-08-15')).toBe(true)   // закрытый месяц того же объекта
+    expect(store.isPeriodClosed(471, '2026-09-10')).toBe(false)  // переоткрытый → не блокируем
+    expect(store.isPeriodClosed(999, '2026-08-15')).toBe(false)  // другой объект
+    expect(store.isPeriodClosed(null, '2026-08-15')).toBe(false) // пустые аргументы
+    expect(store.isPeriodClosed(471, '')).toBe(false)
+  })
 })
