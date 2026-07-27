@@ -185,7 +185,7 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'writeoffs',
-  exportUrl: '/api/v1/stock/writeoffs/',
+  exportUrl: '/api/v1/writeoffs/', // F-626: было /stock/writeoffs/ → 404
   loadingText: 'Загрузка списаний...',
   emptyText: 'Нет списаний',
   emptyTitle: 'Нет списаний',

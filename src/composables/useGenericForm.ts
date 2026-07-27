@@ -250,7 +250,7 @@ export function useFileUpload() {
         method: 'POST',
         body: formData,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('elom_access')}`
         }
       })
 

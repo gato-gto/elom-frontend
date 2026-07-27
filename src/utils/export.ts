@@ -1,4 +1,5 @@
 // Утилиты для экспорта данных
+import api from '@/api/client'
 import { formatCurrencyWithCode, formatDate, formatDateTime, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
 
 function _triggerDownload(url: string, filename: string) {
@@ -28,55 +29,39 @@ export function downloadBlob(blob: Blob, filename: string) {
 
 // Экспорт через backend API
 export async function exportFromBackend(
-  url: string, 
-  format: 'xlsx' | 'pdf', 
+  url: string,
+  format: 'xlsx' | 'pdf',
   filename: string,
   filters?: Record<string, any>
 ) {
   try {
-    // Добавляем параметр export к URL
-    const exportUrl = new URL(url)
-    exportUrl.searchParams.set('export', format)
-    
-    // Добавляем фильтры к URL
+    // F-626: раньше здесь был сырой fetch + localStorage.getItem('access_token') — но приложение
+    // хранит токен под ключом 'elom_access', поэтому token был null → «Токен авторизации не найден»,
+    // и кнопка «Экспорт» не работала нигде. Идём через общий api-клиент: он сам ставит Authorization
+    // из elom_access (+ рефреш), а не дублирует чтение токена с неверным ключом. baseURL клиента —
+    // /api/v1, а exportUrl в конфигах — полный '/api/v1/...' → срезаем префикс до относительного.
+    const relative = url.replace(/^\/api\/v1/, '') || url
+
+    // Чистим фильтры (пустые не шлём) + добавляем export=<format>
+    const params: Record<string, any> = { export: format }
     if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          if (Array.isArray(value)) {
-            value.forEach(v => exportUrl.searchParams.append(key, v.toString()))
-          } else {
-            exportUrl.searchParams.set(key, value.toString())
-          }
-        }
-      })
-    }
-    
-    // Получаем токен авторизации
-    const token = localStorage.getItem('access_token')
-    if (!token) {
-      throw new Error('Токен авторизации не найден')
-    }
-    
-    // Выполняем запрос
-    const response = await fetch(exportUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': format === 'xlsx' 
-          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          : 'application/pdf'
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== null && value !== undefined && value !== '') { params[key] = value }
       }
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`)
     }
-    
-    // Получаем blob и скачиваем файл
-    const blob = await response.blob()
+
+    const response = await api.get(relative, { params, responseType: 'blob' })
+    const blob = response.data as Blob
+
+    // Если бэкенд не поддержал экспорт в этом формате (вернул JSON/ошибку вместо файла) — не
+    // скачиваем «битый» файл, а показываем понятную ошибку. Пока сервер отдаёт xlsx для списков;
+    // pdf-экспорт списков не реализован (MVP) → сюда прилетит не-файловый ответ.
+    if (blob.type && blob.type.includes('application/json')) {
+      throw new Error('Экспорт в этом формате пока не поддерживается сервером')
+    }
+
     const extension = format === 'xlsx' ? 'xlsx' : 'pdf'
     downloadBlob(blob, `${filename}.${extension}`)
-    
     return true
   } catch (error) {
     console.error('Ошибка экспорта:', error)

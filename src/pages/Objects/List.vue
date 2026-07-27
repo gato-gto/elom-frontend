@@ -118,7 +118,7 @@ const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'objects',
-  exportUrl: '/api/v1/common/objects/',
+  exportUrl: '/api/v1/objects/', // F-626: было /common/objects/ → 404
   loadingText: 'Загрузка объектов...',
   emptyText: 'Нет объектов',
   emptyTitle: 'Нет объектов',
