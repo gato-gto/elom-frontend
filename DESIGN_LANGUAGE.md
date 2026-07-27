@@ -166,6 +166,25 @@ slightly tightened tracking (−0.01em). Labels/eyebrows: Plex Sans 500, upperca
   the same markers scaled up. The token layer is responsive from the start (works at ~360px); the full
   mobile/PWA pass is a separate phase but nothing here fights it.
 
+### 7.1 Icon-size standard (F-565..582, F-612 — единая шкала по контексту)
+
+Иконки дрейфовали через точечные правки (то мелкие, то крупные) — зафиксировано ОДНОЙ шкалой
+**по роли/контексту**, применяемой централизованно. Не усложнять — это весь набор:
+
+| Роль | Контрол | Иконка | Где / класс |
+|------|---------|--------|-------------|
+| **Строчное действие списка** (ред./удал./одобр./откл.) | 32px (2rem), **40px ≥1536px** | 20px, **24px ≥1536px** | `.row-action-btn` (`components.css`), `actionIcons.ts` — GenericList/MobileCard |
+| **Тумблер навигации** (свернуть/показать меню) | тот же 32→40px | тот же 20→24px | `.nav-toggle-btn` (`navigation-styles.css`, F-577/578) |
+| **Удаление в форме** (позиция/фото) | `btn-xs` (контекстно мелкий) | **16px** (`w-4 h-4`) | PurchaseForm/WriteOffForm/WriteOffByBalanceForm/MaterialForm (F-612 — было 12px вразнобой) |
+| **Ведущая иконка в текст-кнопке** | по тексту | 16px (`w-4 h-4`) | «Экспорт», «Добавить позицию» и т.п. |
+| **Иконка в поле-контроле** (свернуть группу, шаг) | `btn-xs`/`sm` | 16px (`w-4 h-4`) | Balances/ChartContainer |
+| **Пустое состояние / плейсхолдер** | — | 48–64px (`w-12`/`w-16`) | иллюстративные, не действия |
+
+Правила: `viewBox="0 0 24 24"`, `stroke="currentColor"` везде; тач-минимум **≥44px** на
+`(pointer: coarse)` даёт правило в `components.css` (F-567), даже если визуальный контрол меньше —
+паддим хит-таргет, не картинку. Новые иконочные кнопки — брать существующий класс роли, не плодить
+инлайновые размеры.
+
 ## 8. Component intents (restyled centrally in step 2)
 
 - **Button** — square-ish 4px, Plex Sans 500. Primary = copper solid (white text); secondary = graphite
