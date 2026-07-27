@@ -112,6 +112,27 @@ describe('PurchaseForm', () => {
       expect(hasErrors).toBe(true)
     })
 
+    // M2: ошибки валидации позиций должны рендериться через getItemFieldError (itemErrors),
+    // а не молча уходить в локальный errors, где шаблон их не читает.
+    it('M2: item validation error surfaces via getItemFieldError, not swallowed', async () => {
+      const wrapper = mount(PurchaseForm, {
+        global: {
+          stubs: { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true }
+        }
+      })
+      const vm = wrapper.vm as any
+      vm.addItem()
+      Object.assign(vm.items[0], {
+        material: null, material_name: 'Новый материал', isNewMaterial: true,
+        unit: 0, quantity: '1', price: '100',
+      })
+
+      await vm.onSaved({})
+      await wrapper.vm.$nextTick()
+
+      expect(vm.getItemFieldError(0, 'unit')).toContain('Единица измерения обязательна')
+    })
+
     it('handles edit mode correctly', async () => {
       const wrapper = mount(PurchaseForm, {
         global: {

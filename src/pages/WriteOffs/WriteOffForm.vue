@@ -548,8 +548,16 @@ function getItemFieldError(itemIndex: number, fieldName: string): string {
 // баланса относятся к количеству — там пользователь и правит).
 function applyBulkRowDetail(index: number, detail: unknown) {
   const put = (field: string, msg: unknown) => {
-    const f = field === '__all__' || field === 'non_field_errors' ? 'quantity' : field
-    itemErrors[`items[${index}].${f}`] = Array.isArray(msg) ? String(msg[0]) : String(msg)
+    const text = Array.isArray(msg) ? String(msg[0]) : String(msg)
+    if (field === '__all__' || field === 'non_field_errors') {
+      itemErrors[`items[${index}].quantity`] = text
+    } else if (field === 'object' || field === 'date' || field === 'responsible') {
+      // L1: поля шапки (общие для всех позиций) не имеют per-строкового поля в шаблоне —
+      // кладём на форменную ошибку, иначе сообщение уходит в невидимый itemErrors-ключ.
+      errors.value[field] = [text]
+    } else {
+      itemErrors[`items[${index}].${field}`] = text
+    }
   }
   if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
     for (const [field, msg] of Object.entries(detail as Record<string, unknown>)) {
@@ -812,15 +820,25 @@ const handleSubmit = async () => {
   isSubmitting.value = true
   clearErrors()
   Object.keys(itemErrors).forEach(key => delete itemErrors[key])
-  
+  // M1: соответствие «индекс отправленной позиции → индекс в items.value»; нужно и в catch,
+  // поэтому объявлено во внешней области handleSubmit (в try недоступно из catch).
+  const filledDisplayIndexes: number[] = []
+
   try {
     // FE-3/F-563: считаем только ЗАПОЛНЕННЫЕ позиции (материал+единица+кол-во>0). Плейсхолдерная
     // строка присутствует всегда, поэтому старый guard items.length===0 не срабатывал → при
     // отправке одних пустых строк фильтр давал [] → Promise.all([]) резолвился → тост «Списание
     // создано» ПРИ НУЛЕ созданных записей (ложный успех / потеря данных).
-    const filledItems = items.value.filter(
-      item => item.material && item.unit && parseFloat(String(item.quantity)) > 0,
-    )
+    // Построчные ошибки bulk-create бэкенд отдаёт в индексах ЭТОГО (отфильтрованного) массива,
+    // а шаблон рендерит ошибки по индексу в полном items.value → сохраняем соответствие, иначе
+    // пустая строка перед ошибочной сдвинула бы ошибку на чужую позицию (M1).
+    const filledItems: WriteOffItem[] = []
+    items.value.forEach((item, idx) => {
+      if (item.material && item.unit && parseFloat(String(item.quantity)) > 0) {
+        filledItems.push(item)
+        filledDisplayIndexes.push(idx)
+      }
+    })
     if (filledItems.length === 0) {
       errors.value.non_field_errors = ['Добавьте хотя бы одну заполненную позицию (материал, единица, количество > 0)']
       isSubmitting.value = false
@@ -928,7 +946,9 @@ const handleSubmit = async () => {
     if (Array.isArray(bulkItems) && bulkItems.length > 0) {
       for (const row of bulkItems) {
         if (row && typeof row.index === 'number') {
-          applyBulkRowDetail(row.index, row.detail)
+          // M1: row.index — позиция в отправленном filledItems; переводим в индекс отображения.
+          const displayIdx = filledDisplayIndexes[row.index] ?? row.index
+          applyBulkRowDetail(displayIdx, row.detail)
         }
       }
       ui.toast({ type: 'error', text: error?.response?.data?.detail || 'Ошибки в позициях списания' })

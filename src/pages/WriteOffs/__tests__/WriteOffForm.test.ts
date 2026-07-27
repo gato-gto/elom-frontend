@@ -195,6 +195,71 @@ describe('WriteOffForm.vue', () => {
     expect(wrapper.emitted('success')).toBeFalsy()
     expect(vm.getItemFieldError(0, 'quantity')).toContain('Недостаточно остатка')
   })
+
+  // F-270/M1: пустая строка ПЕРЕД ошибочной сдвигает индекс — ошибка обязана сесть на реальную
+  // (заполненную) строку по индексу ОТОБРАЖЕНИЯ, а не на пустую/чужую (регресс M1).
+  it('F-270/M1: bulk row error maps to the display row, not shifted by a leading empty row', async () => {
+    // бэкенд видит позиции в индексах ОТПРАВЛЕННОГО filledItems: пустая строка отфильтрована,
+    // поэтому заполненная строка (display idx 1) приходит как index 0.
+    vi.mocked(createBulk).mockRejectedValue({
+      response: { data: { detail: 'Ошибки в позициях', errors: { items: [
+        { index: 0, detail: { __all__: ['Недостаточно остатка для списания'] } },
+      ] } } },
+    })
+
+    const wrapper = mount(WriteOffForm, {
+      props: { isOpen: true, initial: null },
+      global: { stubs: { Modal: ModalStub, MaterialSearchSelect: MaterialSearchSelectStub } }
+    })
+    await wrapper.vm.$nextTick()
+    const vm = wrapper.vm as any
+    vm.formData.object = 1
+    vm.formData.responsible = 10
+    vm.formData.date = '2026-02-01'
+    vm.addItem()                     // Row0 — пустая (material=null, отфильтруется)
+    vm.addItem()                     // Row1 — заполненная
+    vm.items[1].material = 100
+    vm.items[1].unit = 5
+    vm.items[1].quantity = '3'
+    vm.items[1].currentBalance = 100
+
+    await vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+
+    expect(createBulk).toHaveBeenCalledTimes(1)
+    // ошибка на заполненной строке (display idx 1), а НЕ на пустой (idx 0)
+    expect(vm.getItemFieldError(1, 'quantity')).toContain('Недостаточно остатка')
+    expect(vm.getItemFieldError(0, 'quantity')).toBe('')
+  })
+
+  // F-270/L1: построчная ошибка поля ШАПКИ (responsible) должна всплыть на форменной ошибке,
+  // а не уйти в невидимый itemErrors-ключ.
+  it('F-270/L1: bulk row error on a header field (responsible) surfaces on the form', async () => {
+    vi.mocked(createBulk).mockRejectedValue({
+      response: { data: { detail: 'Ошибки в позициях', errors: { items: [
+        { index: 0, detail: { responsible: ['Недопустимый ответственный'] } },
+      ] } } },
+    })
+    const wrapper = mount(WriteOffForm, {
+      props: { isOpen: true, initial: null },
+      global: { stubs: { Modal: ModalStub, MaterialSearchSelect: MaterialSearchSelectStub } }
+    })
+    await wrapper.vm.$nextTick()
+    const vm = wrapper.vm as any
+    vm.formData.object = 1
+    vm.formData.responsible = 10
+    vm.formData.date = '2026-02-01'
+    vm.addItem()
+    vm.items[0].material = 100
+    vm.items[0].unit = 5
+    vm.items[0].quantity = '3'
+    vm.items[0].currentBalance = 100
+
+    await vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+
+    expect(vm.errors.responsible?.[0]).toContain('Недопустимый ответственный')
+  })
 })
 
 

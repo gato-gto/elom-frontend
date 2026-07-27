@@ -638,6 +638,7 @@ interface PurchaseItem extends BaseItem {
 
 const {
   items,
+  itemErrors,
   addItem: addItemBase,
   removeItem: removeItemBase,
   getItemFieldError,
@@ -657,6 +658,16 @@ const {
   }),
   recalculate: (item) => recalc(item)
 })
+
+// M2: раскладываем ошибки — items[N].field → itemErrors (их читает шаблон через getItemFieldError),
+// остальные (шапка/общие) → форменные errors. Раньше ошибки позиций (единица/кол-во/материал)
+// уходили только в errors и НЕ подсвечивались вообще — шаблон читает ключи из itemErrors.
+function assignItemErrors(all: Record<string, string>) {
+  for (const [key, msg] of Object.entries(all)) {
+    if (/^items\[\d+\]\./.test(key)) { itemErrors[key] = msg }
+    else { (errors as Record<string, any>)[key] = msg }
+  }
+}
 
 // Photo management
 const instructionPhotos = ref<File[]>([])
@@ -1056,7 +1067,7 @@ async function onSaved(data: PurchaseRequest) {
   // 1. Валидация позиций
   const validationErrors = validatePurchaseItems()
   if (Object.keys(validationErrors).length > 0) {
-    Object.assign(errors, validationErrors)
+    assignItemErrors(validationErrors)
     saving.value = false
     ui.toast({ type: 'error', text: 'Пожалуйста, исправьте ошибки в позициях' })
     return
@@ -1118,10 +1129,13 @@ async function onSaved(data: PurchaseRequest) {
     const errorResult = await handleFormError(error, 'закупка')
     
     // Устанавливаем ошибки полей (включая вложенные)
+    // M2: backend-ошибки позиций (items[N].field) — в itemErrors (их читает шаблон), прочие — в errors.
+    const beErrors: Record<string, string> = {}
     Object.keys(errorResult.fieldErrors).forEach(field => {
       const fieldError = errorResult.fieldErrors[field]
-      errors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
+      beErrors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
     })
+    assignItemErrors(beErrors)
     
     // Если есть общая ошибка (например, 403), показываем её отдельно
     if (errorResult.detail && Object.keys(errorResult.fieldErrors).length === 0) {
