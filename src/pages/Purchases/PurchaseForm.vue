@@ -1,5 +1,12 @@
 <template>
   <div class="purchase-form">
+    <!-- F-643 (#28): период закрыт — предупреждение при редактировании завершённой закупки -->
+    <div v-if="periodClosedWarn" class="alert alert-warning mb-4" role="alert">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="text-sm">Период закрыт (архив) — сохранить завершённую закупку этой датой в закрытый период нельзя. Измените дату или переоткройте период.</span>
+    </div>
     <!-- Generic Form -->
     <GenericForm
       :config="formConfig"
@@ -486,6 +493,7 @@ import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
 import { useObjectsStore } from '@/stores/objects'
+import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { useEmployeesStore } from '@/stores/employees'
 import { useSuppliersStore } from '@/stores/suppliers'
 import { useUiStore } from '@/stores/ui'
@@ -520,6 +528,7 @@ const purchasesStore = usePurchasesStore()
 const materialsStore = useMaterialsStore()
 const unitsStore = useUnitsStore()
 const objectsStore = useObjectsStore()
+const archivePeriodsStore = useArchivePeriodsStore()
 const employeesStore = useEmployeesStore()
 const suppliersStore = useSuppliersStore()
 const ui = useUiStore()
@@ -536,6 +545,12 @@ const errors = reactive<Record<string, string>>({})
 // редактирования из модалки подставлял Number(undefined) → NaN (см. уведомление об ошибке).
 // Роутом остаётся только `/purchases/create` — создание.
 const isEdit = computed(() => !!props.initial)
+// F-643 (#28): завершённая закупка в закрытом периоде → BE (F-619) вернёт 400. Предупреждаем заранее.
+// Только status==='completed': «новая» заявка в закрытую дату журналом не пишется и BE её не блокирует.
+const periodClosedWarn = computed(() =>
+  (formData.value as any).status === 'completed' &&
+  archivePeriodsStore.isPeriodClosed((formData.value as any).object, (formData.value as any).date)
+)
 
 // Form data for tracking status changes
 const formData = ref({
@@ -1086,7 +1101,16 @@ async function onSaved(data: PurchaseRequest) {
     data.status = 'new'
     // responsible устанавливается автоматически на backend из текущего пользователя
   }
-  
+
+  // F-643 (#28): пред-блок завершённой закупки в закрытом периоде — не гоняем 400 по сети,
+  // сразу показываем поле «дата». Зеркалит серверный гард D-012/F-619 (журнал пишет только completed).
+  if (data.status === 'completed' && archivePeriodsStore.isPeriodClosed((data as any).object, (data as any).date)) {
+    errors.date = 'Период закрыт (архив) — измените дату или переоткройте период'
+    saving.value = false
+    ui.toast({ type: 'error', text: 'Период закрыт — измените дату' })
+    return
+  }
+
   // 1. Валидация позиций
   const validationErrors = validatePurchaseItems()
   if (Object.keys(validationErrors).length > 0) {
@@ -1327,6 +1351,10 @@ function onFieldChange(key: string, value: any) {
   if (key === 'status') {
     onStatusChange(value)
   }
+  // F-643 (#28): зеркалим object/date в formData → live-предупреждение о закрытом периоде.
+  if (key === 'object' || key === 'date') {
+    Object.assign(formData.value, { [key]: value })
+  }
 }
 
 // Load data on mount
@@ -1337,7 +1365,8 @@ async function loadData() {
     unitsStore.fetchList(),
     objectsStore.fetchList(),
     employeesStore.fetchList(),
-    suppliersStore.fetchList()
+    suppliersStore.fetchList(),
+    archivePeriodsStore.fetchList(),  // F-643 (#28): для пред-предупреждения о закрытом периоде
   ])
   
   // Load purchase data if editing
@@ -1354,6 +1383,9 @@ async function loadData() {
       // пользователь не дёргал выпадашку статуса — то есть догрузить фото-отчёт было фактически
       // нельзя. Сидируем реальный статус, чтобы секция открывалась сразу при редактировании.
       formData.value.status = purchase?.status || 'new'
+      // F-643 (#28): сидируем object/date, чтобы live-предупреждение о закрытом периоде работало
+      // сразу при открытии завершённой закупки (не только после ручного изменения поля).
+      Object.assign(formData.value, { object: purchase?.object ?? null, date: purchase?.date ?? null })
 
         if (purchase) {
         // Загружаем материалы из позиций закупки в store (включая неактивные)
