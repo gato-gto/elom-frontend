@@ -9874,6 +9874,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        is_period_closed:
+          type: boolean
+          readOnly: true
+          default: false
         items:
           type: array
           items:
@@ -9916,6 +9920,7 @@ components:
       - has_report_photos
       - id
       - is_archived
+      - is_period_closed
       - items
       - object
       - object_name

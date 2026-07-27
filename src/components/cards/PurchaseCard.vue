@@ -63,6 +63,12 @@
           <span class="text-muted">Фото-отчёт:</span>
           <span class="badge badge-warning badge-sm ml-2">нет фото</span>
         </div>
+
+        <!-- F-621/D-012: «новая» закупка датой в закрытом периоде — одобрить (завершить) нельзя -->
+        <div v-if="purchase.status === 'new' && purchase.is_period_closed">
+          <span class="text-muted">Период:</span>
+          <span class="badge badge-error badge-sm ml-2" title="Период закрыт — нельзя одобрить закупку задним числом">закрыт</span>
+        </div>
       </div>
     </template>
 

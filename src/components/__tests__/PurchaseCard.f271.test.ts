@@ -59,3 +59,27 @@ describe('PurchaseCard — F-271 маркер «нет фото-отчёта»',
     expect(w.text()).not.toContain('нет фото')
   })
 })
+
+// F-621 / D-012: «новая» закупка датой в ЗАКРЫТОМ периоде несёт бейдж «период закрыт» —
+// одобрить (завершить) её задним числом нельзя (бэк вернёт 400, F-619). Только для status='new'.
+describe('PurchaseCard — F-621 маркер «период закрыт»', () => {
+  it('показывает бейдж: новая закупка в закрытом периоде', () => {
+    const w = mountCard({ status: 'new', is_period_closed: true })
+    expect(w.text()).toContain('закрыт')
+  })
+
+  it('скрывает бейдж: период открыт', () => {
+    const w = mountCard({ status: 'new', is_period_closed: false })
+    expect(w.text()).not.toContain('Период:')
+  })
+
+  it('скрывает бейдж: аннотация неизвестна (undefined)', () => {
+    const w = mountCard({ status: 'new', is_period_closed: undefined })
+    expect(w.text()).not.toContain('Период:')
+  })
+
+  it('скрывает бейдж: завершённая закупка (бейдж только для «новых»)', () => {
+    const w = mountCard({ status: 'completed', is_period_closed: true })
+    expect(w.text()).not.toContain('Период:')
+  })
+})

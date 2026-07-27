@@ -19,6 +19,12 @@
             class="badge badge-warning badge-xs"
             title="Закупка завершена без фото-отчёта"
           >нет фото</span>
+          <!-- F-621/D-012: «новая» закупка датой в закрытом периоде — одобрить (завершить) нельзя -->
+          <span
+            v-if="item.status === 'new' && item.is_period_closed"
+            class="badge badge-error badge-xs"
+            title="Период закрыт — нельзя одобрить закупку задним числом"
+          >период закрыт</span>
         </div>
       </template>
 
@@ -293,7 +299,10 @@ const listConfig = computed(() => ({
         label: 'Одобрить',
         class: 'btn-success btn-sm',
         permission: 'purchases.approve', // ✅ RBAC: Явное указание permission
-        visible: (item: Purchase) => item.status === 'new'
+        visible: (item: Purchase) => item.status === 'new',
+        // F-621/D-012: одобрение завершает закупку → запись в журнал. В закрытый период это
+        // запрещено бэком (F-619, 400). Гасим кнопку заранее — рядом бейдж «период закрыт».
+        disabled: (item: Purchase) => item.is_period_closed === true
       },
       {
         key: 'reject',
