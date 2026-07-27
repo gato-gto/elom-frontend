@@ -414,34 +414,41 @@ async function confirmApprove() {
   const purchase = approvingPurchase.value
   if (!purchase || approveSubmitting.value) { return }
   approveSubmitting.value = true
+  const hadPhotos = approveItems.value.length > 0
   try {
-    // Фото-отчёт (опционально) грузится ДО одобрения; при сбое загрузки одобрение не
-    // произойдёт (см. approvePurchaseWithReport). Пользователь увидит ошибку и сможет
-    // повторить или одобрить без фото (фото-отчёт необязателен, D-019).
-    const hadPhotos = approveItems.value.length > 0
-    await approvePurchaseWithReport(purchase.id, approveItems.value.map(i => i.file))
-    showSuccess(hadPhotos ? 'Заявка одобрена, фото-отчёт приложен' : 'Заявка успешно одобрена')
-    closeApproveModal()
-    await purchasesStore.fetchList()
+    // Фото-отчёт (опционально) грузится ДО одобрения; при сбое загрузки одобрение не произойдёт.
+    // M3 (FE-hunt): каждый успешно загруженный файл убираем из списка — ретрай после сбоя не
+    // зальёт уже сохранённые повторно (иначе дубли PurchasePhoto без серверного unique).
+    await approvePurchaseWithReport(purchase.id, approveItems.value.map(i => i.file), (file) => {
+      const idx = approveItems.value.findIndex(i => i.file === file)
+      if (idx >= 0) { removeApproveItem(idx) }
+    })
   } catch (error: any) {
     const { parseApiError } = await import('@/utils/errorHandler')
     showError(parseApiError(error).detail)
+    return
   } finally {
     approveSubmitting.value = false
   }
+  // L3 (FE-hunt): approve уже прошёл (200) — сбой рефреша списка НЕ должен выдаваться за сбой
+  // одобрения (иначе тост «Ошибка» ПОСЛЕ «Заявка одобрена»). Рефреш вынесен за approve-try.
+  showSuccess(hadPhotos ? 'Заявка одобрена, фото-отчёт приложен' : 'Заявка успешно одобрена')
+  closeApproveModal()
+  await purchasesStore.fetchList().catch(() => {})
 }
 
 async function handleReject(purchase: Purchase) {
   const reason = prompt('Причина отклонения (необязательно):')
   try {
     await rejectPurchase(purchase.id, reason || undefined)
-    showSuccess('Заявка успешно отклонена')
-    await purchasesStore.fetchList()
   } catch (error: any) {
     const { parseApiError } = await import('@/utils/errorHandler')
-    const parsedError = parseApiError(error)
-    showError(parsedError.detail)
+    showError(parseApiError(error).detail)
+    return
   }
+  // L3 (FE-hunt): отклонение прошло — сбой рефреша не выдаём за сбой отклонения.
+  showSuccess('Заявка успешно отклонена')
+  await purchasesStore.fetchList().catch(() => {})
 }
 
 async function handleDelete(purchase: Purchase) {

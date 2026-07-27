@@ -189,12 +189,18 @@ export const approvePurchase = async (id: number): Promise<Purchase> => {
 // Фото грузим ДО одобрения; при сбое загрузки approvePurchase НЕ вызывается — не должно быть
 // «одобрено, но обещанное фото не приложилось». approve — фиксирующий шаг после успешных загрузок.
 // Пустой files → обычное одобрение (фото-отчёт необязателен, D-019).
+// M3 (FE-hunt): onUploaded вызывается ПОСЛЕ каждой успешной загрузки, чтобы вызывающий убрал
+// файл из списка на ретрай. Без этого: f1 загрузилось, f2 упало → цикл бросил ДО approve; ретрай
+// слал f1 повторно = ДУБЛИКАТ PurchasePhoto (серверного unique-констрейнта нет), копится с каждым
+// ретраем. Теперь ретрай шлёт только непросохранённые файлы.
 export const approvePurchaseWithReport = async (
     purchaseId: number,
-    files: File[] = []
+    files: File[] = [],
+    onUploaded?: (file: File) => void
 ): Promise<Purchase> => {
     for (const file of files) {
         await uploadReportPhoto(purchaseId, file)
+        onUploaded?.(file)
     }
     return approvePurchase(purchaseId)
 }

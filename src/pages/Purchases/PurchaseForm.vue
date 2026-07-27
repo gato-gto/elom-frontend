@@ -480,7 +480,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
@@ -560,9 +560,30 @@ function getItemsGeneralError(): string {
 // clearItemsDuplicateErrors теперь из useItemsForm composable
 
 // Photo management functions
+// L2 (FE-hunt): раньше getPhotoPreview звал URL.createObjectURL прямо в шаблоне → НОВЫЙ blob-URL
+// на КАЖДЫЙ рендер (recalc цены/кол-ва дёргает перерендер) → миниатюры мерцали/перезагружались,
+// а старые URL не revoke'ались (утечка object URL на каждый ввод). Мемоизируем URL per File.
+const _photoPreviewUrls = new Map<File, string>()
 function getPhotoPreview(file: File): string {
-  return URL.createObjectURL(file)
+  let url = _photoPreviewUrls.get(file)
+  if (!url) {
+    url = URL.createObjectURL(file)
+    _photoPreviewUrls.set(file, url)
+  }
+  return url
 }
+function _revokePreview(file: File | undefined) {
+  if (!file) { return }
+  const url = _photoPreviewUrls.get(file)
+  if (url) {
+    URL.revokeObjectURL(url)
+    _photoPreviewUrls.delete(file)
+  }
+}
+onUnmounted(() => {
+  _photoPreviewUrls.forEach(url => URL.revokeObjectURL(url))
+  _photoPreviewUrls.clear()
+})
 
 function onInstructionPhotosChange(event: Event) {
   const target = event.target as HTMLInputElement
@@ -575,6 +596,7 @@ function onInstructionPhotosChange(event: Event) {
 }
 
 function removeInstructionPhoto(index: number) {
+  _revokePreview(instructionPhotos.value[index])  // L2: освобождаем blob-URL удаляемого фото
   instructionPhotos.value.splice(index, 1)
 }
 
@@ -589,6 +611,7 @@ function onReportPhotosChange(event: Event) {
 }
 
 function removeReportPhoto(index: number) {
+  _revokePreview(reportPhotos.value[index])  // L2: освобождаем blob-URL удаляемого фото
   reportPhotos.value.splice(index, 1)
 }
 

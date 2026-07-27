@@ -241,6 +241,38 @@ describe('Purchases Store', () => {
       expect(urls[0]).toContain('approve')
       expect(urls.some(u => u === '/purchase-photos/')).toBe(false)
     })
+
+    // M3 (FE-hunt): onUploaded зовётся за КАЖДУЮ успешную загрузку → вызывающий убирает файл из
+    // списка, и ретрай после сбоя не шлёт уже сохранённые повторно (нет дублей PurchasePhoto).
+    it('M3: reports each uploaded file via onUploaded before approving', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { id: 5 } })
+      vi.mocked(api.get).mockResolvedValue({ data: { id: 5 } })
+      const { approvePurchaseWithReport } = await import('../purchases')
+      const uploaded: string[] = []
+      const f1 = new File(['a'], 'a.jpg', { type: 'image/jpeg' })
+      const f2 = new File(['b'], 'b.jpg', { type: 'image/jpeg' })
+
+      await approvePurchaseWithReport(5, [f1, f2], (f) => uploaded.push(f.name))
+
+      expect(uploaded).toEqual(['a.jpg', 'b.jpg'])
+    })
+
+    it('M3: on a mid-upload failure only succeeded files are reported and approve is NOT called', async () => {
+      vi.mocked(api.post)
+        .mockResolvedValueOnce({ data: { id: 10 } })          // f1 upload OK
+        .mockRejectedValueOnce(new Error('413 too large'))    // f2 upload fails
+      const { approvePurchaseWithReport } = await import('../purchases')
+      const uploaded: string[] = []
+      const f1 = new File(['a'], 'a.jpg', { type: 'image/jpeg' })
+      const f2 = new File(['b'], 'b.jpg', { type: 'image/jpeg' })
+
+      await expect(
+        approvePurchaseWithReport(5, [f1, f2], (f) => uploaded.push(f.name))
+      ).rejects.toThrow('413')
+
+      expect(uploaded).toEqual(['a.jpg'])                       // только f1 отмечен успешным
+      expect(postUrls().some(u => u.includes('approve'))).toBe(false)  // approve не вызван
+    })
   })
 })
 
