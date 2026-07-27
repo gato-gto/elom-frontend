@@ -8,7 +8,6 @@ export const endpoints = {
     auth: {
         token: join('/auth/token/'),
         refresh: join('/auth/token/refresh/'),
-        verify: join('/auth/token/verify/'),
     },
 
     // User endpoints
@@ -64,11 +63,7 @@ export const endpoints = {
         one: (id: number) => join(`/materials/${id}/`),
         uploadPhoto: (id: number) => join(`/materials/${id}/upload-photo/`),
         deletePhoto: (id: number) => join(`/materials/${id}/photo/`),
-        // Новые endpoints
-        lite: join('/materials/lite/'),
         search: join('/materials/search/'),
-        stats: join('/materials/stats/'),
-        bulkUpdate: join('/materials/bulk-update/'),
         byObject: join('/materials/by-object/'),
     },
 
@@ -117,7 +112,6 @@ export const endpoints = {
     writeOffs: {
         list: join('/writeoffs/'),
         one: (id: number) => join(`/writeoffs/${id}/`),
-        fromBalance: join('/writeoffs/from-balance/'),
         fromBalanceBulk: join('/writeoffs/from-balance-bulk/'),
     },
 
@@ -154,16 +148,6 @@ export const endpoints = {
         byMaterial: join('/reports/purchases/by-material/'),
     },
 
-    // ---------- Алиасы совместимости со старым кодом ----------
-    common: {
-        units: join('/units/'),
-        objects: join('/objects/'),
-        employees: join('/employees/'),
-        materials: join('/materials/'),
-    },
-    // Старые имена, которые использовались в коде:
-    materialsPhoto: (id: number) => join(`/materials/${id}/photo/`),
-    purchasePhotos: (id: number) => join(`/purchases/${id}/photos/`),
 } as const;
 
 export type Query = | Record<string, string | number | boolean | Array<string | number> | undefined | null>;
