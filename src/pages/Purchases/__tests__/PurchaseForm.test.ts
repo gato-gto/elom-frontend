@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PurchaseForm from '../PurchaseForm.vue'
 import { useMaterialsStore } from '@/stores/materials'
@@ -261,6 +261,36 @@ describe('PurchaseForm', () => {
       // New status doesn't require photos
       const isValid = purchase.status === 'new' || purchase.photos.length > 0
       expect(isValid).toBe(true)
+    })
+  })
+
+  describe('Report photos visibility (F-615)', () => {
+    function statusOf(vm: any): string {
+      // formData — ref в <script setup>; test-utils может отдать и ref, и развёрнутый объект.
+      return typeof vm.formData === 'object' && vm.formData.value !== undefined
+        ? vm.formData.value.status
+        : vm.formData.status
+    }
+
+    it('seeds status from an already-completed purchase so the «Фотоотчеты» section is available', async () => {
+      // РЕГРЕССИЯ: раньше formData.status оставался 'new' при загрузке (не сидировался из
+      // props.initial), и секция report_photos (condition: isEdit && status==='completed')
+      // не появлялась у завершённой закупки — догрузить фото-отчёт было нельзя.
+      const wrapper = mount(PurchaseForm, {
+        props: { initial: { id: 5, status: 'completed', items: [], photos: [] } as any },
+        global: { stubs: { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true } }
+      })
+      await flushPromises()
+      expect(statusOf(wrapper.vm)).toBe('completed')
+    })
+
+    it('keeps status new for a new purchase in edit mode', async () => {
+      const wrapper = mount(PurchaseForm, {
+        props: { initial: { id: 6, status: 'new', items: [], photos: [] } as any },
+        global: { stubs: { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true } }
+      })
+      await flushPromises()
+      expect(statusOf(wrapper.vm)).toBe('new')
     })
   })
 
