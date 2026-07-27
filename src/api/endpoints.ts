@@ -113,6 +113,7 @@ export const endpoints = {
         list: join('/writeoffs/'),
         one: (id: number) => join(`/writeoffs/${id}/`),
         fromBalanceBulk: join('/writeoffs/from-balance-bulk/'),
+        bulkCreate: join('/writeoffs/bulk-create/'), // F-270: атомарное массовое «Новое списание»
     },
 
     // Archive periods (закрытие/открытие месяца×объекта)

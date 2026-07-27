@@ -1,11 +1,12 @@
 /**
  * Store для управления списаниями
  */
+import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { createBaseStore } from './base'
-import type { 
-  WriteOff, 
-  WriteOffCreateRequest, 
+import type {
+  WriteOff,
+  WriteOffCreateRequest,
   WriteOffUpdateRequest
 } from '@/api/types'
 
@@ -16,6 +17,41 @@ export const useWriteOffsStore = createBaseStore<WriteOff, WriteOffCreateRequest
   entityNamePlural: 'списания',
   defaultOrdering: '-date'
 })
+
+// ============================================================================
+// Custom Actions
+// ============================================================================
+
+// F-270: одна позиция пакетного «Нового списания» (общие object/date/responsible в шапке).
+export interface WriteOffBulkItem {
+  material: number
+  unit: number
+  quantity: string
+  comment?: string
+}
+
+// F-270: тело POST /writeoffs/bulk-create/ — один object+date+responsible на массив позиций.
+export interface WriteOffBulkPayload {
+  object: number
+  date: string
+  responsible: number
+  comment?: string
+  items: WriteOffBulkItem[]
+}
+
+export interface WriteOffBulkResponse {
+  count: number
+  created: WriteOff[]
+}
+
+// F-270: атомарное массовое «Новое списание» — ОДИН запрос вместо N неатомарных create().
+// Всё-или-ничего; при ошибке любой строки бэкенд откатывает все и возвращает 400 с
+// errors.items[{index, detail}] (форма раскладывает их по позициям). Не бросаем в store.error —
+// форма сама разбирает построчные ошибки и показывает тост.
+export const createBulk = async (payload: WriteOffBulkPayload): Promise<WriteOffBulkResponse> => {
+  const response = await api.post<WriteOffBulkResponse>(endpoints.writeOffs.bulkCreate, payload)
+  return response.data
+}
 
 // ============================================================================
 // Helper Functions

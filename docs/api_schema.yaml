@@ -936,8 +936,9 @@ paths:
           enum:
           - admin
           - brigadier
-          - coordinator
-          - director
+          - manager
+          - requester
+          - warehouse
         description: 'Фильтр: роль сотрудника'
       - in: query
         name: search
@@ -965,8 +966,8 @@ paths:
       operationId: employees_create
       description: "\n        Создать нового сотрудника в системе.\n        \n   \
         \     **Обязательные поля:** username, password, role\n        **Опциональные:**\
-        \ first_name, last_name, email\n        \n        Требуется роль admin или\
-        \ director.\n        "
+        \ first_name, last_name, email\n        \n        Требуется роль admin.\n\
+        \        "
       summary: Создать сотрудника
       tags:
       - Employees
@@ -1134,10 +1135,9 @@ paths:
       operationId: employees_set_password
       description: "\n        Установить новый пароль для сотрудника.\n        \n\
         \        **Требования к паролю:**\n        - Минимум 6 символов\n        \n\
-        \        **Права доступа:**\n        - Только admin и director\n        \n\
-        \        **Примечание:** Сотрудник не может сменить пароль себе через этот\
-        \ endpoint.\n        Для самостоятельной смены пароля используйте другой механизм.\n\
-        \        "
+        \        **Права доступа:**\n        - Только admin\n        \n        **Примечание:**\
+        \ Сотрудник не может сменить пароль себе через этот endpoint.\n        Для\
+        \ самостоятельной смены пароля используйте другой механизм.\n        "
       summary: Сменить пароль сотруднику
       parameters:
       - in: path
@@ -1173,7 +1173,7 @@ paths:
         '400':
           description: Некорректный пароль (менее 6 символов)
         '403':
-          description: Нет прав доступа (требуется admin или director)
+          description: Нет прав доступа (требуется admin)
         '404':
           description: Сотрудник не найден
   /api/v1/material-categories/:
@@ -2128,8 +2128,9 @@ paths:
           description: Материал не найден
     delete:
       operationId: materials_destroy
-      description: Удалить материал. Рекомендуется деактивировать (is_active=false)
-        вместо удаления.
+      description: Удалить материал. Запрещено, если материал используется в закупках/движениях
+        (история сохраняется). Рекомендуется деактивировать (is_active=false) вместо
+        удаления.
       summary: Удалить материал
       parameters:
       - in: path
@@ -2145,6 +2146,8 @@ paths:
       responses:
         '204':
           description: Успешно удалено
+        '400':
+          description: Материал используется в закупках/движениях, удаление невозможно
         '401':
           description: Не авторизован
         '403':
@@ -6308,86 +6311,6 @@ paths:
           description: ''
         '404':
           description: Выдача не найдена
-    put:
-      operationId: tool_issues_update
-      description: Обновление выдач запрещено для сохранения истории. Используйте
-        action `return` для возврата инструмента.
-      summary: Обновить выдачу (запрещено)
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Выдача инструмента.
-        required: true
-      tags:
-      - Tool Issues
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ToolIssueRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ToolIssueRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ToolIssueRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '400':
-          description: Обновление выдач запрещено
-    patch:
-      operationId: tool_issues_partial_update
-      description: Обновление выдач запрещено для сохранения истории. Используйте
-        action `return` для возврата инструмента.
-      summary: Частичное обновление выдачи (запрещено)
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Выдача инструмента.
-        required: true
-      tags:
-      - Tool Issues
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedToolIssueRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedToolIssueRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedToolIssueRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '400':
-          description: Обновление выдач запрещено
-    delete:
-      operationId: tool_issues_destroy
-      description: Удаление выдач запрещено для сохранения полной истории движений
-        инструментов.
-      summary: Удалить выдачу (запрещено)
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Выдача инструмента.
-        required: true
-      tags:
-      - Tool Issues
-      security:
-      - jwtAuth: []
-      responses:
-        '400':
-          description: Удаление выдач запрещено
   /api/v1/tool-issues/{id}/return/:
     post:
       operationId: tool_issues_return_create
@@ -7329,10 +7252,11 @@ paths:
       operationId: auth_me
       description: "\n        Возвращает профиль авторизованного пользователя с информацией\
         \ о роли.\n        \n        **Роли в системе (RBAC):**\n        - `admin`\
-        \ — Администратор (только через Django Admin)\n        - `director` — Директор\
-        \ (полный доступ ко всем данным)\n        - `coordinator` — Координатор (координация\
-        \ между объектами)\n        - `brigadier` — Бригадир (работа с назначенными\
-        \ объектами)\n        "
+        \ — Администратор (полный доступ ко всем функциям)\n        - `manager` —\
+        \ Управляющий (полный доступ без учета изменений)\n        - `warehouse` —\
+        \ Склад/Цех/Проект (полный доступ без учета изменений)\n        - `brigadier`\
+        \ — Бригадир/Инженер (работа с назначенными объектами)\n        - `requester`\
+        \ — Заявитель (просмотр и подача заявок на материалы)\n        "
       summary: Профиль текущего пользователя
       tags:
       - Auth
@@ -7345,19 +7269,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
               examples:
-                ПримерОтвета:Директор:
+                ПримерОтвета:Управляющий:
                   value:
                     id: 1
-                    username: director
-                    email: director@elom.uz
+                    username: manager
+                    email: manager@elom.uz
                     first_name: Иван
-                    last_name: Директоров
+                    last_name: Управляющий
                     roles:
-                    - id: 1
-                      name: admin
-                      display_name: Администратор
+                    - id: 2
+                      name: manager
+                      display_name: Управляющий
                     is_active: true
-                  summary: 'Пример ответа: Директор'
+                  summary: 'Пример ответа: Управляющий'
                 ПримерОтвета:Бригадир:
                   value:
                     id: 5
@@ -7798,68 +7722,150 @@ paths:
           description: No response body
         '400':
           description: Archived data is read-only
+  /api/v1/writeoffs/bulk-create/:
+    post:
+      operationId: writeoffs_bulk_create_create
+      description: 'F-270: массив позиций {material, unit, quantity, comment?} на
+        ОДИН object+date+responsible. Атомарно — создаются ВСЕ списания или ни одного
+        (частичное сохранение невозможно). Ошибки строк возвращаются построчно: 400
+        с {errors:{items:[{index, detail}]}}, без 500.'
+      summary: Массовое создание списаний (обычное «Новое списание»)
+      tags:
+      - WriteOff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_WriteOffBulkInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/_WriteOffBulkInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/_WriteOffBulkInputRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_FromBalanceBulkResponse'
+          description: ''
+        '400':
+          description: 'Построчные ошибки: errors.items[{index, detail}]'
   /api/v1/writeoffs/from-balance/:
     post:
       operationId: writeoffs_from_balance_create
-      description: Создать списание из фактического остатка (инвентаризация) — одна
-        позиция.
+      description: |-
+        F-213 / D-015: второй способ оформить расход. Пользователь вводит ФАКТИЧЕСКИЙ остаток материала на объекте; система вычисляет расход = книжный остаток − факт и создаёт списание на разницу (через обычный путь WriteOff: скоуп, ответственный, леджер, аудит).
+
+        w4-2: unit и quantity в теле запроса НЕ передаются — сервер вычисляет их сам (unit — из Material.default_unit, quantity — book − target_balance).
+      summary: Списание по фактическому остатку (инвентаризация)
       tags:
-      - writeoffs
+      - WriteOffs
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WriteOffRequest'
+              $ref: '#/components/schemas/_FromBalanceInputRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  object: 1
+                  material: 5
+                  target_balance: '70.000'
+                  date: '2025-09-21'
+                  comment: Инвентаризация склада
+                summary: Пример запроса
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WriteOffRequest'
+              $ref: '#/components/schemas/_FromBalanceInputRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WriteOffRequest'
+              $ref: '#/components/schemas/_FromBalanceInputRequest'
         required: true
       security:
       - jwtAuth: []
       responses:
-        '200':
+        '201':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WriteOff'
           description: ''
+        '400':
+          description: Отсутствуют/некорректны поля, отрицательный/превышающий книжный
+            остаток, или нулевой расход
+        '403':
+          description: Нет доступа к объекту (F-275)
   /api/v1/writeoffs/from-balance-bulk/:
     post:
       operationId: writeoffs_from_balance_bulk_create
-      description: |-
-        Массовая инвентаризация (F-268): массив позиций {material, target_balance, comment?} на
-        ОДИН объект и дату. Атомарно — либо создаются ВСЕ списания, либо ни одного. Ошибки строк
-        возвращаются построчно (400 с индексом), без 500 и без частичного сохранения.
+      description: 'F-268: массив позиций {material, target_balance, comment?} на
+        ОДИН объект и дату. Атомарно — либо создаются ВСЕ списания, либо ни одного.
+        Ошибки строк возвращаются построчно (400 с индексом), без 500 и без частичного
+        сохранения.'
+      summary: Массовая инвентаризация (несколько позиций на один объект/дату)
       tags:
-      - writeoffs
+      - WriteOffs
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WriteOffRequest'
+              $ref: '#/components/schemas/_FromBalanceBulkInputRequest'
+            examples:
+              ПримерЗапроса:
+                value:
+                  object: 1
+                  date: '2025-09-21'
+                  items:
+                  - material: 5
+                    target_balance: '70.000'
+                    comment: Кабель
+                  - material: 6
+                    target_balance: '12.000'
+                summary: Пример запроса
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WriteOffRequest'
+              $ref: '#/components/schemas/_FromBalanceBulkInputRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WriteOffRequest'
+              $ref: '#/components/schemas/_FromBalanceBulkInputRequest'
         required: true
       security:
       - jwtAuth: []
       responses:
-        '200':
+        '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WriteOff'
+                $ref: '#/components/schemas/_FromBalanceBulkResponse'
+              examples:
+                ПримерОтвета:
+                  value:
+                    count: 2
+                    created: []
+                  summary: Пример ответа
           description: ''
+        '400':
+          description: Либо общие поля (object/date/items) невалидны, либо построчные
+            ошибки позиций (errors.items) — материал не найден/повторяется, остаток
+            некорректен и т.п.
+        '403':
+          description: Нет доступа к объекту (F-275)
 components:
   schemas:
     ArchivePeriod:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         id:
           type: integer
@@ -7896,6 +7902,13 @@ components:
       - object_name
     ArchivePeriodRequest:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         month:
           type: string
@@ -7979,6 +7992,13 @@ components:
         * `handover` - Сдача
     Employee:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         id:
           type: integer
@@ -8034,6 +8054,13 @@ components:
       - username
     EmployeeRequest:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         username:
           type: string
@@ -8075,6 +8102,13 @@ components:
       - username
     Material:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         id:
           type: integer
@@ -8268,6 +8302,13 @@ components:
       - photo
     MaterialRequest:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         name:
           type: string
@@ -8556,8 +8597,13 @@ components:
       - null
     Object:
       type: object
-      description: Проставляет created_by/updated_by из request.user. Подмешивать
-        ПЕРВЫМ.
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         id:
           type: integer
@@ -8660,8 +8706,13 @@ components:
       - updated_by_name
     ObjectRequest:
       type: object
-      description: Проставляет created_by/updated_by из request.user. Подмешивать
-        ПЕРВЫМ.
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         name:
           type: string
@@ -9161,6 +9212,13 @@ components:
             $ref: '#/components/schemas/WriteOff'
     PatchedArchivePeriodRequest:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         month:
           type: string
@@ -9169,6 +9227,13 @@ components:
           type: integer
     PatchedEmployeeRequest:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         username:
           type: string
@@ -9218,6 +9283,13 @@ components:
           nullable: true
     PatchedMaterialRequest:
       type: object
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         name:
           type: string
@@ -9270,8 +9342,13 @@ components:
           description: Комментарий к заявке
     PatchedObjectRequest:
       type: object
-      description: Проставляет created_by/updated_by из request.user. Подмешивать
-        ПЕРВЫМ.
+      description: |-
+        Подмешивать в сериализатор ПЕРВЫМ (перед serializers.ModelSerializer/Serializer).
+
+        Пустая/состоящая из пробелов строка "" на optional (allow_null=True) НЕ-строковом поле
+        (Date/DateTime/Decimal/Integer/...) трактуется как «не заполнено» -> None. Строковые
+        поля (у которых есть атрибут allow_blank — CharField, ChoiceField и потомки) не трогаем:
+        там "" уже штатное, осмысленное значение.
       properties:
         name:
           type: string
@@ -9409,8 +9486,6 @@ components:
           type: string
         responsible:
           type: integer
-        is_archived:
-          type: boolean
         status:
           allOf:
           - $ref: '#/components/schemas/PurchaseStatusEnum'
@@ -9551,58 +9626,6 @@ components:
         is_archived:
           type: boolean
           description: Архивировано
-    PatchedToolIssueRequest:
-      type: object
-      description: Сериализатор для выдачи инструмента
-      properties:
-        tool:
-          type: integer
-          description: Инструмент
-        issued_to:
-          type: integer
-          description: Кому выдал (любой сотрудник)
-        object:
-          type: integer
-          nullable: true
-          description: Объект (на какой выдали, необязательно)
-        issue_condition:
-          allOf:
-          - $ref: '#/components/schemas/ToolConditionEnum'
-          description: |-
-            Состояние при выдаче (обязательно)
-
-            * `new` - Новый
-            * `good` - Хорошее
-            * `after_repair` - После ремонта
-            * `needs_repair` - Требует ремонта
-            * `broken` - Сломан
-            * `lost` - Утерян
-        issue_comment:
-          type: string
-          description: Комментарий при выдаче
-        return_date:
-          type: string
-          format: date-time
-          nullable: true
-          description: Дата возврата (пока пусто — инструмент выдан)
-        return_condition:
-          nullable: true
-          description: |-
-            Состояние при возврате (обязательно при возврате)
-
-            * `new` - Новый
-            * `good` - Хорошее
-            * `after_repair` - После ремонта
-            * `needs_repair` - Требует ремонта
-            * `broken` - Сломан
-            * `lost` - Утерян
-          oneOf:
-          - $ref: '#/components/schemas/ToolConditionEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        return_comment:
-          type: string
-          description: Комментарий при возврате
     PatchedToolRequest:
       type: object
       description: Сериализатор для инструмента
@@ -9713,9 +9736,6 @@ components:
         comment:
           type: string
           description: Комментарий
-        is_archived:
-          type: boolean
-          description: Архивировано
     Permission:
       type: object
       description: |-
@@ -9832,6 +9852,7 @@ components:
           readOnly: true
         is_archived:
           type: boolean
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/PurchaseStatusEnum'
@@ -9894,6 +9915,7 @@ components:
       - date
       - has_report_photos
       - id
+      - is_archived
       - items
       - object
       - object_name
@@ -10218,6 +10240,8 @@ components:
             * `report` - Отчёт
         purchase:
           type: integer
+        is_cover:
+          type: boolean
       required:
       - file
       - purchase
@@ -10245,8 +10269,6 @@ components:
           type: string
         responsible:
           type: integer
-        is_archived:
-          type: boolean
         status:
           allOf:
           - $ref: '#/components/schemas/PurchaseStatusEnum'
@@ -11419,6 +11441,7 @@ components:
           description: Комментарий
         is_archived:
           type: boolean
+          readOnly: true
           description: Архивировано
         current_balance:
           type: number
@@ -11459,6 +11482,7 @@ components:
       - current_balance
       - date
       - id
+      - is_archived
       - material_name
       - object
       - object_name
@@ -11513,15 +11537,92 @@ components:
         comment:
           type: string
           description: Комментарий
-        is_archived:
-          type: boolean
-          description: Архивировано
       required:
       - date
       - object
       - quantity
       - responsible
       - unit
+    _FromBalanceBulkInputRequest:
+      type: object
+      description: |-
+        Реальное тело POST /writeoffs/from-balance-bulk/ — один объект/дата на весь
+        пакет позиций (F-268).
+      properties:
+        object:
+          type: integer
+          description: ID объекта
+        date:
+          type: string
+          format: date
+          description: Дата инвентаризации (YYYY-MM-DD), одна на все позиции
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/_FromBalanceBulkItemInputRequest'
+          description: Позиции инвентаризации
+      required:
+      - date
+      - items
+      - object
+    _FromBalanceBulkItemInputRequest:
+      type: object
+      properties:
+        material:
+          type: integer
+          description: ID материала
+        target_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Фактический остаток на объекте
+        comment:
+          type: string
+      required:
+      - material
+      - target_balance
+    _FromBalanceBulkResponse:
+      type: object
+      description: Реальный ответ bulk-эндпоинта — обёртка {count, created}, а не
+        голый WriteOff.
+      properties:
+        count:
+          type: integer
+        created:
+          type: array
+          items:
+            $ref: '#/components/schemas/WriteOff'
+      required:
+      - count
+      - created
+    _FromBalanceInputRequest:
+      type: object
+      description: |-
+        Реальное тело POST /writeoffs/from-balance/ — unit и quantity вычисляются
+        сервером (_compute_from_balance_row), клиент их не передаёт.
+      properties:
+        object:
+          type: integer
+          description: ID объекта
+        material:
+          type: integer
+          description: ID материала
+        target_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Фактический остаток на объекте
+        date:
+          type: string
+          format: date
+          description: Дата инвентаризации (YYYY-MM-DD)
+        comment:
+          type: string
+      required:
+      - date
+      - material
+      - object
+      - target_balance
     _ReopenInputRequest:
       type: object
       properties:
@@ -11533,6 +11634,54 @@ components:
       required:
       - month
       - object
+    _WriteOffBulkInputRequest:
+      type: object
+      description: 'F-270: тело POST /writeoffs/bulk-create/ — один объект/дата/ответственный
+        на пакет позиций.'
+      properties:
+        object:
+          type: integer
+          description: ID объекта
+        date:
+          type: string
+          format: date
+          description: Дата (YYYY-MM-DD), одна на все позиции
+        responsible:
+          type: integer
+          description: ID ответственного (как в единичном POST)
+        comment:
+          type: string
+          description: Общий комментарий
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/_WriteOffBulkItemInputRequest'
+          description: Позиции списания
+      required:
+      - date
+      - items
+      - object
+    _WriteOffBulkItemInputRequest:
+      type: object
+      properties:
+        material:
+          type: integer
+          description: ID материала
+        unit:
+          type: integer
+          description: ID единицы измерения
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          description: Количество списания
+        comment:
+          type: string
+          description: Комментарий строки (иначе общий)
+      required:
+      - material
+      - quantity
+      - unit
   securitySchemes:
     jwtAuth:
       type: http

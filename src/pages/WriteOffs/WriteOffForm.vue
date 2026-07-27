@@ -386,7 +386,7 @@
 import { ref, computed, watch, onMounted, reactive } from 'vue'
 import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
-import { useWriteOffsStore } from '@/stores/writeOffs'
+import { useWriteOffsStore, createBulk } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
 import { useEmployeesStore, getByObject, getResponsibleEmployees, canBeResponsible } from '@/stores/employees'
@@ -539,6 +539,25 @@ function removeItem(index: number) {
 function getItemFieldError(itemIndex: number, fieldName: string): string {
   const errorKey = `items[${itemIndex}].${fieldName}`
   return itemErrors[errorKey] || ''
+}
+
+// F-270: раскладываем построчную ошибку bulk-create по полям позиции формы. detail строки
+// приходит либо словарём полей ({quantity:[...], material:[...]}), либо message_dict модели
+// ({__all__:[...]} — напр. «Недостаточно остатка»), либо списком/строкой. Полевые ошибки
+// ложатся на своё поле; __all__/non_field_errors/список/строку кладём на quantity (проверки
+// баланса относятся к количеству — там пользователь и правит).
+function applyBulkRowDetail(index: number, detail: unknown) {
+  const put = (field: string, msg: unknown) => {
+    const f = field === '__all__' || field === 'non_field_errors' ? 'quantity' : field
+    itemErrors[`items[${index}].${f}`] = Array.isArray(msg) ? String(msg[0]) : String(msg)
+  }
+  if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+    for (const [field, msg] of Object.entries(detail as Record<string, unknown>)) {
+      put(field, msg)
+    }
+  } else if (detail != null) {
+    put('quantity', detail)
+  }
 }
 
 // Function to get general items error (like duplicate materials)
@@ -876,22 +895,22 @@ const handleSubmit = async () => {
       )
       await Promise.all(extraCreates)
     } else {
-      // Создание - создаем множественные WriteOff записи (только заполненные — FE-3)
-      const createPromises = filledItems
-        .map(item => {
-          const writeOffData: WriteOffCreateRequest = {
-            date: formData.value.date,
-            object: formData.value.object,
-            material: item.material!,
-            unit: item.unit,
-            quantity: item.quantity,
-            responsible: formData.value.responsible,
-            comment: formData.value.comment || ''
-          }
-          return writeOffsStore.create(writeOffData)
-        })
-      
-      await Promise.all(createPromises)
+      // F-270: атомарное массовое «Новое списание» — ОДИН POST /writeoffs/bulk-create/.
+      // Раньше здесь были N независимых неатомарных create(): при падении N-й строки
+      // (баланс/гонка/500) первые уже сохранялись → частичное сохранение, рассинхрон с
+      // ожиданием пользователя «всё-или-ничего». Теперь либо создаются ВСЕ, либо ни одной;
+      // построчные ошибки бэкенд отдаёт как errors.items[{index, detail}] (раскладываем ниже).
+      await createBulk({
+        object: formData.value.object,
+        date: formData.value.date,
+        responsible: formData.value.responsible,
+        comment: formData.value.comment || '',
+        items: filledItems.map(item => ({
+          material: item.material!,
+          unit: item.unit,
+          quantity: item.quantity,
+        })),
+      })
     }
     
     // Уведомление об успехе
@@ -901,9 +920,23 @@ const handleSubmit = async () => {
     })
     
     emit('success')
-  } catch (error) {
+  } catch (error: any) {
+    // F-270: построчные ошибки атомарного bulk-create — errors.items[{index, detail}].
+    // Раскладываем по позициям формы, показываем общий тост и выходим (общий обработчик ниже
+    // не знает про поэлементный массив items и разложил бы его как одно поле).
+    const bulkItems = error?.response?.data?.errors?.items
+    if (Array.isArray(bulkItems) && bulkItems.length > 0) {
+      for (const row of bulkItems) {
+        if (row && typeof row.index === 'number') {
+          applyBulkRowDetail(row.index, row.detail)
+        }
+      }
+      ui.toast({ type: 'error', text: error?.response?.data?.detail || 'Ошибки в позициях списания' })
+      return
+    }
+
     const errorResult = await handleFormError(error, 'списание')
-    
+
     // Устанавливаем ошибки полей (включая вложенные)
     Object.keys(errorResult.fieldErrors).forEach(field => {
       const fieldError = errorResult.fieldErrors[field]
