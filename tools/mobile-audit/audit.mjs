@@ -58,7 +58,25 @@ const CHECK = `() => {
     }
   })
   document.querySelectorAll('button, a[href], input:not([type=hidden]), select, [role=button], [role=tab]').forEach(el => {
-    const r = el.getBoundingClientRect()
+    // F-623: измеряем ЭФФЕКТИВНУЮ тач-цель, а не сам элемент. Чекбокс/радио обычно обёрнут в
+    // кликабельный <label> (клик по всей строке переключает control) — раньше мерили 20x20 input
+    // и ложно флагали десятки controls в формах ролей/прав. Для input берём ближайший
+    // кликабельный предок (label/button/[role=button]/a), если он есть, иначе сам элемент.
+    let target = el
+    const semantic = el.closest('label, button, a[href], [role=button]')
+    if (semantic && semantic !== el) {
+      target = semantic
+    } else {
+      // Кликабельная строка без ARIA-семантики (Vue @click + cursor:pointer — распространённый
+      // паттерн строк-чекбоксов/ролей в этом приложении): эффективная тач-цель = вся строка.
+      let a = el.parentElement, hops = 0
+      while (a && hops < 4) {
+        const ar = a.getBoundingClientRect()
+        if (getComputedStyle(a).cursor === 'pointer' && ar.height >= ${TAP_MIN} && ar.width >= ${TAP_MIN}) { target = a; break }
+        a = a.parentElement; hops++
+      }
+    }
+    const r = target.getBoundingClientRect()
     const vis = r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'
     if (vis && (r.width < ${TAP_MIN} || r.height < ${TAP_MIN})) {
       out.smallTargets++
