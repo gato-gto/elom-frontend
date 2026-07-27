@@ -5,10 +5,16 @@ import { nextTick } from 'vue'
 // F-072: раньше при редактировании сохранялась только items[0], остальные позиции
 // молча терялись. Теперь первая обновляет запись, остальные создаются как новые.
 
-const update = vi.fn().mockResolvedValue({})
-const create = vi.fn().mockResolvedValue({})
+// F-628 (#13): добавочные позиции edit-пути идут через атомарный createBulk, не N×create.
+// createBulk — именованный экспорт, ссылается в фабрике vi.mock напрямую → нужен vi.hoisted
+// (иначе TDZ: «Cannot access before initialization»).
+const { update, create, createBulk } = vi.hoisted(() => ({
+  update: vi.fn().mockResolvedValue({}),
+  create: vi.fn().mockResolvedValue({}),
+  createBulk: vi.fn().mockResolvedValue({ count: 1, created: [] }),
+}))
 
-vi.mock('@/stores/writeOffs', () => ({ useWriteOffsStore: () => ({ update, create, items: [] }) }))
+vi.mock('@/stores/writeOffs', () => ({ useWriteOffsStore: () => ({ update, create, items: [] }), createBulk }))
 vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/units', () => ({ useUnitsStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/materials', () => ({ useMaterialsStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined), fetchByObject: vi.fn().mockResolvedValue([]) }) }))
@@ -27,7 +33,7 @@ vi.mock('@/composables/useErrorHandler', () => ({
 import WriteOffForm from '@/pages/WriteOffs/WriteOffForm.vue'
 
 describe('WriteOffForm edit — no position dropped (F-072)', () => {
-  beforeEach(() => { update.mockClear(); create.mockClear() })
+  beforeEach(() => { update.mockClear(); create.mockClear(); createBulk.mockClear() })
 
   it('edit with 2 positions updates the record and creates the extra', async () => {
     const wrapper = mount(WriteOffForm, {
@@ -50,7 +56,12 @@ describe('WriteOffForm edit — no position dropped (F-072)', () => {
     await vm.handleSubmit()
     expect(update).toHaveBeenCalledTimes(1)
     expect(update).toHaveBeenCalledWith(42, expect.objectContaining({ material: 10, quantity: '3' }))
-    expect(create).toHaveBeenCalledTimes(1)
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ material: 11, quantity: '4' }))
+    // F-628 (#13): добавочная позиция уходит одним атомарным createBulk (не create), retry не дублирует
+    expect(create).not.toHaveBeenCalled()
+    expect(createBulk).toHaveBeenCalledTimes(1)
+    expect(createBulk).toHaveBeenCalledWith(expect.objectContaining({
+      object: 1,
+      items: [expect.objectContaining({ material: 11, quantity: '4' })],
+    }))
   })
 })

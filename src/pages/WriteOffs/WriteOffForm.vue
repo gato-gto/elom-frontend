@@ -523,16 +523,25 @@ function addItem() {
 
 function removeItem(index: number) {
   items.value.splice(index, 1)
-  
+
   // Очищаем ошибки дублирования материалов при удалении позиции
   clearItemsDuplicateErrors()
-  
-  // Очищаем ошибки для удаленной позиции
+
+  // F-628 (#16): после splice ключи itemErrors нужно ПЕРЕИНДЕКСИРОВАТЬ. Раньше удалялись только
+  // ошибки удалённого индекса, а ошибки позиций НИЖЕ оставались на старых ключах items[j] и
+  // показывались на чужой строке (или исчезали, т.к. строка сместилась). Убираем ошибки удалённой
+  // строки и сдвигаем items[j] → items[j-1] для j > index; не-item ключи не трогаем.
+  const reindexed: Record<string, string> = {}
   Object.keys(itemErrors).forEach(key => {
-    if (key.startsWith(`items[${index}]`)) {
-      delete itemErrors[key]
-    }
+    const m = key.match(/^items\[(\d+)\]\.(.+)$/)
+    if (!m) { reindexed[key] = itemErrors[key]; return }
+    const j = parseInt(m[1], 10)
+    if (j === index) { return }               // ошибки удалённой позиции убираем
+    const nj = j > index ? j - 1 : j          // позиции ниже — сдвигаем на 1
+    reindexed[`items[${nj}].${m[2]}`] = itemErrors[key]
   })
+  Object.keys(itemErrors).forEach(k => delete itemErrors[k])
+  Object.assign(itemErrors, reindexed)
 }
 
 // Function to get item field error
@@ -900,18 +909,24 @@ const handleSubmit = async () => {
         }
         await writeOffsStore.update(props.initial.id, updateData)
       }
-      const extraCreates = validItems.slice(1).map(item =>
-        writeOffsStore.create({
-          date: formData.value.date,
+      // F-628 (#13): раньше добавочные позиции (slice(1)) создавались N независимыми create() через
+      // Promise.all — при частичном сбое успешные сохранялись, а retry пере-создавал ВСЕ → дубли
+      // расход-строк (двойное списание). Гоним их через тот же АТОМАРНЫЙ bulk-create, что и путь
+      // создания: всё-или-ничего, retry не дублирует.
+      const extras = validItems.slice(1)
+      if (extras.length > 0) {
+        await createBulk({
           object: formData.value.object,
-          material: item.material!,
-          unit: item.unit,
-          quantity: item.quantity,
+          date: formData.value.date,
           responsible: formData.value.responsible,
           comment: formData.value.comment || '',
-        } as WriteOffCreateRequest),
-      )
-      await Promise.all(extraCreates)
+          items: extras.map(item => ({
+            material: item.material!,
+            unit: item.unit,
+            quantity: item.quantity,
+          })),
+        })
+      }
     } else {
       // F-270: атомарное массовое «Новое списание» — ОДИН POST /writeoffs/bulk-create/.
       // Раньше здесь были N независимых неатомарных create(): при падении N-й строки
