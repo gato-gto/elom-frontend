@@ -950,3 +950,13 @@
     margin-top: 0.5rem !important;
   }
 }
+
+/* F-624: тач-цель ≥44px (iOS HIG) для мелких икон-кнопок (напр. удаление позиции формы,
+   btn-xs). Только на тач-устройствах (pointer: coarse) — на десктопе с мышью компактный
+   размер сохраняется. Применяется классом .touch-target. */
+@media (pointer: coarse) {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
