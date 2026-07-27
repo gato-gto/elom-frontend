@@ -34,6 +34,8 @@ export interface ActionConfig<T = any> {
   class?: string
   icon?: string
   disabled?: (item: T) => boolean
+  /** A11y: причина недоступности — идёт в title/aria-label, когда disabled(item) === true. */
+  disabledTooltip?: string | ((item: T) => string)
   visible?: (item: T) => boolean
   confirm?: string | ((item: T) => string)
   /**

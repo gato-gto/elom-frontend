@@ -24,6 +24,7 @@
             v-if="item.status === 'new' && item.is_period_closed"
             class="badge badge-error badge-xs"
             title="Период закрыт — нельзя одобрить закупку задним числом"
+            aria-label="Период закрыт — нельзя одобрить закупку задним числом"
           >период закрыт</span>
         </div>
       </template>
@@ -313,7 +314,9 @@ const listConfig = computed(() => ({
         visible: (item: Purchase) => item.status === 'new',
         // F-621/D-012: одобрение завершает закупку → запись в журнал. В закрытый период это
         // запрещено бэком (F-619, 400). Гасим кнопку заранее — рядом бейдж «период закрыт».
-        disabled: (item: Purchase) => item.is_period_closed === true
+        disabled: (item: Purchase) => item.is_period_closed === true,
+        // A11y (F-638): причина недоступности для скринридера, когда кнопка погашена.
+        disabledTooltip: 'Период закрыт — одобрить закупку задним числом нельзя'
       },
       {
         key: 'reject',

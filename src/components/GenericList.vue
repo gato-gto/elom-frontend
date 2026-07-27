@@ -147,8 +147,8 @@
                           action.disabled && action.disabled(item) ? 'btn-disabled' : ''
                         ]"
                         :disabled="action.disabled && action.disabled(item)"
-                        :title="action.label"
-                        :aria-label="action.label"
+                        :title="actionTitle(action, item)"
+                        :aria-label="actionTitle(action, item)"
                         @click="handleAction(action.key, item)"
                       >
                         <!-- F-566/F-569: типовые действия — иконкой (компактно на узких desktop);
@@ -268,7 +268,8 @@ import { formatDate } from '@/utils/formatters'
 import { filterActionsByPermissions, getListPermissions, canPerformActionOnItem } from '@/utils/permissions'
 import type {
   GenericListConfig,
-  ColumnConfig
+  ColumnConfig,
+  ActionConfig
 } from '@/types/generic'
 
 // Components
@@ -448,6 +449,16 @@ function colAlign(column: ColumnConfig): string {
   if (column.align === 'left') { return 'text-left' }
   if (RIGHT_ALIGN_KEY_RE.test(column.key)) { return 'text-right' }
   return 'text-left'
+}
+
+// A11y (F-638): title/aria-label иконочной кнопки-действия. Когда действие ЗАБЛОКИРОВАНО и задан
+// disabledTooltip — отдаём причину недоступности (иначе скринридер слышит лишь «Одобрить» без
+// объяснения, почему кнопка погашена).
+function actionTitle(action: ActionConfig, item: any): string {
+  if (action.disabled && action.disabled(item) && action.disabledTooltip) {
+    return typeof action.disabledTooltip === 'function' ? action.disabledTooltip(item) : action.disabledTooltip
+  }
+  return action.label
 }
 
 // Methods
