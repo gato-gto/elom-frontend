@@ -562,6 +562,11 @@ const formData = ref({
 
 // Function to get general items error (like duplicate materials)
 function getItemsGeneralError(): string {
+  // F-857: общий текст «Добавьте хотя бы одну позицию» (validatePurchaseItems) пишется в errors.items —
+  // ключ без items[N], раньше нигде не рендерился (пользователь видел лишь общий тост). Показываем его.
+  if (typeof (errors as Record<string, any>).items === 'string' && (errors as Record<string, any>).items) {
+    return (errors as Record<string, any>).items
+  }
   // Ищем ошибки дублирования материалов в любой позиции
   for (const [key, value] of Object.entries(errors)) {
     if (key.startsWith('items[') && typeof value === 'string' && value.includes('Нельзя добавлять один материал несколько раз')) {
@@ -1182,7 +1187,23 @@ async function onSaved(data: PurchaseRequest) {
       const fieldError = errorResult.fieldErrors[field]
       beErrors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
     })
-    assignItemErrors(beErrors)
+    // F-857: бэкенд шлёт ошибки позиций по индексу ОТПРАВЛЕННОГО (отфильтрованного) массива, а шаблон
+    // читает getItemFieldError по display-индексу полного items.value. Ведущая пустая строка → ошибка
+    // садилась на неё, реально проблемная позиция оставалась без подсветки. Ремапим backend→display
+    // (как WriteOffForm M1/F-634).
+    const filledDisplayIndexes = items.value
+      .map((_it, i) => i)
+      .filter((i) => !isEmptyPurchaseItem(items.value[i]))
+    const remapped: Record<string, string> = {}
+    Object.keys(beErrors).forEach((key) => {
+      const m = key.match(/^items\[(\d+)\]\.(.+)$/)
+      if (m && filledDisplayIndexes[Number(m[1])] !== undefined) {
+        remapped[`items[${filledDisplayIndexes[Number(m[1])]}].${m[2]}`] = beErrors[key]
+      } else {
+        remapped[key] = beErrors[key]
+      }
+    })
+    assignItemErrors(remapped)
     
     // Если есть общая ошибка (например, 403), показываем её отдельно
     if (errorResult.detail && Object.keys(errorResult.fieldErrors).length === 0) {

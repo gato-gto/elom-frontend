@@ -446,66 +446,60 @@ const handleSubmit = async () => {
       return
     }
     
-    // Создание материалов через FormData (API требует FormData, а не JSON)
-    const createPromises = items.value
-      .filter(item => item.name && item.name.trim() !== '' && item.default_unit && item.default_unit !== 0)
-      .map(async (item) => {
-        // Создаем FormData для каждого материала
-        const formData = new FormData()
-        formData.append('name', item.name.trim())
-        if (item.sku?.trim()) {
-          formData.append('sku', item.sku.trim())
-        }
-        if (item.category) {
-          formData.append('category', item.category.toString())
-        }
-        formData.append('default_unit', item.default_unit.toString())
-        if (item.manufacturer?.trim()) {
-          formData.append('manufacturer', item.manufacturer.trim())
-        }
-        if (item.description?.trim()) {
-          formData.append('description', item.description.trim())
-        }
-        // Дата создания и статус устанавливаются по умолчанию на бэкенде
-        // Не отправляем их, если они не изменены пользователем
-        // Но для совместимости с API отправляем значения по умолчанию
-        formData.append('created_date', new Date().toISOString().split('T')[0])
-        formData.append('is_active', 'true')
-        
-        // Используем прямой вызов API с FormData
-        const { data } = await api.post<Material>(
-          endpoints.materials.list,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        )
-        
-        return data
-      })
-    
-    const createdMaterials = await Promise.all(createPromises)
-    
-    // Показываем сообщение об успехе
-    const count = createdMaterials.length
-    uiStore.toast({
-      type: 'success',
-      text: `Успешно добавлено материалов: ${count}`
-    })
-    
+    // F-856: РЕТРАЙ-БЕЗОПАСНОЕ поштучное создание (у materials нет атомарного bulk-эндпоинта).
+    // Раньше Promise.all: при падении одной строки остальные уже создавались на бэке, форма
+    // оставалась открытой, повторный сабмит слал ВСЕ строки → ДУБЛИ; и построчные 400
+    // (name/sku/default_unit/non_field_errors) никуда не мапились. Теперь каждый POST в своём
+    // try/catch со знанием display-индекса: успех → item._created (ретрай пропускает), ошибка →
+    // itemErrors[items[idx].field]. Успешные строки сохраняются; повтор шлёт только несозданные.
+    const pending = items.value
+      .map((item, idx) => ({ item, idx }))
+      .filter(({ item }) => !(item as any)._created
+        && item.name && item.name.trim() !== '' && item.default_unit && item.default_unit !== 0)
+
+    let createdCount = 0
+    let failedCount = 0
+    await Promise.all(pending.map(async ({ item, idx }) => {
+      const itemAny = item as any
+      const formData = new FormData()
+      formData.append('name', item.name.trim())
+      if (item.sku?.trim()) { formData.append('sku', item.sku.trim()) }
+      if (item.category) { formData.append('category', item.category.toString()) }
+      formData.append('default_unit', item.default_unit.toString())
+      if (item.manufacturer?.trim()) { formData.append('manufacturer', item.manufacturer.trim()) }
+      if (item.description?.trim()) { formData.append('description', item.description.trim()) }
+      formData.append('created_date', new Date().toISOString().split('T')[0])
+      formData.append('is_active', 'true')
+      try {
+        await api.post<Material>(endpoints.materials.list, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        itemAny._created = true
+        createdCount++
+      } catch (err) {
+        failedCount++
+        const parsed = await handleFormError(err, 'материал')
+        Object.keys(parsed.fieldErrors || {}).forEach(field => {
+          const fe = (parsed.fieldErrors as any)[field]
+          const msg = Array.isArray(fe) ? fe[0] : fe
+          const target = field === 'non_field_errors' ? 'name' : field
+          itemErrors[`items[${idx}].${target}`] = msg
+        })
+      }
+    }))
+
+    if (createdCount > 0) {
+      uiStore.toast({ type: 'success', text: `Успешно добавлено материалов: ${createdCount}` })
+    }
+    if (failedCount > 0) {
+      uiStore.toast({ type: 'error', text: `Не создано строк: ${failedCount} — исправьте выделенные и повторите` })
+      return  // форма открыта; _created строки при повторе пропустятся (без дублей)
+    }
+
     emit('success')
   } catch (error) {
-    const errorResult = await handleFormError(error, 'материал')
-    
-    // Устанавливаем ошибки полей (включая вложенные)
-    Object.keys(errorResult.fieldErrors).forEach(field => {
-      const fieldError = errorResult.fieldErrors[field]
-      if (field.startsWith('items[')) {
-        itemErrors[field] = Array.isArray(fieldError) ? fieldError[0] : fieldError
-      }
-    })
+    // непредвиденная (не построчная) ошибка — общий обработчик
+    await handleFormError(error, 'материал')
   } finally {
     isSubmitting.value = false
   }
