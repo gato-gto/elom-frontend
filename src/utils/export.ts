@@ -1,6 +1,7 @@
 // Утилиты для экспорта данных
 import api from '@/api/client'
 import { formatCurrencyWithCode, formatDate, formatDateTime, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
+import { getClientPlatform } from '@/utils/device'
 
 function _triggerDownload(url: string, filename: string) {
   // Ошибку click() гасим, чтобы сбой скачивания не ронял приложение/тесты (F-064).
@@ -30,7 +31,7 @@ export function downloadBlob(blob: Blob, filename: string) {
 // Экспорт через backend API
 export async function exportFromBackend(
   url: string,
-  format: 'xlsx' | 'pdf',
+  format: 'xlsx' | 'csv',
   filename: string,
   filters?: Record<string, any>
 ) {
@@ -44,6 +45,8 @@ export async function exportFromBackend(
 
     // Чистим фильтры (пустые не шлём) + добавляем export=<format>
     const params: Record<string, any> = { export: format }
+    // F-866: для CSV сообщаем платформу — бэкенд отдаёт разделитель/переносы под Windows/Mac Excel.
+    if (format === 'csv') { params.platform = getClientPlatform() }
     if (filters) {
       for (const [key, value] of Object.entries(filters)) {
         if (value !== null && value !== undefined && value !== '') { params[key] = value }
@@ -60,7 +63,7 @@ export async function exportFromBackend(
       throw new Error('Экспорт в этом формате пока не поддерживается сервером')
     }
 
-    const extension = format === 'xlsx' ? 'xlsx' : 'pdf'
+    const extension = format === 'csv' ? 'csv' : 'xlsx'
     downloadBlob(blob, `${filename}.${extension}`)
     return true
   } catch (error) {

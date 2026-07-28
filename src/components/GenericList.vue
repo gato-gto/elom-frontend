@@ -261,7 +261,7 @@ import { useResponsiveTable } from '@/composables/useResponsiveTable'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUrlFilters } from '@/composables/useUrlFilters'
-import { exportToCSV, exportToExcel, exportToPDF, exportFromBackend } from '@/utils/export'
+import { exportToCSV, exportToExcel, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
 import { actionIconPath, actionBtnClass } from '@/utils/actionIcons'
 import { formatDate } from '@/utils/formatters'
@@ -301,7 +301,7 @@ useUrlFilters(props.store, () => props.config.filters)
 const emit = defineEmits<{
   create: []
   action: [action: string, item: any]
-  export: [format: 'csv' | 'excel' | 'pdf']
+  export: [format: 'csv' | 'excel']
 }>()
 
 // Composables
@@ -561,13 +561,15 @@ function handleCardAction(item: any, action: string) {
   handleAction(action, item)
 }
 
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
+async function handleExport(format: 'csv' | 'excel') {
   try {
     const filename = `${props.config.exportFilename || 'data'}_${new Date().toISOString().split('T')[0]}`
 
-    // Если есть backend URL для экспорта, используем его
-    if (props.config.exportUrl && (format === 'excel' || format === 'pdf')) {
-      const backendFormat = format === 'excel' ? 'xlsx' : 'pdf'
+    // F-866: и CSV, и Excel идут через БЭКЕНД (полные данные + русские заголовки из export_fields).
+    // Локальный фолбэк (store.items = только текущая страница, сырые англ. ключи) — лишь если у
+    // списка нет exportUrl.
+    if (props.config.exportUrl && (format === 'excel' || format === 'csv')) {
+      const backendFormat = format === 'excel' ? 'xlsx' : 'csv'
       await exportFromBackend(
         props.config.exportUrl,
         backendFormat,
@@ -575,20 +577,9 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
         props.store.filters
       )
     } else {
-      // Fallback на локальный экспорт для CSV или если нет backend URL
       const data = props.store.items
-      
-      switch (format) {
-        case 'csv':
-          exportToCSV(data, filename)
-          break
-        case 'excel':
-          exportToExcel(data, filename)
-          break
-        case 'pdf':
-          exportToPDF(data, filename)
-          break
-      }
+      if (format === 'csv') { exportToCSV(data, filename) }
+      else if (format === 'excel') { exportToExcel(data, filename) }
     }
 
     emit('export', format)
