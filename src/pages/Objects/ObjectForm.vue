@@ -270,8 +270,10 @@ async function handleSubmit(formData: ObjectRequest) {
       // Убеждаемся, что key_person_contacts не пустое (т.к. поле обязательное)
       // Если поле пустое, валидация формы должна была его отклонить
       key_person_contacts: formData.key_person_contacts?.trim() || '',
-      // Не отправляем location_url, если оно пустое
-      location_url: formData.location_url?.trim() || undefined
+      // F-874: очищенный location_url шлём как '' (не undefined) — иначе axios вырезает ключ из
+      // PATCH и открепление ссылки на карту молча теряется (форма пишет «успех», ссылка остаётся).
+      // BE CharField(blank=True, default="") принимает '' (не null).
+      location_url: formData.location_url?.trim() || ''
     }
 
     if (props.initial) {
