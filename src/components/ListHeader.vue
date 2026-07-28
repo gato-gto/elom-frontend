@@ -79,7 +79,9 @@ defineEmits<{
   border: 1px solid hsl(var(--b3));
   border-radius: 0.375rem;
   box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
-  overflow: hidden;
+  /* F-864: было `overflow: hidden` (нужно лишь чтобы скруглить ::before top-rule по углам хедера) —
+     но оно ОБРЕЗАЛО выпадающее меню экспорта (.dropdown-content выходит за нижнюю границу хедера,
+     часть пунктов пряталась). Скругляем ::before напрямую, а overflow оставляем visible. */
   position: relative;
 }
 
@@ -92,6 +94,9 @@ defineEmits<{
   right: 0;
   height: 2px;
   background: hsl(var(--p));
+  /* F-864: скругляем сам top-rule (раньше это делал parent overflow:hidden, теперь его нет). */
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
 }
 
 .header-content {
