@@ -22,10 +22,10 @@ const OUT = arg('--out', '/tmp/claude-0/-opt/60866a76-1ef8-4cd0-a2b1-96f474b5295
 const TAP_MIN = 44
 
 const DEVICE_MATRIX = [
-  { name: 'iphone-15-pro', engine: webkit, ctx: devices['iPhone 15 Pro'] },      // iOS / Safari
-  { name: 'pixel-7', engine: chromium, ctx: devices['Pixel 7'] },                // Android / Chrome
-  { name: 'ipad-pro-11', engine: webkit, ctx: devices['iPad Pro 11'] },          // tablet
-  { name: 'desktop-1366', engine: chromium, ctx: { viewport: { width: 1366, height: 900 } } },
+  { name: 'iphone-15-pro', engine: webkit, ctx: devices['iPhone 15 Pro'], mobile: true },   // iOS / Safari
+  { name: 'pixel-7', engine: chromium, ctx: devices['Pixel 7'], mobile: true },             // Android / Chrome
+  { name: 'ipad-pro-11', engine: webkit, ctx: devices['iPad Pro 11'], mobile: true },       // tablet
+  { name: 'desktop-1366', engine: chromium, ctx: { viewport: { width: 1366, height: 900 } } },  // мышь: pointer:fine
 ]
 
 // route: path; modal:true => navigating to a /create route auto-opens the form modal.
@@ -78,7 +78,9 @@ const CHECK = `() => {
     }
     const r = target.getBoundingClientRect()
     const vis = r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'
-    if (vis && (r.width < ${TAP_MIN} || r.height < ${TAP_MIN})) {
+    // F-715: округляем — min-height:44px рендерится как 43.99px (sub-pixel box), строгий <44 давал
+    // ложный флаг на технически-соответствующих 44px-целях. Round(43.99)=44 → не флаг; 42/40/31 → флаг.
+    if (vis && (Math.round(r.width) < ${TAP_MIN} || Math.round(r.height) < ${TAP_MIN})) {
       out.smallTargets++
       if (out.smallSample.length < 6) out.smallSample.push({ tag: el.tagName.toLowerCase(), w: Math.round(r.width), h: Math.round(r.height), t: (el.textContent||'').trim().slice(0,24) })
     }
@@ -98,6 +100,15 @@ for (const dev of DEVICE_MATRIX) {
   const browser = await dev.engine.launch()
   const ctx = await browser.newContext(dev.ctx)
   const page = await ctx.newPage()
+  // F-715 (harness fix): touch-девайсы матрицы (iPhone/iPad webkit, Pixel chromium) УЖЕ репортят
+  // `pointer: coarse` через playwright device-эмуляцию — проверено напрямую: matchMedia('(pointer:
+  // coarse)') === true на всех трёх БЕЗ каких-либо CDP-хаков. Значит @media(pointer:coarse) правила
+  // (F-865 min-height:44 у меню экспорта) применяются штатно на ОБОИХ движках (замер: кнопки CSV/Excel
+  // = 44px и на webkit, и на chromium). Прежние engine-зависимые «<44px» были НЕ из-за отсутствия
+  // coarse (ложная гипотеза), а из-за (а) протухшего токена → редирект на /login с полу-отрисованным
+  // DOM и (б) замера пунктов dropdown в свёрнутом/недо-reflow состоянии. Лечится валидным токеном +
+  // открытием меню и reflow-тиком (ниже) + округлением sub-pixel (в CHECK). CDP-форсинг coarse убран
+  // как основанный на неверном диагнозе. Desktop-1366 — pointer:fine (мышь), 44px не требуется.
   const consoleErrors = [], failedReq = []
   // F-625: Playwright headless-WebKit НЕ поддерживает Service Workers (офиц. Chromium-only) и на
   // КАЖДОЙ холодной загрузке эмитит «Cannot load …/sw.js due to access control checks», ХОТЯ SW
@@ -123,6 +134,11 @@ for (const dev of DEVICE_MATRIX) {
       await page.goto(BASE + route.path, { waitUntil: 'networkidle', timeout: 25000 })
       await page.waitForTimeout(route.modal ? 1300 : 600)  // modal routes auto-open a form
     } catch (e) { routes[route.label] = { error: String(e).slice(0, 90) }; continue }
+    // F-715: раскрываем dropdown-меню (экспорт) ПЕРЕД замером + даём reflow-тик, чтобы их пункты
+    // мерились в ОТКРЫТОМ (тапабельном) состоянии с применённым @media(pointer:coarse) min-height.
+    // Overflow/wideEls меряются в CHECK по scrollWidth (popover positioned, документ не расширяет).
+    await page.evaluate(() => document.querySelectorAll('details.dropdown').forEach(d => { d.open = true })).catch(() => {})
+    await page.waitForTimeout(350)  // reflow: chromium применяет min-height:44 к только что показанному popover
     const checks = await page.evaluate(eval('(' + CHECK + ')')).catch(() => null)
     await page.screenshot({ path: `${OUT}/${dev.name}__${route.label}.png`, fullPage: !route.modal }).catch(() => {})
     routes[route.label] = {
