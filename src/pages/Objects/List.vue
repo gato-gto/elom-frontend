@@ -82,6 +82,7 @@ const { can, canExportReports } = usePermissions()
 
 // Computed
 const canEdit = computed(() => can('objects', 'edit'))
+const canCreate = computed(() => can('objects', 'create'))  // F-877: create-кнопка гейтилась по .edit (fail-open, класс F-872/F-863)
 
 const modalTitle = computed(() => {
   return current.value ? 'Редактировать объект' : 'Добавить объект'
@@ -110,9 +111,9 @@ const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
   title: 'Объекты',
   subtitle: 'Управление строительными объектами и их характеристиками',
   icon: 'M3 21h18v-2H3v2zM5 10h14V8H5v2zm0-4h14V4H5v2z',
-  showCreate: canEdit.value,
+  showCreate: canCreate.value,
   createText: 'Добавить объект',
-  canCreate: canEdit.value,
+  canCreate: canCreate.value,
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'objects',

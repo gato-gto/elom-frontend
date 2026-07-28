@@ -75,6 +75,7 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 // ✅ RBAC: используем permissions
 const { can, canExportReports } = usePermissions()
 const canEdit = computed(() => can('units', 'edit'))
+const canCreate = computed(() => can('units', 'create'))  // F-877: create-кнопка гейтилась по .edit (fail-open, класс F-872/F-863)
 
 const modalOpen = ref(false)
 const current = ref<Unit | null>(null)
@@ -88,9 +89,9 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
   title: 'Единицы измерения',
   subtitle: 'Управление базовыми единицами для материалов и закупок',
   icon: 'straighten',
-  showCreate: canEdit.value,
+  showCreate: canCreate.value,
   createText: 'Добавить единицу',
-  canCreate: canEdit.value,
+  canCreate: canCreate.value,
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'units',

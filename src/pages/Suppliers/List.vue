@@ -95,6 +95,7 @@ const deleting = ref(false)
 // ✅ RBAC: проверка через permissions
 const { can, canExportReports } = usePermissions()
 const canEdit = computed(() => can('suppliers', 'edit'))
+const canCreate = computed(() => can('suppliers', 'create'))  // F-877: create-кнопка гейтилась по .edit (fail-open, класс F-872/F-863)
 const canDelete = computed(() => can('suppliers', 'delete'))
 
 // Filter options
@@ -117,9 +118,9 @@ const listConfig = computed<GenericListConfig<PurchaseSupplier>>(() => ({
   title: 'Поставщики',
   subtitle: 'Управление поставщиками материалов и услуг',
   icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-  showCreate: canEdit.value,
+  showCreate: canCreate.value,
   createText: 'Добавить поставщика',
-  canCreate: canEdit.value,
+  canCreate: canCreate.value,
   showStats: true,
   // F-861: кнопка экспорта убрана — у /suppliers/ нет бэкенд-экспорта (?export=xlsx → JSON), а
   // локальный фолбэк выгружал лишь текущую страницу (≤20) = неполно. Вернуть при добавлении BE-экспорта.

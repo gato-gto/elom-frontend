@@ -117,6 +117,7 @@ import { useEditQuery } from '@/composables/useEditQuery'
 // ✅ RBAC: проверка через permissions
 const { can, canExportReports } = usePermissions()
 const canEdit = computed(() => can('tools', 'edit'))
+const canCreate = computed(() => can('tools', 'create'))  // F-877: create-кнопка гейтилась по .edit (fail-open, класс F-872/F-863)
 
 // Stores
 const toolsStore = useToolsStore()
@@ -190,7 +191,7 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
   icon: 'build',
   showCreate: true,
   createText: 'Добавить инструмент',
-  canCreate: canEdit.value,
+  canCreate: canCreate.value,
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'tools',
