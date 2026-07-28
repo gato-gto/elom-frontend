@@ -109,17 +109,17 @@
                       </td>
                       <td class="py-2 px-3 text-right">
                         <span class="font-semibold text-success font-mono">
-                          {{ formatQuantity(material.current_balance) }} {{ material.unit_code }}
+                          {{ formatSmartQuantity(material.current_balance, material.unit_code) }}
                         </span>
                       </td>
                       <td class="py-2 px-3 text-right">
                         <span class="font-semibold text-info font-mono">
-                          {{ formatQuantity(material.total_purchased) }} {{ material.unit_code }}
+                          {{ formatSmartQuantity(material.total_purchased, material.unit_code) }}
                         </span>
                       </td>
                       <td class="py-2 px-3 text-right">
                         <span class="font-semibold text-error font-mono">
-                          {{ formatQuantity(material.total_written_off) }} {{ material.unit_code }}
+                          {{ formatSmartQuantity(material.total_written_off, material.unit_code) }}
                         </span>
                       </td>
                     </tr>
@@ -139,6 +139,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { formatNumberClean } from '@/utils/formatters'
+import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки/приход/расход — «умное» число (9 750 км), как в карточках (F-867)
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useUiStore } from '@/stores/ui'
 import { useObjectsStore } from '@/stores/objects'
@@ -206,8 +207,10 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
   filterColumns: 3,
   columns: [
     { key: 'object_name', label: 'Объект', sortable: true },
-    { key: 'total_materials', label: 'Материалов', sortable: true },
-    { key: 'total_balance', label: 'Общий остаток', sortable: false }
+    // F-716: заголовок на ту же ось, что кастомный слот значения (total_materials — по центру,
+    // total_balance — вправо). Ключи не ловятся авто-регэкспом RIGHT_ALIGN_KEY_RE, задаём align явно.
+    { key: 'total_materials', label: 'Материалов', sortable: true, align: 'center' },
+    { key: 'total_balance', label: 'Общий остаток', sortable: false, align: 'right' }
   ],
   filters: [
     // F-220: removed the dead 'search' text filter — the by-objects aggregate endpoint only accepts

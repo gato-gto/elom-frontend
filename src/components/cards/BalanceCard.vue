@@ -54,14 +54,15 @@
                   <div class="text-xs text-muted mt-1">{{ material.unit_code }}</div>
                 </div>
                 <div class="ml-2 text-right flex-shrink-0">
+                  <!-- F-717: остаток/приход/расход — «умным» числом (F-867), как в списках и карточках материалов -->
                   <div class="font-semibold text-success dark:text-success font-mono">
-                    {{ formatQuantity(material.current_balance) }} {{ material.unit_code }}
+                    {{ formatSmartQuantity(material.current_balance, material.unit_code) }}
                   </div>
                   <div class="text-xs text-muted mt-1">
-                    Приход: <span class="text-info font-mono">{{ formatQuantity(material.total_purchased) }}</span>
+                    Приход: <span class="text-info font-mono">{{ formatSmartQuantity(material.total_purchased, material.unit_code) }}</span>
                   </div>
                   <div class="text-xs text-muted">
-                    Расход: <span class="text-error font-mono">{{ formatQuantity(material.total_written_off) }}</span>
+                    Расход: <span class="text-error font-mono">{{ formatSmartQuantity(material.total_written_off, material.unit_code) }}</span>
                   </div>
                 </div>
               </div>
@@ -83,6 +84,7 @@ import { ref } from 'vue'
 import { ObjectBalance, MaterialBalance } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import { formatNumberClean } from '@/utils/formatters'
+import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки «умным» числом (F-867)
 
 interface Props {
   balance: ObjectBalance

@@ -47,10 +47,11 @@
       </template>
 
       <!-- Custom column for current balance -->
+      <!-- F-717: остаток — «умное» число одним значением (9 750 км вместо 9750000 м), как количество/карточки (F-867). -->
       <template #column-current_balance="{ item, value }">
         <div class="text-right">
           <span class="font-mono text-sm text-muted">
-            {{ formatNumberClean(value) }} {{ item.unit_code }}
+            {{ formatSmartQuantity(value, item.unit_code) }}
           </span>
         </div>
       </template>
@@ -86,6 +87,7 @@ import { useEditQuery } from '@/composables/useEditQuery'
 import type { WriteOff, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
+import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остаток «умным» числом (F-867)
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useWriteOffsStore } from '@/stores/writeOffs'
