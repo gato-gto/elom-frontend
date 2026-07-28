@@ -178,7 +178,7 @@ const listConfig = computed<GenericListConfig<Material>>(() => ({
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
-      disabled: () => !canEdit.value,
+      permission: 'materials.delete', // F-863 (perm-audit): было disabled:!canEdit (право EDIT!) → fail-open для роли edit-без-delete
       confirm: (item: Material) => `Удалить материал "${item.name}"?`
     }
   ],

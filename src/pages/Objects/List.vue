@@ -168,7 +168,8 @@ const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
-      disabled: (item: SiteObject) => !canEdit.value || !item.is_active,
+      permission: 'objects.delete', // F-863 (perm-audit): гейт по DELETE-праву (было !canEdit = EDIT → fail-open)
+      disabled: (item: SiteObject) => !item.is_active,
       confirm: (item: SiteObject) =>
         `Удалить объект "${item.name}"? Если у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
     }

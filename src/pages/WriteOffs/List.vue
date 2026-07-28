@@ -239,7 +239,8 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
     {
       key: 'edit',
       label: 'Редактировать',
-      class: 'btn-outline'
+      class: 'btn-outline',
+      permission: 'writeoffs.edit' // F-863 (perm-audit): было БЕЗ гейта (нет resource) → fail-open для роли view-only; _own учитывается filterActionsByPermissions
     }
   ],
   mobileCardComponent: WriteOffCard,

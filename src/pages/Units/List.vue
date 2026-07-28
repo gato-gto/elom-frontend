@@ -138,7 +138,7 @@ const listConfig = computed<GenericListConfig<Unit>>(() => ({
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
-      disabled: () => !canEdit.value,
+      permission: 'units.delete', // F-863 (perm-audit): гейт по DELETE-праву (было !canEdit = EDIT → fail-open)
       confirm: (item: Unit) => {
         const isSmartUnit = isUsedInSmartConversion(item.code)
         let message = `Удалить единицу измерения "${item.name}" (${item.code})?`
