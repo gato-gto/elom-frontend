@@ -228,13 +228,20 @@ const listConfig = computed(() => ({
     { key: 'purchase_no', label: '№ закупки', sortable: true },
     { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name
     { key: 'supplier__name', label: 'Поставщик', sortable: true, displayKey: 'supplier_name' }, // Используем supplier__name для сортировки, но отображаем supplier_name
-    { key: 'responsible__id', label: 'Ответственный', sortable: true, displayKey: 'responsible_name' }, // Используем responsible__id для сортировки, но отображаем responsible_name
+    { key: 'responsible__username', label: 'Ответственный', sortable: true, displayKey: 'responsible_name' }, // F-858: сортируем по username (уже в ordering_fields), а не по скрытому User.id (порядок регистрации)
     // F-316: кто ВНЁС запись — это не «Ответственный». Сортировка реальная:
     // created_by__username добавлен в ordering_fields на бэке (иначе была бы мёртвая сортировка).
     { key: 'created_by__username', label: 'Внёс', sortable: true, displayKey: 'created_by_name' },
     { key: 'items', label: 'Позиций', sortable: false, formatter: (value: any) => value?.length ?? 0 }
   ],
   filters: [
+    {
+      // F-858: BE search_fields = supplier__name/invoice_number/comment были рабочие, но без поля в UI
+      key: 'search',
+      type: 'text' as const,
+      label: 'Поиск',
+      placeholder: '№ накладной, поставщик, комментарий'
+    },
     {
       key: 'date_after',
       type: 'date' as const,
