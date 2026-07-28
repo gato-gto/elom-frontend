@@ -226,7 +226,12 @@ export function createBaseStore<T extends { id: number; name?: string; title?: s
         )
 
         if (params) {
-          Object.assign(filters.value, params)
+          // F-851: НЕ персистим pagination-параметры в общие filters. page_size из разового вызова
+          // (напр. materialsStore.fetchList({page_size:1000}) на другой странице) иначе протекал в
+          // синглтон-стор и через `...filters.value` перетирал page_size следующих запросов → список
+          // молча грузил до 1000 строк и ломал пагинацию. Пагинация живёт в pagination.value.
+          const { page: _page, page_size: _pageSize, ...persistable } = params
+          Object.assign(filters.value, persistable)
         }
 
         return items.value

@@ -619,6 +619,13 @@ const loadCurrentBalance = async (item: WriteOffItem, _index: number) => {
     return
   }
 
+  // F-854: монотонный per-item токен. Быстрые смены даты/материала запускали перекрывающиеся
+  // загрузки; ответ устаревшего запроса перетирал currentBalance → ложная over-balance-блокировка
+  // сабмита. Токен на item (а не глобальный) — параллельные загрузки РАЗНЫХ позиций не мешают друг другу.
+  const itemAny = item as any
+  const token = (itemAny._balanceToken || 0) + 1
+  itemAny._balanceToken = token
+
   try {
     const { data } = await api.get(endpoints.stockSnapshots.balance, {
       params: {
@@ -627,7 +634,8 @@ const loadCurrentBalance = async (item: WriteOffItem, _index: number) => {
         date: formData.value.date
       }
     })
-    
+
+    if (itemAny._balanceToken !== token) { return }  // устарел — новее уже в полёте
     let balance = parseFloat(data.current_balance || 0)
     // F-229: в edit-режиме /balance возвращает остаток, УЖЕ уменьшенный на собственный снапшот
     // этого списания, поэтому getFutureBalance вычитал бы количество ДВАЖДЫ. Возвращаем своё

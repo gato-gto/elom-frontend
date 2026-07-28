@@ -323,6 +323,9 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 // Lifecycle
 onMounted(async () => {
   try {
+    // F-855: дефолтную дату остатков обновляем на СЕГОДНЯ при каждом маунте — иначе в долгоживущей
+    // PWA extendedFilters.date оставался датой импорта модуля (вчера/раньше) и остатки грузились не за тот день.
+    extendedFilters.value.date = new Date().toISOString().split('T')[0]
     // Load objects for filter options
     await objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any)
     

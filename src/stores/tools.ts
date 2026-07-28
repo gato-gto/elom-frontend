@@ -66,9 +66,11 @@ export const useToolsStore = defineStore('tools', () => {
   // ========================================================================
   // Actions
   // ========================================================================
+  let fetchListGen = 0  // F-852: порт F-636 generation-guard из base.ts (tools — ручной стор без него)
   const fetchList = async (params?: Record<string, any>): Promise<Tool[]> => {
     loading.value = true
     error.value = null
+    const gen = ++fetchListGen
 
     try {
       const queryParams: Record<string, any> = {
@@ -89,6 +91,7 @@ export const useToolsStore = defineStore('tools', () => {
       const query = buildQuery(queryParams)
       const { data } = await api.get(endpoints.tools.list + query)
 
+      if (gen !== fetchListGen) { return items.value }  // F-852: более новый fetch стартовал → ответ устарел
       items.value = data.results || data
       pagination.value = {
         count: data.count || data.length || 0,
@@ -105,7 +108,7 @@ export const useToolsStore = defineStore('tools', () => {
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'tools' })
       throw err
     } finally {
-      loading.value = false
+      if (gen === fetchListGen) { loading.value = false }  // F-852: не гасим loading устаревшим ответом
     }
   }
 

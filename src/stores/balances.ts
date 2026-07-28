@@ -41,12 +41,16 @@ export const fetchBalancesList = async (params?: {
   store.error = null
 
   try {
+    // F-855: единый источник object/date — params (явный вызов) > store.filters (его ведёт URL/
+    // useUrlFilters, напр. кнопка «Назад») > extendedFilters (дефолт). Раньше читали ТОЛЬКО
+    // module-level extendedFilters → Back менял store.filters/URL, но запрос слал старый object → данные ≠ URL.
+    const src: any = { ...extendedFilters.value, ...(store.filters || {}), ...(params || {}) }
     const apiParams = new URLSearchParams()
-    if (extendedFilters.value.object) {
-      apiParams.append('object_id', extendedFilters.value.object)
+    if (src.object) {
+      apiParams.append('object_id', String(src.object))
     }
-    if (extendedFilters.value.date) {
-      apiParams.append('date', extendedFilters.value.date)
+    if (src.date) {
+      apiParams.append('date', String(src.date))
     }
     // F-583: отправляем ordering (BE by-objects поддерживает object_name|total_materials, ±) —
     // раньше не клали, поэтому сортировка из UI была мёртвой (PROJECT_STATE «Осталось у B»).

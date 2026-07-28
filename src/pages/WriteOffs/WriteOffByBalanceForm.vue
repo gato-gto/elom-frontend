@@ -355,7 +355,9 @@ function handleSubmit() {
 }
 
 function reset() {
-  date.value = today
+  // F-853: свежая дата на КАЖДОЕ открытие (форма всегда смонтирована через :is-open; PWA,
+  // открытая через полночь, иначе дефолтила инвентаризацию вчерашней датой).
+  date.value = new Date().toISOString().split('T')[0]
   objectId.value = 0
   rows.value = [blankRow()]
   stockMaterials.value = []
