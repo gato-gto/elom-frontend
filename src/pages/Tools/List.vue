@@ -251,13 +251,15 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
       key: 'issue',
       label: 'Выдать',
       class: 'btn-success btn-sm',
-      disabled: (item: Tool) => !!item.current_holder
+      // F-850 (RBAC fail-open): BE issue требует tools.create; гейтим и состоянием, и правом
+      disabled: (item: Tool) => !!item.current_holder || !can('tools', 'create')
     },
     {
       key: 'return',
       label: 'Вернуть',
       class: 'btn-warning btn-sm',
-      disabled: (item: Tool) => !item.current_holder
+      // F-850 (RBAC fail-open): BE return_tool требует tools.edit
+      disabled: (item: Tool) => !item.current_holder || !can('tools', 'edit')
     },
     {
       key: 'history',
@@ -267,12 +269,14 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
     {
       key: 'edit',
       label: 'Редактировать',
-      class: 'btn-outline btn-sm'
+      class: 'btn-outline btn-sm',
+      disabled: () => !canEdit.value  // F-850 (RBAC fail-open): было активно у view-only заявителя
     },
     {
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error btn-sm',
+      disabled: () => !can('tools', 'delete'),  // F-850 (RBAC fail-open)
       confirm: (item: Tool) => `Удалить инструмент "${item.name}"?`
     }
   ],

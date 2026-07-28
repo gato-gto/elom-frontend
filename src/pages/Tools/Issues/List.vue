@@ -101,7 +101,7 @@ const ui = useUiStore()
 const { handleLoadingError } = useErrorHandler()
 
 // ✅ RBAC: проверка экспорта через permissions
-const { canExportReports } = usePermissions()
+const { can, canExportReports } = usePermissions()
 
 // Modal state
 const returnModalOpen = ref(false)
@@ -159,7 +159,8 @@ const listConfig = computed<GenericListConfig<ToolIssue>>(() => ({
       key: 'return',
       label: 'Вернуть',
       class: 'btn-success btn-sm',
-      disabled: (item: ToolIssue) => !item.is_open
+      // F-850 (RBAC fail-open): BE return_tool требует tools.edit; было гейтом только по is_open
+      disabled: (item: ToolIssue) => !item.is_open || !can('tools', 'edit')
     },
     {
       key: 'view',
