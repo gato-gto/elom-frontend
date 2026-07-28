@@ -116,6 +116,14 @@ const SYNTH = [
   { name: 'objects edit, NO delete', perms: ['objects.view', 'objects.view_all', 'objects.edit'], path: '/objects', mustHide: ['Удалить'] },
   { name: 'units edit, NO delete', perms: ['units.view', 'units.edit'], path: '/units', mustHide: ['Удалить'] },
   { name: 'employees edit, NO delete', perms: ['employees.view', 'employees.edit'], path: '/employees', mustHide: ['Удалить'] },
+  // F-877/F-872: «Добавить» гейтилось по .edit на 6 списках (fail-open для роли edit-без-create).
+  // Роль с <res>.edit, но БЕЗ <res>.create не должна видеть активную create-кнопку.
+  { name: 'materials edit, NO create', perms: ['materials.view', 'materials.edit'], path: '/materials', mustHide: ['Добавить материал'] },
+  { name: 'objects edit, NO create', perms: ['objects.view', 'objects.view_all', 'objects.edit'], path: '/objects', mustHide: ['Добавить объект'] },
+  { name: 'units edit, NO create', perms: ['units.view', 'units.edit'], path: '/units', mustHide: ['Добавить единицу'] },
+  { name: 'suppliers edit, NO create', perms: ['suppliers.view', 'suppliers.edit'], path: '/suppliers', mustHide: ['Добавить поставщика'] },
+  { name: 'tools edit, NO create', perms: ['tools.view', 'tools.edit'], path: '/tools_index', mustHide: ['Добавить инструмент'] },
+  { name: 'categories edit, NO create/delete', perms: ['material_categories.view', 'material_categories.edit'], path: '/material_categories', mustHide: ['Добавить категорию', 'Удалить'] },
 ]
 for (const sc of SYNTH) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, ignoreHTTPSErrors: true })
