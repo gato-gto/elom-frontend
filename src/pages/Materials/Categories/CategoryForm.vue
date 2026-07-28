@@ -111,6 +111,8 @@ async function handleSubmit(data: { name: string; parent?: number | string }) {
     }
   } catch (error) {
     await handleFormError(error, 'category')
+    throw error  // F-873: пробрасываем наверх — иначе GenericForm не отрисует inline-ошибки полей
+                 // (дубль имени, 403 и т.п.), как это делают остальные формы (напр. ObjectForm).
   }
 }
 
