@@ -371,11 +371,9 @@ onMounted(() => {
   // capture:true — ловим скролл ЛЮБОГО контейнера (тело модалки скроллится и не поднимает
   // событие до window без capture), иначе меню «отрывалось» от поля при прокрутке формы.
   window.addEventListener('scroll', handleReposition, true)
-  
-  // Load initial material if modelValue is set
-  if (props.modelValue) {
-    loadSelectedMaterial(props.modelValue)
-  }
+  // F-875: начальную загрузку материала НЕ дублируем здесь — её уже делает watcher modelValue с
+  // immediate:true (см. выше). Раньше onMounted звал loadSelectedMaterial повторно → два одинаковых
+  // GET /materials/:id при монтировании формы с непрокэшированным материалом (fetchOne без dedup).
 })
 
 onUnmounted(() => {
