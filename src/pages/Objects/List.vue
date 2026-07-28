@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for address -->
       <template #column-address="{ value }">
@@ -55,7 +54,6 @@ import type { SiteObject } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useObjectsStore, fetchResponsibles } from '@/stores/objects'
 import { usePermissions } from '@/composables/usePermissions'
 import { useEditQuery } from '@/composables/useEditQuery'
@@ -194,27 +192,6 @@ function openCreate() {
 function openEdit(object: SiteObject) {
   current.value = object
   modalOpen.value = true
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = objectsStore.items
-    const filename = `objects_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'objects')
-  }
 }
 
 async function handleAction(action: string, item: SiteObject) {

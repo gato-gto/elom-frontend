@@ -4,14 +4,12 @@
     <GenericList
       :store="balancesStore"
       :config="listConfig"
-      @export="handleExport"
     >
       <template #header-actions>
         <ExportButton 
           :data="balancesStore.items"
           filename="balances"
           :loading="balancesStore.loading"
-          @export="handleExport"
         />
       </template>
       <!-- Custom column for object name with expand button -->
@@ -137,11 +135,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useErrorHandler } from '@/composables/useErrorHandler'
 import { formatNumberClean } from '@/utils/formatters'
 import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки/приход/расход — «умное» число (9 750 км), как в карточках (F-867)
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
-import { useUiStore } from '@/stores/ui'
 import { useObjectsStore } from '@/stores/objects'
 import { useBalancesStore, fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '@/stores/balances'
 import type { GenericListConfig } from '@/types/generic'
@@ -154,11 +149,9 @@ import BalanceCard from '@/components/cards/BalanceCard.vue'
 const route = useRoute()
 
 // Stores
-const ui = useUiStore()
 const objectsStore = useObjectsStore()
 const balancesStore = useBalancesStore()
 // Error handling
-const { handleLoadingError } = useErrorHandler()
 
 // Инициализируем filters из extendedFilters
 const extendedFilters = getBalancesFilters()
@@ -296,30 +289,6 @@ function handleMaterialsSort(key: string) {
   } else {
     materialsSortBy.value = key
     materialsSortOrder.value = 'asc'
-  }
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = balancesStore.items
-
-    const filename = `balances_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-
-    ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
-  } catch (error) {
-    await handleLoadingError(error, 'balances')
   }
 }
 

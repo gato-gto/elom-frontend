@@ -21,7 +21,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for code -->
       <template #column-code="{ value }">
@@ -60,7 +59,6 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useEditQuery } from '@/composables/useEditQuery'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import type { Unit } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import Modal from '@/components/Modal.vue'
@@ -172,27 +170,6 @@ async function onSaved() {
   modalOpen.value = false
   ui.toast({ type: 'success', text: 'Единица измерения сохранена' })
   await unitsStore.fetchList()
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = unitsStore.items
-    const filename = `units_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'units')
-  }
 }
 
 async function handleAction(action: string, item: Unit) {

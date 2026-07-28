@@ -298,10 +298,13 @@ const props = defineProps<Props>()
 useUrlFilters(props.store, () => props.config.filters)
 
 // Emits
+// F-869: `export` СНЯТ намеренно. Раньше handleExport САМ качал файл (backend/fallback) И
+// повторно эмитил 'export' наверх, а страницы на @export качали ВТОРОЙ раз (клиентский
+// exportToCSV по store.items) → на один клик скачивались ДВА файла. Экспортом владеет только
+// GenericList; наверх ничего не эмитим. (Отчёты используют ExportButton напрямую — их это не касалось.)
 const emit = defineEmits<{
   create: []
   action: [action: string, item: any]
-  export: [format: 'csv' | 'excel']
 }>()
 
 // Composables
@@ -581,8 +584,8 @@ async function handleExport(format: 'csv' | 'excel') {
       if (format === 'csv') { exportToCSV(data, filename) }
       else if (format === 'excel') { exportToExcel(data, filename) }
     }
-
-    emit('export', format)
+    // F-869: НЕ эмитим 'export' наверх — иначе страница скачивала бы файл повторно (двойное
+    // скачивание). GenericList — единственная точка экспорта списков.
   } catch (error) {
     await handleExportError(error, props.config.title.toLowerCase())
   }

@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Header actions -->
       <template #header-actions>
@@ -105,7 +104,6 @@ import GenericList from '@/components/GenericList.vue'
 import MaterialCard from '@/components/cards/MaterialCard.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useEditQuery } from '@/composables/useEditQuery'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const _router = useRouter()
 const materialsStore = useMaterialsStore()
@@ -204,27 +202,6 @@ function openBulkCreate() {
 function openEdit(material: Material) {
   current.value = material
   modalOpen.value = true
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = materialsStore.items
-    const filename = `materials_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'materials')
-  }
 }
 
 async function handleAction(action: string, item: Material) {

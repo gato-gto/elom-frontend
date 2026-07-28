@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for supplier name with status -->
       <template #column-name="{ item, value }">
@@ -70,7 +69,6 @@ import { ref, onMounted, computed } from 'vue'
 import type { PurchaseSupplier } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import SupplierForm from './SupplierForm.vue'
 import { usePermissions } from '@/composables/usePermissions'
 import { useEditQuery } from '@/composables/useEditQuery'
@@ -215,27 +213,6 @@ async function onSaved() {
   current.value = null
   await suppliersStore.fetchList()
   ui.toast({ type: 'success', text: 'Поставщик сохранен' })
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = suppliersStore.items
-    const filename = `suppliers_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'suppliers')
-  }
 }
 
 async function handleAction(action: string, item: PurchaseSupplier) {

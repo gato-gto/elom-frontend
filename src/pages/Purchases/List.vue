@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreateModal"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for purchase number with status -->
       <template #column-purchase_no="{ item, value }">
@@ -119,7 +118,6 @@ import { useEditQuery } from '@/composables/useEditQuery'
 import type { Purchase, Employee } from '@/api/types'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import Modal from '@/components/Modal.vue'
 import PurchaseForm from './PurchaseForm.vue'
 import PurchaseInfo from './PurchaseInfo.vue'
@@ -365,27 +363,6 @@ function onPurchaseSaved() {
 function responsibleName(id: number): string {
   const employee = employeesStore.items.find((e: Employee) => e.id === id)
   return employee ? `${employee.first_name || employee.username} ${employee.last_name || ''}`.trim() : '—'
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = purchasesStore.items
-    const filename = `purchases_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'purchases')
-  }
 }
 
 async function handleAction(action: string, item: Purchase) {

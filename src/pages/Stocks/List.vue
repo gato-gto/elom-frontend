@@ -5,7 +5,6 @@
     <GenericList
       :store="stockSnapshotsStore"
       :config="listConfig"
-      @export="handleExport"
     >
       <!-- F-501: имя из ответа API (object_name/material_name); клиентский lookup — только
            запасной путь (store.items перетирается любым fetchList). ID не показываем. -->
@@ -71,13 +70,11 @@ import type { StockSnapshot, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useStockSnapshotsStore } from '@/stores/stockSnapshots'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
 import { usePermissions } from '@/composables/usePermissions'
-import { useUiStore } from '@/stores/ui'
 import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import StockCard from '@/components/cards/StockCard.vue'
@@ -87,7 +84,6 @@ const stockSnapshotsStore = useStockSnapshotsStore()
 const objectsStore = useObjectsStore()
 const materialsStore = useMaterialsStore()
 const employeesStore = useEmployeesStore()
-const ui = useUiStore()
 
 // Error handling
 const { handleLoadingError } = useErrorHandler()
@@ -262,30 +258,7 @@ const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
 }))
 
 // Methods
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = stockSnapshotsStore.items
-    const filename = `stocks_${new Date().toISOString().split('T')[0]}`
 
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-
-    ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
-  } catch (error) {
-    await handleLoadingError(error, 'stocks')
-  }
-}
-
-// Функции экспорта удалены - используются импортированные из @/utils/export
 
 // Lifecycle
 onMounted(async () => {

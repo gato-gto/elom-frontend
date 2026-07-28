@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for category name with hierarchy -->
       <template #column-name="{ item, value }">
@@ -79,7 +78,6 @@ import GenericList from '@/components/GenericList.vue'
 import MaterialCategoryCard from '@/components/cards/MaterialCategoryCard.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useEditQuery } from '@/composables/useEditQuery'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 
 const router = useRouter()
 const materialCategoriesStore = useMaterialCategoriesStore()
@@ -175,27 +173,6 @@ function openCreate() {
 function openEdit(category: MaterialCategory) {
   current.value = category
   modalOpen.value = true
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = materialCategoriesStore.items
-    const filename = `material-categories_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'material-categories')
-  }
 }
 
 async function handleAction(action: string, item: MaterialCategory) {

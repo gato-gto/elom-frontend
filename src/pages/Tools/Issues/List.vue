@@ -5,7 +5,6 @@
       :store="toolIssuesStore"
       :config="listConfig"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for tool (includes category, brand, and name) -->
       <template #column-tool_inventory_number="{ item, value }">
@@ -82,7 +81,6 @@ import { useToolsStore } from '@/stores/tools'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { usePermissions } from '@/composables/usePermissions'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { formatDate as formatDateUtil } from '@/utils/formatters'
 import type { ToolIssue } from '@/api/types/tools'
 import type { GenericListConfig } from '@/types/generic'
@@ -230,27 +228,6 @@ async function onReturnSaved() {
     toolIssuesStore.fetchList(),
     toolsStore.fetchList()
   ])
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = toolIssuesStore.items
-    const filename = `tool_issues_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'toolIssues')
-  }
 }
 
 async function handleAction(action: string, item: ToolIssue) {

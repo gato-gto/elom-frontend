@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Header actions -->
       <template #header-actions>
@@ -100,7 +99,6 @@ import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore } from '@/stores/employees'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import type { Tool, ToolIssue } from '@/api/types/tools'
 import type { GenericListConfig } from '@/types/generic'
 import Modal from '@/components/Modal.vue'
@@ -375,27 +373,6 @@ async function onReturnSaved() {
   returnModalOpen.value = false
   ui.toast({ type: 'success', text: 'Инструмент возвращён' })
   await toolsStore.fetchList()
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = toolsStore.items
-    const filename = `tools_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'tools')
-  }
 }
 
 async function handleAction(action: string, item: Tool) {

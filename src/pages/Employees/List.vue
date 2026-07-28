@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Custom column for roles with badges -->
       <template #column-roles="{ item }">
@@ -48,7 +47,6 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useRbacStore } from '@/stores/rbac'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
 import { useEditQuery } from '@/composables/useEditQuery'
 import type { Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
@@ -166,7 +164,6 @@ const listConfig = computed<GenericListConfig<Employee>>(() => ({
   defaultSortOrder: 'asc'
 }))
 
-
 // Methods
 function openCreate() {
   current.value = null
@@ -184,27 +181,6 @@ async function onSaved() {
   // ✅ RBAC: Перезагружаем список сотрудников для отображения обновленных ролей
   // (колонка «Роли» — из item.roles ответа /employees/; каталог /rbac/roles/ здесь не нужен).
   await employeesStore.fetchList()
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = employeesStore.items
-    const filename = `employees_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'employees')
-  }
 }
 
 async function handleAction(action: string, item: Employee) {

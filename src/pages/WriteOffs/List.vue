@@ -6,7 +6,6 @@
       :config="listConfig"
       @create="openCreate"
       @action="handleAction"
-      @export="handleExport"
     >
       <!-- Inventory-count entry point (F-213): enter the actual remaining balance,
            backend computes расход = книжный остаток − факт and records the write-off. -->
@@ -89,7 +88,6 @@ import type { GenericListConfig } from '@/types/generic'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
 import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остаток «умным» числом (F-867)
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
 import { useWriteOffsStore } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
@@ -271,27 +269,6 @@ function onWriteOffSaved() {
 function onByBalanceSaved() {
   byBalanceOpen.value = false
   writeOffsStore.fetchList()
-}
-
-async function handleExport(format: 'csv' | 'excel' | 'pdf') {
-  try {
-    const data = writeOffsStore.items
-    const filename = `writeoffs_${new Date().toISOString().split('T')[0]}`
-
-    switch (format) {
-      case 'csv':
-        exportToCSV(data, filename)
-        break
-      case 'excel':
-        exportToExcel(data, filename)
-        break
-      case 'pdf':
-        exportToPDF(data, filename)
-        break
-    }
-  } catch (error) {
-    await handleLoadingError(error, 'writeoffs')
-  }
 }
 
 async function handleAction(action: string, item: WriteOff) {
