@@ -102,8 +102,8 @@
             <tr v-for="(item, index) in purchase.items" :key="item.id">
               <td class="col-number">{{ index + 1 }}</td>
               <td class="col-material">{{ item.material_name || '—' }}</td>
-              <td class="col-unit">{{ item.unit_code || '—' }}</td>
-              <td class="col-quantity font-mono">{{ formatNumberClean(item.quantity) }}</td>
+              <td class="col-unit">{{ smartQty(item.quantity, item.unit_code).unit || '—' }}</td>
+              <td class="col-quantity font-mono">{{ smartQty(item.quantity, item.unit_code).value }}</td>
               <td class="col-price font-mono">{{ formatNumber(item.price) }}<span class="cur-code"> UZS</span></td>
               <td class="col-amount font-mono">{{ formatNumber(item.amount) }}<span class="cur-code"> UZS</span></td>
             </tr>
@@ -111,7 +111,7 @@
           <tfoot>
             <tr class="total-row">
               <td colspan="3" class="total-label">ИТОГО:</td>
-              <td class="total-quantity font-mono">{{ formatNumberClean(totalQuantity) }}</td>
+              <td class="total-quantity font-mono">{{ totalQtyDisplay }}</td>
               <td class="total-price">—</td>
               <td class="total-amount font-mono">{{ formatNumber(purchase.total_amount) }}<span class="cur-code"> UZS</span></td>
             </tr>
@@ -253,6 +253,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
 import { formatDate, formatNumber, formatNumberClean } from '@/utils/formatters'
+import { smartConvert, formatSmartQuantity } from '@/utils/unitRounding' // F-717/F-868: накладная — кол-во умным числом
 import { useEmployeesStore } from '@/stores/employees'
 
 interface Props {
@@ -306,6 +307,26 @@ const totalQuantity = computed(() => {
     const qty = typeof item.quantity === 'number' ? item.quantity : parseFloat(String(item.quantity || 0))
     return sum + (isNaN(qty) ? 0 : qty)
   }, 0)
+})
+
+// F-717/F-868: позиция накладной — количество умным числом одним значением+единицей (согласованно
+// с колонкой «Ед.»). Конвертируем ОБЕ ячейки из одного smartConvert, чтобы «9 750» и «км» не разошлись.
+function smartQty(quantity: string, unit: string): { value: string; unit: string } {
+  const n = parseFloat(quantity)
+  if (isNaN(n)) { return { value: '—', unit: unit || '' } }
+  const r = smartConvert(n, unit || '')
+  return { value: formatNumber(r.value), unit: r.unit }
+}
+
+// ИТОГО по количеству: укрупняем только если у ВСЕХ позиций единая единица (иначе сумма разных единиц
+// бессмысленна как одно число → сырьё с разделителями, как было). Строка ИТОГО без отдельной «Ед.» —
+// поэтому показываем значение+единицу вместе (formatSmartQuantity).
+const totalQtyDisplay = computed(() => {
+  const items = props.purchase?.items || []
+  if (!items.length) { return formatNumberClean(totalQuantity.value) }
+  const units = new Set(items.map(i => i.unit_code))
+  if (units.size === 1) { return formatSmartQuantity(totalQuantity.value, items[0].unit_code) }
+  return formatNumberClean(totalQuantity.value)
 })
 
 const allPhotos = computed(() => {
