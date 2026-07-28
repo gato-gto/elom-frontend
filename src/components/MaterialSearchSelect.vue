@@ -20,6 +20,8 @@
         ]"
         v-if="selectedMaterial && !disabled && !loading"
         type="button"
+        aria-label="Очистить выбор материала"
+        title="Очистить выбор"
         @click="clearSelection"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,7 +1,11 @@
 <!-- src/components/ToastCenter.vue -->
 <template>
-  <div v-if="toasts.length > 0" class="toast toast-top toast-end z-[9999]">
-    <div v-for="t in toasts" :key="t.id" :class="alertClass(t.type)">
+  <!-- F-859 (a11y): live-регион для скринридеров. role=status/aria-live=polite для обычных тостов;
+       error-тост → role=alert (assertive), чтобы VoiceOver/TalkBack сразу озвучивали ошибку. -->
+  <div v-if="toasts.length > 0" class="toast toast-top toast-end z-[9999]"
+       role="status" aria-live="polite" aria-atomic="false">
+    <div v-for="t in toasts" :key="t.id" :class="alertClass(t.type)"
+         :role="t.type === 'error' ? 'alert' : undefined">
       <span>{{ t.text }}</span>
     </div>
   </div>
