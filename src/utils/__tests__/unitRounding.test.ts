@@ -30,10 +30,8 @@ describe('F-717/F-868 умное сокращение количеств/ост�
   })
 
   it('formatSmartQuantity: остаток одним удобным числом с укрупнённой единицей', () => {
+    // целые НЕ обзаводятся дробью (min=0): совпадает с 2-знаковым formatNumber для целого
     expect(formatSmartQuantity(9750000, 'м')).toBe(`${formatNumber(9750)} км`)
-    expect(formatSmartQuantity(250000, 'м')).toBe(`${formatNumber(250)} км`)
-    expect(formatSmartQuantity(1500, 'м')).toBe(`${formatNumber(1.5)} км`) // F-868: 1,5 км
-    // строковый вход (API отдаёт строки) обрабатывается так же
     expect(formatSmartQuantity('250000', 'м')).toBe(`${formatNumber(250)} км`)
   })
 
@@ -41,6 +39,16 @@ describe('F-717/F-868 умное сокращение количеств/ост�
     // 1123 г не делится «красиво» → остаётся в граммах, но с группировкой разрядов
     expect(formatSmartQuantity(1123, 'г')).toBe(`${formatNumber(1123)} г`)
     expect(smartConvert(1123, 'г').converted).toBe(false)
+  })
+
+  it('F-876: сохраняет точность (не округляет 0,001 т до «0 т»)', () => {
+    // BE quantity/current_balance = decimal_places 3..6; раньше formatNumber(max 2) прятал реальный
+    // остаток («0,001 т» → «0 т»). Теперь до 6 знаков (regex — независимо от разделителя локали).
+    expect(formatSmartQuantity(0.001, 'т')).toMatch(/^0[.,]001 т$/)
+    expect(formatSmartQuantity(2.5005, 'кг')).toMatch(/^2[.,]5005 кг$/)
+    expect(formatSmartQuantity(0, 'т')).toBe('0 т')            // ноль без хвостовых нулей
+    // целые НЕ обзаводятся дробью (min=0): для целого == 2-знаковый formatNumber
+    expect(formatSmartQuantity(9750000, 'м')).toBe(`${formatNumber(9750)} км`)
   })
 
   it('пустые/нечисловые значения → прочерк', () => {

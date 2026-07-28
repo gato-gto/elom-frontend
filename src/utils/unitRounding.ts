@@ -3,7 +3,7 @@
  * Умная система округления единиц измерения
  * Основана на логике из бэкенда с категориями и умными правилами
  */
-import { formatNumber, formatNumberClean } from '@/utils/formatters'
+import { formatNumber, formatNumberClean, formatNumberWithOptions } from '@/utils/formatters'
 
 export interface UnitRoundingRule {
   fromUnit: string
@@ -199,9 +199,11 @@ export function formatValueWithUnit(
   unit: string,
   _precision: number = 2
 ): string {
-  // F-867: разделители тысяч + без хвостовых нулей — «9 750 км», «1 234 м», «1,5 км»
-  // (было formatNumberClean без разделителей → «9750 км»/«9750000 м» нечитаемо на больших числах).
-  const formattedValue = formatNumber(value)
+  // F-867: разделители тысяч + без хвостовых нулей — «9 750 км», «1 234 м», «1,5 км».
+  // F-876: до 6 знаков после запятой (BE quantity/current_balance хранит decimal_places 3..6), а не 2
+  // как formatNumber — иначе реальный остаток «0,001 т» печатался как «0 т» (владелец: «видно реально»).
+  // minimumFractionDigits:0 → целые без хвостовых нулей («9 750 км»), дробные сохраняют точность.
+  const formattedValue = formatNumberWithOptions(value, { minimumFractionDigits: 0, maximumFractionDigits: 6 })
   return unit ? `${formattedValue} ${unit}` : formattedValue
 }
 
