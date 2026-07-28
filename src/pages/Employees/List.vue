@@ -45,6 +45,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useEmployeesStore } from '@/stores/employees'
 import { usePermissions } from '@/composables/usePermissions'
+import { useRbacStore } from '@/stores/rbac'
 import { useUiStore } from '@/stores/ui'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
@@ -65,6 +66,14 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 // ✅ RBAC: используем permissions
 const { can, canExportReports } = usePermissions()
 const canEdit = computed(() => can('employees', 'edit'))
+// F-867: фильтр по RBAC-роли доступен лишь тем, кто может читать /rbac/roles/ (rbac.manage_roles ИЛИ
+// manage_user_roles) — иначе fetchRoles даёт 403 (F-559). Обычно = администратор.
+const rbacStore = useRbacStore()
+const canFilterByRole = computed(() => can('rbac', 'manage_roles') || can('rbac', 'manage_user_roles'))
+const roleFilterOptions = computed(() => [
+  { value: '', label: 'Все роли' },
+  ...rbacStore.roles.map(r => ({ value: r.id, label: r.name })),
+])
 
 const modalOpen = ref(false)
 const current = ref<Employee | null>(null)
@@ -118,8 +127,14 @@ const listConfig = computed<GenericListConfig<Employee>>(() => ({
       label: 'Поиск',
       placeholder: 'Имя, email'
     },
-    // ✅ Фильтр по role удален - поле role удалено из модели
-    // TODO: Можно добавить фильтр по RBAC ролям через user_roles__role__name
+    // F-867: фильтр по RBAC-роли (?role=<id>). Показываем только тем, кто может читать роли —
+    // иначе скрыт (без 403 на /rbac/roles/).
+    ...(canFilterByRole.value ? [{
+      key: 'role',
+      type: 'select' as const,
+      label: 'Роль',
+      options: roleFilterOptions.value,
+    }] : []),
     {
       key: 'is_active',
       type: 'select',
@@ -217,10 +232,10 @@ async function handleDelete(employee: Employee) {
 // Lifecycle
 onMounted(async () => {
   try {
-    // F-559: роли из RBAC-каталога здесь НЕ нужны — колонка «Роли» рендерится из
-    // item.roles (встроены в ответ /employees/), а фильтр по ролям давно удалён.
-    // Прежний ungated fetchRoles() бил в /rbac/roles/ и давал 403 (+console error)
-    // всем не-admin ролям при простом просмотре списка сотрудников.
+    // F-867: каталог ролей для фильтра грузим ТОЛЬКО если есть право читать /rbac/roles/.
+    // F-559: иначе ungated fetchRoles() давал 403 (+console error) не-admin ролям. Колонка «Роли»
+    // рендерится из item.roles (встроены в ответ /employees/) и от этого не зависит.
+    if (canFilterByRole.value) { rbacStore.fetchRoles().catch(() => {}) }
     await employeesStore.fetchList()
   } catch (error) {
     await handleLoadingError(error, 'employees')
