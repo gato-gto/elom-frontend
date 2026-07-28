@@ -89,6 +89,10 @@ const { handleLoadingError, handleDeleteError } = useErrorHandler()
 // ✅ RBAC: используем permissions
 const { can, canExportReports } = usePermissions()
 const canEdit = computed(() => can('material_categories', 'edit'))
+// F-872 (RBAC fail-open, архетип F-863): create/delete гейтились по .edit — роль с edit, но без
+// create/delete видела «Добавить»/«Удалить» активными. Гейтим каждым правом по его действию.
+const canCreate = computed(() => can('material_categories', 'create'))
+const canDelete = computed(() => can('material_categories', 'delete'))
 
 // Parent category filter options
 const parentFilterOptions = computed(() => [
@@ -102,9 +106,9 @@ const listConfig = computed<GenericListConfig<MaterialCategory>>(() => ({
   title: 'Категории материалов',
   subtitle: 'Управление категориями материалов и их иерархией',
   icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
-  showCreate: canEdit.value,
+  showCreate: canCreate.value,
   createText: 'Добавить категорию',
-  canCreate: canEdit.value,
+  canCreate: canCreate.value,
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'material-categories',
@@ -152,7 +156,7 @@ const listConfig = computed<GenericListConfig<MaterialCategory>>(() => ({
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
-      disabled: () => !canEdit.value,
+      disabled: () => !canDelete.value,
       confirm: (item: MaterialCategory) => `Удалить категорию "${item.name}"?`
     }
   ],
