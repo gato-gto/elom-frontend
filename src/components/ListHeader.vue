@@ -337,7 +337,7 @@ defineEmits<{
   
   .action-btn {
     padding: 0.4375rem 0.625rem;
-    font-size: 0.6875rem;
+    font-size: 0.75rem; /* F-865 (mobile-audit): было 0.6875rem (11px) — CTA-лейбл читаемее */
     min-height: 44px; /* A-06 (F-520): тач-цель ≥44pt (было 2.5rem=40px, перебивало coarse-правило) */
   }
   
@@ -352,7 +352,7 @@ defineEmits<{
   
   .stat-label,
   .stat-value {
-    font-size: 0.6875rem;
+    font-size: 0.75rem; /* F-865 (mobile-audit): было 0.6875rem (11px) — числа записей = данные */
   }
 }
 </style>

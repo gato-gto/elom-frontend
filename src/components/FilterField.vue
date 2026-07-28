@@ -80,7 +80,8 @@
     
     <!-- Checkbox -->
     <div v-else-if="type === 'checkbox'" class="filter-checkbox">
-      <label class="flex items-center gap-2 cursor-pointer">
+      <!-- F-865 (mobile-audit): py-2 → высота ряда ~36px (было ~20px, тонковато для тапа) -->
+      <label class="flex items-center gap-2 cursor-pointer py-2">
         <input
           type="checkbox"
           :checked="Boolean(modelValue)"

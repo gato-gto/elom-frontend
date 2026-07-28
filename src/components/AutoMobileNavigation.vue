@@ -534,6 +534,8 @@
     align-items: center;
     /* F-581: уже по горизонтали — больше места подписи (чтобы «Материалы» помещалось без «…»). */
     padding: 0.5rem 0.25rem;
+    min-height: 44px; /* F-865 (mobile-audit): было 42px (<44 тач-минимум); держится и в @max-width:360 */
+    justify-content: center;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
     color: hsl(var(--tx-2));

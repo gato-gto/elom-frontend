@@ -100,4 +100,10 @@ function pick(format: 'csv' | 'excel' | 'pdf') {
   border-color: hsl(var(--p)) !important;
   background-color: hsl(var(--bc) / 0.06) !important;
 }
+
+/* F-865 (mobile-audit): пункты меню экспорта были ~31px < тач-минимума 44px — поднимаем только
+   на touch-устройствах (floating w-52 z-50 popover, растёт лишь высота, layout не двигается). */
+@media (pointer: coarse) {
+  .dropdown-content li > button { min-height: 44px; }
+}
 </style>

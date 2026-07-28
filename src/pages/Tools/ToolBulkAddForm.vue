@@ -3,13 +3,17 @@
     <!-- Issue info section (optional) -->
     <div class="card bg-base-200 mb-4">
       <div class="card-body">
-        <h4 class="card-title text-sm flex items-center gap-2">
-          <input 
-            type="checkbox" 
-            v-model="autoIssue" 
-            class="checkbox checkbox-primary checkbox-sm"
-          />
-          Сразу выдать инструменты
+        <h4 class="card-title text-sm">
+          <!-- F-865 (mobile-audit): было bare <input> в <h4> — текст был мёртв для тапа; оборачиваем
+               в <label>, чтобы вся подпись стала тач-целью (визуально без изменений). -->
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="autoIssue"
+              class="checkbox checkbox-primary checkbox-sm"
+            />
+            Сразу выдать инструменты
+          </label>
         </h4>
         
         <div v-if="autoIssue" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

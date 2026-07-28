@@ -8,7 +8,9 @@ import { throttle } from '@/utils/debounce'
  * Автоматически переключает между табличным и карточным представлением
  */
 export function useResponsiveTable() {
-  const isMobile = ref(false)
+  // F-865 (mobile-audit): инициализируем СРАЗУ правильным значением (было ref(false) → значение
+  // ставилось только в onMounted) — убирает FOUC (мигание desktop-таблицы на телефоне) и гонку.
+  const isMobile = ref(typeof window !== 'undefined' && window.innerWidth < 768)
   
   // Проверка является ли устройство мобильным (меньше md breakpoint)
   const checkMobile = () => {

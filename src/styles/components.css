@@ -494,7 +494,7 @@
   border-radius: 3px;
   border: 1px solid transparent;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.72rem;
+  font-size: 0.75rem; /* F-865 (mobile-audit): было 0.72rem (<12px) — бейджи несут данные/статус */
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -503,8 +503,8 @@
   transition: none;
 }
 
-.badge-xs { padding: 0.02rem 0.35rem; font-size: 0.72rem; } /* F-562: ≥11px, читаемо на мобиле */
-.badge-sm { padding: 0.06rem 0.4rem;  font-size: 0.7rem; }
+.badge-xs { padding: 0.02rem 0.35rem; font-size: 0.75rem; } /* F-865: floor 12px (было 0.72) */
+.badge-sm { padding: 0.06rem 0.4rem;  font-size: 0.75rem; } /* F-865: floor 12px (было 0.7) */
 .badge-md { padding: 0.12rem 0.5rem;  font-size: 0.75rem; }
 .badge-lg { padding: 0.2rem 0.65rem;  font-size: 0.82rem; }
 
