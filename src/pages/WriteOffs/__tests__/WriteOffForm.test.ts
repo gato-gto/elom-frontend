@@ -34,6 +34,17 @@ vi.mock('@/stores/units', () => ({
   })
 }))
 
+// F-640 (#28, Агент B): форма зовёт archivePeriodsStore.fetchList() в Promise.all загрузки для
+// пред-гейта закрытого периода. Без мока реальный стор дёргает замоканный api.get, цепочка
+// Promise.all рвётся и баланс не рендерится → тест «shows future balance» падал. Период открыт.
+vi.mock('@/stores/archivePeriods', () => ({
+  useArchivePeriodsStore: () => ({
+    items: [],
+    isPeriodClosed: () => false,
+    fetchList: vi.fn().mockResolvedValue(undefined)
+  })
+}))
+
 vi.mock('@/stores/materials', () => ({
   useMaterialsStore: () => ({
     items: [{ id: 100, name: 'Цемент', default_unit: 5 }],
