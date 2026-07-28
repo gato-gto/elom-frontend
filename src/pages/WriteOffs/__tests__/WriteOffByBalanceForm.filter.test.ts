@@ -13,6 +13,16 @@ vi.mock('@/stores/objects', () => ({
   useObjectsStore: () => ({ items: [{ id: 7, name: 'Объект-7' }, { id: 8, name: 'Объект-8' }], fetchList: vi.fn().mockResolvedValue(undefined) }),
 }))
 vi.mock('@/stores/ui', () => ({ useUiStore: () => ({ toast: vi.fn() }) }))
+// F-642 (#28): форма зовёт archivePeriodsStore.fetchList() в onMounted для пред-гейта закрытого
+// периода. Без мока реальный стор дёргает api.get (здесь замокан только post) → unhandled rejection.
+// Период открыт → пред-гейт не мешает существующим кейсам.
+vi.mock('@/stores/archivePeriods', () => ({
+  useArchivePeriodsStore: () => ({
+    items: [],
+    isPeriodClosed: () => false,
+    fetchList: vi.fn().mockResolvedValue(undefined)
+  })
+}))
 vi.mock('@/api/client', () => ({ default: { post } }))
 
 import WriteOffByBalanceForm from '@/pages/WriteOffs/WriteOffByBalanceForm.vue'
