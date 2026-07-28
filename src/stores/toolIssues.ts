@@ -59,9 +59,11 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
   // ========================================================================
   // Actions
   // ========================================================================
+  let fetchListGen = 0  // F-871: порт F-636/F-852 generation-guard (toolIssues — ручной стор без него; поиск шлёт fetch на каждую букву → гонка out-of-order)
   const fetchList = async (params?: Record<string, any>): Promise<ToolIssue[]> => {
     loading.value = true
     error.value = null
+    const gen = ++fetchListGen
 
     try {
       const queryParams: Record<string, any> = {
@@ -82,6 +84,7 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
       const query = buildQuery(queryParams)
       const { data } = await api.get(endpoints.toolIssues.list + query)
 
+      if (gen !== fetchListGen) { return items.value }  // F-871: более новый fetch стартовал → ответ устарел, не перетираем
       items.value = data.results || data
       pagination.value = {
         count: data.count || data.length || 0,
@@ -98,7 +101,7 @@ export const useToolIssuesStore = defineStore('toolIssues', () => {
       await handleApiErrorAsync(err, { operation: 'dataLoading', entity: 'toolIssues' })
       throw err
     } finally {
-      loading.value = false
+      if (gen === fetchListGen) { loading.value = false }  // F-871: не гасим loading устаревшим ответом
     }
   }
 

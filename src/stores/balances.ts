@@ -30,6 +30,9 @@ const extendedFilters = ref({
 // Custom Actions
 // ============================================================================
 
+// F-871: generation-guard (как F-636/F-852) — экран «Остатки»: смена объекта/даты во время
+// тяжёлого by-objects-запроса давала out-of-order ответ, перетиравший текущие цифры остатков.
+let balancesGen = 0
 export const fetchBalancesList = async (params?: {
   page?: number
   search?: string
@@ -39,6 +42,7 @@ export const fetchBalancesList = async (params?: {
   const store = useBalancesStore()
   store.loading = true
   store.error = null
+  const gen = ++balancesGen
 
   try {
     // F-855: единый источник object/date — params (явный вызов) > store.filters (его ведёт URL/
@@ -82,6 +86,7 @@ export const fetchBalancesList = async (params?: {
       })
     }
     
+    if (gen !== balancesGen) { return }  // F-871: новее запрос стартовал → ответ устарел, не перетираем остатки
     store.items = objectsData
     store.pagination.count = objectsData.length
     store.pagination.page = 1
@@ -99,7 +104,7 @@ export const fetchBalancesList = async (params?: {
     await handleApiErrorAsync(error, { operation: 'dataLoading', entity: 'остатки' })
     throw error
   } finally {
-    store.loading = false
+    if (gen === balancesGen) { store.loading = false }  // F-871: не гасим loading устаревшим ответом
   }
 }
 
