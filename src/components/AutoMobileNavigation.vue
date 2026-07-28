@@ -14,17 +14,15 @@
           >
             <div class="relative">
               <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round" 
-                  stroke-width="2" 
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
                   :d="getIconPath(item.icon || '')"
                 />
               </svg>
-              <div 
-                v-if="isActive(item.path)" 
-                class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
-              ></div>
+              <!-- F-870 (владелец): точка-индикатор активного пункта убрана — активность
+                   уже видна по .active (цвет иконки/подписи); точка была лишней. -->
             </div>
             <span class="mobile-nav-label">{{ item.title }}</span>
           </router-link>
@@ -39,10 +37,7 @@
               <svg class="mobile-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-              <div 
-                v-if="showFullMenu" 
-                class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
-              ></div>
+              <!-- F-870: та же точка-индикатор у кнопки «Еще» убрана (согласованно с пунктами). -->
             </div>
             <span class="mobile-nav-label">Еще</span>
           </button>
