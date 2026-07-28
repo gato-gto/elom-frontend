@@ -92,8 +92,9 @@ const listConfig = computed<GenericListConfig<Employee>>(() => ({
   createText: 'Добавить сотрудника',
   canCreate: canEdit.value, // Оставляем для обратной совместимости
   showStats: true,
-  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
-  exportFilename: 'employees',
+  // F-861: кнопка экспорта убрана — у /employees/ нет бэкенд-экспорта (?export=xlsx → JSON), а
+  // локальный фолбэк выгружал лишь текущую страницу (≤20) = неполно. Вернуть при добавлении BE-экспорта.
+  exportable: false,
   loadingText: 'Загрузка сотрудников...',
   emptyText: 'Нет сотрудников',
   emptyTitle: 'Нет сотрудников',

@@ -123,8 +123,9 @@ const listConfig = computed<GenericListConfig<PurchaseSupplier>>(() => ({
   createText: 'Добавить поставщика',
   canCreate: canEdit.value,
   showStats: true,
-  exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
-  exportFilename: 'suppliers',
+  // F-861: кнопка экспорта убрана — у /suppliers/ нет бэкенд-экспорта (?export=xlsx → JSON), а
+  // локальный фолбэк выгружал лишь текущую страницу (≤20) = неполно. Вернуть при добавлении BE-экспорта.
+  exportable: false,
   loadingText: 'Загрузка поставщиков...',
   emptyText: 'Нет поставщиков',
   emptyTitle: 'Нет поставщиков',
