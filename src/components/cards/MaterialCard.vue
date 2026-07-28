@@ -15,7 +15,7 @@
         
         <div>
           <span class="text-muted">Единица измерения:</span>
-          <span class="font-medium ml-2">{{ material.unit_code }}</span>
+          <span class="font-medium ml-2">{{ material.default_unit_code }}</span>
         </div>
         
         <div v-if="material.purchases_count">
@@ -30,12 +30,12 @@
         
         <div v-if="material.current_stock !== undefined">
           <span class="text-muted">Текущий остаток:</span>
-          <span class="font-medium ml-2 font-mono">{{ formatNumberClean(material.current_stock) }} {{ material.unit_code }}</span>
+          <span class="font-medium ml-2 font-mono">{{ formatSmartQuantity(material.current_stock, material.default_unit_code) }}</span>
         </div>
         
         <div v-if="material.average_price">
           <span class="text-muted">Средняя цена:</span>
-          <span class="font-medium ml-2 font-mono">{{ formatNumberClean(material.average_price) }}</span>
+          <span class="font-medium ml-2 font-mono">{{ formatNumber(material.average_price) }}</span>
         </div>
         
         <div>
@@ -54,7 +54,7 @@
         
         <div v-if="material.total_purchased">
           <span class="text-muted">Куплено всего:</span>
-          <span class="font-medium ml-2 font-mono">{{ formatNumberClean(material.total_purchased) }} {{ material.unit_code }}</span>
+          <span class="font-medium ml-2 font-mono">{{ formatSmartQuantity(material.total_purchased, material.default_unit_code) }}</span>
         </div>
         
         <div v-if="material.last_purchase_date">
@@ -79,11 +79,12 @@
 import { Material } from '@/api/types/materials'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
-import { formatDate, formatNumberClean } from '@/utils/formatters'
+import { formatDate, formatNumber } from '@/utils/formatters'
+import { formatSmartQuantity } from '@/utils/unitRounding'
 
 interface Props {
   material: Material & {
-    unit_code?: string
+    default_unit_code?: string
     current_stock?: number
     average_price?: string
     total_purchased?: number

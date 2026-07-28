@@ -21,7 +21,7 @@
         <div>
           <span class="text-muted">Количество списания:</span>
           <span class="font-medium ml-2 text-error font-mono">
-            -{{ formatQuantity(writeOff.quantity) }} {{ writeOff.unit_code }}
+            -{{ formatQuantity(writeOff.quantity) }}
           </span>
         </div>
         
@@ -38,14 +38,14 @@
         <div>
           <span class="text-muted">Остаток до списания:</span>
           <span class="font-medium ml-2 text-info font-mono">
-            {{ getBalanceBefore() }} {{ writeOff.unit_code }}
+            {{ getBalanceBefore() }}
           </span>
         </div>
         
         <div>
           <span class="text-muted">Остаток после списания:</span>
           <span class="font-medium ml-2 text-success font-mono">
-            {{ formatQuantity(writeOff.current_balance) }} {{ writeOff.unit_code }}
+            {{ formatQuantity(writeOff.current_balance) }}
           </span>
         </div>
         
@@ -62,7 +62,6 @@
                в списках: показывает укрупнённую единицу + исходное значение рядом. -->
           <SmartUnitValue
             :smart-quantity="writeOff.smart_quantity"
-            :show-original="true"
             class-name="font-medium font-mono ml-2"
           />
         </div>
@@ -85,7 +84,8 @@ import { WriteOff } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
-import { formatDate, formatNumberClean } from '@/utils/formatters'
+import { formatDate } from '@/utils/formatters'
+import { formatSmartQuantity } from '@/utils/unitRounding'
 
 interface Props {
   writeOff: WriteOff
@@ -109,8 +109,9 @@ defineEmits<Emits>()
 
 const { truncateText } = useMobileCardHelpers()
 
+// F-867: умная единица одним числом (250000 м → «250 км»), включает единицу измерения.
 const formatQuantity = (quantity: string) => {
-  return formatNumberClean(parseFloat(quantity))
+  return formatSmartQuantity(parseFloat(quantity), props.writeOff.unit_code)
 }
 
 // current_balance с бэкенда = остаток НА ДАТУ списания, УЖЕ включающий это списание
@@ -121,7 +122,7 @@ const formatQuantity = (quantity: string) => {
 const getBalanceBefore = () => {
   const current = parseFloat(props.writeOff.current_balance)
   const writeOffQty = parseFloat(props.writeOff.quantity)
-  return formatNumberClean(current + writeOffQty)
+  return formatSmartQuantity(current + writeOffQty, props.writeOff.unit_code)
 }
 
 const getStageLabel = (stage: string) => {

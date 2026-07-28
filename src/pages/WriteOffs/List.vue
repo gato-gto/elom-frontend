@@ -38,7 +38,6 @@
           <SmartUnitValue 
             v-if="item.smart_quantity" 
             :smart-quantity="item.smart_quantity" 
-            :show-original="true"
             class-name="font-mono text-sm text-error"
           />
           <span v-else class="font-mono text-sm text-error">

@@ -3,7 +3,7 @@
  * Умная система округления единиц измерения
  * Основана на логике из бэкенда с категориями и умными правилами
  */
-import { formatNumberClean } from '@/utils/formatters'
+import { formatNumber, formatNumberClean } from '@/utils/formatters'
 
 export interface UnitRoundingRule {
   fromUnit: string
@@ -192,9 +192,23 @@ export function formatValueWithUnit(
   unit: string,
   _precision: number = 2
 ): string {
-  // Используем умное форматирование без лишних нулей
-  const formattedValue = formatNumberClean(value)
-  return `${formattedValue} ${unit}`
+  // F-867: разделители тысяч + без хвостовых нулей — «9 750 км», «1 234 м», «1,5 км»
+  // (было formatNumberClean без разделителей → «9750 км»/«9750000 м» нечитаемо на больших числах).
+  const formattedValue = formatNumber(value)
+  return unit ? `${formattedValue} ${unit}` : formattedValue
+}
+
+/**
+ * F-867 (выбор владельца «умная единица, одно число»): единый вывод количества — конвертирует в
+ * удобную единицу ОДНИМ числом (250000 м → «250 км»), а если не делится красиво — исходное
+ * значение с разделителями тысяч («1 234 м»). Без дубля «250 км (250000 м)», реальное видно.
+ */
+export function formatSmartQuantity(value: number | string | null | undefined, unit?: string): string {
+  if (value === null || value === undefined || value === '') { return '—' }
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) { return '—' }
+  const r = smartConvert(num, unit || '')
+  return formatValueWithUnit(r.value, r.unit)
 }
 
 /**

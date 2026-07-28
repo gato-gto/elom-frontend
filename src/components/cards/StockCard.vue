@@ -65,7 +65,6 @@
                SmartUnitValue как в списках (укрупнённая единица + исходное значение рядом). -->
           <SmartUnitValue
             :smart-quantity="stock.smart_quantity"
-            :show-original="true"
             class-name="font-medium font-mono ml-2"
           />
         </div>
