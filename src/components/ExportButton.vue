@@ -104,6 +104,8 @@ function pick(format: 'csv' | 'excel' | 'pdf') {
 /* F-865 (mobile-audit): пункты меню экспорта были ~31px < тач-минимума 44px — поднимаем только
    на touch-устройствах (floating w-52 z-50 popover, растёт лишь высота, layout не двигается). */
 @media (pointer: coarse) {
-  .dropdown-content li > button { min-height: 44px; }
+  /* min-height даёт высоту 44; width:100% — полноширинная тач-цель на всю ширину меню (w-52),
+     иначе кнопка была content-width ~42px. */
+  .dropdown-content li > button { min-height: 44px; width: 100%; }
 }
 </style>

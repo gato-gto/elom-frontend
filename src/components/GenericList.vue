@@ -685,7 +685,7 @@ onUnmounted(() => {
   border-radius: 0.5rem;
   background: hsl(var(--b1));
   color: hsl(var(--bc));
-  font-size: 0.9375rem;
+  font-size: 1rem; /* F-865 (mobile-audit): было 0.9375rem (15px) → iOS зумит при фокусе; 16px не зумит */
 }
 .mobile-sort-dir {
   display: flex;
