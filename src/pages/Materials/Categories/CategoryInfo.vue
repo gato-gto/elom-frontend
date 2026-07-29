@@ -247,7 +247,7 @@ const canEdit = computed(() => can('material_categories', 'edit'))
 const materialsListConfig = computed<GenericListConfig<Material>>(() => ({
   title: 'Материалы в категории',
   subtitle: `Категория: ${category.value?.name || ''}`,
-  icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+  icon: 'category',
   showCreate: false, // Не показываем кнопку создания на странице категории
   showStats: false, // Убираем статистику, так как показываем только материалы категории
   exportable: false, // Убираем кнопку экспорта на странице категории

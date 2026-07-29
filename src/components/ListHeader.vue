@@ -3,8 +3,8 @@
     <div class="header-content">
       <div class="header-title-section">
         <h1 class="list-title">
-          <svg v-if="icon" class="title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(icon)" />
+          <svg v-if="headerIcon" class="title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(headerIcon)" />
           </svg>
           {{ title }}
         </h1>
@@ -43,6 +43,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { getIconPath } from '@/assets/icons'
 
 interface Props {
@@ -58,7 +60,7 @@ interface Props {
   filteredCount?: number
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   showCreate: true,
   createText: 'Добавить',
   canCreate: true,
@@ -67,6 +69,15 @@ withDefaults(defineProps<Props>(), {
   totalCount: 0,
   filteredCount: 0
 })
+
+// F-898: иконка заголовка страницы = иконка НАВИГАЦИИ (route.meta.icon → getIconPath), а НЕ сырой
+// SVG-путь из config.icon. Раньше страницы передавали сырой path; getIconPath его не знал → fallback
+// на «дом»: ВСЕ заголовки списков показывали домик вместо своей иконки и не совпадали с меню.
+// Приоритет: имя из маршрута (совпадает с навигацией) → иначе переданный prop (для страниц вне меню).
+const route = useRoute()
+// route?. — в юнит-тестах ListHeader/GenericList монтируются без установленного роутера (useRoute()
+// возвращает undefined); без optional chaining это падало (15 тестов). В приложении route всегда есть.
+const headerIcon = computed(() => ((route?.meta?.icon as string | undefined) || props.icon))
 
 defineEmits<{
   create: []
