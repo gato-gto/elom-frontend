@@ -299,6 +299,9 @@ async function handleMaterialAction(action: string, item: Material) {
         await materialsStore.remove(item.id)
         // Обновляем список после удаления
         await materialsStore.fetchList()
+        // F-891: перечитываем и саму категорию — иначе карточка «Материалов» (materials_count)
+        // остаётся устаревшей после удаления материала (categoryInfo не обновлялся).
+        await materialCategoriesStore.fetchOne(categoryId.value)
       } catch (error) {
         console.error('Error deleting material:', error)
       }
