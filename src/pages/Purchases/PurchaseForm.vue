@@ -442,7 +442,10 @@
     </GenericForm>
 
     <!-- Modal для подтверждения новых материалов -->
-    <Modal v-model="confirmNewMaterialsModalOpen" title="Подтверждение создания новых материалов" size="lg" :closable="true">
+    <!-- F-881: @close ОБЯЗАТЕЛЕН — крестик/Escape эмитят 'close', но НЕ вызывают кнопочные
+         обработчики; без него newMaterialsConfirmResolve оставался неразрешённым → сабмит висел
+         вечно в «Сохранение...». cancelNewMaterials резолвит false и защищён от двойного резолва. -->
+    <Modal v-model="confirmNewMaterialsModalOpen" title="Подтверждение создания новых материалов" size="lg" :closable="true" @close="cancelNewMaterials">
       <div class="space-y-4">
         <div class="alert alert-warning">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -488,6 +491,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { todayLocal } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { usePurchasesStore } from '@/stores/purchases'
 import { useMaterialsStore } from '@/stores/materials'
@@ -924,7 +928,7 @@ const initialData = computed(() => {
     }
   }
   return {
-    date: new Date().toISOString().split('T')[0],
+    date: todayLocal(),
     object: 0,
     // responsible убран - устанавливается автоматически из объекта
     supplier: 0,
