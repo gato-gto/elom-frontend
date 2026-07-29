@@ -58,7 +58,9 @@
         <div class="info-row">
           <div class="info-item">
             <span class="info-label">Ответственный:</span>
-            <span class="info-value">{{ responsibleName(purchase.responsible) || '—' }}</span>
+            <!-- F-718: серверное responsible_name (F-501) — client-лукап требовал полной загрузки
+                 employees(29), а в накладной стор не грузится → печаталось «—». Лукап оставлен fallback'ом. -->
+            <span class="info-value">{{ purchase.responsible_name || responsibleName(purchase.responsible) || '—' }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Валюта:</span>

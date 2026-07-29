@@ -265,11 +265,10 @@ onMounted(async () => {
     currentPhotoUrl.value = props.initial.photo_url
   }
 
-  // Load units and categories if not already loaded
-  const promises = []
-  if (unitsStore.items.length === 0) {
-    promises.push(unitsStore.fetchList())
-  }
+  // Load units and categories
+  // F-718: units=14 > мобильного page_size 10 → на МОБИЛЕ дропдаун default_unit резался до 10 (нет
+  // метров). Грузим единицы полным списком БЕЗУСЛОВНО (guard length===0 оставлял усечённый стор).
+  const promises: Promise<unknown>[] = [unitsStore.fetchList({ page_size: 1000 })]
   if (materialCategoriesStore.items.length === 0) {
     promises.push(materialCategoriesStore.fetchList())
   }

@@ -365,7 +365,9 @@ function reset() {
 }
 
 onMounted(() => {
-  if (!objectsStore.items.length) {objectsStore.fetchList?.({ page_size: 1000 } as any)}
+  // F-718: objects=35 > 20 — грузим полностью БЕЗУСЛОВНО. Guard !items.length оставлял усечённый (20)
+  // стор с чужого экрана → в выпадашке объектов было 20 из 35, часть недоступна для списания по остатку.
+  objectsStore.fetchList?.({ page_size: 1000 } as any)
   if (!archivePeriodsStore.items.length) {archivePeriodsStore.fetchList()}  // F-642 (#28)
 })
 </script>

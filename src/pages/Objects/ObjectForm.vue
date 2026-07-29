@@ -295,9 +295,9 @@ function handleCancel() {
 
 // Load data on mount
 onMounted(async () => {
-  // Load all employees if not already loaded
-  if (employeesStore.items.length === 0) {
-    await employeesStore.fetchList({ ordering: 'username' })
-  }
+  // F-718: справочник сотрудников — ПОЛНЫМ списком (employees=29 > desktop page_size 20). Без
+  // page_size:1000 дропдаун «Ответственный» резался и на десктопе; guard length===0 к тому же не
+  // дозагружал уже усечённый (20) стор с чужого экрана → грузим безусловно и целиком.
+  await employeesStore.fetchList({ page_size: 1000, ordering: 'username' })
 })
 </script>

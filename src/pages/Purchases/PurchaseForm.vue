@@ -1381,13 +1381,18 @@ function onFieldChange(key: string, value: any) {
 // Load data on mount
 async function loadData() {
   // Load reference data
+  // F-718: справочники — ПОЛНЫМ списком (page_size:1000, паттерн F-510). Без него fetchList() брал
+  // адаптивный размер getOptimalPageSize → на МОБИЛЕ всего 10 записей. При ordering '-id' у единиц это
+  // обрезало 4 младших id (м³, м², «м», «шт») → в новом материале не было метров, а у существующей
+  // позиции с единицей «м» getUnitName не находил её и печатал «—». Та же обрезка грозила
+  // объектам/поставщикам/сотрудникам/периодам (пропуск закрытого периода).
   await Promise.all([
-    materialsStore.fetchList(),
-    unitsStore.fetchList(),
-    objectsStore.fetchList(),
-    employeesStore.fetchList(),
-    suppliersStore.fetchList(),
-    archivePeriodsStore.fetchList(),  // F-643 (#28): для пред-предупреждения о закрытом периоде
+    materialsStore.fetchList({ page_size: 1000 }),
+    unitsStore.fetchList({ page_size: 1000 }),
+    objectsStore.fetchList({ page_size: 1000 }),
+    employeesStore.fetchList({ page_size: 1000 }),
+    suppliersStore.fetchList({ page_size: 1000 }),
+    archivePeriodsStore.fetchList(),  // F-643 (#28): для пред-предупреждения о закрытом периоде (свой стор, без page_size)
   ])
   
   // Load purchase data if editing

@@ -481,8 +481,10 @@ onMounted(async () => {
   try {
     await Promise.all([
       purchasesStore.fetchList(),
-      objectsStore.fetchList(),
-      employeesStore.fetchList()
+      // F-718: справочники фильтров — полным списком (F-510); без page_size на мобиле (<768px)
+      // getOptimalPageSize давал 10 → фильтр-дропдауны объектов/ответственных обрезались.
+      objectsStore.fetchList({ page_size: 1000 }),
+      employeesStore.fetchList({ page_size: 1000 })
     ])
   } catch (error) {
     await handleLoadingError(error, 'purchases')

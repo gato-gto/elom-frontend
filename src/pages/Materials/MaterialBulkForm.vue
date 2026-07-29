@@ -515,11 +515,10 @@ const closeModal = () => {
 
 // Initialize form
 onMounted(async () => {
-  // Загружаем единицы измерения и категории, если еще не загружены
-  const promises = []
-  if (unitsStore.items.length === 0) {
-    promises.push(unitsStore.fetchList())
-  }
+  // Загружаем единицы измерения и категории
+  // F-718: units=14 > мобильного page_size 10 → на МОБИЛЕ селект единиц в строках резался (нет метров).
+  // Грузим единицы полным списком БЕЗУСЛОВНО (guard length===0 оставлял усечённый стор).
+  const promises: Promise<unknown>[] = [unitsStore.fetchList({ page_size: 1000 })]
   if (materialCategoriesStore.items.length === 0) {
     promises.push(materialCategoriesStore.fetchList())
   }

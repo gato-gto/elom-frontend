@@ -198,8 +198,12 @@ async function refresh() {
 }
 
 onMounted(async () => {
-  const loads: Promise<unknown>[] = [store.fetchList().catch(() => {})]
-  if (!objectsStore.items.length) {loads.push(objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))}
+  // F-718: objects=35 > 20 — грузим полный список БЕЗУСЛОВНО. Guard !items.length оставлял усечённый
+  // (20) стор с Objects/List → объекты #21..35 печатались как «объект #id» вместо имени.
+  const loads: Promise<unknown>[] = [
+    store.fetchList().catch(() => {}),
+    objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
+  ]
   await Promise.all(loads)
 })
 </script>
