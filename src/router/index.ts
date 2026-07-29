@@ -230,7 +230,10 @@ const routes = [
       breadcrumb: 'Закупки / Печать накладной',
       description: 'Отдельная страница для печати накладной',
       category: 'purchases',
-      permissions: ['purchases.view']
+      // F-882: было ['purchases.view'] — заявитель (view_own, без .view) открывал свою закупку и жал
+      // «Печать», но гард отбрасывал его на /purchases (печать не работала для всех *_own-ролей).
+      // Совпадает с маршрутом списка /purchases (F-512), бэкенд скоупит доступ по объектам.
+      permissions: ['purchases.view', 'purchases.view_own']
     }
   },
   
@@ -578,8 +581,11 @@ const routes = [
   {
     path: '/rbac/roles/:id/edit',
     name: 'RBACRoleEdit',
-    component: RBACRoleForm,
-    meta: { 
+    // F-888 (класс F-505): RoleForm получает данные ТОЛЬКО через prop :initial (её открывает список
+    // модалкой). Роутом монтировалась БЕЗ пропса → ПУСТАЯ форма «Создать роль», сабмит создавал НОВУЮ
+    // роль вместо редактирования. Ведём на список с ?edit=:id — там модалка откроется уже с ролью.
+    redirect: (to: { params: Record<string, unknown> }) => ({ path: '/rbac/roles', query: { edit: String(to.params.id) } }),
+    meta: {
       title: 'Редактировать роль',
       breadcrumb: 'Управление ролями / Редактировать',
       description: 'Редактирование роли и её разрешений',

@@ -192,6 +192,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRbacStore } from '@/stores/rbac'
+import { useEditQuery } from '@/composables/useEditQuery'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { parseApiError } from '@/utils/errorHandler'
@@ -293,6 +294,10 @@ function openEdit(role: Role) {
   current.value = role
   modalOpen.value = true
 }
+
+// F-888 (F-507): открытие модалки редактирования по ?edit=:id (сюда ведёт redirect маршрута
+// /rbac/roles/:id/edit). Store хранит роли в .roles → адаптер-getter под контракт useEditQuery.
+useEditQuery({ get items() { return rbacStore.roles } }, openEdit)
 
 async function viewPermissions(role: Role) {
   try {
