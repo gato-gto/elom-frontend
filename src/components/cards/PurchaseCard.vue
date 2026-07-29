@@ -18,14 +18,17 @@
           <span class="font-medium ml-2">{{ purchase.object_name }}</span>
         </div>
         
-        <div v-if="purchase.supplier">
+        <div v-if="purchase.supplier_name">
           <span class="text-muted">Поставщик:</span>
-          <span class="font-medium ml-2">{{ purchase.supplier }}</span>
+          <!-- F-909: было {{ purchase.supplier }} — сырой ID поставщика (FK), а не имя. supplier_name
+               = source='supplier.name' в сериализаторе; как в desktop-списке и на детальной. -->
+          <span class="font-medium ml-2">{{ purchase.supplier_name }}</span>
         </div>
-        
+
         <div>
           <span class="text-muted">Сумма:</span>
-          <span class="font-medium ml-2 text-success font-mono">{{ purchase.total_amount }} {{ purchase.currency }}</span>
+          <!-- F-909: сумма с разделителями разрядов (было «12500000.00» против «12 500 000» на детальной). -->
+          <span class="font-medium ml-2 text-success font-mono">{{ formatNumber(purchase.total_amount) }} {{ purchase.currency }}</span>
         </div>
         
         <div v-if="purchase.responsible_name">
@@ -87,7 +90,7 @@
 import { Purchase } from '@/api/types/purchases'
 import MobileCard from '@/components/MobileCard.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, formatNumber } from '@/utils/formatters'
 import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
 
 interface Props {
