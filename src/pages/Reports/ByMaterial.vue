@@ -208,8 +208,14 @@ const objects = ref<SiteObject[]>([])
 const chartContainer = ref<InstanceType<typeof ChartContainer>>()
 
 async function loadObjects() {
-  const {data} = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000}))
-  objects.value = data.results
+  // F-886: сбой загрузки объектов НЕ должен ронять отчёт (раньше reject прерывал onMounted до load()
+  // → «Нет данных» без ошибки, класс F-552). Тост + продолжаем.
+  try {
+    const {data} = await api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000}))
+    objects.value = data.results
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
 }
 
 async function load() {

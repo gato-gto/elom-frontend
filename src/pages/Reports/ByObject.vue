@@ -210,14 +210,21 @@ const employeeOptions = computed(() => [
 ])
 
 async function loadRefs() {
-  const [{data: od}, {data: ed}, {data: md}] = await Promise.all([
-    api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
-    api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
-    api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
-  ])
-  objects.value = od.results
-  employees.value = ed.results
-  materials.value = md.results
+  // F-886: сбой справочников НЕ должен ронять отчёт. Раньше reject в Promise.all прерывал onMounted
+  // до fetchReport → отчёт показывал «Нет данных» БЕЗ ошибки (класс F-552, напр. 403 на /employees).
+  // Тост + продолжаем; фильтры-выпадашки просто будут пустыми, а сам отчёт загрузится.
+  try {
+    const [{data: od}, {data: ed}, {data: md}] = await Promise.all([
+      api.get<PageResponse<SiteObject>>(endpoints.objects.list + buildQuery({page_size: 1000, ordering: 'name'})),
+      api.get<PageResponse<Employee>>(endpoints.employees.list + buildQuery({page_size: 1000, ordering: 'username'})),
+      api.get<PageResponse<Material>>(endpoints.materials.list + buildQuery({page_size: 1000, ordering: 'name'})),
+    ])
+    objects.value = od.results
+    employees.value = ed.results
+    materials.value = md.results
+  } catch (error) {
+    ErrorHandlers.dataLoading(error)
+  }
 }
 
 async function fetchReport() {
