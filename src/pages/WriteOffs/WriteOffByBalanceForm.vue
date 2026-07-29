@@ -201,7 +201,7 @@ import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { useUiStore } from '@/stores/ui'
 import { parseApiError } from '@/utils/errorHandler'
-import { formatNumberClean } from '@/utils/formatters'
+import { formatNumberClean, todayLocal } from '@/utils/formatters'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 
@@ -216,8 +216,7 @@ interface Row { _k: number; material: number | null; actual_balance: string }
 let seq = 0
 const blankRow = (): Row => ({ _k: ++seq, material: null, actual_balance: '' })
 
-const today = new Date().toISOString().split('T')[0]
-const date = ref(today)
+const date = ref(todayLocal())  // F-884: локальная дата, не UTC (toISOString съезжал на вчера в UTC+5 ночью)
 const objectId = ref(0)
 // F-642 (#28): пред-предупреждение о закрытом периоде (зеркалит серверный гард D-012/F-619).
 const periodClosed = computed(() => archivePeriodsStore.isPeriodClosed(objectId.value, date.value))
@@ -296,7 +295,18 @@ function addRow() {
 }
 
 function removeRow(index: number) {
-  if (rows.value.length > 1) {rows.value.splice(index, 1)}
+  if (rows.value.length > 1) {
+    rows.value.splice(index, 1)
+    // F-883 (класс F-628): rowErrors keyed по индексу строки → после splice сдвигаем ключи, иначе
+    // ошибка остаётся на старом индексе и показывается на ЧУЖОЙ строке (или на удалённой).
+    const re: Record<number, string> = {}
+    Object.keys(rowErrors.value).forEach(k => {
+      const j = Number(k)
+      if (j === index) { return }
+      re[j > index ? j - 1 : j] = rowErrors.value[j]
+    })
+    rowErrors.value = re
+  }
 }
 
 function clearErrors() {
@@ -357,7 +367,7 @@ function handleSubmit() {
 function reset() {
   // F-853: свежая дата на КАЖДОЕ открытие (форма всегда смонтирована через :is-open; PWA,
   // открытая через полночь, иначе дефолтила инвентаризацию вчерашней датой).
-  date.value = new Date().toISOString().split('T')[0]
+  date.value = todayLocal()
   objectId.value = 0
   rows.value = [blankRow()]
   stockMaterials.value = []

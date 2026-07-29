@@ -134,9 +134,24 @@ export function useItemsForm<T extends BaseItem>(
   function removeItem(index: number) {
     if (index >= 0 && index < items.value.length) {
       items.value.splice(index, 1)
-      
+
       // Очищаем ошибки дублирования после удаления
       clearItemsDuplicateErrors()
+
+      // F-883 (класс F-628): переиндексируем itemErrors после splice. Раньше ошибки позиций НИЖЕ
+      // удалённой оставались на старых ключах items[j] и показывались на ЧУЖОЙ строке. Убираем
+      // ошибки удалённой строки, сдвигаем items[j] → items[j-1] для j > index; не-item ключи не трогаем.
+      const reindexed: Record<string, string> = {}
+      Object.keys(itemErrors).forEach(key => {
+        const m = key.match(/^items\[(\d+)\]\.(.+)$/)
+        if (!m) { reindexed[key] = itemErrors[key]; return }
+        const j = parseInt(m[1], 10)
+        if (j === index) { return }
+        const nj = j > index ? j - 1 : j
+        reindexed[`items[${nj}].${m[2]}`] = itemErrors[key]
+      })
+      Object.keys(itemErrors).forEach(k => delete itemErrors[k])
+      Object.assign(itemErrors, reindexed)
     }
   }
   
