@@ -145,6 +145,10 @@ export function useUrlFilters(store: any, getFilterConfigs: () => FilterConfig[]
     const { patch, page } = parseQuery()
     const cfgs = configByKey()
     if (!store.filters) { store.filters = {} }
+    // F-904 (perf): снимок ДО применения — если URL ничего не меняет в state, значит это ЭХО нашей
+    // же router.replace (не «назад/вперёд»/внешняя ссылка), и рефетч не нужен. Раньше каждый фильтр/
+    // сорт/страница слал fetchList ДВАЖДЫ: setFilters (fetch#1) → URL → этот watcher → fetch#2.
+    const _before = JSON.stringify([store.filters, store.pagination?.page])
     syncing = true
     // config-фильтры + search: применяем из URL или сбрасываем (отсутствующие) к «все» ('').
     const clearable = [...Object.keys(cfgs), 'search']
@@ -160,7 +164,8 @@ export function useUrlFilters(store: any, getFilterConfigs: () => FilterConfig[]
     // page: из URL либо на первую (свежий переход без ?page → страница 1).
     if (store.pagination) { store.pagination.page = page && page > 0 ? page : 1 }
     syncing = false
-    if (triggerFetch && typeof store.fetchList === 'function') { store.fetchList() }
+    const _changed = JSON.stringify([store.filters, store.pagination?.page]) !== _before
+    if (triggerFetch && _changed && typeof store.fetchList === 'function') { store.fetchList() }
     return true
   }
 
