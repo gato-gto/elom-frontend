@@ -462,24 +462,31 @@ async function handleSubmit(formData: EmployeeRequest) {
         } else {
           // Remove all roles if none selected
           if (currentUserRoles.length > 0) {
+            // F-906: считаем успехи/сбои — раньше «Все роли отозваны» показывалось БЕЗУСЛОВНО, даже
+            // если часть revoke упала (роли остались) → ложный успех. Теперь честный итог.
+            let revokeOk = 0, revokeFailed = 0
             for (const userRole of currentUserRoles) {
               try {
                 await rbacStore.revokeRole(userRole.id, userId)
+                revokeOk++
               } catch (revokeError: any) {
+                revokeFailed++
                 const role = rbacStore.getRoleById(userRole.role_id)
                 const roleName = role?.display_name || `Роль #${userRole.role_id}`
                 const parsedError = parseApiError(revokeError)
                 console.error(`[EmployeeForm] Failed to revoke role ${roleName}:`, revokeError)
-                ui.toast({ 
-                  type: 'error', 
-                  text: `Не удалось отозвать роль "${roleName}": ${parsedError.detail}` 
+                ui.toast({
+                  type: 'error',
+                  text: `Не удалось отозвать роль "${roleName}": ${parsedError.detail}`
                 })
               }
             }
-            ui.toast({ 
-              type: 'info', 
-              text: 'Все роли отозваны у пользователя' 
-            })
+            if (revokeFailed === 0) {
+              ui.toast({ type: 'info', text: 'Все роли отозваны у пользователя' })
+            } else if (revokeOk > 0) {
+              ui.toast({ type: 'info', text: `Отозвано ${revokeOk} из ${revokeOk + revokeFailed} ролей (часть не удалась)` })
+            }
+            // если упали ВСЕ — по каждой уже показан error-тост, общий success не даём
             
             // Перезагружаем роли пользователя
             await rbacStore.getUserRoles(userId, true)
