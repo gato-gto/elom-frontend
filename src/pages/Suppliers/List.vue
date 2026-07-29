@@ -48,9 +48,10 @@
           <button class="btn btn-ghost" @click="showDeleteModal = false">
             Отмена
           </button>
-          <button 
-            class="btn btn-error" 
+          <button
+            class="btn btn-error"
             :class="{ 'loading': deleting }"
+            :disabled="deleting"
             @click="handleDelete"
           >
             <svg v-if="!deleting" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,8 +195,8 @@ function confirmDelete(supplier: PurchaseSupplier) {
 }
 
 async function handleDelete() {
-  if (!deletingSupplier.value) {return}
-  
+  if (!deletingSupplier.value || deleting.value) {return}  // F-892: гард от дабл-клика (двойной DELETE + ложный тост-ошибка)
+
   deleting.value = true
   try {
     await suppliersStore.remove(deletingSupplier.value.id)
