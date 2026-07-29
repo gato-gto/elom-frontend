@@ -91,12 +91,14 @@
               </li>
               <li><div class="divider my-2"></div></li>
               <li>
-                <a @click="logout" class="text-error hover:bg-error/10 hover:text-error transition-all duration-200 rounded-lg">
+                <!-- F-915 (a11y): было <a @click> без href → недостижимо/неактивируемо с клавиатуры
+                     (клавиатурный юзер не мог выйти). <button> фокусируется и активируется Enter/Space. -->
+                <button type="button" @click="logout" class="w-full text-left text-error hover:bg-error/10 hover:text-error transition-all duration-200 rounded-lg">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                   Выйти
-                </a>
+                </button>
               </li>
             </ul>
           </div>
