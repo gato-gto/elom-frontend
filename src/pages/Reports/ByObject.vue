@@ -178,7 +178,6 @@ const rows = ref<ObjectReportRow[]>([])
 // F-721: агрегат по ВСЕМУ отфильтрованному отчёту (BE grand_total) — сводка не должна считаться reduce'ом по странице.
 const grandTotal = ref<{ total_amount: number; purchases: number; rows_count: number; avg_amount: number } | null>(null)
 const loading = ref(false)
-const count = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(50)
 const totalItems = ref(0)
@@ -267,7 +266,8 @@ async function fetchReport() {
   } catch (error) {
     ErrorHandlers.dataLoading(error)
     rows.value = []
-    count.value = 0
+    totalItems.value = 0
+    grandTotal.value = null  // F-721: как в else-ветке и в сиблингах — не оставляем устаревшую сводку
   } finally {
     loading.value = false
   }

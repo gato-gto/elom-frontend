@@ -211,11 +211,10 @@ async function load() {
     
     if (data && data.results) {
       rows.value = data.results
-      // F-721: итог/сводку берём из BE grand_total (по всему отчёту); reduce по странице — fallback.
+      // F-721: grand_total (по ВСЕМУ отчёту) — для сводки-карточек (chartStats). tfoot «Итого (стр.)» —
+      // подытог ТЕКУЩЕЙ страницы, поэтому total оставляем reduce'ом по странице (метка честна).
       grandTotal.value = data.grand_total || null
-      total.value = grandTotal.value
-        ? grandTotal.value.total_amount
-        : data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
+      total.value = data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
 
       // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
       // график дважды за тик (гонка уничтожения → ctx.save на null). См. ByPeriod.

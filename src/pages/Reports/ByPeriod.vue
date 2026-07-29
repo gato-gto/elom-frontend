@@ -252,11 +252,10 @@ async function load() {
         avg_amount: row.avg_amount || 0
       }))
       totalItems.value = data.count
-      // F-721: итог/сводку берём из BE grand_total (по всему отчёту); reduce по странице — fallback.
+      // F-721: grand_total (по ВСЕМУ отчёту) — для сводки-карточек (chartStats). tfoot «Итого (стр.)» —
+      // подытог ТЕКУЩЕЙ страницы, поэтому total оставляем reduce'ом по странице (метка честна).
       grandTotal.value = data.grand_total || null
-      total.value = grandTotal.value
-        ? grandTotal.value.total_amount
-        : rows.value.reduce((sum: number, row: PeriodReportRow) => sum + row.total_amount, 0)
+      total.value = rows.value.reduce((sum: number, row: PeriodReportRow) => sum + row.total_amount, 0)
       // F-570: НЕ триггерим график здесь — за отрисовку отвечает единственный watch(rows) ниже.
       // Двойной вызов (этот + watch) создавал график дважды за тик: первый экземпляр на ещё
       // не разложенном canvas (300px) уничтожался посреди кадра, и хук Filler звал ctx.save()
