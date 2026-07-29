@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import {ref, computed, onMounted} from 'vue'
+import { todayLocal } from '@/utils/formatters'
 import {useMaterialsStore, uploadPhoto, deletePhoto} from '@/stores/materials'
 import {useUnitsStore} from '@/stores/units'
 import {useMaterialCategoriesStore} from '@/stores/materialCategories'
@@ -183,7 +184,7 @@ const initialFormData = computed<MaterialRequest & { photo?: File }>(() => {
       sku: props.initial.sku || '',
       category: props.initial.category,
       default_unit: props.initial.default_unit,
-      created_date: props.initial.created_date || new Date().toISOString().split('T')[0],
+      created_date: props.initial.created_date || todayLocal(),
       description: props.initial.description || '',
       manufacturer: props.initial.manufacturer || '',
       is_active: props.initial.is_active ?? true,
@@ -196,7 +197,7 @@ const initialFormData = computed<MaterialRequest & { photo?: File }>(() => {
     sku: '',
     category: undefined,
     default_unit: 0,  // F-250: пусто → пользователь обязан выбрать (см. validation.custom выше)
-    created_date: new Date().toISOString().split('T')[0],
+    created_date: todayLocal(),
     description: '',
     manufacturer: '',
     is_active: true,

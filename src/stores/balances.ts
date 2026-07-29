@@ -2,6 +2,7 @@
  * Store для управления остатками материалов
  */
 import { ref } from 'vue'
+import { todayLocal } from '@/utils/formatters'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { createBaseStore } from './base'
@@ -23,7 +24,7 @@ export const useBalancesStore = createBaseStore<ObjectBalance & { id: number }, 
 const extendedFilters = ref({
   search: '',
   object: '',
-  date: new Date().toISOString().split('T')[0]
+  date: todayLocal()
 })
 
 // ============================================================================
@@ -126,7 +127,7 @@ export const resetBalancesFilters = async () => {
   Object.assign(extendedFilters.value, {
     search: '',
     object: '',
-    date: new Date().toISOString().split('T')[0]
+    date: todayLocal()
   })
   store.filters = {
     ...extendedFilters.value,

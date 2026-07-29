@@ -126,7 +126,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { formatNumberClean } from '@/utils/formatters'
+import { formatNumberClean, todayLocal } from '@/utils/formatters'
 import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки/приход/расход — «умное» число (9 750 км), как в карточках (F-867)
 import { useObjectsStore } from '@/stores/objects'
 import { useBalancesStore, fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '@/stores/balances'
@@ -281,7 +281,7 @@ onMounted(async () => {
   try {
     // F-855: дефолтную дату остатков обновляем на СЕГОДНЯ при каждом маунте — иначе в долгоживущей
     // PWA extendedFilters.date оставался датой импорта модуля (вчера/раньше) и остатки грузились не за тот день.
-    extendedFilters.value.date = new Date().toISOString().split('T')[0]
+    extendedFilters.value.date = todayLocal()
     // Load objects for filter options
     await objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any)
     

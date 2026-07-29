@@ -404,7 +404,7 @@ import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useUiStore } from '@/stores/ui'
-import { formatNumberClean } from '@/utils/formatters'
+import { formatNumberClean, todayLocal } from '@/utils/formatters'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
@@ -445,7 +445,7 @@ const emit = defineEmits<{
 
 // Form data - общие поля
 const formData = ref({
-  date: new Date().toISOString().split('T')[0],
+  date: todayLocal(),
   object: 0,
   responsible: 0,
   comment: ''
@@ -1090,7 +1090,7 @@ const initializeForm = async () => {
     const defaultObject = objects.length === 1 ? objects[0].id : 0
     
     formData.value = {
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       object: defaultObject,
       responsible: defaultResponsible,
       comment: ''

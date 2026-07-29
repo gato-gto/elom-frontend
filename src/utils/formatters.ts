@@ -3,6 +3,16 @@
  */
 
 /**
+ * F-884: сегодняшняя дата в ЛОКАЛЬНОМ поясе как 'YYYY-MM-DD'.
+ * `new Date().toISOString().split('T')[0]` берёт дату в UTC → в UTC+5 ночью (00:00–05:00)
+ * «сегодня» съезжало на вчера (дефолты дат в формах/фильтрах). Собираем из локальных компонент.
+ */
+export function todayLocal(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
  * Нормализует входную дату
  */
 function toValidDate(value: string | Date | number | null | undefined): Date | null {

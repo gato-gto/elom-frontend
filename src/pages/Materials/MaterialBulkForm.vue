@@ -309,6 +309,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, watch } from 'vue'
+import { todayLocal } from '@/utils/formatters'
 import Modal from '@/components/Modal.vue'
 import { useMaterialsStore } from '@/stores/materials'
 import { useUnitsStore } from '@/stores/units'
@@ -377,7 +378,7 @@ function addItem() {
     manufacturer: '',
     description: '',
     // Значения по умолчанию: дата создания - текущая дата, статус - активный
-    created_date: new Date().toISOString().split('T')[0],
+    created_date: todayLocal(),
     is_active: true
   }
   items.value.push(newItem)
@@ -468,7 +469,7 @@ const handleSubmit = async () => {
       formData.append('default_unit', item.default_unit.toString())
       if (item.manufacturer?.trim()) { formData.append('manufacturer', item.manufacturer.trim()) }
       if (item.description?.trim()) { formData.append('description', item.description.trim()) }
-      formData.append('created_date', new Date().toISOString().split('T')[0])
+      formData.append('created_date', todayLocal())
       formData.append('is_active', 'true')
       try {
         await api.post<Material>(endpoints.materials.list, formData, {
