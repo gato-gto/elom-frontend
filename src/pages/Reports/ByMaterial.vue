@@ -190,6 +190,9 @@ const dateTo = ref<string | undefined>()
 const objectId = ref<number | undefined>()
 const rows = ref<MaterialReportRow[]>([])
 const total = ref<number | null>(null)
+// F-721: агрегат по ВСЕМУ отфильтрованному отчёту (BE grand_total) — сводка/итог не должны считаться
+// reduce'ом по одной странице (недосчёт при materials > page_size).
+const grandTotal = ref<{ amount_total: number; rows: number; rows_count: number; avg_amount: number } | null>(null)
 
 // Pagination
 const currentPage = ref(1)
@@ -249,18 +252,24 @@ async function load() {
         amount_total: r.amount_total || 0,
         rows: r.rows || 0
       }))
-      total.value = rows.value.reduce((sum: number, r: MaterialReportRow) => sum + r.amount_total, 0)
-      
+      // F-721: итог/сводку берём из BE grand_total (по всему отчёту); reduce по странице — только fallback.
+      grandTotal.value = data.grand_total || null
+      total.value = grandTotal.value
+        ? grandTotal.value.amount_total
+        : rows.value.reduce((sum: number, r: MaterialReportRow) => sum + r.amount_total, 0)
+
       // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
       // график дважды за тик (латентная гонка уничтожения; doughnut её переживал, но чистим). См. ByPeriod.
     } else {
       rows.value = []
       total.value = null
+      grandTotal.value = null
     }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
+    grandTotal.value = null
   } finally {
     loading.value = false
   }
@@ -439,10 +448,12 @@ const chartLegendItems = computed(() => {
 const chartStats = computed(() => {
   if (rows.value.length === 0) {return undefined}
   
-  const totalAmount = rows.value.reduce((sum, row) => sum + row.amount_total, 0)
-  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.rows || 0), 0)
-  const uniqueMaterials = rows.value.length
-  
+  // F-721: сводка по ВСЕМУ отфильтрованному отчёту из BE grand_total; reduce по странице — fallback.
+  const gt = grandTotal.value
+  const totalAmount = gt ? gt.amount_total : rows.value.reduce((sum, row) => sum + row.amount_total, 0)
+  const totalPurchases = gt ? gt.rows : rows.value.reduce((sum, row) => sum + (row.rows || 0), 0)
+  const uniqueMaterials = gt ? (gt.rows_count ?? totalItems.value) : rows.value.length
+
   return {
     totalAmount: {
       label: 'Общая сумма',

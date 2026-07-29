@@ -175,6 +175,8 @@ import ChartContainer from '@/components/ChartContainer.vue'
 import ExportButton from '@/components/ExportButton.vue'
 
 const rows = ref<ObjectReportRow[]>([])
+// F-721: агрегат по ВСЕМУ отфильтрованному отчёту (BE grand_total) — сводка не должна считаться reduce'ом по странице.
+const grandTotal = ref<{ total_amount: number; purchases: number; rows_count: number; avg_amount: number } | null>(null)
 const loading = ref(false)
 const count = ref(0)
 const currentPage = ref(1)
@@ -253,12 +255,14 @@ async function fetchReport() {
     if (data && data.results) {
       rows.value = data.results
       totalItems.value = data.count
-      
+      grandTotal.value = data.grand_total || null  // F-721
+
       // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
       // график дважды за тик (гонка уничтожения → ctx.save на null). См. ByPeriod.
     } else {
       rows.value = []
       totalItems.value = 0
+      grandTotal.value = null
     }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
@@ -417,9 +421,12 @@ const chartLegendItems = computed(() => [
 const chartStats = computed(() => {
   if (rows.value.length === 0) {return undefined}
   
-  const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
-  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
-  const avgAmount = totalAmount / rows.value.length
+  // F-721: сводка по ВСЕМУ отфильтрованному отчёту из BE grand_total; reduce по странице — fallback.
+  const gt = grandTotal.value
+  const totalAmount = gt ? gt.total_amount : rows.value.reduce((sum, row) => sum + row.total_amount, 0)
+  const totalPurchases = gt ? gt.purchases : rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
+  const uniqueCount = gt ? gt.rows_count : rows.value.length
+  const avgAmount = uniqueCount ? totalAmount / uniqueCount : 0
   
   return {
     totalAmount: {

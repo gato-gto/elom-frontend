@@ -171,6 +171,8 @@ const dateFrom = ref<string | undefined>()
 const dateTo = ref<string | undefined>()
 const rows = ref<ResponsibleReportRow[]>([])
 const total = ref<number | null>(null)
+// F-721: агрегат по ВСЕМУ отфильтрованному отчёту (BE grand_total) — итог/сводка не считаются reduce'ом по странице.
+const grandTotal = ref<{ total_amount: number; purchases: number; rows_count: number; avg_amount: number } | null>(null)
 
 // Pagination
 const currentPage = ref(1)
@@ -209,20 +211,24 @@ async function load() {
     
     if (data && data.results) {
       rows.value = data.results
-      
-      total.value = data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
-      
+      // F-721: итог/сводку берём из BE grand_total (по всему отчёту); reduce по странице — fallback.
+      grandTotal.value = data.grand_total || null
+      total.value = grandTotal.value
+        ? grandTotal.value.total_amount
+        : data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
+
       // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
       // график дважды за тик (гонка уничтожения → ctx.save на null). См. ByPeriod.
     } else {
       rows.value = []
-      
       total.value = null
+      grandTotal.value = null
     }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
+    grandTotal.value = null
   } finally {
     loading.value = false
   }
@@ -368,9 +374,12 @@ const chartLegendItems = computed(() => [
 const chartStats = computed(() => {
   if (rows.value.length === 0) {return undefined}
   
-  const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
-  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
-  const avgAmount = totalAmount / rows.value.length
+  // F-721: сводка по ВСЕМУ отфильтрованному отчёту из BE grand_total; reduce по странице — fallback.
+  const gt = grandTotal.value
+  const totalAmount = gt ? gt.total_amount : rows.value.reduce((sum, row) => sum + row.total_amount, 0)
+  const totalPurchases = gt ? gt.purchases : rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
+  const uniqueCount = gt ? gt.rows_count : rows.value.length
+  const avgAmount = uniqueCount ? totalAmount / uniqueCount : 0
   
   return {
     totalAmount: {

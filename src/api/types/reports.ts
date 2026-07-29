@@ -81,9 +81,24 @@ export interface MaterialReportRow {
   last_purchase_date: string | null;
 }
 
+// F-721: агрегат сводки по ВСЕМУ отфильтрованному отчёту (не по странице). BE отдаёт рядом с results.
+export interface MaterialReportGrandTotal {
+  amount_total: number;
+  rows: number;
+  rows_count: number;
+  avg_amount: number;
+}
+export interface AmountReportGrandTotal {
+  total_amount: number;
+  purchases: number;
+  rows_count: number;
+  avg_amount: number;
+}
+
 export interface MaterialReportResponse {
   count: number;
   results: MaterialReportRow[];
+  grand_total?: MaterialReportGrandTotal; // F-721
 }
 
 export interface ObjectReportRow {
@@ -102,6 +117,7 @@ export interface ObjectReportRow {
 export interface ObjectReportResponse {
   count: number;
   results: ObjectReportRow[];
+  grand_total?: AmountReportGrandTotal; // F-721
 }
 
 export interface PeriodReportRow {
@@ -117,6 +133,7 @@ export interface PeriodReportRow {
 export interface PeriodReportResponse {
   count: number;
   results: PeriodReportRow[];
+  grand_total?: AmountReportGrandTotal; // F-721
 }
 
 export interface ResponsibleReportRow {
@@ -133,6 +150,7 @@ export interface ResponsibleReportRow {
 export interface ResponsibleReportResponse {
   count: number;
   results: ResponsibleReportRow[];
+  grand_total?: AmountReportGrandTotal; // F-721
 }
 
 // Report query types

@@ -201,6 +201,8 @@ const dateTo = ref<string | undefined>()
 const period = ref<'day' | 'month'>('month')
 const rows = ref<PeriodReportRow[]>([])
 const total = ref<number | null>(null)
+// F-721: агрегат по ВСЕМУ отфильтрованному отчёту (BE grand_total) — итог/сводка не считаются reduce'ом по странице.
+const grandTotal = ref<{ total_amount: number; purchases: number; rows_count: number; avg_amount: number } | null>(null)
 
 // Pagination
 const currentPage = ref(1)
@@ -250,8 +252,11 @@ async function load() {
         avg_amount: row.avg_amount || 0
       }))
       totalItems.value = data.count
-      // Вычисляем общую сумму
-      total.value = rows.value.reduce((sum: number, row: PeriodReportRow) => sum + row.total_amount, 0)
+      // F-721: итог/сводку берём из BE grand_total (по всему отчёту); reduce по странице — fallback.
+      grandTotal.value = data.grand_total || null
+      total.value = grandTotal.value
+        ? grandTotal.value.total_amount
+        : rows.value.reduce((sum: number, row: PeriodReportRow) => sum + row.total_amount, 0)
       // F-570: НЕ триггерим график здесь — за отрисовку отвечает единственный watch(rows) ниже.
       // Двойной вызов (этот + watch) создавал график дважды за тик: первый экземпляр на ещё
       // не разложенном canvas (300px) уничтожался посреди кадра, и хук Filler звал ctx.save()
@@ -260,11 +265,13 @@ async function load() {
       rows.value = []
       totalItems.value = 0
       total.value = null
+      grandTotal.value = null
     }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
+    grandTotal.value = null
   } finally {
     loading.value = false
   }
@@ -453,9 +460,12 @@ const chartLegendItems = computed(() => [
 const chartStats = computed(() => {
   if (rows.value.length === 0) {return undefined}
   
-  const totalAmount = rows.value.reduce((sum, row) => sum + row.total_amount, 0)
-  const totalPurchases = rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
-  const avgAmount = totalAmount / rows.value.length
+  // F-721: сводка по ВСЕМУ отфильтрованному отчёту из BE grand_total; reduce по странице — fallback.
+  const gt = grandTotal.value
+  const totalAmount = gt ? gt.total_amount : rows.value.reduce((sum, row) => sum + row.total_amount, 0)
+  const totalPurchases = gt ? gt.purchases : rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
+  const uniqueCount = gt ? gt.rows_count : rows.value.length
+  const avgAmount = uniqueCount ? totalAmount / uniqueCount : 0
   
   return {
     totalAmount: {
