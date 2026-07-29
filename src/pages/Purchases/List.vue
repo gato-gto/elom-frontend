@@ -330,8 +330,11 @@ const listConfig = computed(() => ({
       {
         key: 'reject',
         label: 'Отклонить',
+        // F-913 (permission-string contract): BE reject-эндпоинт требует purchases.APPROVE
+        // (purchases/views.py:1233), а НЕ purchases.reject (такого codename в RBAC нет) → кнопка
+        // была скрыта у всех неадминов, кто РЕАЛЬНО может отклонять (держатели approve). Синхро с BE.
         class: 'btn-error btn-sm',
-        permission: 'purchases.reject', // ✅ RBAC: Явное указание permission
+        permission: 'purchases.approve',
         visible: (item: Purchase) => item.status === 'new',
         // F-907: reject/-экшен на BE (purchases/views.py reject) отклоняет is_archived закупку 400
         // (F-288, D-012 read-only). Гасим симметрично approve. ВАЖНО: гейт по is_archived (флаг,
