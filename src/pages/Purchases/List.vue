@@ -308,7 +308,11 @@ const listConfig = computed(() => ({
         // Для остальных: проверка прав выполняется автоматически через permissions
         // (purchases.edit или purchases.edit_own + принадлежность объекта)
         return true
-      }
+      },
+      // F-907: BE perform_update отклоняет ЛЮБОЕ изменение is_archived закупки 400 («Нельзя изменять
+      // архивированные закупки»), для всех статусов (не только completed). Гасим редактирование архива.
+      disabled: (item: Purchase) => item.is_archived === true,
+      disabledTooltip: 'Закупка в закрытом периоде (архив) — редактировать нельзя'
     },
     ...(canApprove.value ? [
       {
@@ -328,7 +332,12 @@ const listConfig = computed(() => ({
         label: 'Отклонить',
         class: 'btn-error btn-sm',
         permission: 'purchases.reject', // ✅ RBAC: Явное указание permission
-        visible: (item: Purchase) => item.status === 'new'
+        visible: (item: Purchase) => item.status === 'new',
+        // F-907: reject/-экшен на BE (purchases/views.py reject) отклоняет is_archived закупку 400
+        // (F-288, D-012 read-only). Гасим симметрично approve. ВАЖНО: гейт по is_archived (флаг,
+        // который проверяет BE), НЕ по is_period_closed — они расходятся (период закрыт, но не архив).
+        disabled: (item: Purchase) => item.is_archived === true,
+        disabledTooltip: 'Закупка в закрытом периоде (архив) — отклонить нельзя'
       }
     ] : [])
   ],
