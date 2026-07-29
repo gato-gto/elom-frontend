@@ -58,11 +58,14 @@ function setTokens(access?: string | null, refresh?: string | null) {
 function clearTokensAndLogout() {
     const s = authStoreSafe()
     if (s?.logout) {
-        // важно: без аргументов (исправление ошибки TS2554)
-        s.logout()
+        // F-905: logout(true) — С РЕДИРЕКТОМ на /login?session=expired. Раньше звали logout() без
+        // аргумента (withRedirect=false) → при протухшей сессии (рефреш не удался) токены чистились,
+        // но пользователь оставался на мёртвой странице с потоком 401/тостов. Редирект уводит на логин.
+        s.logout(true)
     } else {
         localStorage.removeItem(ACCESS_KEY)
         localStorage.removeItem(REFRESH_KEY)
+        location.replace('/login?session=expired')
     }
 }
 
