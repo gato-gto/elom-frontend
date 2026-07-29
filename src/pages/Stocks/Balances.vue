@@ -40,15 +40,6 @@
         </div>
       </template>
 
-      <!-- Custom column for total balance -->
-      <template #column-total_balance="{ item }">
-        <div class="text-right">
-          <span class="font-semibold text-success font-mono">
-            {{ formatQuantity(calculateTotalBalance(item.materials)) }}
-          </span>
-        </div>
-      </template>
-
       <!-- Expanded materials rows -->
       <template #row-expanded="{ item }">
         <tr v-if="expandedRows.has(item.object_id)" class="bg-base-200">
@@ -200,10 +191,10 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
   filterColumns: 3,
   columns: [
     { key: 'object_name', label: 'Объект', sortable: true },
-    // F-716: заголовок на ту же ось, что кастомный слот значения (total_materials — по центру,
-    // total_balance — вправо). Ключи не ловятся авто-регэкспом RIGHT_ALIGN_KEY_RE, задаём align явно.
-    { key: 'total_materials', label: 'Материалов', sortable: true, align: 'center' },
-    { key: 'total_balance', label: 'Общий остаток', sortable: false, align: 'right' }
+    // F-716/F-879: заголовок на оси значения (total_materials — по центру); ключ не ловится
+    // авто-регэкспом RIGHT_ALIGN_KEY_RE, align задаём явно. Колонка «Общий остаток» УБРАНА (F-879,
+    // решение владельца): суммировала current_balance по разным единицам (кг+м+шт) → бессмысленное число.
+    { key: 'total_materials', label: 'Материалов', sortable: true, align: 'center' }
   ],
   filters: [
     // F-220: removed the dead 'search' text filter — the by-objects aggregate endpoint only accepts
@@ -240,13 +231,6 @@ function toggleExpanded(objectId: number) {
   } else {
     expandedRows.value.add(objectId)
   }
-}
-
-function calculateTotalBalance(materials: MaterialBalance[]): string {
-  const total = materials.reduce((sum, material) => {
-    return sum + parseFloat(material.current_balance || '0')
-  }, 0)
-  return total.toString()
 }
 
 // Sort materials function

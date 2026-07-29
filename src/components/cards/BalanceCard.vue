@@ -11,12 +11,7 @@
           <span class="font-medium ml-2">{{ balance.object_address || '—' }}</span>
         </div>
         
-        <div>
-          <span class="text-muted">Общий остаток:</span>
-          <span class="font-medium ml-2 text-success font-mono">
-            {{ formatQuantity(calculateTotalBalance(balance.materials)) }}
-          </span>
-        </div>
+        <!-- F-879 (владелец): «Общий остаток» убран — суммировал разные единицы (кг+м+шт). -->
 
         <!-- Кнопка раскрытия материалов -->
         <div v-if="balance.materials && balance.materials.length > 0" class="pt-2 border-t border-base-300">
@@ -101,13 +96,6 @@ const expanded = ref(false)
 
 function formatQuantity(quantity: string): string {
   return formatNumberClean(quantity)
-}
-
-function calculateTotalBalance(materials: MaterialBalance[]): string {
-  const total = materials.reduce((sum, material) => {
-    return sum + parseFloat(material.current_balance || '0')
-  }, 0)
-  return total.toString()
 }
 
 function toggleExpanded() {
