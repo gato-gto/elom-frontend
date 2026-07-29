@@ -519,10 +519,13 @@ onMounted(async () => {
   // Загружаем единицы измерения и категории
   // F-718: units=14 > мобильного page_size 10 → на МОБИЛЕ селект единиц в строках резался (нет метров).
   // Грузим единицы полным списком БЕЗУСЛОВНО (guard length===0 оставлял усечённый стор).
-  const promises: Promise<unknown>[] = [unitsStore.fetchList({ page_size: 1000 })]
-  if (materialCategoriesStore.items.length === 0) {
-    promises.push(materialCategoriesStore.fetchList())
-  }
+  // F-901 (sweep, класс F-718): категории — dropdown в строках bulk-формы, нужен ПОЛНЫЙ список.
+  // Guard length===0 оставлял усечённый (≤20) стор с чужого экрана, а fetchList без page_size усёк
+  // бы при >20 категориях. Грузим безусловно полным списком (как units в F-718).
+  const promises: Promise<unknown>[] = [
+    unitsStore.fetchList({ page_size: 1000 }),
+    materialCategoriesStore.fetchList({ page_size: 1000 } as any),
+  ]
   
   if (promises.length > 0) {
     await Promise.all(promises)
