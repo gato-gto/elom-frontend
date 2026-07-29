@@ -169,19 +169,21 @@ function getSourceTypeDisplayName(sourceType: string) {
 
 // GenericList configuration
 const listConfig = computed<GenericListConfig<StockSnapshot>>(() => ({
-  title: 'Остатки',
-  subtitle: 'Журнал движения остатков по объектам (только просмотр). Списания — на странице «Списания».',
-  icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+  // F-897: страница «Движения» (маршрут /movements) ошибочно называлась «Остатки» — копипаст-остаток
+  // (сама страница остатков — /balances). Заголовок/тексты приведены к «Движениям».
+  title: 'Движения',
+  subtitle: 'Журнал движения остатков по объектам (приход/расход, только просмотр). Списания — на странице «Списания».',
+  icon: 'warehouse',
   showCreate: false,
   canCreate: false,
   showStats: true,
   exportable: canExportReports.value, // ✅ RBAC: контроль экспорта через permissions
   exportFilename: 'stocks',
   exportUrl: '/api/v1/stock/snapshots/',
-  loadingText: 'Загрузка остатков...',
-  emptyText: 'Нет внесений остатков',
-  emptyTitle: 'Нет внесений остатков',
-  emptySubtitle: 'Внесите первые остатки для начала работы',
+  loadingText: 'Загрузка движений...',
+  emptyText: 'Нет движений',
+  emptyTitle: 'Нет движений',
+  emptySubtitle: 'Движения появятся после закупок и списаний по объектам',
   filterColumns: 4,
   columns: [
     { key: 'date', label: 'Дата', sortable: true, formatter: (value) => formatDate(value) },
