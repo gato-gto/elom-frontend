@@ -69,12 +69,13 @@
       >
           <!-- Results -->
           <button
-            v-for="material in searchResults"
+            v-for="(material, mIdx) in searchResults"
             :key="material.id"
             type="button"
             class="w-full px-3 py-2 text-left hover:bg-base-200 focus:bg-base-200 focus:outline-none"
-            :class="{ 'bg-primary text-primary-content': selectedMaterial?.id === material.id }"
+            :class="{ 'bg-primary text-primary-content': selectedMaterial?.id === material.id || mIdx === activeIndex }"
             @mousedown.prevent
+            @mousemove="activeIndex = mIdx"
             @click="selectMaterial(material)"
           >
             <div class="font-medium">{{ material.name }}</div>
@@ -95,6 +96,7 @@
             v-if="allowCustom && searchQuery.trim().length >= 2"
             type="button"
             class="w-full px-3 py-2 text-left hover:bg-base-200 focus:bg-base-200 focus:outline-none border-t border-base-300"
+            :class="{ 'bg-primary text-primary-content': activeIndex === searchResults.length }"
             @mousedown.prevent
             @click="selectCustomMaterial"
           >
@@ -151,6 +153,7 @@ const inputContainer = ref<HTMLElement>()
 const dropdown = ref<HTMLElement>()
 const searchQuery = ref('')
 const searchResults = ref<Material[]>([])
+const activeIndex = ref(-1)  // F-914: активный пункт для клавиатурной навигации (ArrowUp/Down + Enter)
 const selectedMaterial = ref<Material | null>(null)
 const showDropdown = ref(false)
 const loading = ref(false)
@@ -189,10 +192,11 @@ const dropdownStyle = computed(() => {
 
 // Search materials when query changes
 watch(searchQuery, (newQuery) => {
+  activeIndex.value = -1  // F-914: новый ввод → сбрасываем активный пункт клавиатурной навигации
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value)
   }
-  
+
   if (newQuery.length >= 2) {
     searchTimeout.value = setTimeout(() => {
       searchMaterials(newQuery)
@@ -345,6 +349,28 @@ function handleKeydown(event: KeyboardEvent) {
     showDropdown.value = false
     isUserTyping.value = false // Сбрасываем флаг при нажатии Escape
     searchInput.value?.blur()
+    return
+  }
+  // F-914 (a11y): раньше выбрать результат с клавиатуры было НЕЛЬЗЯ — TAB к кнопкам-результатам ронял
+  // blur input → handleBlur закрывал dropdown раньше активации (блокировало ввод позиций закупки/
+  // списания с клавиатуры). Ведём активный индекс прямо в поле: ArrowDown/Up перемещают, Enter выбирает
+  // (последний виртуальный пункт — «создать материал», если allowCustom и ввод ≥2 симв.).
+  const customAvailable = !!props.allowCustom && searchQuery.value.trim().length >= 2
+  const total = searchResults.value.length + (customAvailable ? 1 : 0)
+  if (!showDropdown.value || total === 0) { return }
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    activeIndex.value = activeIndex.value < total - 1 ? activeIndex.value + 1 : 0
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    activeIndex.value = activeIndex.value > 0 ? activeIndex.value - 1 : total - 1
+  } else if (event.key === 'Enter' && activeIndex.value >= 0) {
+    event.preventDefault()
+    if (activeIndex.value < searchResults.value.length) {
+      selectMaterial(searchResults.value[activeIndex.value])
+    } else if (customAvailable) {
+      selectCustomMaterial()
+    }
   }
 }
 
