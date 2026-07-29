@@ -28,7 +28,10 @@ export const useArchivePeriodsStore = defineStore('archivePeriods', () => {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get(endpoints.archivePeriods.list)
+      // F-895: page_size=1000 — иначе список закрытых периодов резался дефолтом (~20) и пред-
+      // предупреждение о закрытом периоде (PurchaseForm/WriteOffForm/WriteOffByBalance) молча
+      // пропускало периоды за пределами первой страницы (A F-718 этот стор оставил без page_size).
+      const { data } = await api.get(endpoints.archivePeriods.list + '?page_size=1000')
       items.value = Array.isArray(data) ? data : (data?.results ?? [])
     } catch (e: any) {
       // EH-FE-9 (F-552): единый parseApiError вместо сырого data.detail.
