@@ -110,8 +110,11 @@ const objectsStore = useObjectsStore()
 const ui = useUiStore()
 const { can } = usePermissions()
 
-// D-014: закрытие/открытие требуют stock.edit — иначе контролы полностью скрыты (не «кнопки-обманки»)
-const canEdit = computed(() => can('stock', 'edit'))
+// F-912 (permission-string contract): BE close_period/reopen_period требуют stock.EDIT_ALL
+// (stock/views.py:814,882), а НЕ stock.edit. Гейтили по 'edit' → держатель голого stock.edit
+// (бригадир) видел контролы закрытия/открытия, но BE отвечал 403 — та самая «кнопка-обманка»,
+// которую комментарий обещал избежать. Синхронизируем с BE: edit_all.
+const canEdit = computed(() => can('stock', 'edit_all'))
 
 const busy = ref(false)
 const form = reactive({ object: 0, month: new Date().toISOString().slice(0, 7) })
