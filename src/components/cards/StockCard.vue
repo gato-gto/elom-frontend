@@ -126,32 +126,32 @@ const getQuantityColorClass = () => {
 }
 
 const getStageLabel = (stage: string) => {
+  // F-910: ключи ДОЛЖНЫ совпадать с BE StockSnapshot.STAGE_CHOICES и desktop-списком (Stocks/List
+  // getStageDisplayName). Раньше карта (planning/procurement/…) не совпадала → мобильная карточка
+  // печатала сырой код («acceptance»), а desktop — «Приемка». Тот же ряд для одной строки расходился.
   const stageMap: Record<string, string> = {
-    'planning': 'Планирование',
-    'procurement': 'Закупка',
-    'delivery': 'Доставка',
-    'storage': 'Хранение',
-    'installation': 'Монтаж',
-    'completion': 'Завершение'
+    'acceptance': 'Приемка',
+    'request': 'Заявка',
+    'delivery_fixed': 'Доставка',
+    'post_rough': 'После черновых',
+    'handover': 'Сдача'
   }
   return stageMap[stage] || stage
 }
 
 const getSourceTypeLabel = () => {
+  // F-910: BE source_type = 'purchase_item' | 'writeoff' (не 'purchase'/'transfer'/'adjustment').
   const sourceMap: Record<string, string> = {
-    'purchase': 'Закупка',
-    'transfer': 'Перемещение',
-    'adjustment': 'Корректировка',
+    'purchase_item': 'Закупка',
     'writeoff': 'Списание'
   }
   return sourceMap[props.stock.source_type] || props.stock.source_type
 }
 
 const getSourceTypeBadgeClass = () => {
+  // F-910: ключи по BE source_type ('purchase_item'/'writeoff'), а не 'purchase'/'transfer'.
   const classMap: Record<string, string> = {
-    'purchase': 'badge-success',
-    'transfer': 'badge-info',
-    'adjustment': 'badge-warning',
+    'purchase_item': 'badge-success',
     'writeoff': 'badge-error'
   }
   return classMap[props.stock.source_type] || 'badge-neutral'
