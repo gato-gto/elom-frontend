@@ -231,7 +231,13 @@ const materialCategoriesStore = useMaterialCategoriesStore()
 const materialsStore = useMaterialsStore()
 
 const categoryId = computed(() => Number(route.params.id))
-const category = computed(() => materialCategoriesStore.items.find(c => c.id === categoryId.value))
+// F-916: сначала .current (результат fetchOne — гарантированно ЭТА категория), затем items.find.
+// Раньше читали ТОЛЬКО items.find → если категории нет на загруженной странице пагинации, страница
+// висела в «Загрузка...» (store-shared-pollution / усечение).
+const category = computed(() =>
+  (materialCategoriesStore.current?.id === categoryId.value ? materialCategoriesStore.current : null)
+  || materialCategoriesStore.items.find(c => c.id === categoryId.value)
+)
 
 // Подкатегории
 const childCategories = computed(() => 
@@ -324,10 +330,10 @@ watch(
 
 // Загрузка данных
 onMounted(async () => {
-  // Загружаем список категорий
-  if (materialCategoriesStore.items.length === 0) {
-    await materialCategoriesStore.fetchList()
-  }
+  // F-916 (класс F-718): полный список — подкатегории (childCategories = items.filter) и lookup
+  // категории иначе усекались бы дефолтной пагинацией (~20). Грузим безусловно (guard length===0
+  // оставлял усечённый/чужой стор).
+  await materialCategoriesStore.fetchList({ page_size: 1000 } as any)
   
   // Загружаем данные конкретной категории
   try {
