@@ -412,17 +412,26 @@
 
             <!-- Add item button -->
             <div class="mt-4">
-              <button 
-                type="button" 
-                class="btn btn-sm btn-primary w-full" 
+              <button
+                type="button"
+                class="btn btn-sm btn-primary w-full"
                 @click="addItem"
-                :disabled="disabled"
+                :disabled="disabled || !canAddItems"
+                :title="!canAddItems ? 'Позиции в выполненную закупку не добавляются — переоткройте её (статус «Новая»)' : ''"
               >
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 Добавить позицию
               </button>
+              <!-- F-720: подсказка про переоткрытие, когда добавление заблокировано (закупка выполнена) -->
+              <p v-if="!canAddItems" class="text-xs text-warning mt-2 flex items-start gap-1">
+                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Нельзя добавлять позиции в выполненную закупку. Чтобы добавить — переключите статус
+                  на «Новая» (закупка будет переоткрыта) и сохраните, затем снова завершите.</span>
+              </p>
             </div>
 
             <!-- Общие ошибки для позиций -->
@@ -560,6 +569,14 @@ const periodClosedWarn = computed(() =>
 const formData = ref({
   status: 'new'
 })
+
+// F-720: в ВЫПОЛНЕННУЮ закупку нельзя ДОБАВЛЯТЬ позиции (проведённый документ прихода — как в SAP/
+// Odoo/1С). Кнопка «Добавить позицию» блокируется, когда редактируем уже-выполненную закупку и статус
+// в форме остаётся 'completed'. Переключение статуса на «Новая» (переоткрытие) снова включает добавление.
+// Правка/удаление СУЩЕСТВУЮЩИХ строк остаётся доступной — совпадает с серверным гейтом (add-only).
+const canAddItems = computed(() =>
+  !(isEdit.value && props.initial?.status === 'completed' && (formData.value as any).status === 'completed')
+)
 
 // Function to get item field error
 // getItemFieldError теперь из useItemsForm composable

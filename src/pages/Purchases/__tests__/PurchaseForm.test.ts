@@ -315,6 +315,50 @@ describe('PurchaseForm', () => {
     })
   })
 
+  describe('F-720: добавление позиции запрещено в выполненную закупку', () => {
+    const stubs = { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true }
+    const canAdd = (vm: any) =>
+      typeof vm.canAddItems === 'object' && vm.canAddItems.value !== undefined
+        ? vm.canAddItems.value : vm.canAddItems
+    const fdOf = (vm: any) =>
+      typeof vm.formData === 'object' && vm.formData.value !== undefined ? vm.formData.value : vm.formData
+
+    it('выполненная закупка → добавление позиции ЗАБЛОКИРОВАНО', async () => {
+      const wrapper = mount(PurchaseForm, {
+        props: { initial: { id: 7, status: 'completed', items: [], photos: [] } as any },
+        global: { stubs }
+      })
+      await flushPromises()
+      expect(canAdd(wrapper.vm)).toBe(false)
+    })
+
+    it('черновик (new) → добавление РАЗРЕШЕНО', async () => {
+      const wrapper = mount(PurchaseForm, {
+        props: { initial: { id: 8, status: 'new', items: [], photos: [] } as any },
+        global: { stubs }
+      })
+      await flushPromises()
+      expect(canAdd(wrapper.vm)).toBe(true)
+    })
+
+    it('создание новой закупки → добавление РАЗРЕШЕНО', async () => {
+      const wrapper = mount(PurchaseForm, { global: { stubs } })
+      await flushPromises()
+      expect(canAdd(wrapper.vm)).toBe(true)
+    })
+
+    it('переоткрытие: статус выполненной → «Новая» снова РАЗРЕШАЕТ добавление', async () => {
+      const wrapper = mount(PurchaseForm, {
+        props: { initial: { id: 9, status: 'completed', items: [], photos: [] } as any },
+        global: { stubs }
+      })
+      await flushPromises()
+      fdOf(wrapper.vm).status = 'new'   // пользователь переоткрывает закупку
+      await wrapper.vm.$nextTick()
+      expect(canAdd(wrapper.vm)).toBe(true)
+    })
+  })
+
   describe('Amount Calculation', () => {
     it('calculates item amount correctly', () => {
       const item = {
