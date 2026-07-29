@@ -278,7 +278,14 @@ async function load() {
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
-    const data = rows.value
+    // F-902: экспорт ВСЕГО отфильтрованного отчёта (page_size=1000 — потолок BE), не текущей страницы.
+    const eq: ReportByPeriodQuery = {}
+    if (dateFrom.value) { eq.date_from = dateFrom.value }
+    if (dateTo.value) { eq.date_to = dateTo.value }
+    if (period.value) { eq.period = period.value }
+    ;(eq as any).page_size = 1000
+    const { data: full } = await api.get<PeriodReportResponse>(endpoints.reports.byPeriod + buildQuery(eq))
+    const data = full.results || []
     const filename = `periods_report_${new Date().toISOString().split('T')[0]}`
 
     const headers = ['Месяц', 'Сумма', 'Кол-во закупок', 'Средняя сумма', 'Объектов']

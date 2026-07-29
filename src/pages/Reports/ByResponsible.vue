@@ -235,18 +235,33 @@ async function load() {
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
-    const data = rows.value
+    // F-902 + F-908: экспорт ВСЕГО отфильтрованного отчёта (page_size=1000 — потолок BE) + РУССКИЕ
+    // колонки. Раньше exportToCSV(rows.value) без маппинга → сырые объекты (первая колонка — голый id,
+    // англ. заголовки) И только текущая страница.
+    const eq: ReportByResponsibleQuery = {}
+    if (dateFrom.value) { eq.date_from = dateFrom.value }
+    if (dateTo.value) { eq.date_to = dateTo.value }
+    ;(eq as any).page_size = 1000
+    const { data: full } = await api.get<ResponsibleReportResponse>(endpoints.reports.byResponsible + buildQuery(eq))
+    const rowsAll = full.results || []
     const filename = `responsible_report_${new Date().toISOString().split('T')[0]}`
+
+    const headers = ['Ответственный', 'Сумма', 'Кол-во закупок']
+    const formattedData = rowsAll.map(item => ({
+      'Ответственный': item.responsible_name || '',
+      'Сумма': item.total_amount,
+      'Кол-во закупок': item.purchases || 0
+    }))
 
     switch (format) {
       case 'csv':
-        exportToCSV(data, filename)
+        exportToCSV(formattedData, filename, { headers })
         break
       case 'excel':
-        exportToExcel(data, filename)
+        exportToExcel(formattedData, filename, { headers })
         break
       case 'pdf':
-        exportToPDF(data, filename)
+        exportToPDF(formattedData, filename, { headers })
         break
     }
 

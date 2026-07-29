@@ -276,7 +276,15 @@ async function load() {
 
 async function handleExport(format: 'csv' | 'excel' | 'pdf') {
   try {
-    const data = rows.value
+    // F-902: экспорт ВСЕГО отфильтрованного отчёта (page_size=1000 — потолок BE), а не текущей
+    // страницы. Раньше exportToCSV(rows.value) молча выгружал только видимую страницу.
+    const eq: ReportByMaterialQuery = {}
+    if (dateFrom.value) { eq.date_from = dateFrom.value }
+    if (dateTo.value) { eq.date_to = dateTo.value }
+    if (objectId.value && String(objectId.value) !== '') { eq.object = [Number(objectId.value)] }
+    ;(eq as any).page_size = 1000
+    const { data: full } = await api.get<MaterialReportResponse>(endpoints.reports.byMaterial + buildQuery(eq))
+    const data = full.results || []
     const filename = `materials_report_${new Date().toISOString().split('T')[0]}`
 
     const headers = ['Материал', 'Единица', 'Сумма', 'Кол-во закупок']
