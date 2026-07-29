@@ -331,6 +331,12 @@ function handleSubmit() {
     if (!r.material) { rowErrors.value[idx] = 'Выберите материал'; return }
     if (r.actual_balance === '' || r.actual_balance == null) { rowErrors.value[idx] = 'Укажите остаток'; return }
     if (parseFloat(r.actual_balance) < 0) { rowErrors.value[idx] = 'Остаток не может быть отрицательным'; return }
+    // F-894: факт НЕ может превышать книжный остаток — расход = книжный − факт стал бы отрицательным,
+    // и бэкенд (from_balance _compute_from_balance_row) отклонит ВЕСЬ атомарный батч. Предупреждаем на строке.
+    const bal = balanceFor(r)
+    if (bal && parseFloat(r.actual_balance) > Number(bal.current_balance)) {
+      rowErrors.value[idx] = `Факт не может превышать книжный остаток (${formatNumberClean(Number(bal.current_balance))})`; return
+    }
     if (seen.has(r.material)) { rowErrors.value[idx] = 'Материал повторяется'; return }
     seen.add(r.material)
   })
