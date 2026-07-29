@@ -261,6 +261,7 @@ import { useResponsiveTable } from '@/composables/useResponsiveTable'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUrlFilters } from '@/composables/useUrlFilters'
+import { debounce } from '@/utils/debounce'
 import { exportToCSV, exportToExcel, exportFromBackend } from '@/utils/export'
 import { isMobileDevice } from '@/utils/device'
 import { actionIconPath, actionBtnClass } from '@/utils/actionIcons'
@@ -591,10 +592,26 @@ async function handleExport(format: 'csv' | 'excel') {
   }
 }
 
-// Update filter value
+// F-903 (perf): текстовые фильтры дебаунсим — раньше КАЖДАЯ буква в поле «Поиск»/«Название»/«SKU»
+// слала полный GET списка (6 букв = 6 запросов + мигание оверлея). Select/date/checkbox — дискретны,
+// применяем сразу. Накапливаем patch, чтобы быстрый переход между полями не терял значение.
+let _pendingFilterPatch: Record<string, any> = {}
+const _flushFilters = debounce(() => {
+  const patch = _pendingFilterPatch
+  _pendingFilterPatch = {}
+  props.store.setFilters(patch)
+}, 300)
+
 async function updateFilter(key: string, value: any) {
-  await props.store.setFilters({ [key]: value })
-  // setFilters уже вызывает fetchList(), поэтому дополнительная загрузка не нужна
+  const f = props.config.filters?.find((x) => x.key === key)
+  const isFreeText = !!f && ['text', 'textarea', 'input', 'number', 'search'].includes(f.type as string)
+  if (isFreeText) {
+    _pendingFilterPatch[key] = value
+    _flushFilters()
+  } else {
+    await props.store.setFilters({ [key]: value })
+  }
+  // setFilters сам вызывает fetchList()
 }
 
 // Reset filters
