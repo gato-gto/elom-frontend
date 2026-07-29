@@ -11,9 +11,9 @@ export const icons: Record<string, string> = {
   // Heroicons: map-pin
   location_on: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z',
   
-  // Stocks (Movements) - Clipboard List
-  // Heroicons: clipboard-document-list
-  warehouse: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
+  // Stocks (Движения) - Transfer arrows (движение = приход/расход)
+  // Heroicons: arrows-right-left  (было clipboard-list — не читалось как «движения»)
+  warehouse: 'M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
   
   // Balances - Stack (Inventory 2)
   // Heroicons: circle-stack (Database style)
@@ -26,6 +26,14 @@ export const icons: Record<string, string> = {
   // Archive - Archive Box
   // Heroicons: archive-box
   archive: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z',
+
+  // Material Categories (Категории материалов) - Tag
+  // Heroicons: tag  (было БЕЗ маппинга → getIconPath падал на fallback «дом»)
+  category: 'M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z M6 6h.008v.008H6V6z',
+
+  // Role Management (Управление ролями) - Shield Check
+  // Heroicons: shield-check  (было БЕЗ маппинга → fallback «дом»)
+  shield: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
   
   // Employees - User Group
   // Heroicons: user-group

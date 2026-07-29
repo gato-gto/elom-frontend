@@ -440,7 +440,7 @@ const routes = [
     component: ArchivePeriods,
     meta: {
       title: 'Архив',
-      icon: 'inventory_2',
+      icon: 'archive',
       breadcrumb: 'Архивные периоды',
       description: 'Закрытие и открытие месяцев по объектам',
       category: 'inventory',
