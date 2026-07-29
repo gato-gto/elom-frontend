@@ -420,19 +420,11 @@ async function loadObject(id: number) {
     const data = await objectsStore.fetchOne(id)
     object.value = data
     
-    // Загружаем связанные данные для статистики
-    if (purchasesStore.items.length === 0) {
-      await purchasesStore.fetchList({ object: id })
-    } else {
-      // Обновляем список закупок для этого объекта
-      await purchasesStore.fetchList({ object: id })
-    }
-    
-    if (writeOffsStore.items.length === 0) {
-      await writeOffsStore.fetchList({ object: id })
-    } else {
-      await writeOffsStore.fetchList({ object: id })
-    }
+    // F-885: карточки статистики (Закупки/Материалов/Списаний) считают по store.items.length —
+    // грузим ПОЛНЫМ списком для объекта (page_size:1000, паттерн F-718), иначе items = только 1
+    // страница (~20) и объект с >20 закупок показывал «Закупки: 20» (undercount). if/else были дублем.
+    await purchasesStore.fetchList({ object: id, page_size: 1000 })
+    await writeOffsStore.fetchList({ object: id, page_size: 1000 })
   } catch (error) {
     await handleLoadingError(error, 'object')
     router.push('/objects')
