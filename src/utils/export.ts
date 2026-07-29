@@ -77,6 +77,17 @@ export interface ExportOptions {
   formatters?: Record<string, (value: any) => string>
 }
 
+// F-887 (CWE-1236): нейтрализация CSV/формула-инъекций в КЛИЕНТСКОМ экспорте (отчёты качают CSV
+// на фронте). Строку, начинающуюся с формула-триггера, префиксуем ' — Excel/Numbers трактуют
+// ячейку как текст, а не как живую формулу/DDE. Зеркалит серверный neutralize_formula_cell (F-626).
+const _FORMULA_TRIGGERS = ['=', '+', '-', '@', '\t', '\r']
+function neutralizeFormulaCell(value: any): any {
+  if (typeof value === 'string' && value.length > 0 && _FORMULA_TRIGGERS.includes(value[0])) {
+    return "'" + value
+  }
+  return value
+}
+
 export function exportToCSV<T extends Record<string, any>>(
   data: T[],
   filename: string,
@@ -89,13 +100,13 @@ export function exportToCSV<T extends Record<string, any>>(
   // Определяем заголовки
   const headers = Array.isArray(options) ? options : options?.headers
   const csvHeaders = headers || Object.keys(data[0])
-  
+
   // Создаем CSV контент
   const csvContent = [
     csvHeaders.join(','),
-    ...data.map(row => 
+    ...data.map(row =>
       csvHeaders.map(header => {
-        const value = row[header]
+        const value = neutralizeFormulaCell(row[header])  // F-887: гасим формула-инъекцию
         // Экранируем значения с запятыми или кавычками
         if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
           return `"${value.replace(/"/g, '""')}"`
