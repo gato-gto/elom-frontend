@@ -55,6 +55,7 @@ import type {Material, MaterialRequest} from '@/api/types'
 import type {GenericFormConfig} from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import {useErrorHandler} from '@/composables/useErrorHandler'
+import {useUiStore} from '@/stores/ui'
 
 const props = defineProps<{
   initial?: Material | null
@@ -70,8 +71,11 @@ const unitsStore = useUnitsStore()
 const materialCategoriesStore = useMaterialCategoriesStore()
 const {handleFormError} = useErrorHandler()
 
+const ui = useUiStore()
 const deletingPhoto = ref(false)
 const currentPhotoUrl = ref<string | null>(null)
+// F-890: удаление текущего фото откладываем до сохранения — иначе «Отмена» не вернёт удалённое фото.
+const photoMarkedForDeletion = ref(false)
 
 // Form configuration
 const formConfig = computed<GenericFormConfig<MaterialRequest & { photo?: File }>>(() => ({
@@ -210,20 +214,12 @@ const categoryOptions = computed(() => materialCategoriesStore.selectOptions)
 const unitOptions = computed(() => unitsStore.selectOptions)
 
 // Methods
-async function onDeletePhoto() {
-  if (!props.initial?.id) {
-    return
-  }
-
-  deletingPhoto.value = true
-  try {
-    await deletePhoto(props.initial.id)
-    currentPhotoUrl.value = null
-  } catch (error) {
-    await handleFormError(error, 'material')
-  } finally {
-    deletingPhoto.value = false
-  }
+function onDeletePhoto() {
+  // F-890: НЕ удаляем на сервере немедленно — иначе «Отмена»/закрытие модалки не вернёт фото (потеря
+  // данных, а фото — единственное доказательство закупки). Помечаем к удалению + чистим превью;
+  // фактический DELETE выполняется в handleSubmit ТОЛЬКО при сохранении.
+  photoMarkedForDeletion.value = true
+  currentPhotoUrl.value = null
 }
 
 async function handleSubmit(formData: MaterialRequest & { photo?: File }) {
@@ -243,9 +239,23 @@ async function handleSubmit(formData: MaterialRequest & { photo?: File }) {
       materialId = newMaterial.id
     }
 
-    // Then, upload photo if exists
+    // F-890: применяем ОТЛОЖЕННОЕ удаление фото только при сохранении (edit). Ошибка удаления —
+    // не фатальна (материал уже сохранён), просто логируем.
+    if (photoMarkedForDeletion.value && props.initial?.id) {
+      try { await deletePhoto(props.initial.id) } catch (e) { console.error('Photo delete failed (non-fatal):', e) }
+      photoMarkedForDeletion.value = false
+    }
+
+    // F-889: фото — НЕ фатально. Материал УЖЕ сохранён; если POST фото падает (HEIC/большой файл/сеть),
+    // НЕ бросаем ошибку — иначе форма остаётся открытой и повтор «Создать» плодит ДУБЛЬ материала
+    // (SKU авто-генерится, имена не уникальны). Показываем предупреждение и закрываем (как PurchaseForm).
     if (photoFile) {
-      await uploadPhoto(materialId, photoFile)
+      try {
+        await uploadPhoto(materialId, photoFile)
+      } catch (photoErr) {
+        console.error('Photo upload failed (non-fatal):', photoErr)
+        ui.toast({ type: 'info', text: 'Материал сохранён, но фото не загрузилось — можно догрузить позже через «Редактировать»' })
+      }
     }
 
     emit('saved')
@@ -256,12 +266,14 @@ async function handleSubmit(formData: MaterialRequest & { photo?: File }) {
 }
 
 function handleCancel() {
+  photoMarkedForDeletion.value = false  // F-890: отменяем отложенное удаление фото
   emit('cancel')
 }
 
 // Load data on mount
 onMounted(async () => {
   // Load initial photo URL
+  photoMarkedForDeletion.value = false  // F-890: свежий монтаж — сбрасываем отложенное удаление
   if (props.initial?.photo_url) {
     currentPhotoUrl.value = props.initial.photo_url
   }
