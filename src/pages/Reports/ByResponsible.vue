@@ -215,6 +215,9 @@ async function load() {
       // подытог ТЕКУЩЕЙ страницы, поэтому total оставляем reduce'ом по странице (метка честна).
       grandTotal.value = data.grand_total || null
       total.value = data.results.reduce((sum: number, r: ResponsibleReportRow) => sum + r.total_amount, 0)
+      // F-919: totalItems не присваивался → пагинация мертва (см. ByMaterial). При >20 ответственных
+      // стр.2+ были недостижимы. Паритет с ByObject/ByPeriod.
+      totalItems.value = data.count || 0
 
       // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
       // график дважды за тик (гонка уничтожения → ctx.save на null). См. ByPeriod.
@@ -222,12 +225,14 @@ async function load() {
       rows.value = []
       total.value = null
       grandTotal.value = null
+      totalItems.value = 0
     }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
     grandTotal.value = null
+    totalItems.value = 0
   } finally {
     loading.value = false
   }
@@ -241,7 +246,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     const eq: ReportByResponsibleQuery = {}
     if (dateFrom.value) { eq.date_from = dateFrom.value }
     if (dateTo.value) { eq.date_to = dateTo.value }
-    ;(eq as any).page_size = 1000
+    (eq as any).page_size = 1000
     const { data: full } = await api.get<ResponsibleReportResponse>(endpoints.reports.byResponsible + buildQuery(eq))
     const rowsAll = full.results || []
     const filename = `responsible_report_${new Date().toISOString().split('T')[0]}`

@@ -256,6 +256,10 @@ async function load() {
       // подытог ТЕКУЩЕЙ страницы, поэтому total оставляем reduce'ом по странице (метка честна).
       grandTotal.value = data.grand_total || null
       total.value = rows.value.reduce((sum: number, r: MaterialReportRow) => sum + r.amount_total, 0)
+      // F-919: totalItems НЕ присваивался ни разу → totalPages=ceil(0/20)=0, ModernPagination (v-if
+      // totalPages>1) не рендерился вовсе → при >20 материалах стр.2+ были недостижимы и молча скрыты
+      // (выглядело как «всего 20»). Сиблинги ByObject/ByPeriod делали это; здесь пропущено.
+      totalItems.value = data.count || 0
 
       // F-570: график рисует единственный watch(rows) ниже; двойной вызов создавал
       // график дважды за тик (латентная гонка уничтожения; doughnut её переживал, но чистим). См. ByPeriod.
@@ -263,12 +267,14 @@ async function load() {
       rows.value = []
       total.value = null
       grandTotal.value = null
+      totalItems.value = 0
     }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
     rows.value = []
     total.value = null
     grandTotal.value = null
+    totalItems.value = 0
   } finally {
     loading.value = false
   }
@@ -282,7 +288,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     if (dateFrom.value) { eq.date_from = dateFrom.value }
     if (dateTo.value) { eq.date_to = dateTo.value }
     if (objectId.value && String(objectId.value) !== '') { eq.object = [Number(objectId.value)] }
-    ;(eq as any).page_size = 1000
+    (eq as any).page_size = 1000
     const { data: full } = await api.get<MaterialReportResponse>(endpoints.reports.byMaterial + buildQuery(eq))
     const data = full.results || []
     const filename = `materials_report_${new Date().toISOString().split('T')[0]}`
