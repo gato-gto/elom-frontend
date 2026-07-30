@@ -790,6 +790,33 @@ paths:
           description: Не авторизован
         '404':
           description: Запись не найдена
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: "\n    F-729 (auth-hunt #1): logout — заносит переданный refresh-токен\
+        \ в blacklist\n    (rest_framework_simplejwt.token_blacklist). После этого\
+        \ он не может обновить access.\n    Даёт per-сессионный отзыв — рычаг, которого\
+        \ раньше не было. Пара к CHECK_REVOKE_TOKEN\n    (смена пароля отзывает всё;\
+        \ logout отзывает конкретную сессию, не трогая пароль).\n\n    **Запрос:**\
+        \ refresh token\n    **Ответ:** 200 OK если занесён в blacklist\n    "
+      summary: Выход (отзыв refresh-токена)
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklistRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklistRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklistRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
   /api/v1/auth/token/:
     post:
       operationId: auth_token_create
@@ -10709,6 +10736,9 @@ components:
         responsible:
           type: integer
           description: Ответственный
+        responsible_name:
+          type: string
+          readOnly: true
         comment:
           type: string
           description: Комментарий
@@ -10738,6 +10768,7 @@ components:
       - object
       - object_name
       - responsible
+      - responsible_name
       - smart_quantity
       - source_description
       - stage
@@ -10808,6 +10839,15 @@ components:
       - responsible
       - stage
       - unit
+    TokenBlacklistRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
     TokenObtainPair:
       type: object
       properties:
@@ -11441,6 +11481,9 @@ components:
         responsible:
           type: integer
           description: Ответственный
+        responsible_name:
+          type: string
+          readOnly: true
         comment:
           type: string
           description: Комментарий
@@ -11493,6 +11536,7 @@ components:
       - object_name
       - quantity
       - responsible
+      - responsible_name
       - smart_quantity
       - unit
       - unit_code
