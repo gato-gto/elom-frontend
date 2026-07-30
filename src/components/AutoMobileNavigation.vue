@@ -51,8 +51,12 @@
           class="mobile-full-menu-overlay"
           @click="closeFullMenu"
         >
-          <div 
+          <div
+            ref="fullMenuRef"
             class="mobile-full-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Меню"
             @click.stop
           >
             <!-- Заголовок меню -->
@@ -273,7 +277,8 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
+  import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
   import { useRoute, useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
   import { usePermissionsStore } from '@/stores/permissions'
@@ -306,7 +311,64 @@
   const closeFullMenu = () => {
     showFullMenu.value = false
   }
-  
+
+  // F-922 (a11y): полноэкранное меню было обычным <div>, а не модалкой — фокус оставался на кнопке
+  // «Еще» под оверлеем, Tab перебирал фон, Escape не закрывал, фон прокручивался на iOS. Зеркалим
+  // паттерн Modal.vue: focus-trap + Escape + scroll-lock + возврат фокуса на триггер.
+  const fullMenuRef = ref<HTMLElement | null>(null)
+  let lastActive: HTMLElement | null = null
+  let menuScrollLocked = false
+
+  const menuFocusables = (): HTMLElement[] => {
+    if (!fullMenuRef.value) { return [] }
+    const sel = 'a[href], button:not([disabled]), textarea:not([disabled]), ' +
+      'input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    return Array.from(fullMenuRef.value.querySelectorAll<HTMLElement>(sel)).filter((el) => el.offsetParent !== null)
+  }
+
+  const onMenuKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      closeFullMenu()
+      return
+    }
+    if (e.key !== 'Tab') { return }
+    const items = menuFocusables()
+    if (items.length === 0) { e.preventDefault(); fullMenuRef.value?.focus(); return }
+    const first = items[0]
+    const last = items[items.length - 1]
+    const active = document.activeElement as HTMLElement | null
+    const inside = !!fullMenuRef.value && !!active && fullMenuRef.value.contains(active)
+    if (e.shiftKey && (active === first || !inside)) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+
+  watch(showFullMenu, async (isOpen, wasOpen) => {
+    if (isOpen) {
+      lastActive = document.activeElement as HTMLElement | null
+      document.addEventListener('keydown', onMenuKeydown)
+      lockBodyScroll()
+      menuScrollLocked = true
+      await nextTick()
+      ;(menuFocusables()[0] || fullMenuRef.value)?.focus()
+    } else if (wasOpen !== undefined) {
+      document.removeEventListener('keydown', onMenuKeydown)
+      if (menuScrollLocked) { unlockBodyScroll(); menuScrollLocked = false }
+      lastActive?.focus?.()
+      lastActive = null
+    }
+  })
+
+  onBeforeUnmount(() => {
+    document.removeEventListener('keydown', onMenuKeydown)
+    if (menuScrollLocked) { unlockBodyScroll(); menuScrollLocked = false }
+  })
+
   // Проверка активного маршрута
   const isActive = (path: string): boolean => {
     return route.path.startsWith(path)
