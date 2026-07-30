@@ -228,18 +228,27 @@
 
           <div v-if="currentPhotoList.length > 1" class="mb-4">
             <div class="carousel carousel-center w-full space-x-2 bg-base-200 p-2 rounded-lg">
-              <div 
-                v-for="(photo, index) in currentPhotoList" 
+              <div
+                v-for="(photo, index) in currentPhotoList"
                 :key="photo.id"
                 class="carousel-item"
               >
-                <img
-                  :src="photo.url"
-                  :alt="`Миниатюра ${index + 1}`"
-                  class="w-16 h-16 object-cover rounded cursor-pointer border-2 transition-all duration-200"
-                  :class="{ 'border-primary': index === currentPhotoIndex, 'border-transparent': index !== currentPhotoIndex }"
+                <!-- F-923 (a11y): было <img @click> — недостижимо с клавиатуры (Tab не проходит,
+                     Enter не срабатывает). Обёртка в <button> делает миниатюру фокусируемой/активируемой. -->
+                <button
+                  type="button"
+                  class="block p-0 border-0 bg-transparent cursor-pointer"
+                  :aria-label="`Фото ${index + 1}`"
+                  :aria-current="index === currentPhotoIndex ? 'true' : undefined"
                   @click="selectPhoto(index)"
-                />
+                >
+                  <img
+                    :src="photo.url"
+                    :alt="`Миниатюра ${index + 1}`"
+                    class="w-16 h-16 object-cover rounded border-2 transition-all duration-200"
+                    :class="{ 'border-primary': index === currentPhotoIndex, 'border-transparent': index !== currentPhotoIndex }"
+                  />
+                </button>
               </div>
             </div>
           </div>
@@ -252,6 +261,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
 import { useRouter, useRoute } from 'vue-router'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
 import { formatDate, formatNumber, formatNumberClean } from '@/utils/formatters'
@@ -387,6 +397,31 @@ function openPhotoModal(photo: PurchasePhoto, index: number = 0) {
   currentPhotoList.value = getPhotosByType(photo.type || 'instructions')
   photoModalOpen.value = true
 }
+
+// F-923 (a11y): фото-модалка была голым .modal без управления — фон прокручивался на iOS под
+// лайтбоксом, Escape/стрелки не работали. Добавляем scroll-lock + клавиатуру (Escape закрывает,
+// ←/→ листают). Полный focus-trap для лайтбокса избыточен (мало контролов), но базовая операбельность
+// с клавиатуры и блокировка фона — обязательны.
+function onPhotoKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') { e.preventDefault(); photoModalOpen.value = false }
+  else if (e.key === 'ArrowRight') { nextPhoto() }
+  else if (e.key === 'ArrowLeft') { previousPhoto() }
+}
+
+watch(photoModalOpen, (isOpen, wasOpen) => {
+  if (isOpen) {
+    document.addEventListener('keydown', onPhotoKeydown)
+    lockBodyScroll()
+  } else if (wasOpen !== undefined) {
+    document.removeEventListener('keydown', onPhotoKeydown)
+    unlockBodyScroll()
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', onPhotoKeydown)
+  if (photoModalOpen.value) { unlockBodyScroll() }
+})
 
 function nextPhoto() {
   if (currentPhotoIndex.value < currentPhotoList.value.length - 1) {
