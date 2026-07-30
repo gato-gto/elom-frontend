@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatNumberClean, formatQuantity, formatDate, formatDateTime, formatNumber, formatCurrency } from '../formatters'
+import { formatNumberClean, formatQuantity, formatDate, formatDateTime, formatNumber, formatCurrency, pluralizeRu } from '../formatters'
 
 describe('formatNumberClean', () => {
   it('removes trailing zeros from decimal numbers', () => {
@@ -158,3 +158,39 @@ describe('formatCurrency', () => {
   })
 })
 
+
+describe('pluralizeRu (F-920)', () => {
+  const forms: [string, string, string] = ['материал', 'материала', 'материалов']
+  it('форма[0] для n%10==1 кроме 11', () => {
+    expect(pluralizeRu(1, forms)).toBe('материал')
+    expect(pluralizeRu(21, forms)).toBe('материал')
+    expect(pluralizeRu(101, forms)).toBe('материал')
+  })
+  it('форма[1] для n%10 2..4 кроме 12..14', () => {
+    expect(pluralizeRu(2, forms)).toBe('материала')
+    expect(pluralizeRu(3, forms)).toBe('материала')
+    expect(pluralizeRu(24, forms)).toBe('материала')
+  })
+  it('форма[2] для 0, 5..20, 11..14', () => {
+    expect(pluralizeRu(0, forms)).toBe('материалов')
+    expect(pluralizeRu(5, forms)).toBe('материалов')
+    expect(pluralizeRu(11, forms)).toBe('материалов')
+    expect(pluralizeRu(12, forms)).toBe('материалов')
+    expect(pluralizeRu(14, forms)).toBe('материалов')
+    expect(pluralizeRu(100, forms)).toBe('материалов')
+  })
+})
+
+describe('formatNumberClean float-артефакты (F-921)', () => {
+  it('срезает артефакт представления вычисленных float', () => {
+    expect(formatNumberClean(0.1 + 0.2)).toBe('0.3')          // 0.30000000000000004
+    expect(formatNumberClean(1.005 * 3)).toBe('3.015')        // 3.0149999999999997
+    expect(formatNumberClean(0.3)).toBe('0.3')
+  })
+  it('не ломает легитимные малые и целые числа', () => {
+    expect(formatNumberClean(0.000001)).toBe('0.000001')
+    expect(formatNumberClean(14.000000)).toBe('14')
+    expect(formatNumberClean(-14.5)).toBe('-14.5')
+    expect(formatNumberClean(0)).toBe('0')
+  })
+})

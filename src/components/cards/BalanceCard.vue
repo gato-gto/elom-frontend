@@ -1,7 +1,7 @@
 <template>
   <MobileCard
     :title="balance.object_name"
-    :badge="`${balance.total_materials} материалов`"
+    :badge="`${balance.total_materials} ${pluralizeRu(balance.total_materials, ['материал', 'материала', 'материалов'])}`"
     badge-class="badge-info"
   >
     <template #content>
@@ -78,7 +78,7 @@
 import { ref } from 'vue'
 import { ObjectBalance, MaterialBalance } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
-import { formatNumberClean } from '@/utils/formatters'
+import { formatNumberClean, pluralizeRu } from '@/utils/formatters'
 import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки «умным» числом (F-867)
 
 interface Props {

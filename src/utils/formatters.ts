@@ -137,9 +137,16 @@ export function formatAmountWithCurrency(
 export function formatNumberClean(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === '') { return '—' }
   
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) { return '—' }
-  
+  const num0 = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num0)) { return '—' }
+
+  // F-921: срезаем float-артефакты представления у ВЫЧИСЛЕННЫХ значений. `str.replace(/\.?0+$/)`
+  // ниже убирает только хвостовые НУЛИ, но 0.1+0.2 === 0.30000000000000004 → строка кончается на
+  // «…004», не на нулях → в UI попадал сырой 17-значный артефакт. Округляем до 10 знаков (артефакты
+  // живут на 15–17-й значащей цифре; реальные значения BE ≤6 знаков, F-876) — легитимные малые числа
+  // (1e-6, 1e-7) и целые не затрагиваются.
+  const num = parseFloat(num0.toFixed(10))
+
   // Если число целое, возвращаем как целое
   if (Number.isInteger(num)) {
     return num.toString()
@@ -196,4 +203,20 @@ export function getStatusText(status: boolean | string | null | undefined): stri
     return 'Неактивен'
   }
   return '—'
+}
+
+/**
+ * F-920: русская плюрализация существительного по числу.
+ * pluralizeRu(1, ['материал','материала','материалов']) → 'материал'
+ * pluralizeRu(2, …) → 'материала'; pluralizeRu(5|11|0, …) → 'материалов'.
+ * Правило: 11–14 → мн.род (форма[2]); иначе n%10==1 → форма[0], n%10 2..4 → форма[1], иначе форма[2].
+ */
+export function pluralizeRu(n: number, forms: [string, string, string]): string {
+  const abs = Math.abs(Math.trunc(n))
+  const mod100 = abs % 100
+  if (mod100 >= 11 && mod100 <= 14) { return forms[2] }
+  const mod10 = abs % 10
+  if (mod10 === 1) { return forms[0] }
+  if (mod10 >= 2 && mod10 <= 4) { return forms[1] }
+  return forms[2]
 }
