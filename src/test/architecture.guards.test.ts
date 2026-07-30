@@ -166,3 +166,50 @@ describe('ARCH · Apple-стандарты — исполнимые стражи
     expect(/apple-touch-icon\.png/.test(html), 'apple-touch-icon должен быть PNG (iOS игнорит SVG).').toBe(true)
   })
 })
+
+describe('A11Y · иконочные destructive-кнопки имеют доступное имя (F-917)', () => {
+  it('каждая icon-only btn-error (удаление позиции/строки/фото) несёт aria-label', () => {
+    // Замерено ВЖИВУЮ на реальном iOS WebKit (iPhone, pointer:coarse): кнопка удаления позиции
+    // form-writeoff рендерится 44×44 (тач-цель ОК, глоб. правило F-520), НО aria-label=null → VoiceOver
+    // озвучивает просто «кнопка», смысла нет. Класс «missed sibling»: у row-action/close/PurchaseInfo
+    // aria есть, а у remove-кнопок позиций/фото — не было. Страж скана РЕАЛЬНЫХ .vue: destructive
+    // иконочная кнопка (btn-error + btn-xs/square/circle) БЕЗ видимого текста обязана нести aria-label
+    // (обычный текстовый «Отмена/Удалить» не трогаем — у него имя = текст).
+    const files: string[] = []
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const p = join(dir, name)
+        const st = statSync(p)
+        if (st.isDirectory()) { walk(p) }
+        else if (name.endsWith('.vue')) { files.push(p) }
+      }
+    }
+    walk(resolve(ROOT, 'src'))
+    const offenders: string[] = []
+    for (const f of files) {
+      const src = readFileSync(f, 'utf8')
+      const elements = src.match(/<button[\s\S]*?<\/button>/g) || []
+      for (const el of elements) {
+        const openTag = el.match(/<button[\s\S]*?>/)?.[0] ?? ''
+        const isDestructiveIcon = /btn-error/.test(openTag) && /(btn-square|btn-circle|btn-xs)/.test(openTag)
+        if (!isDestructiveIcon) { continue }
+        // Видимый текст кнопки: срезаем открывающий/закрывающий тег, вложенные теги и {{ }}-интерполяцию.
+        const visibleText = el
+          .replace(/<button[\s\S]*?>/, '')
+          .replace(/<\/button>/, '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\{\{[\s\S]*?\}\}/g, 'X')
+          .trim()
+        const hasAria = /aria-label\s*=/.test(openTag) // ловит и :aria-label (динамический)
+        if (!visibleText && !hasAria) {
+          offenders.push(`${f.replace(ROOT + '/', '')}: ${openTag.replace(/\s+/g, ' ').slice(0, 90)}`)
+        }
+      }
+    }
+    expect(
+      offenders,
+      'Иконочные destructive-кнопки без aria-label — VoiceOver/screen-reader озвучит просто «кнопка»:\n' +
+        offenders.join('\n'),
+    ).toEqual([])
+  })
+})

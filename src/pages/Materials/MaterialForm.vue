@@ -17,6 +17,7 @@
                 class="absolute -top-2 -right-2 btn btn-error btn-xs btn-circle"
                 :disabled="deletingPhoto"
                 @click="onDeletePhoto"
+                aria-label="Удалить фото"
                 title="Удалить фото"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

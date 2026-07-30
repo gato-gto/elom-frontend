@@ -67,6 +67,8 @@
                   <button
                     type="button"
                     class="absolute -top-2 -right-2 btn btn-error btn-xs btn-circle"
+                    aria-label="Удалить фото"
+                    title="Удалить фото"
                     @click="removeInstructionPhoto(index)"
                     :disabled="disabled"
                   >
@@ -144,6 +146,8 @@
                   <button
                     type="button"
                     class="absolute top-2 right-2 btn btn-error btn-xs btn-circle"
+                    aria-label="Удалить фото"
+                    title="Удалить фото"
                     @click="removeReportPhoto(index)"
                     :disabled="disabled"
                   >
@@ -270,7 +274,7 @@
                   </td>
                   <td class="text-right font-mono">{{ formatMoney(it.total) }}</td>
                   <td class="text-right">
-                    <button type="button" class="btn btn-error btn-xs touch-target" @click="removeItem(idx)">
+                    <button type="button" class="btn btn-error btn-xs touch-target" aria-label="Удалить позицию" title="Удалить" @click="removeItem(idx)">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                       </svg>
@@ -294,7 +298,7 @@
                 <div class="">
                   <div class="flex justify-between items-start mb-3">
                     <h3 class="font-medium text-sm">Позиция {{ idx + 1 }}</h3>
-                    <button type="button" class="btn btn-error btn-xs touch-target" @click="removeItem(idx)">
+                    <button type="button" class="btn btn-error btn-xs touch-target" aria-label="Удалить позицию" title="Удалить" @click="removeItem(idx)">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                       </svg>
