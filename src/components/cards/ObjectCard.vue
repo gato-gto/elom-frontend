@@ -106,8 +106,12 @@ const getProjectProgress = () => {
   if (now > end) {return 100}
   
   const total = end.getTime() - start.getTime()
+  // F-924 (защитный guard): при date_start === date_end (проект «на 1 день») total=0 → passed/0=Infinity
+  // → «Infinity%». А при инвертированных датах (end<start) total<0 давал бы бессмыслицу. Обе аномалии
+  // данных → прогресс не показываем.
+  if (total <= 0) { return null }
   const passed = now.getTime() - start.getTime()
-  
+
   return Math.round((passed / total) * 100)
 }
 </script>
