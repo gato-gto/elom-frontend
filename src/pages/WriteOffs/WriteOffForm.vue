@@ -860,6 +860,15 @@ const handleSubmit = async () => {
   // filledItems.slice(1) (первая позиция идёт через update), т.е. смещена на 1 относительно
   // filledDisplayIndexes — иначе построчная ошибка bulk на edit-пути сядет на строку ВЫШЕ (класс M1).
   let bulkDisplayIndexes: number[] = filledDisplayIndexes
+  // F-925 (#8 hunt-round6): edit-путь неатомарен — сначала update(первой строки), затем bulk-create
+  // добавленных. Типовую причину сбоя extras (превышение остатка/закрытый период) уже ловит пред-
+  // валидация выше (F-306/F-640) ДО записи, поэтому «частичное сохранение» осталось лишь на редкой
+  // серверной гонке (остаток «съел» другой пользователь между update и bulk). Полная атомарность
+  // требует транзакционного BE-эндпоинта (зона A, хендофф в OPS §7). Здесь делаем остаток ЧЕСТНЫМ:
+  // если первая строка уже обновлена, а extras упали — прямо говорим, что основное списание сохранено,
+  // а добавленные позиции — нет (раньше юзер видел только ошибки на extra-строках и не знал, что row1
+  // уже изменён — «тихое» частичное сохранение).
+  let firstRowUpdated = false
 
   try {
     // FE-3/F-563: считаем только ЗАПОЛНЕННЫЕ позиции (материал+единица+кол-во>0). Плейсхолдерная
@@ -944,6 +953,7 @@ const handleSubmit = async () => {
           comment: formData.value.comment,
         }
         await writeOffsStore.update(props.initial.id, updateData)
+        firstRowUpdated = true  // F-925: первая строка уже сохранена; extras пойдут отдельным bulk ниже
       }
       // F-628 (#13): раньше добавочные позиции (slice(1)) создавались N независимыми create() через
       // Promise.all — при частичном сбое успешные сохранялись, а retry пере-создавал ВСЕ → дубли
@@ -991,6 +1001,15 @@ const handleSubmit = async () => {
     
     emit('success')
   } catch (error: any) {
+    // F-925 (#8): если первая строка УЖЕ обновлена, а мы в catch — значит упал bulk-create добавочных
+    // позиций. Раньше юзер видел только построчные ошибки extras и не знал, что основное списание уже
+    // сохранено. Делаем состояние честным: явный текст + non_field_error, чтобы не было «тихого» частичного.
+    const partialSaved = !!props.initial && firstRowUpdated
+    if (partialSaved) {
+      errors.value.non_field_errors = [
+        'Основное списание сохранено, но добавленные позиции — нет. Проверьте и добавьте их отдельно.',
+      ]
+    }
     // F-270: построчные ошибки атомарного bulk-create — errors.items[{index, detail}].
     // Раскладываем по позициям формы, показываем общий тост и выходим (общий обработчик ниже
     // не знает про поэлементный массив items и разложил бы его как одно поле).
@@ -1004,7 +1023,12 @@ const handleSubmit = async () => {
           applyBulkRowDetail(displayIdx, row.detail)
         }
       }
-      ui.toast({ type: 'error', text: error?.response?.data?.detail || 'Ошибки в позициях списания' })
+      ui.toast({
+        type: 'error',
+        text: partialSaved
+          ? 'Основное списание сохранено; добавленные позиции — с ошибками'
+          : (error?.response?.data?.detail || 'Ошибки в позициях списания'),
+      })
       return
     }
 
@@ -1031,10 +1055,12 @@ const handleSubmit = async () => {
       errors.value.non_field_errors = Array.isArray(nonFieldErrors) ? nonFieldErrors : [String(nonFieldErrors)]
     }
     
-    // Уведомление об ошибке
-    ui.toast({ 
-      type: 'error', 
-      text: errorResult.detail || 'Ошибка при сохранении списания' 
+    // Уведомление об ошибке (F-925: честно про частичное сохранение при неатомарном edit-пути)
+    ui.toast({
+      type: 'error',
+      text: partialSaved
+        ? 'Основное списание сохранено, но добавленные позиции — нет'
+        : (errorResult.detail || 'Ошибка при сохранении списания'),
     })
   } finally {
     isSubmitting.value = false
