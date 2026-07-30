@@ -126,13 +126,17 @@ const getBalanceBefore = () => {
 }
 
 const getStageLabel = (stage: string) => {
+  // F-918: пропущенный сиблинг F-910 (StockCard). Ключи ДОЛЖНЫ совпадать с BE WriteOff.STAGE_CHOICES
+  // (stock/models.py) и desktop-списком (WriteOffs/List stageOptions). Старая карта
+  // (planning/procurement/…) не совпадала ни с одним кодом → getStageLabel('post_rough') падал в
+  // `|| stage` и печатал сырой «post_rough» на мобильной карточке, тогда как desktop показывал
+  // «После черновых» — мобильная и desktop-версии одной записи расходились.
   const stageMap: Record<string, string> = {
-    'planning': 'Планирование',
-    'procurement': 'Закупка',
-    'delivery': 'Доставка',
-    'storage': 'Хранение',
-    'installation': 'Монтаж',
-    'completion': 'Завершение'
+    'acceptance': 'Приемка',
+    'request': 'Заявка',
+    'delivery_fixed': 'Доставка',
+    'post_rough': 'После черновых',
+    'handover': 'Сдача'
   }
   return stageMap[stage] || stage
 }
