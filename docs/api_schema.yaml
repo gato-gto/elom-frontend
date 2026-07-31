@@ -8896,7 +8896,6 @@ components:
           maxLength: 32
         order:
           type: integer
-          default: 0
       required:
       - quantity
     EstimateLineWriteRequest:
@@ -8937,7 +8936,6 @@ components:
           maxLength: 32
         order:
           type: integer
-          default: 0
       required:
       - quantity
     KindEnum:
