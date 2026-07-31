@@ -43,6 +43,12 @@ const ArchivePeriods = () => import(/* webpackChunkName: "stocks" */ '@/pages/St
 // WriteOffs
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
 
+// Estimates (сметы по объекту / отчёт цен)
+const EstimateList = () => import(/* webpackChunkName: "estimates" */ '@/pages/Estimates/EstimateList.vue')
+const EstimateForm = () => import(/* webpackChunkName: "estimates" */ '@/pages/Estimates/EstimateForm.vue')
+const EstimateInfo = () => import(/* webpackChunkName: "estimates" */ '@/pages/Estimates/EstimateInfo.vue')
+const EstimatesCatalog = () => import(/* webpackChunkName: "estimates" */ '@/pages/Estimates/Catalog.vue')
+
 // Reports
 const ReportByPeriod = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByPeriod.vue')
 const ReportByObject = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByObject.vue')
@@ -496,7 +502,73 @@ const routes = [
       permissions: ['writeoffs.edit']
     }
   },
-  
+
+  // Estimates routes (сметы по объекту). Статические пути (new) — ПЕРЕД динамическим :id.
+  {
+    path: '/estimates',
+    name: 'EstimatesList',
+    component: EstimateList,
+    meta: {
+      title: 'Сметы',
+      icon: 'clipboard',
+      breadcrumb: 'Сметы',
+      description: 'Сметы по объекту (отчёт цен)',
+      category: 'estimates',
+      order: 6,
+      permissions: ['estimates.view', 'estimates.view_own', 'estimates.view_all'],
+    },
+  },
+  {
+    path: '/work-catalog',
+    name: 'EstimatesCatalog',
+    component: EstimatesCatalog,
+    meta: {
+      title: 'Прайс-каталог',
+      icon: 'book',
+      breadcrumb: 'Прайс-каталог',
+      description: 'Разделы работ и позиции для смет',
+      category: 'estimates',
+      order: 7,
+      permissions: ['work_categories.view', 'work_items.view'],
+    },
+  },
+  {
+    path: '/estimates/new',
+    name: 'EstimateCreate',
+    component: EstimateForm,
+    meta: {
+      title: 'Новая смета',
+      breadcrumb: 'Сметы / Новая',
+      description: 'Создание сметы',
+      category: 'estimates',
+      permissions: ['estimates.create'],
+    },
+  },
+  {
+    path: '/estimates/:id/edit',
+    name: 'EstimateEdit',
+    component: EstimateForm,
+    meta: {
+      title: 'Редактировать смету',
+      breadcrumb: 'Сметы / Редактировать',
+      description: 'Редактирование сметы',
+      category: 'estimates',
+      permissions: ['estimates.edit', 'estimates.edit_own', 'estimates.edit_all'],
+    },
+  },
+  {
+    path: '/estimates/:id',
+    name: 'EstimateInfo',
+    component: EstimateInfo,
+    meta: {
+      title: 'Смета',
+      breadcrumb: 'Сметы / Просмотр',
+      description: 'Просмотр сметы',
+      category: 'estimates',
+      permissions: ['estimates.view', 'estimates.view_own', 'estimates.view_all'],
+    },
+  },
+
   // Reports routes
   {
     path: '/reports/by-period',
