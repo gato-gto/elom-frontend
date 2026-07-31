@@ -1203,6 +1203,194 @@ paths:
           description: Нет прав доступа (требуется admin)
         '404':
           description: Сотрудник не найден
+  /api/v1/estimates/:
+    get:
+      operationId: estimates_list
+      description: 'Сметы по объекту. Object-scope: view_all → все; иначе только свои
+        объекты (как закупки).'
+      parameters:
+      - in: query
+        name: created_by
+        schema:
+          type: integer
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: object
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - estimates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEstimateList'
+          description: ''
+    post:
+      operationId: estimates_create
+      description: 'Сметы по объекту. Object-scope: view_all → все; иначе только свои
+        объекты (как закупки).'
+      tags:
+      - estimates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimateCreate'
+          description: ''
+  /api/v1/estimates/{id}/:
+    get:
+      operationId: estimates_retrieve
+      description: 'Сметы по объекту. Object-scope: view_all → все; иначе только свои
+        объекты (как закупки).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Смета.
+        required: true
+      tags:
+      - estimates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+          description: ''
+    put:
+      operationId: estimates_update
+      description: 'Сметы по объекту. Object-scope: view_all → все; иначе только свои
+        объекты (как закупки).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Смета.
+        required: true
+      tags:
+      - estimates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EstimateCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimateCreate'
+          description: ''
+    patch:
+      operationId: estimates_partial_update
+      description: 'Сметы по объекту. Object-scope: view_all → все; иначе только свои
+        объекты (как закупки).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Смета.
+        required: true
+      tags:
+      - estimates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEstimateCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEstimateCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEstimateCreateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimateCreate'
+          description: ''
+    delete:
+      operationId: estimates_destroy
+      description: 'Сметы по объекту. Object-scope: view_all → все; иначе только свои
+        объекты (как закупки).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Смета.
+        required: true
+      tags:
+      - estimates
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/material-categories/:
     get:
       operationId: material_categories_list
@@ -7325,6 +7513,397 @@ paths:
           description: ''
         '401':
           description: Не авторизован. Требуется JWT токен.
+  /api/v1/work-categories/:
+    get:
+      operationId: work_categories_list
+      description: Категории работ прайса (двухуровневые). Правит руководство/админ
+        (RBAC work_categories.*).
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - in: query
+        name: parent__isnull
+        schema:
+          type: boolean
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - work-categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWorkCategoryList'
+          description: ''
+    post:
+      operationId: work_categories_create
+      description: Категории работ прайса (двухуровневые). Правит руководство/админ
+        (RBAC work_categories.*).
+      tags:
+      - work-categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkCategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCategory'
+          description: ''
+  /api/v1/work-categories/{id}/:
+    get:
+      operationId: work_categories_retrieve
+      description: Категории работ прайса (двухуровневые). Правит руководство/админ
+        (RBAC work_categories.*).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Категория работ.
+        required: true
+      tags:
+      - work-categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCategory'
+          description: ''
+    put:
+      operationId: work_categories_update
+      description: Категории работ прайса (двухуровневые). Правит руководство/админ
+        (RBAC work_categories.*).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Категория работ.
+        required: true
+      tags:
+      - work-categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkCategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCategory'
+          description: ''
+    patch:
+      operationId: work_categories_partial_update
+      description: Категории работ прайса (двухуровневые). Правит руководство/админ
+        (RBAC work_categories.*).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Категория работ.
+        required: true
+      tags:
+      - work-categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkCategoryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCategory'
+          description: ''
+    delete:
+      operationId: work_categories_destroy
+      description: Категории работ прайса (двухуровневые). Правит руководство/админ
+        (RBAC work_categories.*).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Категория работ.
+        required: true
+      tags:
+      - work-categories
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/work-items/:
+    get:
+      operationId: work_items_list
+      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
+        — руководство.
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - work-items
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWorkItemList'
+          description: ''
+    post:
+      operationId: work_items_create
+      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
+        — руководство.
+      tags:
+      - work-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+          description: ''
+  /api/v1/work-items/{id}/:
+    get:
+      operationId: work_items_retrieve
+      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
+        — руководство.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Позиция прайса.
+        required: true
+      tags:
+      - work-items
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+          description: ''
+    put:
+      operationId: work_items_update
+      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
+        — руководство.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Позиция прайса.
+        required: true
+      tags:
+      - work-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+          description: ''
+    patch:
+      operationId: work_items_partial_update
+      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
+        — руководство.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Позиция прайса.
+        required: true
+      tags:
+      - work-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkItemRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+          description: ''
+    delete:
+      operationId: work_items_destroy
+      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
+        — руководство.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Позиция прайса.
+        required: true
+      tags:
+      - work-items
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/work-items/search/:
+    get:
+      operationId: work_items_search_retrieve
+      description: 'Автоподсказка позиций: ?q=&category=&limit= (зеркало MaterialViewSet.search).'
+      tags:
+      - work-items
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItem'
+          description: ''
   /api/v1/writeoffs/:
     get:
       operationId: writeoffs_list
@@ -8127,6 +8706,252 @@ components:
           writeOnly: true
       required:
       - username
+    Estimate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        object:
+          type: integer
+        object_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 256
+        date:
+          type: string
+          format: date
+          nullable: true
+        currency:
+          type: string
+          maxLength: 8
+        note:
+          type: string
+        source_ref:
+          type: string
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstimateLine'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - created_by_name
+      - id
+      - lines
+      - object
+      - object_name
+      - source_ref
+      - total
+      - updated_at
+    EstimateCreate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        object:
+          type: integer
+        title:
+          type: string
+          maxLength: 256
+        date:
+          type: string
+          format: date
+          nullable: true
+        currency:
+          type: string
+          maxLength: 8
+        note:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstimateLineWrite'
+      required:
+      - id
+      - lines
+      - object
+    EstimateCreateRequest:
+      type: object
+      properties:
+        object:
+          type: integer
+        title:
+          type: string
+          maxLength: 256
+        date:
+          type: string
+          format: date
+          nullable: true
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 8
+        note:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstimateLineWriteRequest'
+      required:
+      - lines
+      - object
+    EstimateLine:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        work_item:
+          type: integer
+          nullable: true
+        position_no:
+          type: string
+          maxLength: 32
+        name:
+          type: string
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        kind_display:
+          type: string
+          readOnly: true
+        unit:
+          type: string
+          maxLength: 32
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        amount:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - amount
+      - id
+      - kind_display
+      - name
+    EstimateLineWrite:
+      type: object
+      properties:
+        work_item:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        unit:
+          type: string
+          maxLength: 32
+        default_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          default: '0.00'
+        position_no:
+          type: string
+          default: ''
+          maxLength: 32
+        order:
+          type: integer
+          default: 0
+      required:
+      - quantity
+    EstimateLineWriteRequest:
+      type: object
+      properties:
+        work_item:
+          type: integer
+          nullable: true
+        category:
+          type: integer
+          writeOnly: true
+          nullable: true
+        name:
+          type: string
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        unit:
+          type: string
+          maxLength: 32
+        default_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,3})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          default: '0.00'
+        position_no:
+          type: string
+          default: ''
+          maxLength: 32
+        order:
+          type: integer
+          default: 0
+      required:
+      - quantity
+    KindEnum:
+      enum:
+      - work
+      - material
+      - equipment
+      - coefficient
+      type: string
+      description: |-
+        * `work` - Работа
+        * `material` - Материал
+        * `equipment` - Оборудование
+        * `coefficient` - Коэффициент
     Material:
       type: object
       description: |-
@@ -8869,6 +9694,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Employee'
+    PaginatedEstimateList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Estimate'
     PaginatedMaterialCategoryList:
       type: object
       required:
@@ -9214,6 +10062,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserRole'
+    PaginatedWorkCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkCategory'
+    PaginatedWorkItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkItem'
     PaginatedWriteOffList:
       type: object
       required:
@@ -9298,6 +10192,28 @@ components:
         password:
           type: string
           writeOnly: true
+    PatchedEstimateCreateRequest:
+      type: object
+      properties:
+        object:
+          type: integer
+        title:
+          type: string
+          maxLength: 256
+        date:
+          type: string
+          format: date
+          nullable: true
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 8
+        note:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstimateLineWriteRequest'
     PatchedMaterialCategoryRequest:
       type: object
       properties:
@@ -9720,6 +10636,47 @@ components:
           nullable: true
           description: Дата истечения роли (опционально). Если не указана, роль действует
             бессрочно.
+    PatchedWorkCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+    PatchedWorkItemRequest:
+      type: object
+      properties:
+        category:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        unit:
+          type: string
+          maxLength: 32
+        default_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
     PatchedWriteOffRequest:
       type: object
       description: Сериализатор для списаний материалов
@@ -11429,6 +12386,124 @@ components:
       required:
       - role_id
       - user
+    WorkCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+        parent_name:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        children_count:
+          type: integer
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+      required:
+      - children_count
+      - id
+      - items_count
+      - name
+      - parent_name
+    WorkCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        parent:
+          type: integer
+          nullable: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - name
+    WorkItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        kind_display:
+          type: string
+          readOnly: true
+        unit:
+          type: string
+          maxLength: 32
+        default_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - category
+      - category_name
+      - id
+      - kind_display
+      - name
+    WorkItemRequest:
+      type: object
+      properties:
+        category:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        unit:
+          type: string
+          maxLength: 32
+        default_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - category
+      - name
     WriteOff:
       type: object
       description: Сериализатор для списаний материалов
