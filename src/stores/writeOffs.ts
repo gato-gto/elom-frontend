@@ -36,6 +36,10 @@ export interface WriteOffBulkPayload {
   date: string
   responsible: number
   comment?: string
+  // F-926/F-730: атомарный edit-путь — если задан, ПЕРВАЯ позиция items[0] обновляет существующее
+  // списание (partial update), остальные создаются, ВСЁ в одной серверной transaction.atomic.
+  // Без него — чистый bulk-create (поведение F-270 неизменно).
+  update_id?: number
   items: WriteOffBulkItem[]
 }
 

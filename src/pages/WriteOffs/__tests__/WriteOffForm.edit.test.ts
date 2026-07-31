@@ -35,7 +35,10 @@ import WriteOffForm from '@/pages/WriteOffs/WriteOffForm.vue'
 describe('WriteOffForm edit — no position dropped (F-072)', () => {
   beforeEach(() => { update.mockClear(); create.mockClear(); createBulk.mockClear() })
 
-  it('edit with 2 positions updates the record and creates the extra', async () => {
+  // F-926/F-730: edit-путь теперь АТОМАРЕН — ОДИН вызов createBulk с update_id (первая позиция обновляет
+  // существующее списание, остальные создаются в одной серверной transaction.atomic). update() больше НЕ
+  // вызывается отдельно (устранена two-call TOCTOU-гонка).
+  it('edit sends ONE atomic createBulk with update_id + all positions (no separate update)', async () => {
     const wrapper = mount(WriteOffForm, {
       props: { initial: { id: 42, object: 1, responsible: 5, date: '2026-01-01' } },
       global: { stubs: { PermissionButton: true, MaterialSearchSelect: true } },
@@ -54,24 +57,28 @@ describe('WriteOffForm edit — no position dropped (F-072)', () => {
     )
     await nextTick()
     await vm.handleSubmit()
-    expect(update).toHaveBeenCalledTimes(1)
-    expect(update).toHaveBeenCalledWith(42, expect.objectContaining({ material: 10, quantity: '3' }))
-    // F-628 (#13): добавочная позиция уходит одним атомарным createBulk (не create), retry не дублирует
+    // F-926: НЕТ отдельного update() и НЕТ N×create() — только один атомарный createBulk
+    expect(update).not.toHaveBeenCalled()
     expect(create).not.toHaveBeenCalled()
     expect(createBulk).toHaveBeenCalledTimes(1)
+    // update_id = id редактируемого списания; items — ПОЛНЫЙ набор (первая = правка, вторая = create)
     expect(createBulk).toHaveBeenCalledWith(expect.objectContaining({
       object: 1,
-      items: [expect.objectContaining({ material: 11, quantity: '4' })],
+      update_id: 42,
+      items: [
+        expect.objectContaining({ material: 10, quantity: '3' }),
+        expect.objectContaining({ material: 11, quantity: '4' }),
+      ],
     }))
   })
 
-  // F-634: edit-путь шлёт extras = filledItems.slice(1); построчная ошибка bulk-create приходит в
-  // индексах ЭТОГО (смещённого) массива. Ошибка должна сесть на добавочную позицию (display idx 1),
-  // а НЕ на обновляемую (idx 0) — иначе класс M1 (ошибка на чужой строке) в edit-пути.
-  it('F-634: edit-path bulk error maps to the extra row, not the updated row (off-by-one)', async () => {
+  // F-926: edit-путь теперь шлёт ПОЛНЫЙ items (не slice(1)) → построчная ошибка bulk-create маппится НА
+  // ТУ ЖЕ строку (без off-by-one сдвига F-634). Ошибка на index 0 должна сесть на ПЕРВУЮ (обновляемую)
+  // позицию, на index 1 — на вторую (добавочную).
+  it('F-926: edit-path bulk error maps directly to the same row (no off-by-one shift)', async () => {
     createBulk.mockRejectedValueOnce({
       response: { data: { detail: 'Ошибки в позициях', errors: { items: [
-        { index: 0, detail: { __all__: ['Недостаточно остатка'] } },
+        { index: 1, detail: { __all__: ['Недостаточно остатка'] } },
       ] } } },
     })
     const wrapper = mount(WriteOffForm, {
@@ -87,12 +94,13 @@ describe('WriteOffForm edit — no position dropped (F-072)', () => {
     }
     Object.assign(vm.formData, { object: 1, responsible: 5, date: '2026-01-01', comment: '' })
     vm.items.splice(0, vm.items.length,
-      { _k: 'a', material: 10, unit: 2, quantity: '3' },   // обновляемая (idx 0)
-      { _k: 'b', material: 11, unit: 2, quantity: '4' },   // добавочная (idx 1) — она в bulk
+      { _k: 'a', material: 10, unit: 2, quantity: '3' },   // idx 0 — обновляемая
+      { _k: 'b', material: 11, unit: 2, quantity: '4' },   // idx 1 — добавочная (ошибка сюда)
     )
     await nextTick()
     await vm.handleSubmit()
     await nextTick()
+    // index 1 → строка 1 напрямую (раньше slice(1) сдвигал бы, теперь items полный)
     expect(vm.getItemFieldError(1, 'quantity')).toContain('Недостаточно остатка')
     expect(vm.getItemFieldError(0, 'quantity') || '').toBe('')
   })

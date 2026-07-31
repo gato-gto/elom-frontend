@@ -409,9 +409,8 @@ import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
 import type { 
-  WriteOff, 
-  WriteOffCreateRequest, 
-  WriteOffUpdateRequest,
+  WriteOff,
+  WriteOffCreateRequest,
   SiteObject,
   Material,
   Unit
@@ -859,16 +858,7 @@ const handleSubmit = async () => {
   // F-634: карта display-индексов ИМЕННО для массива, отправленного в createBulk. В edit-пути это
   // filledItems.slice(1) (первая позиция идёт через update), т.е. смещена на 1 относительно
   // filledDisplayIndexes — иначе построчная ошибка bulk на edit-пути сядет на строку ВЫШЕ (класс M1).
-  let bulkDisplayIndexes: number[] = filledDisplayIndexes
-  // F-925 (#8 hunt-round6): edit-путь неатомарен — сначала update(первой строки), затем bulk-create
-  // добавленных. Типовую причину сбоя extras (превышение остатка/закрытый период) уже ловит пред-
-  // валидация выше (F-306/F-640) ДО записи, поэтому «частичное сохранение» осталось лишь на редкой
-  // серверной гонке (остаток «съел» другой пользователь между update и bulk). Полная атомарность
-  // требует транзакционного BE-эндпоинта (зона A, хендофф в OPS §7). Здесь делаем остаток ЧЕСТНЫМ:
-  // если первая строка уже обновлена, а extras упали — прямо говорим, что основное списание сохранено,
-  // а добавленные позиции — нет (раньше юзер видел только ошибки на extra-строках и не знал, что row1
-  // уже изменён — «тихое» частичное сохранение).
-  let firstRowUpdated = false
+  const bulkDisplayIndexes: number[] = filledDisplayIndexes
 
   try {
     // FE-3/F-563: считаем только ЗАПОЛНЕННЫЕ позиции (материал+единица+кол-во>0). Плейсхолдерная
@@ -936,44 +926,25 @@ const handleSubmit = async () => {
     }
 
     if (props.initial) {
-      // F-072: списание — это одна строка (объект+материал+кол-во). Раньше при
-      // редактировании сохранялась ТОЛЬКО items[0], остальные позиции молча
-      // терялись. Теперь: первую позицию обновляем как текущую запись, остальные
-      // добавленные позиции создаём как новые списания — данные не теряются.
-      const validItems = filledItems
-      const first = validItems[0]
-      if (first) {
-        const updateData: WriteOffUpdateRequest = {
-          date: formData.value.date,
-          object: formData.value.object,
-          material: first.material,
-          unit: first.unit,
-          quantity: first.quantity,
-          responsible: formData.value.responsible,
-          comment: formData.value.comment,
-        }
-        await writeOffsStore.update(props.initial.id, updateData)
-        firstRowUpdated = true  // F-925: первая строка уже сохранена; extras пойдут отдельным bulk ниже
-      }
-      // F-628 (#13): раньше добавочные позиции (slice(1)) создавались N независимыми create() через
-      // Promise.all — при частичном сбое успешные сохранялись, а retry пере-создавал ВСЕ → дубли
-      // расход-строк (двойное списание). Гоним их через тот же АТОМАРНЫЙ bulk-create, что и путь
-      // создания: всё-или-ничего, retry не дублирует.
-      const extras = validItems.slice(1)
-      if (extras.length > 0) {
-        bulkDisplayIndexes = filledDisplayIndexes.slice(1)  // F-634: extras = filledItems.slice(1) → индексы ошибок смещены на 1
-        await createBulk({
-          object: formData.value.object,
-          date: formData.value.date,
-          responsible: formData.value.responsible,
-          comment: formData.value.comment || '',
-          items: extras.map(item => ({
-            material: item.material!,
-            unit: item.unit,
-            quantity: item.quantity,
-          })),
-        })
-      }
+      // F-926/F-730: АТОМАРНЫЙ edit-путь. Раньше (F-072/F-628/F-925) редактирование шло ДВУМЯ вызовами —
+      // update(первой строки) + createBulk(добавленных) — без общей транзакции: редкая серверная TOCTOU-
+      // гонка (остаток «съел» другой юзер между вызовами) оставляла первую строку сохранённой, а extras
+      // упавшими (F-925 делал это лишь ЧЕСТНЫМ, не устранял). Теперь ОДИН вызов bulk-create с update_id:
+      // BE обновляет первую позицию items[0] (partial update существующего списания) и создаёт остальные —
+      // ВСЁ в одной transaction.atomic (all-or-nothing, гонка откатывает и правку, и creates). Индексы
+      // построчных ошибок теперь маппятся на ПОЛНЫЙ items (без slice(1)-сдвига F-634).
+      await createBulk({
+        object: formData.value.object,
+        date: formData.value.date,
+        responsible: formData.value.responsible,
+        comment: formData.value.comment || '',
+        update_id: props.initial.id,
+        items: filledItems.map(item => ({
+          material: item.material!,
+          unit: item.unit,
+          quantity: item.quantity,
+        })),
+      })
     } else {
       // F-270: атомарное массовое «Новое списание» — ОДИН POST /writeoffs/bulk-create/.
       // Раньше здесь были N независимых неатомарных create(): при падении N-й строки
@@ -1001,34 +972,21 @@ const handleSubmit = async () => {
     
     emit('success')
   } catch (error: any) {
-    // F-925 (#8): если первая строка УЖЕ обновлена, а мы в catch — значит упал bulk-create добавочных
-    // позиций. Раньше юзер видел только построчные ошибки extras и не знал, что основное списание уже
-    // сохранено. Делаем состояние честным: явный текст + non_field_error, чтобы не было «тихого» частичного.
-    const partialSaved = !!props.initial && firstRowUpdated
-    if (partialSaved) {
-      errors.value.non_field_errors = [
-        'Основное списание сохранено, но добавленные позиции — нет. Проверьте и добавьте их отдельно.',
-      ]
-    }
-    // F-270: построчные ошибки атомарного bulk-create — errors.items[{index, detail}].
+    // F-270/F-926: построчные ошибки атомарного bulk-create — errors.items[{index, detail}].
     // Раскладываем по позициям формы, показываем общий тост и выходим (общий обработчик ниже
-    // не знает про поэлементный массив items и разложил бы его как одно поле).
+    // не знает про поэлементный массив items и разложил бы его как одно поле). F-926: edit-путь теперь
+    // тоже атомарный (update_id) → частичного сохранения не бывает, F-925 honest-partial больше не нужен.
     const bulkItems = error?.response?.data?.errors?.items
     if (Array.isArray(bulkItems) && bulkItems.length > 0) {
       for (const row of bulkItems) {
         if (row && typeof row.index === 'number') {
-          // M1/F-634: row.index — позиция в ОТПРАВЛЕННОМ массиве (create: filledItems;
-          // edit: filledItems.slice(1)); bulkDisplayIndexes переводит её в индекс отображения.
+          // M1/F-634/F-926: row.index — позиция в ОТПРАВЛЕННОМ массиве (и create, и edit теперь шлют
+          // ПОЛНЫЙ filledItems) → bulkDisplayIndexes = filledDisplayIndexes переводит её в индекс отображения.
           const displayIdx = bulkDisplayIndexes[row.index] ?? row.index
           applyBulkRowDetail(displayIdx, row.detail)
         }
       }
-      ui.toast({
-        type: 'error',
-        text: partialSaved
-          ? 'Основное списание сохранено; добавленные позиции — с ошибками'
-          : (error?.response?.data?.detail || 'Ошибки в позициях списания'),
-      })
+      ui.toast({ type: 'error', text: error?.response?.data?.detail || 'Ошибки в позициях списания' })
       return
     }
 
@@ -1055,13 +1013,8 @@ const handleSubmit = async () => {
       errors.value.non_field_errors = Array.isArray(nonFieldErrors) ? nonFieldErrors : [String(nonFieldErrors)]
     }
     
-    // Уведомление об ошибке (F-925: честно про частичное сохранение при неатомарном edit-пути)
-    ui.toast({
-      type: 'error',
-      text: partialSaved
-        ? 'Основное списание сохранено, но добавленные позиции — нет'
-        : (errorResult.detail || 'Ошибка при сохранении списания'),
-    })
+    // Уведомление об ошибке
+    ui.toast({ type: 'error', text: errorResult.detail || 'Ошибка при сохранении списания' })
   } finally {
     isSubmitting.value = false
   }
