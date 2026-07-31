@@ -149,6 +149,21 @@ export const endpoints = {
         byMaterial: join('/reports/purchases/by-material/'),
     },
 
+    // Estimates (смета по объекту / отчёт цен) — этап 1
+    workCategories: {
+        list: join('/work-categories/'),
+        one: (id: number) => join(`/work-categories/${id}/`),
+    },
+    workItems: {
+        list: join('/work-items/'),
+        one: (id: number) => join(`/work-items/${id}/`),
+        search: join('/work-items/search/'),
+    },
+    estimates: {
+        list: join('/estimates/'),
+        one: (id: number) => join(`/estimates/${id}/`),
+    },
+
 } as const;
 
 export type Query = | Record<string, string | number | boolean | Array<string | number> | undefined | null>;
