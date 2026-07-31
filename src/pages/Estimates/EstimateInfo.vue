@@ -31,7 +31,7 @@
               <td>{{ ln.position_no || '—' }}</td>
               <td class="font-medium">{{ ln.name }}</td>
               <td><span class="badge badge-ghost badge-sm">{{ ln.kind_display }}</span></td>
-              <td class="text-right font-mono">{{ formatNumber(ln.quantity) }}</td>
+              <td class="text-right font-mono">{{ formatNumberClean(ln.quantity) }}</td>
               <td>{{ ln.unit || '—' }}</td>
               <td class="text-right font-mono">{{ formatNumber(ln.unit_price) }}</td>
               <td class="text-right font-mono">{{ ln.amount === null ? '×' : formatNumber(ln.amount) }}</td>
@@ -45,7 +45,7 @@
       <div class="md:hidden space-y-2">
         <div v-for="ln in estimate.lines" :key="ln.id" class="bg-base-200 rounded-lg p-3">
           <div class="flex justify-between"><span class="font-medium">{{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}</span><span class="font-mono font-semibold">{{ ln.amount === null ? '×' : formatNumber(ln.amount) }}</span></div>
-          <div class="text-xs text-muted mt-1">{{ ln.kind_display }} · {{ formatNumber(ln.quantity) }} {{ ln.unit }} × {{ formatNumber(ln.unit_price) }}</div>
+          <div class="text-xs text-muted mt-1">{{ ln.kind_display }} · {{ formatNumberClean(ln.quantity) }} {{ ln.unit }} × {{ formatNumber(ln.unit_price) }}</div>
         </div>
         <div class="text-right font-semibold pt-2">Итого: <span class="font-mono">{{ formatNumber(estimate.total) }}</span></div>
       </div>
@@ -74,7 +74,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import ListHeader from '@/components/ListHeader.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
-import { formatNumber, formatDate, pluralizeRu } from '@/utils/formatters'
+import { formatNumber, formatNumberClean, formatDate, pluralizeRu } from '@/utils/formatters'
 import type { Estimate } from '@/api/types/estimates'
 
 const route = useRoute()

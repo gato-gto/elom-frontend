@@ -264,6 +264,22 @@ function handleKeydown(event: KeyboardEvent) {
   }
   const customAvailable = !!props.allowCustom && searchQuery.value.trim().length >= 2
   const total = searchResults.value.length + (customAvailable ? 1 : 0)
+  // F-929 (review): Enter в поле поиска НИКОГДА не должен сабмитить родительскую <form> (форма сметы —
+  // <form @submit.prevent>, и Enter в единственном text-input по умолчанию сабмитил всю смету). Гасим
+  // сабмит, если открыт дропдаун или есть запрос; при подсвеченном пункте — выбираем его.
+  if (event.key === 'Enter') {
+    if (showDropdown.value || searchQuery.value.trim().length >= 2) {
+      event.preventDefault()
+      if (showDropdown.value && activeIndex.value >= 0) {
+        if (activeIndex.value < searchResults.value.length) {
+          selectItem(searchResults.value[activeIndex.value])
+        } else if (customAvailable) {
+          selectCustomItem()
+        }
+      }
+    }
+    return
+  }
   if (!showDropdown.value || total === 0) { return }
   if (event.key === 'ArrowDown') {
     event.preventDefault()
@@ -271,13 +287,6 @@ function handleKeydown(event: KeyboardEvent) {
   } else if (event.key === 'ArrowUp') {
     event.preventDefault()
     activeIndex.value = activeIndex.value > 0 ? activeIndex.value - 1 : total - 1
-  } else if (event.key === 'Enter' && activeIndex.value >= 0) {
-    event.preventDefault()
-    if (activeIndex.value < searchResults.value.length) {
-      selectItem(searchResults.value[activeIndex.value])
-    } else if (customAvailable) {
-      selectCustomItem()
-    }
   }
 }
 

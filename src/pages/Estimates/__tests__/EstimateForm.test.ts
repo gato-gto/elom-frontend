@@ -56,7 +56,8 @@ describe('EstimateForm — контракт вложенных строк (F-928
     expect(create).toHaveBeenCalledTimes(1)
     const payload = create.mock.calls[0][0]
     expect(payload.object).toBe(347)
-    expect(payload.lines[0]).toMatchObject({ work_item: 55, quantity: '3', unit_price: '1000', position_no: '1', order: 0 })
+    // F-929 (review): mode «а» ТЕПЕРЬ шлёт снапшот-имя явно (иначе BE fallback на wi.name → нарушение историчности).
+    expect(payload.lines[0]).toMatchObject({ work_item: 55, name: 'Монтаж', quantity: '3', unit_price: '1000', position_no: '1', order: 0 })
     expect(payload.lines[0].category).toBeUndefined()
   })
 
@@ -98,6 +99,14 @@ describe('EstimateForm — контракт вложенных строк (F-928
     const vm = mountForm()
     await nextTick()
     vm.lines.splice(0, vm.lines.length, { _k: 'x', work_item: 10, category_a: null, category_b: null, name: 'X', kind: 'work', unit: '', quantity: '', unit_price: '100', position_no: '' })
+    await vm.handleSubmit()
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('F-929: не сабмитит строку с отрицательной ценой (симметрия с кол-вом)', async () => {
+    const vm = mountForm()
+    await nextTick()
+    vm.lines.splice(0, vm.lines.length, { _k: 'p', work_item: 10, category_a: null, category_b: null, name: 'X', kind: 'work', unit: '', quantity: '1', unit_price: '-5', position_no: '' })
     await vm.handleSubmit()
     expect(create).not.toHaveBeenCalled()
   })

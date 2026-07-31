@@ -152,8 +152,13 @@ async function confirmDelete() {
   }
 }
 
-// Object-scope filter персистится в стор через setFilters, но здесь ведём его явным параметром.
-watch(() => estimatesStore.filters, () => {}, { deep: false })
+// F-929 (review): нав-ссылка «Сметы» ведёт на /estimates (query сбрасывается), но роут НЕ ремаунтит
+// компонент (тот же route record) → objectId «прилипал» к прежнему объекту, а URL уже без фильтра
+// (список показывал подмножество одного объекта, выдавая за «все»). Ведём objectId за route.query.object.
+watch(() => route.query.object, (v) => {
+  const next = v ? Number(v) : null
+  if (next !== objectId.value) { objectId.value = next; load() }
+})
 
 onMounted(async () => {
   if (objectsStore.items.length === 0) { objectsStore.fetchList({ page_size: 1000 }).catch(() => {}) }

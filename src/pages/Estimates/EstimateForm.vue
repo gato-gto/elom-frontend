@@ -81,7 +81,10 @@
                   @change="onItemPicked(line, $event)"
                   @custom-item="onCustomItem(line, $event)"
                 />
-                <input v-if="line.name && !line.work_item" v-model="line.name" type="text" class="input input-bordered input-xs w-full mt-1" placeholder="Название позиции" />
+                <div v-if="line.name && !line.work_item" class="flex gap-1 mt-1">
+                  <input v-model="line.name" type="text" class="input input-bordered input-xs w-full" placeholder="Название позиции" />
+                  <input v-model="line.unit" type="text" maxlength="32" class="input input-bordered input-xs w-20" placeholder="Ед." />
+                </div>
               </td>
               <td>
                 <select v-model="line.kind" class="select select-bordered select-xs w-full">
@@ -125,7 +128,10 @@
             </select>
             <div class="col-span-2">
               <WorkItemSearchSelect v-model="line.work_item" size="sm" :category="line.category_b" :allow-custom="true" :error="lineErrors[idx]?.name || lineErrors[idx]?.work_item" @change="onItemPicked(line, $event)" @custom-item="onCustomItem(line, $event)" />
-              <input v-if="line.name && !line.work_item" v-model="line.name" type="text" class="input input-bordered input-sm w-full mt-1" placeholder="Название позиции" />
+              <div v-if="line.name && !line.work_item" class="flex gap-1 mt-1">
+                <input v-model="line.name" type="text" class="input input-bordered input-sm w-full" placeholder="Название позиции" />
+                <input v-model="line.unit" type="text" maxlength="32" class="input input-bordered input-sm w-20" placeholder="Ед." />
+              </div>
             </div>
             <label class="form-control"><span class="label-text text-xs">Кол-во</span><input v-model="line.quantity" type="number" step="0.001" min="0" class="input input-bordered input-sm text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" /></label>
             <label class="form-control"><span class="label-text text-xs">Цена</span><input v-model="line.unit_price" type="number" step="0.01" min="0" class="input input-bordered input-sm text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" /></label>
@@ -231,7 +237,13 @@ function removeLine(idx: number) {
 
 async function loadChildren(parentId: number) {
   if (childrenByParent[parentId]) { return }
-  try { childrenByParent[parentId] = await fetchChildCategories(parentId) } catch { childrenByParent[parentId] = [] }
+  try {
+    childrenByParent[parentId] = await fetchChildCategories(parentId)
+  } catch {
+    // F-929/F-552: не глушим сбой — пустой дропдаун иначе выглядит как «нет подразделов».
+    childrenByParent[parentId] = []
+    ui.toast({ type: 'error', text: 'Не удалось загрузить подразделы — попробуйте ещё раз' })
+  }
 }
 function onCatARow(line: FormLine) {
   line.category_b = null
@@ -277,6 +289,11 @@ function validate(): boolean {
     if (!l.work_item && !l.name.trim()) { errs.name = 'Укажите позицию или название' }
     const q = parseFloat(l.quantity || '')
     if (l.quantity === '' || isNaN(q) || q < 0) { errs.quantity = 'Кол-во ≥ 0' }
+    // F-929 (review): симметрично с кол-вом валидируем цену (отрицательная/NaN → BE 400).
+    if (l.unit_price !== '' && l.unit_price != null) {
+      const p = parseFloat(String(l.unit_price))
+      if (isNaN(p) || p < 0) { errs.unit_price = 'Цена ≥ 0' }
+    }
     if (Object.keys(errs).length) { lineErrors.value[i] = errs; ok = false }
   })
   return ok
@@ -294,6 +311,10 @@ function buildPayloadLines(): EstimateLineWrite[] {
     }
     if (l.work_item) {
       base.work_item = l.work_item // (а) существующая позиция
+      // F-929 (review): ШЛЁМ снапшот-имя явно. Иначе на edit BE (_save_lines) видит name='' и берёт
+      // ТЕКУЩЕЕ wi.name из каталога → если позицию переименовали, правка сметы по др. причине молча
+      // перепишет имена строк = нарушение инварианта историчности (правка каталога смету не меняет).
+      base.name = l.name.trim()
     } else if (l.category_b && l.name.trim()) {
       base.category = l.category_b // (б) добавить в каталог
       base.name = l.name.trim()
@@ -362,7 +383,9 @@ async function loadForEdit(id: number) {
     const est = await estimatesStore.fetchOne(id)
     form.object = est.object
     form.title = est.title || ''
-    form.date = est.date || todayLocal()
+    // F-929 (review): смета без даты (date=null, «НЗ») НЕ должна получать сегодня при правке др. поля —
+    // оставляем пусто, `date: form.date || null` вернёт null (todayLocal — только дефолт СОЗДАНИЯ).
+    form.date = est.date || ''
     form.note = est.note || ''
     lines.value = est.lines.map(ln => ({
       _k: `l${_kSeq++}`,
