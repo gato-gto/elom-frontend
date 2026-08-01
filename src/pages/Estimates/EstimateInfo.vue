@@ -6,12 +6,15 @@
     <LoadingSpinner v-if="loading && !estimate" size="lg" variant="primary" text="Загрузка сметы…" :overlay="false" />
 
     <div v-else-if="estimate" class="space-y-4 p-1">
-      <div class="grid md:grid-cols-4 gap-3 bg-base-200 rounded-lg p-4">
-        <div><div class="text-xs text-muted">Дата</div><div class="font-mono">{{ estimate.date ? formatDate(estimate.date) : 'НЗ' }}</div></div>
-        <div><div class="text-xs text-muted">Автор</div><div>{{ estimate.created_by_name || 'НЗ' }}</div></div>
-        <div><div class="text-xs text-muted">Валюта</div><div>{{ estimate.currency }}</div></div>
-        <div><div class="text-xs text-muted">Итого</div><div class="font-mono font-semibold text-lg">{{ formatNumber(estimate.total) }}</div></div>
-        <div v-if="estimate.note" class="md:col-span-4"><div class="text-xs text-muted">Примечание</div><div>{{ estimate.note }}</div></div>
+      <!-- F-934 (дизайн-консистентность P1): шапка-сводка в .card/.card-body (как остальные детальные), «Итого» — stat-акцент. -->
+      <div class="card">
+        <div class="card-body grid md:grid-cols-4 gap-3">
+          <div><div class="text-xs text-muted">Дата</div><div class="font-mono">{{ estimate.date ? formatDate(estimate.date) : 'НЗ' }}</div></div>
+          <div><div class="text-xs text-muted">Автор</div><div>{{ estimate.created_by_name || 'НЗ' }}</div></div>
+          <div><div class="text-xs text-muted">Валюта</div><div>{{ estimate.currency }}</div></div>
+          <div><div class="text-xs text-muted">Итого</div><div class="font-mono font-semibold text-lg text-success">{{ formatNumber(estimate.total) }}</div></div>
+          <div v-if="estimate.note" class="md:col-span-4"><div class="text-xs text-muted">Примечание</div><div>{{ estimate.note }}</div></div>
+        </div>
       </div>
 
       <div class="flex justify-between items-center">

@@ -56,7 +56,8 @@
 
     <!-- Позиции -->
     <div v-else>
-      <div class="grid md:grid-cols-3 gap-2 mb-2 items-end">
+      <!-- F-934 (дизайн-консистентность P1): фильтры в FilterPanel (как все списки/EstimateList) — единый бокс+сброс. -->
+      <FilterPanel :columns="2" :loading="itemStore.loading" @reset="resetItemFilters">
         <div class="form-control"><label class="label"><span class="label-text">Раздел A</span></label>
           <select v-model.number="filterA" class="select select-bordered select-sm" @change="onFilterA">
             <option :value="null">— все —</option><option v-for="c in roots" :key="c.id" :value="c.id">{{ c.name }}</option>
@@ -67,10 +68,10 @@
             <option :value="null">— все —</option><option v-for="c in (childrenByParent[filterA || 0] || [])" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
         </div>
-        <div class="flex justify-end" v-if="canAddItem">
-          <button class="btn btn-sm btn-primary" @click="openItemForm(null)"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Добавить позицию</button>
-        </div>
-      </div>
+        <template #actions>
+          <button v-if="canAddItem" class="btn btn-sm btn-primary" @click="openItemForm(null)"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Добавить позицию</button>
+        </template>
+      </FilterPanel>
       <!-- Desktop-таблица -->
       <div class="hidden md:block overflow-x-auto">
         <table class="modern-table w-full">
@@ -92,19 +93,21 @@
           </tbody>
         </table>
       </div>
-      <!-- F-930: Mobile-карточки позиций -->
+      <!-- F-934 (дизайн-консистентность P1): моб-карточки позиций на MobileCard (единые тень/бордер/hover/тач-цели). -->
       <div class="md:hidden space-y-2">
-        <div v-for="it in itemStore.items" :key="it.id" class="bg-base-200 rounded-lg p-3">
-          <div class="flex justify-between items-start">
-            <div class="font-medium">{{ it.name }}</div>
-            <div class="flex gap-1" v-if="canEditItem || canDeleteItem">
-              <button v-if="canEditItem" class="btn btn-ghost btn-xs btn-square touch-target" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(it)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-              <button v-if="canDeleteItem" class="btn btn-ghost btn-xs btn-square touch-target text-error" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(it)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+        <MobileCard
+          v-for="it in itemStore.items" :key="it.id"
+          :title="it.name" :badge="it.kind_display" badge-class="badge-ghost"
+          :actions="itemCardActions" @action="(k) => handleItemCardAction(k, it)"
+        >
+          <template #content>
+            <div class="text-sm space-y-1">
+              <div><span class="text-muted">Раздел:</span> <span class="font-medium ml-1">{{ it.category_name }}</span></div>
+              <div v-if="it.unit"><span class="text-muted">Ед.:</span> <span class="ml-1">{{ it.unit }}</span></div>
+              <div v-if="it.default_price"><span class="text-muted">Цена:</span> <span class="font-mono ml-1">{{ formatNumber(it.default_price) }}</span></div>
             </div>
-          </div>
-          <div class="text-sm text-muted mt-1">{{ it.category_name }} · {{ it.kind_display }}<span v-if="it.unit"> · {{ it.unit }}</span></div>
-          <div v-if="it.default_price" class="text-sm font-mono mt-1">{{ formatNumber(it.default_price) }}</div>
-        </div>
+          </template>
+        </MobileCard>
         <div v-if="itemStore.items.length === 0" class="text-center text-muted py-8">Позиций нет</div>
       </div>
     </div>
@@ -157,6 +160,8 @@ import { useUiStore } from '@/stores/ui'
 import { usePermissions } from '@/composables/usePermissions'
 import ListHeader from '@/components/ListHeader.vue'
 import Modal from '@/components/Modal.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import MobileCard from '@/components/MobileCard.vue'
 import { formatNumber } from '@/utils/formatters'
 import type { WorkCategory, WorkItem, WorkItemKind } from '@/api/types/estimates'
 
@@ -305,6 +310,20 @@ async function deleteItem(it: WorkItem) {
   } catch (e: any) {
     ui.toast({ type: 'error', text: e?.response?.data?.detail || 'Не удалось удалить позицию' })
   }
+}
+
+// F-934: действия моб-карточки позиции (MobileCard эмитит key) + сброс фильтров (FilterPanel @reset).
+const itemCardActions = computed(() => [
+  ...(canEditItem.value ? [{ key: 'edit', label: 'Изменить' }] : []),
+  ...(canDeleteItem.value ? [{ key: 'delete', label: 'Удалить', class: 'btn-error' }] : []),
+])
+function handleItemCardAction(key: string, it: WorkItem) {
+  if (key === 'edit') { openItemForm(it) } else if (key === 'delete') { deleteItem(it) }
+}
+function resetItemFilters() {
+  filterA.value = null
+  filterB.value = null
+  loadItems()
 }
 
 // ── загрузка ──
