@@ -111,7 +111,7 @@
         <div class="grid grid-cols-3 gap-2">
           <label class="form-control"><span class="label-text text-xs">Тип</span><select v-model="itemForm.kind" class="select select-bordered select-sm w-full"><option v-for="k in KIND_OPTIONS" :key="k.value" :value="k.value">{{ k.label }}</option></select></label>
           <label class="form-control"><span class="label-text text-xs">Ед.</span><input v-model="itemForm.unit" type="text" maxlength="32" class="input input-bordered input-sm w-full" /></label>
-          <label class="form-control"><span class="label-text text-xs">Цена</span><input v-model="itemForm.default_price" type="number" step="0.01" min="0" class="input input-bordered input-sm text-right w-full" /></label>
+          <label class="form-control"><span class="label-text text-xs">Цена</span><input v-model="itemForm.default_price" type="number" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" /></label>
         </div>
         <div class="flex justify-end gap-2"><button class="btn btn-ghost" @click="itemModal = false">Отмена</button><button class="btn btn-primary" :disabled="savingItem" @click="saveItem">{{ savingItem ? '…' : 'Сохранить' }}</button></div>
       </div>

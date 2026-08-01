@@ -73,10 +73,12 @@
                 </button>
               </div>
               <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-sm">
-                <input v-model="line.quantity" type="number" step="0.001" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" />
+                <input v-model="line.quantity" type="number" :step="qtyStep(line.unit)" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" />
                 <span class="text-muted w-10 text-center">{{ line.unit || '—' }}</span>
                 <span class="text-muted">×</span>
-                <input v-model="line.unit_price" type="number" step="0.01" min="0" class="input input-bordered input-sm w-28 text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" aria-label="Цена" />
+                <!-- цена: каталожная позиция → read-only (прайс-книга, меняется в каталоге); произвольная одноразовая → вручную -->
+                <span v-if="line.work_item" class="font-mono w-28 text-right text-muted" title="Цена из каталога — меняется в «Прайс-каталоге»">{{ formatNumber(line.unit_price || 0) }}</span>
+                <input v-else v-model="line.unit_price" type="number" step="1" min="0" class="input input-bordered input-sm w-28 text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" aria-label="Цена" placeholder="цена" />
                 <span class="text-muted">=</span>
                 <span class="font-mono font-semibold ml-auto">{{ lineAmountDisplay(line) }}</span>
               </div>
@@ -193,13 +195,18 @@ function removeLine(idx: number) {
   lineErrors.value = remapped
 }
 
-// ── суммы ──
+// ── числа: количество целое для штучных, дробное для мерных; цена/сумма — целый сум ──
+const MEASURE_UNITS = new Set(['п.м.', 'м2', 'час', 'км.'])
+function isMeasure(unit: string) { return MEASURE_UNITS.has((unit || '').toLowerCase()) }
+function qtyStep(unit: string) { return isMeasure(unit) ? '0.001' : '1' }
+
+// ── суммы (целый сум) ──
 function lineAmount(line: FormLine): number | null {
   if (line.kind === 'coefficient') { return null }
   const q = parseFloat(line.quantity || '0')
   const p = parseFloat(line.unit_price || '0')
   if (isNaN(q) || isNaN(p)) { return 0 }
-  return q * p
+  return Math.round(q * p)
 }
 function lineAmountDisplay(line: FormLine): string {
   const a = lineAmount(line)
