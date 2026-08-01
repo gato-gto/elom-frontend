@@ -25,7 +25,7 @@
         @click="clearSelection"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.reject"></path>
         </svg>
       </button>
       <input
@@ -46,7 +46,7 @@
       />
       <div v-if="loading" class="absolute right-3 top-1/2 transform -translate-y-1/2">
         <svg class="w-4 h-4 animate-spin text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('refresh')"></path>
         </svg>
       </div>
     </div>
@@ -68,7 +68,7 @@
           @mousemove="activeIndex = iIdx"
           @click="selectItem(item)"
         >
-          <div class="font-medium">{{ item.name }}</div>
+          <div class="font-medium break-words">{{ item.name }}</div>
           <div class="text-xs text-muted flex gap-2">
             <span>{{ item.kind_display }}</span>
             <span v-if="item.unit">· {{ item.unit }}</span>
@@ -91,7 +91,7 @@
         >
           <div class="font-medium text-primary flex items-center gap-2">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" />
             </svg>
             <span class="truncate">Добавить «{{ searchQuery.trim() }}»</span>
           </div>
@@ -111,6 +111,8 @@ import { useWorkItemsStore, searchWorkItems } from '@/stores/workItems'
 import type { WorkItem, WorkItemLite } from '@/api/types/estimates'
 import { computeDropdownPosition } from '@/utils/dropdownPosition'
 import { formatNumber } from '@/utils/formatters'
+import { ACTION_ICONS } from '@/utils/actionIcons'
+import { getIconPath } from '@/assets/icons'
 
 const props = defineProps<{
   modelValue?: number | null

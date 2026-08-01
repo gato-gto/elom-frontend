@@ -213,3 +213,32 @@ describe('A11Y · иконочные destructive-кнопки имеют дос�
     ).toEqual([])
   })
 })
+
+/**
+ * Правило (F-939, задача владельца «нормализуй иконки как во всём проекте и сделай это правилом»):
+ * иконки — ТОЛЬКО из реестра, не инлайн-SVG. Сущности/навигация → getIconPath (@/assets/icons);
+ * действия (edit/delete/add/view/reject…) → ACTION_ICONS / actionIconPath (@/utils/actionIcons).
+ * Инлайн сырого пути d="M…" запрещён (дублирование + рассинхрон стиля). Скоуп — сметный модуль
+ * (нормализован); легаси-страницы вне скоупа — отдельный follow-up.
+ */
+describe('Правило: иконки из реестра, не инлайн SVG (сметный модуль)', () => {
+  const files = [
+    'src/pages/Estimates/Catalog.vue',
+    'src/pages/Estimates/EstimateForm.vue',
+    'src/pages/Estimates/EstimateInfo.vue',
+    'src/pages/Estimates/EstimateList.vue',
+    'src/components/WorkItemSearchSelect.vue',
+    'src/components/cards/EstimateCard.vue',
+  ]
+  for (const rel of files) {
+    it(`${rel}: без инлайн d="M…" (getIconPath/ACTION_ICONS)`, () => {
+      const p = resolve(ROOT, rel)
+      if (!existsSync(p)) { return }
+      const inline = (readFileSync(p, 'utf8').match(/\sd="M[\d-]/g) || [])
+      expect(
+        inline,
+        `Инлайн SVG-путь в ${rel} — замени на getIconPath('name') или ACTION_ICONS.key`,
+      ).toHaveLength(0)
+    })
+  }
+})
