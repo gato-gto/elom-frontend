@@ -91,14 +91,17 @@
       </div>
     </Modal>
 
-    <!-- Модалка позиции -->
-    <Modal v-model="itemModal" :title="editingItem?.id ? 'Изменить позицию' : 'Новая позиция'">
+    <!-- Модалка позиции — шире (2xl): длинные пути подраздела «Раздел → Подраздел» читаемы (owner). -->
+    <Modal v-model="itemModal" size="2xl" :title="editingItem?.id ? 'Изменить позицию' : 'Новая позиция'">
       <div class="p-4 space-y-3">
         <div class="form-control"><label class="label"><span class="label-text">Подраздел</span><span class="label-text-alt text-error">*</span></label>
-          <select v-model.number="itemForm.category" class="select select-bordered w-full" :class="{ 'select-error': itemErr.category }">
+          <select v-model.number="itemForm.category" class="select select-bordered w-full" :class="{ 'select-error': itemErr.category }" :title="selectedSubLabel">
             <option :value="null" disabled>— выберите подраздел —</option>
             <option v-for="o in subcategoryOptions" :key="o.id" :value="o.id">{{ o.label }}</option>
           </select>
+          <!-- Полный путь выбранного подраздела — переносится на строки, всегда виден целиком
+               (нативный select обрезает длинное значение справа; owner-баг). -->
+          <div v-if="selectedSubLabel" class="text-xs text-muted break-words leading-snug mt-1">{{ selectedSubLabel }}</div>
           <label v-if="itemErr.category" class="label"><span class="label-text-alt text-error">{{ itemErr.category }}</span></label>
         </div>
         <div class="form-control"><label class="label"><span class="label-text">Название</span><span class="label-text-alt text-error">*</span></label>
@@ -259,6 +262,8 @@ const editingItem = ref<WorkItem | null>(null)
 const itemForm = reactive<{ category: number | null; name: string; kind: WorkItemKind; unit: string; default_price: string }>({ category: null, name: '', kind: 'work', unit: '', default_price: '' })
 const itemErr = reactive<Record<string, string>>({})
 const savingItem = ref(false)
+// Полный лейбл выбранного подраздела «Раздел → Подраздел» (для тултипа + переносимой строки под select).
+const selectedSubLabel = computed(() => subcategoryOptions.value.find(o => o.id === itemForm.category)?.label || '')
 
 // contextCategoryId — подраздел, из-под которого нажали «+ Позиция» (подставляется в форму).
 function openItemForm(it: WorkItem | null, contextCategoryId?: number) {
