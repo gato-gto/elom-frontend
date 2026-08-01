@@ -56,6 +56,10 @@ export interface WorkItemLite {
   kind_display: string
   unit: string
   default_price: string | null // decimal as string
+  // #65: цепочка категории позиции — FE авто-подставляет путь без ручного каскада.
+  category: number // id подраздела (leaf)
+  section_name: string // раздел (верхний уровень)
+  subcategory_name: string // подраздел
 }
 
 // ─────────────────────────── Смета (read) ───────────────────────────
@@ -68,6 +72,8 @@ export interface EstimateLine {
   kind: WorkItemKind
   kind_display: string
   unit: string
+  section_name: string // #65: раздел (снапшот) — для группировки
+  subcategory_name: string // #65: подраздел (снапшот)
   quantity: string // decimal as string
   unit_price: string // decimal as string
   amount: number | null // qty×price; null у коэффициента (не в total)

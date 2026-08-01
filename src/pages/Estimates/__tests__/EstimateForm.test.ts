@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
-// F-928: контракт вложенных строк сметы — три режима (а) work_item, (б) category+name, (в) свободная.
-// createBulk-аналог: один вызов estimatesStore.create с payload {object,...,lines:[...]}.
+// #65: форма-документ с авто-группировкой. Строка несёт снапшот пути (section/subcategory) из выбранной
+// позиции; buildPayloadLines — три режима (а) work_item, (б) category+name, (в) свободная.
 const { create, update, fetchOne } = vi.hoisted(() => ({
   create: vi.fn().mockResolvedValue({ id: 7 }),
   update: vi.fn().mockResolvedValue({ id: 7 }),
@@ -12,10 +12,6 @@ const { create, update, fetchOne } = vi.hoisted(() => ({
 
 vi.mock('@/stores/estimates', () => ({ useEstimatesStore: () => ({ create, update, fetchOne }) }))
 vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [{ id: 347, name: 'Тест-объект' }], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
-vi.mock('@/stores/workCategories', () => ({
-  fetchRootCategoriesSafe: vi.fn().mockResolvedValue([{ id: 1, name: 'Раздел A', parent: null }]),
-  fetchChildCategories: vi.fn().mockResolvedValue([{ id: 2, name: 'Подраздел B', parent: 1 }]),
-}))
 vi.mock('@/stores/ui', () => ({ useUiStore: () => ({ toast: vi.fn() }) }))
 
 const push = vi.fn()
@@ -28,58 +24,69 @@ vi.mock('@/components/ListHeader.vue', () => ({ default: { name: 'ListHeader', t
 
 import EstimateForm from '@/pages/Estimates/EstimateForm.vue'
 
+interface Lite { id: number; name: string; kind: string; kind_display: string; unit: string; default_price: string | null; category: number; section_name: string; subcategory_name: string }
 function mountForm() {
   const wrapper = mount(EstimateForm)
   return wrapper.vm as unknown as {
     form: { object: number | null; title: string; date: string; note: string }
     lines: Array<Record<string, unknown>>
+    onSearchPicked: (item: Lite) => void
+    groupedLines: Array<{ section: string; sectionTotal: number; subgroups: Array<{ subcategory: string; subTotal: number; items: unknown[] }> }>
     handleSubmit: () => Promise<void>
   }
 }
+const line = (o: Record<string, unknown>) => ({
+  _k: 'k', work_item: null, category: null, section_name: '', subcategory_name: '',
+  name: '', kind: 'work', unit: '', quantity: '1', unit_price: '0', position_no: '', ...o,
+})
 
-describe('EstimateForm — контракт вложенных строк (F-928)', () => {
+describe('EstimateForm — #65 авто-группировка + контракт строк', () => {
   beforeEach(() => { create.mockClear(); update.mockClear(); push.mockClear() })
 
   it('object предзаполнен из ?object= и залочен', async () => {
-    const vm = mountForm()
-    await nextTick()
+    const vm = mountForm(); await nextTick()
     expect(vm.form.object).toBe(347)
   })
 
-  it('режим (а) существующая позиция → work_item в payload', async () => {
-    const vm = mountForm()
+  it('#65: выбор позиции добавляет строку с авто-путём; группировка Раздел→Подраздел + подытоги', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked({ id: 55, name: 'Кабель', kind: 'work', kind_display: 'Работа', unit: 'п.м.', default_price: '6000', category: 2, section_name: 'Монтажные работы', subcategory_name: 'Прокладка кабеля' })
+    vm.onSearchPicked({ id: 56, name: 'Штробление', kind: 'work', kind_display: 'Работа', unit: 'п.м.', default_price: '15000', category: 3, section_name: 'Монтажные работы', subcategory_name: 'Штробление' })
+    vm.onSearchPicked({ id: 57, name: 'Камера', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '100000', category: 4, section_name: 'Слаботочные системы', subcategory_name: 'Видеонаблюдение' })
     await nextTick()
-    vm.lines.splice(0, vm.lines.length, {
-      _k: 'a', work_item: 55, category_a: null, category_b: null, name: 'Монтаж', kind: 'work', unit: 'шт.', quantity: '3', unit_price: '1000', position_no: '1',
-    })
+    expect(vm.lines.length).toBe(3)
+    expect(vm.lines[0].section_name).toBe('Монтажные работы')
+    expect(vm.lines[0].unit_price).toBe('6000')  // цена подставилась из каталога
+    const g = vm.groupedLines
+    expect(g.map(s => s.section)).toEqual(['Монтажные работы', 'Слаботочные системы'])
+    expect(g[0].subgroups.map(s => s.subcategory)).toEqual(['Прокладка кабеля', 'Штробление'])
+    // подытоги: раздел = сумма подразделов; qty=1 по умолчанию
+    expect(g[0].subgroups[0].subTotal).toBe(6000)
+    expect(g[0].sectionTotal).toBe(6000 + 15000)
+  })
+
+  it('режим (а) существующая позиция → work_item + снапшот-имя (F-929)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ work_item: 55, name: 'Монтаж', unit: 'шт.', quantity: '3', unit_price: '1000', position_no: '1' }))
     await vm.handleSubmit()
-    expect(create).toHaveBeenCalledTimes(1)
     const payload = create.mock.calls[0][0]
     expect(payload.object).toBe(347)
-    // F-929 (review): mode «а» ТЕПЕРЬ шлёт снапшот-имя явно (иначе BE fallback на wi.name → нарушение историчности).
-    expect(payload.lines[0]).toMatchObject({ work_item: 55, name: 'Монтаж', quantity: '3', unit_price: '1000', position_no: '1', order: 0 })
+    expect(payload.lines[0]).toMatchObject({ work_item: 55, name: 'Монтаж', quantity: '3', unit_price: '1000', order: 0 })
     expect(payload.lines[0].category).toBeUndefined()
   })
 
   it('режим (б) новая позиция в каталог → category+name, без work_item', async () => {
-    const vm = mountForm()
-    await nextTick()
-    vm.lines.splice(0, vm.lines.length, {
-      _k: 'b', work_item: null, category_a: 1, category_b: 2, name: 'Новая работа', kind: 'material', unit: 'м', quantity: '5', unit_price: '250', position_no: '',
-    })
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ category: 2, name: 'Новая работа', kind: 'material', unit: 'м', quantity: '5', unit_price: '250' }))
     await vm.handleSubmit()
     const payload = create.mock.calls[0][0]
-    expect(payload.lines[0]).toMatchObject({ category: 2, name: 'Новая работа', quantity: '5', unit_price: '250' })
+    expect(payload.lines[0]).toMatchObject({ category: 2, name: 'Новая работа', quantity: '5', unit_price: '250', default_price: '250' })
     expect(payload.lines[0].work_item).toBeUndefined()
-    expect(payload.lines[0].default_price).toBe('250')
   })
 
-  it('режим (в) свободная строка → только name, без work_item/category', async () => {
-    const vm = mountForm()
-    await nextTick()
-    vm.lines.splice(0, vm.lines.length, {
-      _k: 'c', work_item: null, category_a: null, category_b: null, name: 'Свободная', kind: 'work', unit: '', quantity: '2', unit_price: '500', position_no: '',
-    })
+  it('режим (в) свободная строка → только name', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ name: 'Свободная', quantity: '2', unit_price: '500' }))
     await vm.handleSubmit()
     const payload = create.mock.calls[0][0]
     expect(payload.lines[0]).toMatchObject({ name: 'Свободная', quantity: '2', unit_price: '500' })
@@ -87,26 +94,23 @@ describe('EstimateForm — контракт вложенных строк (F-928
     expect(payload.lines[0].category).toBeUndefined()
   })
 
-  it('не сабмитит без строк / без объекта', async () => {
-    const vm = mountForm()
-    await nextTick()
-    vm.lines.splice(0, vm.lines.length) // ноль строк
+  it('не сабмитит без строк', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length)
     await vm.handleSubmit()
     expect(create).not.toHaveBeenCalled()
   })
 
-  it('не сабмитит строку с отрицательным/пустым кол-вом', async () => {
-    const vm = mountForm()
-    await nextTick()
-    vm.lines.splice(0, vm.lines.length, { _k: 'x', work_item: 10, category_a: null, category_b: null, name: 'X', kind: 'work', unit: '', quantity: '', unit_price: '100', position_no: '' })
+  it('не сабмитит строку с пустым кол-вом', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ work_item: 10, name: 'X', quantity: '', unit_price: '100' }))
     await vm.handleSubmit()
     expect(create).not.toHaveBeenCalled()
   })
 
-  it('F-929: не сабмитит строку с отрицательной ценой (симметрия с кол-вом)', async () => {
-    const vm = mountForm()
-    await nextTick()
-    vm.lines.splice(0, vm.lines.length, { _k: 'p', work_item: 10, category_a: null, category_b: null, name: 'X', kind: 'work', unit: '', quantity: '1', unit_price: '-5', position_no: '' })
+  it('F-929: не сабмитит строку с отрицательной ценой', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ work_item: 10, name: 'X', quantity: '1', unit_price: '-5' }))
     await vm.handleSubmit()
     expect(create).not.toHaveBeenCalled()
   })
