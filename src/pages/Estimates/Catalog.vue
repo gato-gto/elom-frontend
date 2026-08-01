@@ -81,7 +81,7 @@
 
     <!-- Модалка раздела/подраздела -->
     <Modal v-model="catModal" :title="catModalTitle">
-      <div class="p-4 space-y-3">
+      <div class="space-y-3">
         <div v-if="catFormMode === 'child'" class="text-sm bg-base-200 rounded-lg px-3 py-2">Раздел: <span class="font-medium">{{ catForm.parentName }}</span></div>
         <div class="form-control"><label class="label"><span class="label-text">Название</span><span class="label-text-alt text-error">*</span></label>
           <input v-model="catForm.name" type="text" maxlength="128" class="input input-bordered w-full" :class="{ 'input-error': catErr.name }" @keydown.enter.prevent="saveCat" />
@@ -93,7 +93,7 @@
 
     <!-- Модалка позиции — шире (2xl): длинные пути подраздела «Раздел → Подраздел» читаемы (owner). -->
     <Modal v-model="itemModal" size="2xl" :title="editingItem?.id ? 'Изменить позицию' : 'Новая позиция'">
-      <div class="p-4 space-y-3">
+      <div class="space-y-3">
         <div class="form-control"><label class="label"><span class="label-text">Подраздел</span><span class="label-text-alt text-error">*</span></label>
           <select v-model.number="itemForm.category" class="select select-bordered w-full" :class="{ 'select-error': itemErr.category }" :title="selectedSubLabel">
             <option :value="null" disabled>— выберите подраздел —</option>

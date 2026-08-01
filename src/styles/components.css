@@ -486,6 +486,8 @@
     width: 100%;
     max-width: none;
     margin: 0.5rem;
+    /* F-942 (owner): меньше отступов от стен на мобиле — было 1.5rem (DaisyUI) → 0.75rem, контент шире. */
+    padding: 0.75rem;
     /* APPLE-3 (F-514): dvh с фолбэком vh — модалка не подрезается под адресной строкой iOS. */
     max-height: calc(100vh - 1rem);
     max-height: calc(100dvh - 1rem);
