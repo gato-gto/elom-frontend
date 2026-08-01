@@ -16,7 +16,8 @@
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Добавить раздел
         </button>
       </div>
-      <div class="overflow-x-auto">
+      <!-- Desktop-таблица -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="modern-table w-full">
           <thead><tr><th>Название</th><th>Родитель (A)</th><th class="text-right">Подразделов</th><th class="text-right">Позиций</th><th class="w-24"></th></tr></thead>
           <tbody>
@@ -34,6 +35,20 @@
             <tr v-if="catStore.items.length === 0"><td colspan="5" class="text-center text-muted py-8">Разделов нет</td></tr>
           </tbody>
         </table>
+      </div>
+      <!-- F-930: Mobile-карточки (было widetable на мобиле — флаг A cross-device) -->
+      <div class="md:hidden space-y-2">
+        <div v-for="c in catStore.items" :key="c.id" class="bg-base-200 rounded-lg p-3">
+          <div class="flex justify-between items-start">
+            <div class="font-medium">{{ c.name }}</div>
+            <div class="flex gap-1" v-if="canEditCat || canDeleteCat">
+              <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target" aria-label="Изменить раздел" title="Изменить" @click="openCatForm(c)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+              <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error" aria-label="Удалить раздел" title="Удалить" @click="deleteCat(c)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            </div>
+          </div>
+          <div class="text-sm text-muted mt-1">{{ c.parent_name || '— корневой (A) —' }} · подразделов: {{ c.children_count }} · позиций: {{ c.items_count }}</div>
+        </div>
+        <div v-if="catStore.items.length === 0" class="text-center text-muted py-8">Разделов нет</div>
       </div>
     </div>
 
@@ -54,7 +69,8 @@
           <button class="btn btn-sm btn-primary" @click="openItemForm(null)"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Добавить позицию</button>
         </div>
       </div>
-      <div class="overflow-x-auto">
+      <!-- Desktop-таблица -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="modern-table w-full">
           <thead><tr><th>Название</th><th>Раздел</th><th class="w-28">Тип</th><th class="w-16">Ед.</th><th class="text-right w-28">Цена</th><th class="w-24"></th></tr></thead>
           <tbody>
@@ -73,6 +89,21 @@
             <tr v-if="itemStore.items.length === 0"><td colspan="6" class="text-center text-muted py-8">Позиций нет</td></tr>
           </tbody>
         </table>
+      </div>
+      <!-- F-930: Mobile-карточки позиций -->
+      <div class="md:hidden space-y-2">
+        <div v-for="it in itemStore.items" :key="it.id" class="bg-base-200 rounded-lg p-3">
+          <div class="flex justify-between items-start">
+            <div class="font-medium">{{ it.name }}</div>
+            <div class="flex gap-1" v-if="canEditItem || canDeleteItem">
+              <button v-if="canEditItem" class="btn btn-ghost btn-xs btn-square touch-target" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(it)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+              <button v-if="canDeleteItem" class="btn btn-ghost btn-xs btn-square touch-target text-error" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(it)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            </div>
+          </div>
+          <div class="text-sm text-muted mt-1">{{ it.category_name }} · {{ it.kind_display }}<span v-if="it.unit"> · {{ it.unit }}</span></div>
+          <div v-if="it.default_price" class="text-sm font-mono mt-1">{{ formatNumber(it.default_price) }}</div>
+        </div>
+        <div v-if="itemStore.items.length === 0" class="text-center text-muted py-8">Позиций нет</div>
       </div>
     </div>
 

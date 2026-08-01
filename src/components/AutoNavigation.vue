@@ -299,8 +299,8 @@ const navigationItems = computed((): NavigationItem[] => {
 
 // Business Operations - основные бизнес-операции
 const businessOperations = computed(() => {
-  const items = navigationItems.value.filter(item => 
-    ['purchases', 'objects', 'writeoffs'].includes(item.category || '')
+  const items = navigationItems.value.filter(item =>
+    ['purchases', 'objects', 'writeoffs', 'estimates'].includes(item.category || '')
   )
   
   // ✅ RBAC: Для requester изменяем название "Закупки" на "Заявки"

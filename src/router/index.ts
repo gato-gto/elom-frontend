@@ -527,7 +527,8 @@ const routes = [
       icon: 'book',
       breadcrumb: 'Прайс-каталог',
       description: 'Разделы работ и позиции для смет',
-      category: 'estimates',
+      // F-930: каталог = справочник (группа referenceData нава), рядом с материалами/единицами.
+      category: 'reference_data',
       order: 7,
       permissions: ['work_categories.view', 'work_items.view'],
     },
