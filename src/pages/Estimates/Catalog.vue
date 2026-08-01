@@ -1,124 +1,88 @@
-<!-- Управление прайс-каталогом: разделы работ (A→B) + позиции. RBAC: руководство правит категории
-     (work_categories.*), вводящий добавляет позиции (work_items.create). -->
+<!-- Прайс-каталог (задача #64): ЕДИНОЕ дерево-аккордеон Раздел → Подраздел → Позиции.
+     Заменяет прежние 2 вкладки (Разделы/Позиции): вся иерархия видна и правится в одном месте,
+     с контекстными «+» на каждом уровне. Строгие 3 уровня (F-937: позиции всегда под подразделом).
+     Дерево строится на клиенте из плоских catStore.items + itemStore.items. -->
 <template>
   <div class="list-container">
-    <ListHeader title="Прайс-каталог" subtitle="Разделы работ и позиции (для смет)" icon="book" :show-create="false" :show-stats="false" />
+    <ListHeader title="Прайс-каталог" subtitle="Разделы → подразделы → позиции" icon="book" :show-create="false" :show-stats="false" />
 
-    <div class="tabs tabs-boxed my-2">
-      <a class="tab" :class="{ 'tab-active': tab === 'categories' }" @click="tab = 'categories'">Разделы</a>
-      <a class="tab" :class="{ 'tab-active': tab === 'items' }" @click="tab = 'items'">Позиции</a>
+    <!-- Панель: поиск позиции + добавить раздел -->
+    <div class="flex flex-wrap gap-2 items-center mb-3">
+      <input v-model="search" type="search" placeholder="Поиск позиции…" class="input input-bordered input-sm flex-1 min-w-[180px]" aria-label="Поиск позиции" />
+      <button v-if="canCreateCat" class="btn btn-sm btn-primary" @click="openAddRoot">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        <span class="ml-1">Раздел</span>
+      </button>
     </div>
 
-    <!-- Разделы — иерархия A→B (owner UX: добавить раздел отдельно, у раздела появляется «+ подраздел»).
-         Responsive: одна логика desktop+mobile (убирает widetable). Дерево строится на клиенте из
-         плоского списка catStore.items (parent/children_count/items_count). -->
-    <div v-if="tab === 'categories'">
-      <div class="flex justify-between items-center mb-3">
-        <p class="text-sm text-muted hidden md:block">Раздел (A) → подраздел (B). Позиции цепляются к разделу или подразделу.</p>
-        <button v-if="canCreateCat" class="btn btn-sm btn-primary ml-auto" @click="openAddRoot">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Добавить раздел
-        </button>
-      </div>
+    <LoadingSpinner v-if="loading && !catStore.items.length" size="lg" variant="primary" text="Загрузка каталога…" :overlay="false" />
 
-      <div class="space-y-3">
-        <!-- A-раздел -->
-        <div v-for="a in rootCats" :key="a.id" class="bg-base-100 border border-base-300 rounded-lg overflow-hidden">
-          <div class="flex justify-between items-center gap-2 p-3">
-            <div class="min-w-0">
-              <div class="font-semibold truncate">{{ a.name }}</div>
-              <div class="text-xs text-muted">подразделов: {{ a.children_count }} · позиций: {{ a.items_count }}</div>
-            </div>
-            <div class="flex gap-1 shrink-0">
-              <button v-if="canCreateCat" class="btn btn-ghost btn-xs touch-target text-primary" aria-label="Добавить подраздел" title="Добавить подраздел" @click="openAddChild(a)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg><span class="hidden sm:inline ml-1">Подраздел</span>
+    <div v-else class="space-y-2">
+      <!-- РАЗДЕЛ (A) -->
+      <div v-for="root in visibleTree" :key="root.id" class="card bg-base-100 border border-base-300 overflow-hidden">
+        <div class="flex items-center gap-1 p-2 sm:p-3">
+          <button class="btn btn-ghost btn-xs btn-square touch-target shrink-0" :aria-label="isOpen(root.id) ? 'Свернуть' : 'Развернуть'" @click="toggle(root.id)">
+            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-90': isOpen(root.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button class="flex-1 min-w-0 text-left self-stretch flex flex-col justify-center py-1" @click="toggle(root.id)">
+            <div class="font-semibold truncate">{{ root.name }}</div>
+            <div class="text-xs text-muted">подразделов: {{ root.subs.length }} · позиций: {{ root.posCount }}</div>
+          </button>
+          <button v-if="canCreateCat" class="btn btn-ghost btn-xs touch-target text-primary shrink-0" aria-label="Добавить подраздел" title="Добавить подраздел" @click="openAddChild(root)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg><span class="hidden sm:inline ml-1 text-xs">Подраздел</span>
+          </button>
+          <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target shrink-0" aria-label="Изменить раздел" title="Изменить" @click="openEditCat(root)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+          <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error shrink-0" aria-label="Удалить раздел" :title="delTitle(root)" :disabled="root.children_count > 0 || root.items_count > 0" @click="deleteCat(root)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+        </div>
+
+        <!-- ПОДРАЗДЕЛЫ (B) -->
+        <div v-if="isOpen(root.id)" class="border-t border-base-200">
+          <div v-for="sub in root.subs" :key="sub.id" class="border-b border-base-200 last:border-b-0">
+            <div class="flex items-center gap-1 py-1.5 px-2 sm:px-3 pl-4 sm:pl-8 bg-base-200/40">
+              <button class="btn btn-ghost btn-xs btn-square touch-target shrink-0" :aria-label="isOpen(sub.id) ? 'Свернуть' : 'Развернуть'" @click="toggle(sub.id)">
+                <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-90': isOpen(sub.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
               </button>
-              <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target" aria-label="Изменить раздел" title="Изменить" @click="openEditCat(a)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-              <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error" aria-label="Удалить раздел" :title="delTitle(a)" :disabled="a.children_count > 0 || a.items_count > 0" @click="deleteCat(a)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+              <button class="flex-1 min-w-0 text-left self-stretch flex items-center py-1" @click="toggle(sub.id)">
+                <span class="text-sm font-medium">{{ sub.name }}</span> <span class="text-xs text-muted">({{ sub.allCount }})</span>
+              </button>
+              <button v-if="canAddItem" class="btn btn-ghost btn-xs touch-target text-primary shrink-0" aria-label="Добавить позицию" title="Добавить позицию" @click="openItemForm(null, sub.id)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg><span class="hidden sm:inline ml-1 text-xs">Позиция</span>
+              </button>
+              <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target shrink-0" aria-label="Изменить подраздел" title="Изменить" @click="openEditCat(sub)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+              <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error shrink-0" aria-label="Удалить подраздел" :title="delTitle(sub)" :disabled="sub.items_count > 0" @click="deleteCat(sub)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+            </div>
+
+            <!-- ПОЗИЦИИ -->
+            <div v-if="isOpen(sub.id)">
+              <div v-for="p in sub.positions" :key="p.id" class="flex items-center gap-2 py-1.5 px-2 sm:px-3 pl-6 sm:pl-12 text-sm border-t border-base-200/60">
+                <div class="flex-1 min-w-0">
+                  <div class="truncate">{{ p.name }}</div>
+                  <!-- моб: мета одной строкой под именем (имя получает всю ширину) -->
+                  <div class="text-xs text-muted sm:hidden mt-0.5">{{ p.kind_display }} · {{ p.unit || '—' }} · <span class="font-mono">{{ p.default_price ? formatNumber(p.default_price) : 'НЗ' }}</span></div>
+                </div>
+                <!-- desktop: колонки (контейнер hidden sm:flex — надёжно прячет на мобиле, без CSS-конфликта .badge) -->
+                <div class="hidden sm:flex items-center gap-2 shrink-0">
+                  <span class="badge badge-ghost badge-sm">{{ p.kind_display }}</span>
+                  <span class="text-xs text-muted w-12 text-right">{{ p.unit || '—' }}</span>
+                  <span class="font-mono text-xs w-24 text-right">{{ p.default_price ? formatNumber(p.default_price) : 'НЗ' }}</span>
+                </div>
+                <button v-if="canEditItem" class="btn btn-ghost btn-xs btn-square touch-target shrink-0" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(p, sub.id)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                <button v-if="canDeleteItem" class="btn btn-ghost btn-xs btn-square touch-target text-error shrink-0" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(p)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+              </div>
+              <div v-if="!sub.positions.length" class="py-2 px-2 pl-6 sm:pl-12 text-xs text-muted">{{ search ? '—' : 'Позиций нет' }}</div>
             </div>
           </div>
-          <!-- B-подразделы (с отступом, без кнопки +подраздел → 3-й уровень невозможен из UI) -->
-          <div v-if="childrenOf(a.id).length" class="border-t border-base-200 bg-base-200/40 px-3 py-1">
-            <div v-for="b in childrenOf(a.id)" :key="b.id" class="flex justify-between items-center gap-2 py-1.5 border-l-2 border-base-300 pl-3">
-              <div class="min-w-0">
-                <div class="text-sm truncate">{{ b.name }}</div>
-                <div class="text-xs text-muted">позиций: {{ b.items_count }}</div>
-              </div>
-              <div class="flex gap-1 shrink-0">
-                <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target" aria-label="Изменить подраздел" title="Изменить" @click="openEditCat(b)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error" aria-label="Удалить подраздел" :title="delTitle(b)" :disabled="b.items_count > 0" @click="deleteCat(b)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-              </div>
-            </div>
-          </div>
+          <div v-if="!root.subs.length" class="py-2 px-3 pl-4 sm:pl-8 text-xs text-muted">{{ search ? '—' : 'Подразделов нет' }}</div>
         </div>
-        <div v-if="rootCats.length === 0" class="text-center text-muted py-8">Разделов нет — добавьте первый</div>
       </div>
+
+      <div v-if="!visibleTree.length" class="text-center text-muted py-10">{{ search ? 'Ничего не найдено' : 'Каталог пуст — добавьте раздел' }}</div>
     </div>
 
-    <!-- Позиции -->
-    <div v-else>
-      <!-- F-934 (дизайн-консистентность P1): фильтры в FilterPanel (как все списки/EstimateList) — единый бокс+сброс. -->
-      <FilterPanel :columns="2" :loading="itemStore.loading" @reset="resetItemFilters">
-        <div class="form-control"><label class="label"><span class="label-text">Раздел A</span></label>
-          <select v-model.number="filterA" class="select select-bordered select-sm" @change="onFilterA">
-            <option :value="null">— все —</option><option v-for="c in roots" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-        </div>
-        <div class="form-control"><label class="label"><span class="label-text">Подраздел B</span></label>
-          <select v-model.number="filterB" class="select select-bordered select-sm" :disabled="!filterA" @change="loadItems">
-            <option :value="null">— все —</option><option v-for="c in (childrenByParent[filterA || 0] || [])" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-        </div>
-        <template #actions>
-          <button v-if="canAddItem" class="btn btn-sm btn-primary" @click="openItemForm(null)"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Добавить позицию</button>
-        </template>
-      </FilterPanel>
-      <!-- Desktop-таблица -->
-      <div class="hidden md:block overflow-x-auto">
-        <table class="modern-table w-full">
-          <thead><tr><th>Название</th><th>Раздел</th><th class="w-28">Тип</th><th class="w-16">Ед.</th><th class="text-right w-28">Цена</th><th class="w-24"></th></tr></thead>
-          <tbody>
-            <tr v-for="it in itemStore.items" :key="it.id">
-              <td class="font-medium">{{ it.name }}</td>
-              <td>{{ it.category_name }}</td>
-              <td><span class="badge badge-ghost badge-sm">{{ it.kind_display }}</span></td>
-              <td>{{ it.unit || '—' }}</td>
-              <td class="text-right font-mono">{{ it.default_price ? formatNumber(it.default_price) : '—' }}</td>
-              <td class="text-right" v-if="canEditItem || canDeleteItem">
-                <button v-if="canEditItem" class="btn btn-ghost btn-xs btn-square touch-target" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(it)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                <button v-if="canDeleteItem" class="btn btn-ghost btn-xs btn-square touch-target text-error" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(it)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-              </td>
-              <td v-else></td>
-            </tr>
-            <tr v-if="itemStore.items.length === 0"><td colspan="6" class="text-center text-muted py-8">Позиций нет</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- F-934 (дизайн-консистентность P1): моб-карточки позиций на MobileCard (единые тень/бордер/hover/тач-цели). -->
-      <div class="md:hidden space-y-2">
-        <MobileCard
-          v-for="it in itemStore.items" :key="it.id"
-          :title="it.name" :badge="it.kind_display" badge-class="badge-ghost"
-          :actions="itemCardActions" @action="(k) => handleItemCardAction(k, it)"
-        >
-          <template #content>
-            <div class="text-sm space-y-1">
-              <div><span class="text-muted">Раздел:</span> <span class="font-medium ml-1">{{ it.category_name }}</span></div>
-              <div v-if="it.unit"><span class="text-muted">Ед.:</span> <span class="ml-1">{{ it.unit }}</span></div>
-              <div v-if="it.default_price"><span class="text-muted">Цена:</span> <span class="font-mono ml-1">{{ formatNumber(it.default_price) }}</span></div>
-            </div>
-          </template>
-        </MobileCard>
-        <div v-if="itemStore.items.length === 0" class="text-center text-muted py-8">Позиций нет</div>
-      </div>
-    </div>
-
-    <!-- Модалка раздела — 3 режима (root/child/edit), БЕЗ parent-селекта (родитель из контекста). -->
+    <!-- Модалка раздела/подраздела -->
     <Modal v-model="catModal" :title="catModalTitle">
       <div class="p-4 space-y-3">
-        <!-- Контекст для подраздела: под каким разделом (read-only, не селект). -->
-        <div v-if="catFormMode === 'child'" class="text-sm bg-base-200 rounded-lg px-3 py-2">
-          Раздел: <span class="font-medium">{{ catForm.parentName }}</span>
-        </div>
+        <div v-if="catFormMode === 'child'" class="text-sm bg-base-200 rounded-lg px-3 py-2">Раздел: <span class="font-medium">{{ catForm.parentName }}</span></div>
         <div class="form-control"><label class="label"><span class="label-text">Название</span><span class="label-text-alt text-error">*</span></label>
           <input v-model="catForm.name" type="text" maxlength="128" class="input input-bordered" :class="{ 'input-error': catErr.name }" @keydown.enter.prevent="saveCat" />
           <label v-if="catErr.name" class="label"><span class="label-text-alt text-error">{{ catErr.name }}</span></label>
@@ -130,10 +94,10 @@
     <!-- Модалка позиции -->
     <Modal v-model="itemModal" :title="editingItem?.id ? 'Изменить позицию' : 'Новая позиция'">
       <div class="p-4 space-y-3">
-        <div class="form-control"><label class="label"><span class="label-text">Раздел (подраздел B)</span><span class="label-text-alt text-error">*</span></label>
+        <div class="form-control"><label class="label"><span class="label-text">Подраздел</span><span class="label-text-alt text-error">*</span></label>
           <select v-model.number="itemForm.category" class="select select-bordered" :class="{ 'select-error': itemErr.category }">
-            <option :value="null" disabled>— выберите раздел —</option>
-            <option v-for="c in allCategories" :key="c.id" :value="c.id">{{ c.parent_name ? c.parent_name + ' → ' : '' }}{{ c.name }}</option>
+            <option :value="null" disabled>— выберите подраздел —</option>
+            <option v-for="o in subcategoryOptions" :key="o.id" :value="o.id">{{ o.label }}</option>
           </select>
           <label v-if="itemErr.category" class="label"><span class="label-text-alt text-error">{{ itemErr.category }}</span></label>
         </div>
@@ -154,14 +118,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useWorkCategoriesStore, fetchRootCategoriesSafe, fetchChildCategories } from '@/stores/workCategories'
+import { useWorkCategoriesStore } from '@/stores/workCategories'
 import { useWorkItemsStore } from '@/stores/workItems'
 import { useUiStore } from '@/stores/ui'
 import { usePermissions } from '@/composables/usePermissions'
 import ListHeader from '@/components/ListHeader.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
-import FilterPanel from '@/components/FilterPanel.vue'
-import MobileCard from '@/components/MobileCard.vue'
 import { formatNumber } from '@/utils/formatters'
 import type { WorkCategory, WorkItem, WorkItemKind } from '@/api/types/estimates'
 
@@ -175,8 +138,8 @@ const KIND_OPTIONS: { value: WorkItemKind; label: string }[] = [
   { value: 'equipment', label: 'Оборудование' }, { value: 'coefficient', label: 'Коэффициент' },
 ]
 
-// F-912/913: каждый гейт = ТОЧНО право BE DictPermission (POST→create, PATCH→edit, DELETE→delete).
-// Категории (work_categories) и позиции (work_items) — РАЗНЫЕ ресурсы (не путать гейты).
+// F-912/913: каждый гейт = ТОЧНО право BE DictPermission. Категории (work_categories) и позиции
+// (work_items) — РАЗНЫЕ ресурсы.
 const canCreateCat = computed(() => can('work_categories', 'create'))
 const canEditCat = computed(() => can('work_categories', 'edit'))
 const canDeleteCat = computed(() => can('work_categories', 'delete'))
@@ -184,15 +147,53 @@ const canAddItem = computed(() => can('work_items', 'create'))
 const canEditItem = computed(() => can('work_items', 'edit'))
 const canDeleteItem = computed(() => can('work_items', 'delete'))
 
-const tab = ref<'categories' | 'items'>('categories')
-const roots = ref<WorkCategory[]>([])
-const childrenByParent = reactive<Record<number, WorkCategory[]>>({})
-const allCategories = computed(() => catStore.items)
+const loading = computed(() => catStore.loading || itemStore.loading)
+const search = ref('')
 
-const filterA = ref<number | null>(null)
-const filterB = ref<number | null>(null)
+// ── дерево на клиенте: разделы(parent==null) → подразделы(parent==root) → позиции(itemsByCategory) ──
+const byOrder = (a: { order?: number; name: string }, b: { order?: number; name: string }) =>
+  ((a.order ?? 0) - (b.order ?? 0)) || a.name.localeCompare(b.name)
 
-// ── категории CRUD (дерево A→B, owner UX: добавить раздел отдельно → «+ подраздел» у раздела) ──
+const itemsByCategory = computed<Record<number, WorkItem[]>>(() => {
+  const m: Record<number, WorkItem[]> = {}
+  for (const it of itemStore.items) { (m[it.category] ||= []).push(it) }
+  return m
+})
+
+const visibleTree = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  const roots = catStore.items.filter(c => c.parent == null).slice().sort(byOrder)
+  return roots
+    .map(root => {
+      const subsRaw = catStore.items.filter(c => c.parent === root.id).slice().sort(byOrder)
+      const subs = subsRaw.map(sub => {
+        const all = (itemsByCategory.value[sub.id] || []).slice().sort(byOrder)
+        const positions = q ? all.filter(p => p.name.toLowerCase().includes(q)) : all
+        return { ...sub, positions, allCount: all.length }
+      })
+      const filteredSubs = q ? subs.filter(s => s.positions.length) : subs
+      const posCount = subs.reduce((n, s) => n + s.allCount, 0)
+      return { ...root, subs: filteredSubs, posCount }
+    })
+    .filter(root => (q ? root.subs.length > 0 : true))
+})
+
+// разворот: при активном поиске всё с совпадениями раскрыто; иначе — по клику
+const expanded = reactive(new Set<number>())
+function isOpen(id: number) { return search.value.trim() ? true : expanded.has(id) }
+function toggle(id: number) { if (search.value.trim()) { return } expanded.has(id) ? expanded.delete(id) : expanded.add(id) }
+
+function delTitle(c: WorkCategory) {
+  return (c.children_count > 0 || c.items_count > 0) ? 'Нельзя удалить: есть подразделы или позиции' : 'Удалить'
+}
+
+// подразделы (2-й уровень) для селекта позиции — строго под них цепляем позиции.
+const subcategoryOptions = computed(() =>
+  catStore.items.filter(c => c.parent != null).slice().sort((a, b) =>
+    (a.parent_name || '').localeCompare(b.parent_name || '') || a.name.localeCompare(b.name),
+  ).map(c => ({ id: c.id, label: `${c.parent_name || ''} → ${c.name}` })))
+
+// ── категории CRUD ──
 const catModal = ref(false)
 const catFormMode = ref<'root' | 'child' | 'edit'>('root')
 const editingCat = ref<WorkCategory | null>(null)
@@ -200,32 +201,23 @@ const catForm = reactive<{ name: string; parent: number | null; parentName: stri
 const catErr = reactive<Record<string, string>>({})
 const savingCat = ref(false)
 
-// Дерево строим на клиенте из плоского catStore.items (parent/children_count/items_count уже приходят).
-const rootCats = computed(() => catStore.items.filter(c => c.parent == null))
-function childrenOf(parentId: number) { return catStore.items.filter(c => c.parent === parentId) }
-function delTitle(c: WorkCategory) {
-  return (c.children_count > 0 || c.items_count > 0) ? 'Нельзя удалить: есть подразделы или позиции' : 'Удалить'
-}
 const catModalTitle = computed(() => {
   if (catFormMode.value === 'child') { return 'Новый подраздел' }
   if (catFormMode.value === 'edit') { return editingCat.value?.parent ? 'Изменить подраздел' : 'Изменить раздел' }
   return 'Новый раздел'
 })
-
 function openAddRoot() {
   catFormMode.value = 'root'; editingCat.value = null
-  catForm.name = ''; catForm.parent = null; catForm.parentName = ''
-  catErr.name = ''; catModal.value = true
+  catForm.name = ''; catForm.parent = null; catForm.parentName = ''; catErr.name = ''; catModal.value = true
 }
 function openAddChild(a: WorkCategory) {
   catFormMode.value = 'child'; editingCat.value = null
-  catForm.name = ''; catForm.parent = a.id; catForm.parentName = a.name
-  catErr.name = ''; catModal.value = true
+  catForm.name = ''; catForm.parent = a.id; catForm.parentName = a.name; catErr.name = ''
+  expanded.add(a.id); catModal.value = true
 }
 function openEditCat(c: WorkCategory) {
   catFormMode.value = 'edit'; editingCat.value = c
-  catForm.name = c.name; catForm.parent = c.parent; catForm.parentName = c.parent_name || ''
-  catErr.name = ''; catModal.value = true
+  catForm.name = c.name; catForm.parent = c.parent; catForm.parentName = c.parent_name || ''; catErr.name = ''; catModal.value = true
 }
 async function saveCat() {
   catErr.name = ''
@@ -233,18 +225,16 @@ async function saveCat() {
   savingCat.value = true
   try {
     if (editingCat.value?.id) {
-      // ТОЛЬКО name (parent НЕ шлём) — иначе оживает F-733 re-parent-валидация. Переместить B под другой A
-      // из UI нельзя (нет действия) → 3-й уровень / re-parent структурно исключены.
+      // ТОЛЬКО name (parent НЕ шлём) — иначе оживает F-733 re-parent-валидация.
       await catStore.update(editingCat.value.id, { name: catForm.name.trim() })
     } else {
       await catStore.create({ name: catForm.name.trim(), parent: catForm.parent })
     }
     ui.toast({ type: 'success', text: catFormMode.value === 'child' ? 'Подраздел сохранён' : 'Раздел сохранён' })
     catModal.value = false
-    await reloadCats()
+    await reload()
   } catch (e: any) {
     const d = e?.response?.data
-    // F-733: уникальность (parent,name) → {name:...}; показываем под инпутом.
     if (d?.name) { catErr.name = Array.isArray(d.name) ? d.name[0] : String(d.name) }
     if (!catErr.name) { ui.toast({ type: 'error', text: d?.detail || (Array.isArray(d?.parent) ? d.parent[0] : 'Не удалось сохранить') }) }
   } finally { savingCat.value = false }
@@ -255,7 +245,7 @@ async function deleteCat(c: WorkCategory) {
   try {
     await catStore.remove(c.id)
     ui.toast({ type: 'success', text: `${c.parent ? 'Подраздел' : 'Раздел'} удалён` })
-    await reloadCats()
+    await reload()
   } catch (e: any) {
     ui.toast({ type: 'error', text: e?.response?.data?.detail || 'Нельзя удалить: есть подразделы или позиции' })
   }
@@ -268,32 +258,30 @@ const itemForm = reactive<{ category: number | null; name: string; kind: WorkIte
 const itemErr = reactive<Record<string, string>>({})
 const savingItem = ref(false)
 
-function openItemForm(it: WorkItem | null) {
+// contextCategoryId — подраздел, из-под которого нажали «+ Позиция» (подставляется в форму).
+function openItemForm(it: WorkItem | null, contextCategoryId?: number) {
   editingItem.value = it
-  itemForm.category = it?.category ?? filterB.value ?? null
+  itemForm.category = it?.category ?? contextCategoryId ?? null
   itemForm.name = it?.name || ''
   itemForm.kind = it?.kind || 'work'
   itemForm.unit = it?.unit || ''
   itemForm.default_price = it?.default_price || ''
   itemErr.category = ''; itemErr.name = ''
+  if (contextCategoryId) { expanded.add(contextCategoryId) }
   itemModal.value = true
 }
 async function saveItem() {
   itemErr.category = ''; itemErr.name = ''
-  if (!itemForm.category) { itemErr.category = 'Выберите раздел' }
+  if (!itemForm.category) { itemErr.category = 'Выберите подраздел' }
   if (!itemForm.name.trim()) { itemErr.name = 'Укажите название' }
   if (itemErr.category || itemErr.name) { return }
   savingItem.value = true
   const payload = { category: itemForm.category!, name: itemForm.name.trim(), kind: itemForm.kind, unit: itemForm.unit || '', default_price: itemForm.default_price ? String(itemForm.default_price) : null }
   try {
-    if (editingItem.value?.id) {
-      await itemStore.update(editingItem.value.id, payload)
-    } else {
-      await itemStore.create(payload)
-    }
+    if (editingItem.value?.id) { await itemStore.update(editingItem.value.id, payload) } else { await itemStore.create(payload) }
     ui.toast({ type: 'success', text: 'Позиция сохранена' })
     itemModal.value = false
-    await loadItems()
+    await reload()
   } catch (e: any) {
     const d = e?.response?.data
     if (d?.name) { itemErr.name = Array.isArray(d.name) ? d.name[0] : String(d.name) }
@@ -306,45 +294,18 @@ async function deleteItem(it: WorkItem) {
   try {
     await itemStore.remove(it.id)
     ui.toast({ type: 'success', text: 'Позиция удалена' })
-    await loadItems()
+    await reload()
   } catch (e: any) {
     ui.toast({ type: 'error', text: e?.response?.data?.detail || 'Не удалось удалить позицию' })
   }
 }
 
-// F-934: действия моб-карточки позиции (MobileCard эмитит key) + сброс фильтров (FilterPanel @reset).
-const itemCardActions = computed(() => [
-  ...(canEditItem.value ? [{ key: 'edit', label: 'Изменить' }] : []),
-  ...(canDeleteItem.value ? [{ key: 'delete', label: 'Удалить', class: 'btn-error' }] : []),
-])
-function handleItemCardAction(key: string, it: WorkItem) {
-  if (key === 'edit') { openItemForm(it) } else if (key === 'delete') { deleteItem(it) }
+// ── загрузка: все категории + все позиции разом (дерево группируем на клиенте) ──
+async function reload() {
+  await Promise.all([
+    catStore.fetchList({ page_size: 1000 }).catch(() => {}),
+    itemStore.fetchList({ page: 1, page_size: 1000 }).catch(() => {}),
+  ])
 }
-function resetItemFilters() {
-  filterA.value = null
-  filterB.value = null
-  loadItems()
-}
-
-// ── загрузка ──
-async function reloadCats() {
-  await catStore.fetchList({ page_size: 1000 }).catch(() => {})
-  roots.value = await fetchRootCategoriesSafe()
-}
-async function onFilterA() {
-  filterB.value = null
-  if (filterA.value && !childrenByParent[filterA.value]) {
-    try { childrenByParent[filterA.value] = await fetchChildCategories(filterA.value) } catch { childrenByParent[filterA.value] = [] }
-  }
-  await loadItems()
-}
-async function loadItems() {
-  const category = filterB.value || filterA.value || undefined
-  await itemStore.fetchList({ page: 1, page_size: 1000, category }).catch(() => {})
-}
-
-onMounted(async () => {
-  await reloadCats()
-  await loadItems()
-})
+onMounted(reload)
 </script>
