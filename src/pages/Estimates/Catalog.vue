@@ -21,35 +21,35 @@
       <!-- РАЗДЕЛ (A) -->
       <div v-for="root in visibleTree" :key="root.id" class="card bg-base-100 border border-base-300 overflow-hidden">
         <div class="flex items-center gap-1 p-2 sm:p-3">
-          <button class="btn btn-ghost btn-xs btn-square touch-target shrink-0" :aria-label="isOpen(root.id) ? 'Свернуть' : 'Развернуть'" @click="toggle(root.id)">
+          <button class="btn btn-ghost btn-square row-action-btn shrink-0" :aria-label="isOpen(root.id) ? 'Свернуть' : 'Развернуть'" @click="toggle(root.id)">
             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-90': isOpen(root.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('chevron_right')" /></svg>
           </button>
           <button class="flex-1 min-w-0 text-left self-stretch flex flex-col justify-center py-1" @click="toggle(root.id)">
             <div class="font-semibold truncate">{{ root.name }}</div>
             <div class="text-xs text-muted">подразделов: {{ root.subs.length }} · позиций: {{ root.posCount }}</div>
           </button>
-          <button v-if="canCreateCat" class="btn btn-ghost btn-xs touch-target text-primary shrink-0" aria-label="Добавить подраздел" title="Добавить подраздел" @click="openAddChild(root)">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg><span class="hidden sm:inline ml-1 text-xs">Подраздел</span>
+          <button v-if="canCreateCat" class="btn btn-ghost btn-square row-action-btn text-primary shrink-0" aria-label="Добавить подраздел" title="Добавить подраздел" @click="openAddChild(root)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg>
           </button>
-          <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target shrink-0" aria-label="Изменить раздел" title="Изменить" @click="openEditCat(root)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
-          <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error shrink-0" aria-label="Удалить раздел" :title="delTitle(root)" :disabled="root.children_count > 0 || root.items_count > 0" @click="deleteCat(root)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
+          <button v-if="canEditCat" class="btn btn-ghost btn-square row-action-btn shrink-0" aria-label="Изменить раздел" title="Изменить" @click="openEditCat(root)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
+          <button v-if="canDeleteCat" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить раздел" :title="delTitle(root)" :disabled="root.children_count > 0 || root.items_count > 0" @click="deleteCat(root)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
         </div>
 
         <!-- ПОДРАЗДЕЛЫ (B) -->
         <div v-if="isOpen(root.id)" class="border-t border-base-200">
           <div v-for="sub in root.subs" :key="sub.id" class="border-b border-base-200 last:border-b-0">
             <div class="flex items-center gap-1 py-1.5 px-2 sm:px-3 pl-4 sm:pl-8 bg-base-200/40">
-              <button class="btn btn-ghost btn-xs btn-square touch-target shrink-0" :aria-label="isOpen(sub.id) ? 'Свернуть' : 'Развернуть'" @click="toggle(sub.id)">
+              <button class="btn btn-ghost btn-square row-action-btn shrink-0" :aria-label="isOpen(sub.id) ? 'Свернуть' : 'Развернуть'" @click="toggle(sub.id)">
                 <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-90': isOpen(sub.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('chevron_right')" /></svg>
               </button>
               <button class="flex-1 min-w-0 text-left self-stretch flex items-center py-1" @click="toggle(sub.id)">
                 <span class="text-sm font-medium">{{ sub.name }}</span> <span class="text-xs text-muted">({{ sub.allCount }})</span>
               </button>
-              <button v-if="canAddItem" class="btn btn-ghost btn-xs touch-target text-primary shrink-0" aria-label="Добавить позицию" title="Добавить позицию" @click="openItemForm(null, sub.id)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg><span class="hidden sm:inline ml-1 text-xs">Позиция</span>
+              <button v-if="canAddItem" class="btn btn-ghost btn-square row-action-btn text-primary shrink-0" aria-label="Добавить позицию" title="Добавить позицию" @click="openItemForm(null, sub.id)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg>
               </button>
-              <button v-if="canEditCat" class="btn btn-ghost btn-xs btn-square touch-target shrink-0" aria-label="Изменить подраздел" title="Изменить" @click="openEditCat(sub)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
-              <button v-if="canDeleteCat" class="btn btn-ghost btn-xs btn-square touch-target text-error shrink-0" aria-label="Удалить подраздел" :title="delTitle(sub)" :disabled="sub.items_count > 0" @click="deleteCat(sub)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
+              <button v-if="canEditCat" class="btn btn-ghost btn-square row-action-btn shrink-0" aria-label="Изменить подраздел" title="Изменить" @click="openEditCat(sub)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
+              <button v-if="canDeleteCat" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить подраздел" :title="delTitle(sub)" :disabled="sub.items_count > 0" @click="deleteCat(sub)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
             </div>
 
             <!-- ПОЗИЦИИ -->
@@ -66,8 +66,8 @@
                   <span class="text-xs text-muted w-12 text-right">{{ p.unit || '—' }}</span>
                   <span class="font-mono text-xs w-24 text-right">{{ p.default_price ? formatNumber(p.default_price) : 'НЗ' }}</span>
                 </div>
-                <button v-if="canEditItem" class="btn btn-ghost btn-xs btn-square touch-target shrink-0" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(p, sub.id)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
-                <button v-if="canDeleteItem" class="btn btn-ghost btn-xs btn-square touch-target text-error shrink-0" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(p)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
+                <button v-if="canEditItem" class="btn btn-ghost btn-square row-action-btn shrink-0" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(p, sub.id)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
+                <button v-if="canDeleteItem" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(p)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
               </div>
               <div v-if="!sub.positions.length" class="py-2 px-2 pl-6 sm:pl-12 text-xs text-muted">{{ search ? '—' : 'Позиций нет' }}</div>
             </div>
