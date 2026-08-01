@@ -83,5 +83,10 @@ function handleAction(action: string, item: { id: number; title?: string }) {
 
 onMounted(() => {
   if (objectsStore.items.length === 0) { objectsStore.fetchList({ page_size: 1000 }).catch(() => {}) }
+  // F-932 (регресс F-931, флаг A): GenericList САМ не фетчит на mount (его useUrlFilters init —
+  // triggerFetch=false, «список грузит страница»). Все списки зовут fetchList в onMounted; при рефакторе
+  // на GenericList я это потерял → холодный /estimates пуст даже при наличии смет (замаскировано 0 смет
+  // на проде). Возвращаем. Object-фильтр из URL уже применён useUrlFilters синхронно (setup) ДО сюда.
+  estimatesStore.fetchList().catch(() => {})
 })
 </script>
