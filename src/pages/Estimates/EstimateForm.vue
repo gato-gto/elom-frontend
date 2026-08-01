@@ -142,7 +142,13 @@
             <div class="col-span-2 text-right text-sm">Сумма: <span class="font-mono font-semibold">{{ lineAmountDisplay(line) }}</span></div>
           </div>
         </div>
-        <div v-if="lines.length" class="text-right font-semibold">Итого: <span class="font-mono">{{ formatNumber(clientTotal) }}</span></div>
+        <!-- F-935 (дизайн-консистентность P2.11): моб-итог плоским текстом → карточка-акцент (как сводка EstimateInfo). -->
+        <div v-if="lines.length" class="card bg-base-100 border border-base-300">
+          <div class="card-body flex-row justify-between items-center py-3 px-4">
+            <span class="font-semibold">Итого</span>
+            <span class="font-mono font-semibold text-lg text-success">{{ formatNumber(clientTotal) }}</span>
+          </div>
+        </div>
       </div>
 
       <button type="button" class="btn btn-sm btn-primary w-full mt-2" @click="addLine">
