@@ -25,32 +25,33 @@
         </div>
       </div>
 
-      <!-- Desktop -->
-      <div class="hidden md:block overflow-x-auto">
-        <table class="modern-table w-full">
-          <thead><tr><th class="w-12">№</th><th>Позиция</th><th class="w-28">Тип</th><th class="w-24 text-right">Кол-во</th><th class="w-16">Ед.</th><th class="w-28 text-right">Цена</th><th class="w-28 text-right">Сумма</th></tr></thead>
-          <tbody>
-            <tr v-for="ln in estimate.lines" :key="ln.id">
-              <td>{{ ln.position_no || '—' }}</td>
-              <td class="font-medium break-words">{{ ln.name }}</td>
-              <td><span class="badge badge-ghost badge-sm">{{ ln.kind_display }}</span></td>
-              <td class="text-right font-mono">{{ formatNumberClean(ln.quantity) }}</td>
-              <td>{{ ln.unit || '—' }}</td>
-              <td class="text-right font-mono">{{ formatNumber(ln.unit_price) }}</td>
-              <td class="text-right font-mono">{{ ln.amount === null ? '×' : formatNumber(ln.amount) }}</td>
-            </tr>
-          </tbody>
-          <tfoot><tr><th colspan="6" class="text-right">Итого (без коэффициентов)</th><th class="text-right font-mono">{{ formatNumber(estimate.total) }}</th></tr></tfoot>
-        </table>
+      <!-- #65: группировка Раздел → Подраздел с подытогами обоих уровней (как форма/отчёт цен). Единый вид desktop+mobile. -->
+      <div v-for="g in grouped" :key="g.section" class="card bg-base-100 border border-base-300 overflow-hidden">
+        <div class="card-body p-3 gap-2">
+          <div class="font-semibold text-primary">{{ g.section }}</div>
+          <div v-for="sg in g.subgroups" :key="sg.subcategory" class="pl-2 sm:pl-3 border-l-2 border-base-200 space-y-1">
+            <div v-if="sg.subcategory && sg.subcategory !== '—'" class="text-sm font-medium text-muted">{{ sg.subcategory }}</div>
+            <div v-for="ln in sg.lines" :key="ln.id" class="bg-base-200/40 rounded-lg p-2">
+              <div class="flex justify-between gap-2">
+                <span class="flex-1 min-w-0 text-sm break-words">
+                  {{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}
+                  <span v-if="ln.kind === 'coefficient'" class="badge badge-ghost badge-sm ml-1">коэфф.</span>
+                </span>
+                <span class="font-mono font-semibold shrink-0">{{ ln.amount === null ? '×' : formatNumber(ln.amount) }}</span>
+              </div>
+              <div class="text-xs text-muted mt-0.5">{{ ln.kind_display }} · {{ formatNumberClean(ln.quantity) }} {{ ln.unit }} × {{ formatNumber(ln.unit_price) }}</div>
+            </div>
+            <div class="text-right text-xs text-muted pr-1">Подытог «{{ sg.subcategory || '—' }}»: <span class="font-mono">{{ formatNumber(sg.subTotal) }}</span></div>
+          </div>
+          <div class="text-right text-sm font-medium border-t border-base-200 pt-1.5">Итого «{{ g.section }}»: <span class="font-mono text-success">{{ formatNumber(g.sectionTotal) }}</span></div>
+        </div>
       </div>
 
-      <!-- Mobile -->
-      <div class="md:hidden space-y-2">
-        <div v-for="ln in estimate.lines" :key="ln.id" class="bg-base-200 rounded-lg p-3">
-          <div class="flex justify-between gap-2"><span class="font-medium min-w-0 break-words">{{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}</span><span class="font-mono font-semibold shrink-0">{{ ln.amount === null ? '×' : formatNumber(ln.amount) }}</span></div>
-          <div class="text-xs text-muted mt-1">{{ ln.kind_display }} · {{ formatNumberClean(ln.quantity) }} {{ ln.unit }} × {{ formatNumber(ln.unit_price) }}</div>
+      <div class="card bg-base-100 border border-base-300">
+        <div class="card-body flex-row justify-between items-center py-3 px-4">
+          <span class="font-semibold text-lg">ИТОГО <span class="text-xs text-muted font-normal">(без коэффициентов)</span></span>
+          <span class="font-mono font-semibold text-xl text-success">{{ formatNumber(estimate.total) }}</span>
         </div>
-        <div class="text-right font-semibold pt-2">Итого: <span class="font-mono">{{ formatNumber(estimate.total) }}</span></div>
       </div>
 
       <div class="pt-2"><button class="btn btn-ghost btn-sm" @click="goBack">← К списку</button></div>
@@ -78,7 +79,7 @@ import ListHeader from '@/components/ListHeader.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
 import { formatNumber, formatNumberClean, formatDate, pluralizeRu } from '@/utils/formatters'
-import type { Estimate } from '@/api/types/estimates'
+import type { Estimate, EstimateLine } from '@/api/types/estimates'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,6 +96,27 @@ const showDelete = ref(false)
 // F-912/913: гейт = ТОЧНО право BE (PATCH→edit, DELETE→delete; scope own/all чекает BE на объекте).
 const canEdit = computed(() => can('estimates', 'edit'))
 const canDelete = computed(() => can('estimates', 'delete'))
+
+// #65: группировка строк Раздел → Подраздел (по снапшот-пути) с подытогами обоих уровней.
+const grouped = computed(() => {
+  const est = estimate.value
+  const amt = (ln: EstimateLine) => (ln.amount === null ? 0 : ln.amount)
+  const sections = new Map<string, Map<string, EstimateLine[]>>()
+  for (const ln of est?.lines || []) {
+    const sec = ln.section_name || 'Прочее'
+    const sub = ln.subcategory_name || '—'
+    if (!sections.has(sec)) { sections.set(sec, new Map()) }
+    const subs = sections.get(sec)!
+    if (!subs.has(sub)) { subs.set(sub, []) }
+    subs.get(sub)!.push(ln)
+  }
+  return [...sections.entries()].map(([section, subs]) => {
+    const subgroups = [...subs.entries()].map(([subcategory, lines]) => ({
+      subcategory, lines, subTotal: lines.reduce((s, ln) => s + amt(ln), 0),
+    }))
+    return { section, subgroups, sectionTotal: subgroups.reduce((s, sg) => s + sg.subTotal, 0) }
+  })
+})
 
 function editEstimate() { router.push(`/estimates/${id.value}/edit`) }
 function goBack() { router.push(estimate.value?.object ? `/estimates?object=${estimate.value.object}` : '/estimates') }
