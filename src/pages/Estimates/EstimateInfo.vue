@@ -20,7 +20,7 @@
       <div class="flex justify-between items-center">
         <h2 class="text-lg font-semibold">Позиции <span class="text-sm text-muted">({{ estimate.lines.length }} {{ pluralizeRu(estimate.lines.length, ['строка', 'строки', 'строк']) }})</span></h2>
         <div class="flex gap-2">
-          <button class="btn btn-sm btn-ghost" :disabled="exporting" @click="exportEstimate" title="Скачать xlsx">{{ exporting ? '…' : 'Экспорт' }}</button>
+          <button v-if="canExport" class="btn btn-sm btn-ghost" :disabled="exporting" @click="exportEstimate" title="Скачать xlsx">{{ exporting ? '…' : 'Экспорт' }}</button>
           <button v-if="canEdit" class="btn btn-sm btn-primary" @click="editEstimate">Редактировать</button>
           <button v-if="canDelete" class="btn btn-sm btn-ghost text-error" :disabled="deleting" @click="showDelete = true">Удалить</button>
         </div>
@@ -113,6 +113,9 @@ async function exportEstimate() {
 // F-912/913: гейт = ТОЧНО право BE (PATCH→edit, DELETE→delete; scope own/all чекает BE на объекте).
 const canEdit = computed(() => can('estimates', 'edit'))
 const canDelete = computed(() => can('estimates', 'delete'))
+// F-738 (A, BE): экспорт = выделенное право estimates.export (руководство) → прячем кнопку без него,
+// иначе viewer/brigadier ловил бы 403 по клику.
+const canExport = computed(() => can('estimates', 'export'))
 
 // #65: группировка строк Раздел → Подраздел (по снапшот-пути) с подытогами обоих уровней.
 const grouped = computed(() => {
