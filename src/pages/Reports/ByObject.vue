@@ -281,7 +281,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     if (filters.value.date_to) { eq.date_to = filters.value.date_to }
     if (filters.value.object && String(filters.value.object) !== '') { eq.object = [Number(filters.value.object)] }
     if (filters.value.responsible && String(filters.value.responsible) !== '') { eq.responsible = Number(filters.value.responsible) }
-    ;(eq as any).page_size = 1000
+    (eq as Record<string, unknown>).page_size = 1000
     const { data: full } = await api.get<ObjectReportResponse>(endpoints.reports.byObject + buildQuery(eq))
     const data = full.results || []
     const filename = `objects_report_${new Date().toISOString().split('T')[0]}`

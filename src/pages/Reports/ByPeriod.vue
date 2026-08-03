@@ -283,7 +283,7 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     if (dateFrom.value) { eq.date_from = dateFrom.value }
     if (dateTo.value) { eq.date_to = dateTo.value }
     if (period.value) { eq.period = period.value }
-    ;(eq as any).page_size = 1000
+    (eq as Record<string, unknown>).page_size = 1000
     const { data: full } = await api.get<PeriodReportResponse>(endpoints.reports.byPeriod + buildQuery(eq))
     const data = full.results || []
     const filename = `periods_report_${new Date().toISOString().split('T')[0]}`
