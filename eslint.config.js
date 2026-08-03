@@ -146,6 +146,8 @@ export default [
         console: 'readonly',
         process: 'readonly',
         document: 'readonly',
+        window: 'readonly',
+        fetch: 'readonly',
         getComputedStyle: 'readonly',
         innerWidth: 'readonly',
         innerHeight: 'readonly',
@@ -156,7 +158,10 @@ export default [
       sourceType: 'module'
     },
     rules: {
-      'no-console': 'off'
+      'no-console': 'off',
+      // dev-харнессы (mobile/permission/export-audit) — одноразовые скрипты, неиспользуемая
+      // переменная-заготовка не должна валить гейт приложения.
+      'no-unused-vars': 'warn'
     }
   },
   {

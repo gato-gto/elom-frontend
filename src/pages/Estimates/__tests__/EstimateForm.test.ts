@@ -79,6 +79,20 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(vm.groupedLines[0].subgroups[0].subTotal).toBe(1_000_000 * 1000) // D3: cap 1e6
   })
 
+  it('D2-инверсия: мерные/незнакомые единицы сохраняют дробное (флорим ТОЛЬКО штучные)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 1, unit: 'п.м.', default_price: '1000', section_name: 'S1' }))   // мерная
+    vm.onSearchPicked(lite({ id: 2, unit: 'проц.', default_price: '1000', section_name: 'S2' }))  // незнакомая (не в вайтлисте целых)
+    await nextTick()
+    ;(vm.lines[0] as Record<string, unknown>).quantity = '2.5'
+    ;(vm.lines[1] as Record<string, unknown>).quantity = '12.5'
+    await nextTick()
+    // п.м. 2.5×1000 = 2500 (НЕ floor→2000); проц. 12.5×1000 = 12500 (НЕ floor→12000)
+    const totals = vm.groupedLines.flatMap(s => s.subgroups.map(sg => sg.subTotal))
+    expect(totals).toContain(2500)
+    expect(totals).toContain(12500)
+  })
+
   it('D5+D7: та же позиция → +1 к количеству (склейка, не дубль)', async () => {
     const vm = mountForm(); await nextTick()
     vm.onSearchPicked(lite({ id: 1, name: 'A' }))

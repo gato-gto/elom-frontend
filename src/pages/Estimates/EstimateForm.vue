@@ -207,18 +207,20 @@ function removeLine(idx: number) {
   lineErrors.value = remapped
 }
 
-// ── числа: количество целое для штучных, дробное для мерных; цена/сумма — целый сум ──
-const MEASURE_UNITS = new Set(['п.м.', 'м2', 'час', 'км.'])
+// ── числа: количество целое ТОЛЬКО для штучных; всё остальное (мерные/коэф./проц./пусто) — дробное ──
+// D2 (аудит-инверсия, F-954): вайтлист ЦЕЛЫХ единиц, а не мерных — иначе любая незнакомая единица
+// (коэф./проц./новая мерная от руководства) молча флорилась бы. Неизвестное → допускаем дробное (без потери).
+const COUNT_UNITS = new Set(['шт.', 'точ.'])
 const MAX_QTY = 1_000_000 // D3: разумный потолок количества
-function isMeasure(unit: string) { return MEASURE_UNITS.has((unit || '').toLowerCase()) }
-function qtyStep(unit: string) { return isMeasure(unit) ? '0.001' : '1' }
+function isCount(unit: string) { return COUNT_UNITS.has((unit || '').trim().toLowerCase()) }
+function qtyStep(unit: string) { return isCount(unit) ? '1' : '0.001' }
 
 // Каноническое кол-во строки: clamp [0, MAX] (D1 нет отрицательного / D3 потолок) + целое для штучных (D2).
 function effQty(line: FormLine): number {
   const q = parseFloat(line.quantity || '0')
   if (isNaN(q)) { return 0 }
   const c = Math.min(Math.max(0, q), MAX_QTY)
-  return isMeasure(line.unit) ? c : Math.floor(c)
+  return isCount(line.unit) ? Math.floor(c) : c
 }
 // Синхронизируем видимое значение поля после ввода (пусто оставляем пустым — ловит валидация).
 function sanitizeQty(line: FormLine) {
