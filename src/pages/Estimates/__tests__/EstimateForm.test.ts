@@ -65,6 +65,39 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(g[0].sectionTotal).toBe(6000 + 15000)
   })
 
+  const lite = (o: Partial<Lite>): Lite => ({ id: 1, name: 'X', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '1000', category: 2, section_name: 'S', subcategory_name: 'Sub', ...o })
+
+  it('D1/D2/D3: кол-во clamp≥0 · целое для штучных · потолок MAX', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 1, unit: 'шт.', default_price: '1000' }))
+    const line = vm.lines[0] as Record<string, unknown>
+    line.quantity = '-5'; await nextTick()
+    expect(vm.groupedLines[0].subgroups[0].subTotal).toBe(0)                 // D1: нет отрицательного
+    line.quantity = '2.5'; await nextTick()
+    expect(vm.groupedLines[0].subgroups[0].subTotal).toBe(2000)             // D2: floor(2.5)=2 × 1000
+    line.quantity = '9999999999'; await nextTick()
+    expect(vm.groupedLines[0].subgroups[0].subTotal).toBe(1_000_000 * 1000) // D3: cap 1e6
+  })
+
+  it('D5+D7: та же позиция → +1 к количеству (склейка, не дубль)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 1, name: 'A' }))
+    vm.onSearchPicked(lite({ id: 2, name: 'B' }))   // другой item — снимает 500мс-гвард
+    vm.onSearchPicked(lite({ id: 1, name: 'A' }))   // снова A → склейка
+    await nextTick()
+    expect(vm.lines.length).toBe(2)
+    expect((vm.lines.find(l => l.work_item === 1) as Record<string, unknown>).quantity).toBe('2')
+  })
+
+  it('D5: двойной клик (тот же item подряд, <500мс) → одна строка', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 1 }))
+    vm.onSearchPicked(lite({ id: 1 }))   // гвард
+    await nextTick()
+    expect(vm.lines.length).toBe(1)
+    expect((vm.lines[0] as Record<string, unknown>).quantity).toBe('1')
+  })
+
   it('режим (а) существующая позиция → work_item + снапшот-имя (F-929)', async () => {
     const vm = mountForm(); await nextTick()
     vm.lines.splice(0, vm.lines.length, line({ work_item: 55, name: 'Монтаж', unit: 'шт.', quantity: '3', unit_price: '1000', position_no: '1' }))

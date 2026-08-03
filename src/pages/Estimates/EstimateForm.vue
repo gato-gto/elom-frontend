@@ -73,7 +73,7 @@
                 </button>
               </div>
               <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-sm">
-                <input v-model="line.quantity" type="number" :step="qtyStep(line.unit)" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" />
+                <input v-model="line.quantity" type="number" :step="qtyStep(line.unit)" min="0" :max="MAX_QTY" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" @change="sanitizeQty(line)" />
                 <span class="text-muted w-10 text-center">{{ line.unit || '—' }}</span>
                 <span class="text-muted">×</span>
                 <!-- цена: каталожная позиция → read-only (прайс-книга, меняется в каталоге); произвольная одноразовая → вручную -->
@@ -165,16 +165,28 @@ const objectName = computed(() => objectsStore.items.find(o => o.id === form.obj
 let _kSeq = 0
 
 // ── добавление позиции через поиск (позиция сама встаёт в свою группу) ──
+let _lastPickId: number | null = null
+let _lastPickAt = 0
 function onSearchPicked(item: WorkItemLite | null) {
   if (!item) { return }
+  const clearSearch = () => nextTick(() => { searchPick.value = null })
+  // D5: гвард двойного клика — тот же item в пределах 500мс игнорируем.
+  if (item.id === _lastPickId && Date.now() - _lastPickAt < 500) { clearSearch(); return }
+  _lastPickId = item.id; _lastPickAt = Date.now()
+  // D5+D7: позиция уже в смете → +1 к количеству (не новая строка) → нет дублей и разных цен одной позиции.
+  const existing = lines.value.find(l => l.work_item === item.id)
+  if (existing) {
+    existing.quantity = String(effQty(existing) + 1)
+    ui.toast({ type: 'info', text: `«${item.name}» уже в смете — количество +1` })
+    clearSearch(); return
+  }
   lines.value.push({
     _k: `l${_kSeq++}`, work_item: item.id, category: item.category,
     section_name: item.section_name || '', subcategory_name: item.subcategory_name || '',
     name: item.name, kind: item.kind, unit: item.unit,
     quantity: '1', unit_price: item.default_price || '', position_no: '',
   })
-  // очищаем поиск для следующей позиции
-  nextTick(() => { searchPick.value = null })
+  clearSearch()
 }
 function onSearchCustom(name: string) {
   // Свободная позиция (нет в каталоге) → группа «Прочее». В каталог добавляют отдельно (Прайс-каталог).
@@ -197,16 +209,29 @@ function removeLine(idx: number) {
 
 // ── числа: количество целое для штучных, дробное для мерных; цена/сумма — целый сум ──
 const MEASURE_UNITS = new Set(['п.м.', 'м2', 'час', 'км.'])
+const MAX_QTY = 1_000_000 // D3: разумный потолок количества
 function isMeasure(unit: string) { return MEASURE_UNITS.has((unit || '').toLowerCase()) }
 function qtyStep(unit: string) { return isMeasure(unit) ? '0.001' : '1' }
 
-// ── суммы (целый сум) ──
+// Каноническое кол-во строки: clamp [0, MAX] (D1 нет отрицательного / D3 потолок) + целое для штучных (D2).
+function effQty(line: FormLine): number {
+  const q = parseFloat(line.quantity || '0')
+  if (isNaN(q)) { return 0 }
+  const c = Math.min(Math.max(0, q), MAX_QTY)
+  return isMeasure(line.unit) ? c : Math.floor(c)
+}
+// Синхронизируем видимое значение поля после ввода (пусто оставляем пустым — ловит валидация).
+function sanitizeQty(line: FormLine) {
+  if (line.quantity === '' || line.quantity == null) { return }
+  line.quantity = String(effQty(line))
+}
+
+// ── суммы (целый сум; отрицательное/дробное-штучное/сверх-max отсекает effQty; цена ≥0) ──
 function lineAmount(line: FormLine): number | null {
   if (line.kind === 'coefficient') { return null }
-  const q = parseFloat(line.quantity || '0')
-  const p = parseFloat(line.unit_price || '0')
-  if (isNaN(q) || isNaN(p)) { return 0 }
-  return Math.round(q * p)
+  const p = Math.max(0, parseFloat(line.unit_price || '0'))
+  if (isNaN(p)) { return 0 }
+  return Math.round(effQty(line) * p)
 }
 function lineAmountDisplay(line: FormLine): string {
   const a = lineAmount(line)
@@ -259,8 +284,8 @@ function validate(): boolean {
 function buildPayloadLines(): EstimateLineWrite[] {
   return lines.value.map((l, i) => {
     const base: EstimateLineWrite = {
-      quantity: String(l.quantity || '0'),
-      unit_price: String(l.unit_price || '0'),
+      quantity: String(effQty(l)),
+      unit_price: String(Math.max(0, parseFloat(l.unit_price || '0')) || 0),
       position_no: l.position_no || '', order: i, kind: l.kind, unit: l.unit || '',
     }
     if (l.work_item) {
