@@ -8905,6 +8905,9 @@ components:
         coeff_scope_name:
           type: string
           maxLength: 128
+        coeff_scope_section:
+          type: string
+          maxLength: 128
         quantity:
           type: string
           format: decimal
@@ -8954,6 +8957,9 @@ components:
           - $ref: '#/components/schemas/CoeffScopeEnum'
           - $ref: '#/components/schemas/BlankEnum'
         coeff_scope_name:
+          type: string
+          maxLength: 128
+        coeff_scope_section:
           type: string
           maxLength: 128
         default_price:
@@ -9007,6 +9013,9 @@ components:
           - $ref: '#/components/schemas/CoeffScopeEnum'
           - $ref: '#/components/schemas/BlankEnum'
         coeff_scope_name:
+          type: string
+          maxLength: 128
+        coeff_scope_section:
           type: string
           maxLength: 128
         default_price:

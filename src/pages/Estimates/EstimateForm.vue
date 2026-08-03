@@ -64,10 +64,7 @@
 
             <div v-for="{ line, idx } in sg.items" :key="line._k" class="bg-base-200/40 rounded-lg p-2">
               <div class="flex items-start gap-2">
-                <span class="flex-1 min-w-0 text-sm break-words">
-                  {{ line.name }}
-                  <span v-if="line.kind === 'coefficient'" class="badge badge-ghost badge-sm ml-1">коэфф.</span>
-                </span>
+                <span class="flex-1 min-w-0 text-sm break-words">{{ line.name }}</span>
                 <button type="button" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить строку" title="Удалить" @click="removeLine(idx)">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg>
                 </button>
@@ -107,18 +104,15 @@
             </div>
             <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-sm">
               <span class="text-muted">зона:</span>
-              <select :value="scopeValue(line)" @change="onScopeChange(line, ($event.target as HTMLSelectElement).value)" class="select select-bordered select-sm min-w-0 max-w-[16rem]" :class="{ 'select-error': !line.coeff_scope }" aria-label="Зона коэффициента">
+              <select :value="scopeValue(line)" @change="onScopeChange(line, ($event.target as HTMLSelectElement).value)" class="select select-bordered select-sm min-w-0 max-w-[18rem]" :class="{ 'select-error': !line.coeff_scope }" aria-label="Зона коэффициента">
                 <option value="">— выберите зону —</option>
-                <optgroup v-if="scopeOptions.sections.length" label="Раздел">
-                  <option v-for="s in scopeOptions.sections" :key="'sec' + s" :value="'section:' + s">{{ s }}</option>
-                </optgroup>
-                <optgroup v-if="scopeOptions.subcategories.length" label="Подраздел">
-                  <option v-for="s in scopeOptions.subcategories" :key="'sub' + s" :value="'subcategory:' + s">{{ s }}</option>
-                </optgroup>
+                <option v-for="o in scopeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
               </select>
               <span class="text-muted">→</span>
-              <span class="font-mono font-semibold ml-auto" :class="contributionAt(idx) === null ? 'text-muted' : 'text-success'">{{ contributionAt(idx) === null ? 'выберите зону' : '+' + formatNumber(contributionAt(idx)!) }}</span>
+              <!-- N2 (аудит): знак берём из числа (скидка k<1 → «-…» красным), не префиксуем «+» безусловно -->
+              <span class="font-mono font-semibold ml-auto" :class="contribClass(idx)">{{ contribDisplay(idx) }}</span>
             </div>
+            <div v-if="lineErrors[idx]?.coeff" class="text-xs text-error mt-1">{{ lineErrors[idx]?.coeff }}</div>
           </div>
         </div>
       </div>
@@ -142,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEstimatesStore } from '@/stores/estimates'
 import { useObjectsStore } from '@/stores/objects'
@@ -174,7 +168,8 @@ interface FormLine {
   unit_price: string
   position_no: string
   coeff_scope: string            // #65 Фаза 1: зона коэффициента ('section'|'subcategory'|''); '' = не применён
-  coeff_scope_name: string       // имя раздела/подраздела (снапшот)
+  coeff_scope_name: string       // section-зона: имя раздела; subcategory-зона: имя подраздела
+  coeff_scope_section: string    // M4: раздел подраздела-зоны (квалификатор; для section-зоны пусто)
 }
 
 const editId = computed(() => (route.params.id ? Number(route.params.id) : null))
@@ -205,8 +200,11 @@ function onSearchPicked(item: WorkItemLite | null) {
   // D5: гвард двойного клика — тот же item в пределах 500мс игнорируем.
   if (item.id === _lastPickId && Date.now() - _lastPickAt < 500) { clearSearch(); return }
   _lastPickId = item.id; _lastPickAt = Date.now()
-  // D5+D7: позиция уже в смете → +1 к количеству (не новая строка) → нет дублей и разных цен одной позиции.
-  const existing = lines.value.find(l => l.work_item === item.id)
+  // D5+D7: позиция уже в смете → +1 к количеству (не новая строка). M5 (аудит): НЕ для коэффициента —
+  // один каталожный коэффициент может понадобиться на РАЗНЫЕ зоны (каждая = своя строка), дедуп их сливал.
+  const existing = item.kind !== 'coefficient'
+    ? lines.value.find(l => l.work_item === item.id)
+    : undefined
   if (existing) {
     existing.quantity = String(effQty(existing) + 1)
     ui.toast({ type: 'info', text: `«${item.name}» уже в смете — количество +1` })
@@ -217,7 +215,7 @@ function onSearchPicked(item: WorkItemLite | null) {
     section_name: item.section_name || '', subcategory_name: item.subcategory_name || '',
     name: item.name, kind: item.kind, unit: item.unit,
     quantity: '1', unit_price: item.default_price || '', position_no: '',
-    coeff_scope: '', coeff_scope_name: '',
+    coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
   })
   clearSearch()
 }
@@ -227,7 +225,7 @@ function onSearchCustom(name: string) {
     _k: `l${_kSeq++}`, work_item: null, category: null,
     section_name: '', subcategory_name: '',
     name, kind: 'work', unit: '', quantity: '1', unit_price: '', position_no: '',
-    coeff_scope: '', coeff_scope_name: '',
+    coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
   })
   nextTick(() => { searchPick.value = null })
 }
@@ -278,31 +276,68 @@ function lineAmountDisplay(line: FormLine): string {
 const calcResult = computed(() => computeEstimate(lines.value))
 const clientTotal = computed(() => calcResult.value.total)
 function contributionAt(idx: number): number | null { return calcResult.value.contributions[idx] ?? null }
+// N2 (аудит): показ вклада со знаком (скидка k<1 → отрицательный, красным; не «+−…» зелёным).
+function contribDisplay(idx: number): string {
+  const c = contributionAt(idx)
+  if (c === null) { return 'выберите зону' }
+  return c > 0 ? `+${formatNumber(c)}` : formatNumber(c)
+}
+function contribClass(idx: number): string {
+  const c = contributionAt(idx)
+  if (c === null || c === 0) { return 'text-muted' }
+  return c > 0 ? 'text-success' : 'text-error'
+}
 
 // Коэффициент-строки (kind=coefficient) — отдельным блоком со селектором зоны (не в группировке работ).
 const coeffLines = computed(() =>
   lines.value.map((line, idx) => ({ line, idx })).filter(({ line }) => line.kind === 'coefficient'))
 
-// Зоны для селектора: разделы/подразделы, реально присутствующие среди НЕ-коэффициент строк.
-const scopeOptions = computed(() => {
-  const secs = new Set<string>(), subs = new Set<string>()
+// Зоны для селектора: разделы + КВАЛИФИЦИРОВАННЫЕ разделом подразделы (M4: имя «Общие» не уникально).
+// value кодирует scope+section+name через U+0001 (не встречается в именах) → устойчиво к именам с символами.
+const SEP = '\u0001'
+interface ScopeOpt { scope: string; section: string; name: string; label: string; value: string }
+const scopeOptions = computed<ScopeOpt[]>(() => {
+  const opts: ScopeOpt[] = []
+  const seenSec = new Set<string>(), seenPair = new Set<string>()
   for (const l of lines.value) {
     if (l.kind === 'coefficient') { continue }
-    if (l.section_name) { secs.add(l.section_name) }
-    if (l.subcategory_name) { subs.add(l.subcategory_name) }
+    if (l.section_name && !seenSec.has(l.section_name)) {
+      seenSec.add(l.section_name)
+      opts.push({ scope: 'section', section: '', name: l.section_name,
+        label: `Раздел: ${l.section_name}`, value: `section${SEP}${SEP}${l.section_name}` })
+    }
+    if (l.subcategory_name) {
+      const key = `${l.section_name}${SEP}${l.subcategory_name}`
+      if (!seenPair.has(key)) {
+        seenPair.add(key)
+        opts.push({ scope: 'subcategory', section: l.section_name, name: l.subcategory_name,
+          label: `${l.section_name} / ${l.subcategory_name}`,
+          value: `subcategory${SEP}${l.section_name}${SEP}${l.subcategory_name}` })
+      }
+    }
   }
-  return { sections: [...secs], subcategories: [...subs] }
+  return opts
 })
 
 function scopeValue(line: FormLine): string {
-  return line.coeff_scope ? `${line.coeff_scope}:${line.coeff_scope_name}` : ''
+  return line.coeff_scope ? `${line.coeff_scope}${SEP}${line.coeff_scope_section}${SEP}${line.coeff_scope_name}` : ''
 }
 function onScopeChange(line: FormLine, val: string) {
-  if (!val) { line.coeff_scope = ''; line.coeff_scope_name = ''; return }
-  const idx = val.indexOf(':')
-  line.coeff_scope = val.slice(0, idx)
-  line.coeff_scope_name = val.slice(idx + 1)
+  if (!val) { line.coeff_scope = ''; line.coeff_scope_section = ''; line.coeff_scope_name = ''; return }
+  const [scope, section, name] = val.split(SEP)
+  line.coeff_scope = scope; line.coeff_scope_section = section || ''; line.coeff_scope_name = name || ''
 }
+
+// N3 (аудит): зона исчезла из опций (удалили все работы раздела/подраздела) → сбросить зону коэффициента,
+// иначе селектор пуст, а вклад тихо «+0». Сброс включает штатное «выберите зону»/валидацию.
+watch(scopeOptions, (opts) => {
+  const valid = new Set(opts.map(o => o.value))
+  for (const l of lines.value) {
+    if (l.kind === 'coefficient' && l.coeff_scope && !valid.has(scopeValue(l))) {
+      l.coeff_scope = ''; l.coeff_scope_section = ''; l.coeff_scope_name = ''
+    }
+  }
+})
 
 // ── группировка Раздел → Подраздел (БЕЗ коэффициентов — они отдельным блоком) ──
 const groupedLines = computed(() => {
@@ -342,6 +377,8 @@ function validate(): boolean {
       const p = parseFloat(String(l.unit_price))
       if (isNaN(p) || p < 0) { errs.unit_price = 'Цена ≥ 0' }
     }
+    // #65 Фаза 1 (аудит A#6): коэффициент без выбранной зоны инертен — не пускаем сабмит.
+    if (l.kind === 'coefficient' && !l.coeff_scope) { errs.coeff = 'Выберите зону коэффициента'; ok = false }
     if (Object.keys(errs).length) { lineErrors.value[i] = errs; ok = false }
   })
   return ok
@@ -357,6 +394,7 @@ function buildPayloadLines(): EstimateLineWrite[] {
       section_name: l.section_name || '', subcategory_name: l.subcategory_name || '',
       // #65 Фаза 1: зона коэффициента (для kind=coefficient; иначе пусто, BE игнорит на не-коэфф).
       coeff_scope: l.coeff_scope || '', coeff_scope_name: l.coeff_scope_name || '',
+      coeff_scope_section: l.coeff_scope_section || '',
     }
     if (l.work_item) {
       base.work_item = l.work_item                    // (а) существующая позиция
@@ -430,6 +468,7 @@ async function loadForEdit(id: number) {
       name: ln.name, kind: ln.kind, unit: ln.unit,
       quantity: ln.quantity, unit_price: ln.unit_price, position_no: ln.position_no,
       coeff_scope: ln.coeff_scope || '', coeff_scope_name: ln.coeff_scope_name || '',
+      coeff_scope_section: ln.coeff_scope_section || '',
     }))
   } catch {
     ui.toast({ type: 'error', text: 'Не удалось загрузить смету' })

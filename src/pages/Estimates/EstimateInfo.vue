@@ -34,11 +34,8 @@
             <div v-if="sg.subcategory && sg.subcategory !== '—'" class="text-sm font-medium text-muted">{{ sg.subcategory }}</div>
             <div v-for="ln in sg.lines" :key="ln.id" class="bg-base-200/40 rounded-lg p-2">
               <div class="flex justify-between gap-2">
-                <span class="flex-1 min-w-0 text-sm break-words">
-                  {{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}
-                  <span v-if="ln.kind === 'coefficient'" class="badge badge-ghost badge-sm ml-1">коэфф.</span>
-                </span>
-                <span class="font-mono font-semibold shrink-0">{{ ln.amount === null ? '×' : formatNumber(ln.amount) }}</span>
+                <span class="flex-1 min-w-0 text-sm break-words">{{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}</span>
+                <span class="font-mono font-semibold shrink-0">{{ formatNumber(ln.amount || 0) }}</span>
               </div>
               <div class="text-xs text-muted mt-0.5">{{ ln.kind_display }} · {{ formatNumberClean(ln.quantity) }} {{ ln.unit }} × {{ formatNumber(ln.unit_price) }}</div>
             </div>
@@ -57,7 +54,7 @@
               {{ ln.name }} <span class="font-mono text-muted">×{{ formatNumberClean(ln.unit_price) }}</span>
               <span class="text-xs text-muted">· {{ scopeText(ln) }}</span>
             </span>
-            <span class="font-mono font-semibold shrink-0" :class="ln.contribution === null ? 'text-muted' : 'text-success'">{{ ln.contribution === null ? '×' : '+' + formatNumber(ln.contribution) }}</span>
+            <span class="font-mono font-semibold shrink-0" :class="contribClass(ln.contribution)">{{ contribText(ln.contribution) }}</span>
           </div>
         </div>
       </div>
@@ -159,8 +156,21 @@ const coeffLines = computed(() =>
   (estimate.value?.lines || []).filter(ln => ln.kind === 'coefficient'))
 function scopeText(ln: EstimateLine): string {
   if (!ln.coeff_scope) { return 'зона не задана' }
+  if (ln.coeff_scope === 'subcategory') {
+    // M4: подраздел квалифицируем разделом.
+    return ln.coeff_scope_section ? `${ln.coeff_scope_section} / ${ln.coeff_scope_name}` : ln.coeff_scope_name
+  }
   const kind = SCOPE_LABEL[ln.coeff_scope] || ln.coeff_scope
   return ln.coeff_scope_name ? `${kind}: ${ln.coeff_scope_name}` : kind
+}
+// N2 (аудит): знак вклада (скидка k<1 → «-…» красным).
+function contribText(c: number | null): string {
+  if (c === null) { return '×' }
+  return c > 0 ? '+' + formatNumber(c) : formatNumber(c)
+}
+function contribClass(c: number | null): string {
+  if (c === null || c === 0) { return 'text-muted' }
+  return c > 0 ? 'text-success' : 'text-error'
 }
 
 function editEstimate() { router.push(`/estimates/${id.value}/edit`) }

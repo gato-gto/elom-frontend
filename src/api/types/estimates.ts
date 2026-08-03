@@ -75,7 +75,8 @@ export interface EstimateLine {
   section_name: string // #65: раздел (снапшот) — для группировки
   subcategory_name: string // #65: подраздел (снапшот)
   coeff_scope: string // #65 Фаза 1: зона коэффициента ('section'|'subcategory'|''); '' у не-коэфф
-  coeff_scope_name: string // имя раздела/подраздела (снапшот)
+  coeff_scope_name: string // section-зона: раздел; subcategory-зона: подраздел
+  coeff_scope_section: string // M4: раздел подраздела-зоны (квалификатор)
   quantity: string // decimal as string
   unit_price: string // decimal as string
   amount: number | null // qty×price; null у коэффициента (не в total)
@@ -116,6 +117,7 @@ export interface EstimateLineWrite {
   // #65 Фаза 1: зона коэффициента (для kind=coefficient).
   coeff_scope?: string
   coeff_scope_name?: string
+  coeff_scope_section?: string
   quantity: string
   unit_price?: string
   position_no?: string

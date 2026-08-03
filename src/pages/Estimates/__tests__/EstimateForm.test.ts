@@ -175,13 +175,29 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     // коэффициент НЕ в группах работ; он в отдельном блоке coeffLines
     expect(anyVm.groupedLines.flatMap(g => g.subgroups.flatMap(s => s.items)).length).toBe(1)
     expect(anyVm.coeffLines.length).toBe(1)
-    // задаём зону = раздел «Монтаж» → уходит в payload
-    anyVm.onScopeChange(anyVm.coeffLines[0].line, 'section:Монтаж')
+    // задаём зону = раздел «Монтаж» → уходит в payload (value = scopesectionname)
+    anyVm.onScopeChange(anyVm.coeffLines[0].line, 'sectionМонтаж')
     await nextTick()
     await vm.handleSubmit()
     const payload = create.mock.calls[0][0]
     const cp = payload.lines.find((l: Record<string, unknown>) => l.kind === 'coefficient')
     expect(cp.coeff_scope).toBe('section')
     expect(cp.coeff_scope_name).toBe('Монтаж')
+    expect(cp.coeff_scope_section).toBe('')
+  })
+
+  it('#65 M4: подраздел-зона квалифицируется разделом в payload', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 11, unit: 'шт.', default_price: '100', section_name: 'Разд1', subcategory_name: 'Общие' }))
+    vm.onSearchPicked({ id: 22, name: 'Коэфф', kind: 'coefficient', kind_display: 'Коэффициент', unit: 'коэф.', default_price: '1.5', category: 9, section_name: 'Разд1', subcategory_name: 'Общие' } as unknown as Lite)
+    await nextTick()
+    const anyVm = vm as unknown as { coeffLines: Array<{ line: Record<string, unknown> }>; onScopeChange: (l: Record<string, unknown>, v: string) => void }
+    anyVm.onScopeChange(anyVm.coeffLines[0].line, 'subcategoryРазд1Общие')
+    await nextTick()
+    await vm.handleSubmit()
+    const cp = create.mock.calls[0][0].lines.find((l: Record<string, unknown>) => l.kind === 'coefficient')
+    expect(cp.coeff_scope).toBe('subcategory')
+    expect(cp.coeff_scope_section).toBe('Разд1')
+    expect(cp.coeff_scope_name).toBe('Общие')
   })
 })
