@@ -1391,6 +1391,31 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/estimates/{id}/export/:
+    get:
+      operationId: estimates_export_retrieve
+      description: |-
+        Экспорт сметы в xlsx — группировка Раздел→Подраздел с подытогами обоих уровней + ИТОГО
+        (VALUES-версия; формульный round-trip =D*F — отдельный поздний этап). get_object → object-scope.
+        Имена нейтрализуются (neutralize_formula_cell) от инъекции формул в Excel.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Смета.
+        required: true
+      tags:
+      - estimates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+          description: ''
   /api/v1/material-categories/:
     get:
       operationId: material_categories_list
@@ -7704,8 +7729,10 @@ paths:
   /api/v1/work-items/:
     get:
       operationId: work_items_list
-      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
-        — руководство.
+      description: |-
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
+        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
+        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
       parameters:
       - in: query
         name: category
@@ -7756,8 +7783,10 @@ paths:
           description: ''
     post:
       operationId: work_items_create
-      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
-        — руководство.
+      description: |-
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
+        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
+        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
       tags:
       - work-items
       requestBody:
@@ -7784,8 +7813,10 @@ paths:
   /api/v1/work-items/{id}/:
     get:
       operationId: work_items_retrieve
-      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
-        — руководство.
+      description: |-
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
+        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
+        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
       parameters:
       - in: path
         name: id
@@ -7806,8 +7837,10 @@ paths:
           description: ''
     put:
       operationId: work_items_update
-      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
-        — руководство.
+      description: |-
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
+        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
+        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
       parameters:
       - in: path
         name: id
@@ -7840,8 +7873,10 @@ paths:
           description: ''
     patch:
       operationId: work_items_partial_update
-      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
-        — руководство.
+      description: |-
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
+        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
+        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
       parameters:
       - in: path
         name: id
@@ -7873,8 +7908,10 @@ paths:
           description: ''
     delete:
       operationId: work_items_destroy
-      description: Позиции прайса. Добавляет вводящий смету (work_items.create); правку/удаление
-        — руководство.
+      description: |-
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
+        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
+        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
       parameters:
       - in: path
         name: id
@@ -8842,6 +8879,12 @@ components:
         unit:
           type: string
           maxLength: 32
+        section_name:
+          type: string
+          maxLength: 128
+        subcategory_name:
+          type: string
+          maxLength: 128
         quantity:
           type: string
           format: decimal
@@ -8876,6 +8919,12 @@ components:
         unit:
           type: string
           maxLength: 32
+        section_name:
+          type: string
+          maxLength: 128
+        subcategory_name:
+          type: string
+          maxLength: 128
         default_price:
           type: string
           format: decimal
@@ -8916,6 +8965,12 @@ components:
         unit:
           type: string
           maxLength: 32
+        section_name:
+          type: string
+          maxLength: 128
+        subcategory_name:
+          type: string
+          maxLength: 128
         default_price:
           type: string
           format: decimal
