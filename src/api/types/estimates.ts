@@ -107,6 +107,9 @@ export interface EstimateLineWrite {
   kind?: WorkItemKind
   unit?: string
   default_price?: string | null
+  // D8: снапшот пути с фронта → BE хранит его (историчность на правке, не ре-деривит из каталога).
+  section_name?: string
+  subcategory_name?: string
   quantity: string
   unit_price?: string
   position_no?: string

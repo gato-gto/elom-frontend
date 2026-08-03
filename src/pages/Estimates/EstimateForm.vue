@@ -287,6 +287,8 @@ function buildPayloadLines(): EstimateLineWrite[] {
       quantity: String(effQty(l)),
       unit_price: String(Math.max(0, parseFloat(l.unit_price || '0')) || 0),
       position_no: l.position_no || '', order: i, kind: l.kind, unit: l.unit || '',
+      // D8: снапшот пути с фронта → историчность на правке (BE не ре-деривит из текущего каталога).
+      section_name: l.section_name || '', subcategory_name: l.subcategory_name || '',
     }
     if (l.work_item) {
       base.work_item = l.work_item                    // (а) существующая позиция
