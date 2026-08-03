@@ -225,4 +225,33 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(cp.coeff_scope).toBe('selection')
     expect(cp.coeff_targets).toEqual([w1uid])
   })
+
+  it('#65 Ф2-аудит F2-2: пикер selection предлагает только работы (не материалы)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 51, name: 'Работа', kind: 'work', unit: 'шт.', default_price: '100', section_name: 'A' }))
+    vm.onSearchPicked({ id: 52, name: 'Материал', kind: 'material', kind_display: 'Материал', unit: 'шт.', default_price: '50', category: 9, section_name: 'A', subcategory_name: '' } as unknown as Lite)
+    await nextTick()
+    const anyVm = vm as unknown as { selectableWorks: Array<{ name: string }> }
+    expect(anyVm.selectableWorks.map(w => w.name)).toEqual(['Работа'])   // материал не в списке
+  })
+
+  it('#65 Ф2-аудит F2-5: смена зоны с selection на раздел чистит coeff_targets', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 61, unit: 'шт.', default_price: '100', section_name: 'A' }))
+    vm.onSearchPicked({ id: 62, name: 'Коэфф', kind: 'coefficient', kind_display: 'Коэффициент', unit: 'коэф.', default_price: '1.5', category: 9, section_name: 'A', subcategory_name: '' } as unknown as Lite)
+    await nextTick()
+    const anyVm = vm as unknown as {
+      lines: Array<{ uid: string; work_item: number | null }>
+      coeffLines: Array<{ line: Record<string, unknown> }>
+      onScopeChange: (l: Record<string, unknown>, v: string) => void
+      toggleTarget: (l: Record<string, unknown>, uid: string) => void
+    }
+    const coeff = anyVm.coeffLines[0].line
+    const sep = String.fromCharCode(1)
+    anyVm.onScopeChange(coeff, 'selection')
+    anyVm.toggleTarget(coeff, anyVm.lines.find(l => l.work_item === 61)!.uid)
+    expect((coeff.coeff_targets as string[]).length).toBe(1)
+    anyVm.onScopeChange(coeff, `section${sep}${sep}A`)   // сменили на раздел → цели должны обнулиться
+    expect((coeff.coeff_targets as string[]).length).toBe(0)
+  })
 })

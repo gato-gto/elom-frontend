@@ -365,9 +365,11 @@ function scopeValue(line: FormLine): string {
   return line.coeff_scope ? `${line.coeff_scope}${SEP}${line.coeff_scope_section}${SEP}${line.coeff_scope_name}` : ''
 }
 function onScopeChange(line: FormLine, val: string) {
-  if (!val) { line.coeff_scope = ''; line.coeff_scope_section = ''; line.coeff_scope_name = ''; return }
+  if (!val) { line.coeff_scope = ''; line.coeff_scope_section = ''; line.coeff_scope_name = ''; line.coeff_targets = []; return }
   const [scope, section, name] = val.split(SEP)
   line.coeff_scope = scope; line.coeff_scope_section = section || ''; line.coeff_scope_name = name || ''
+  // F2-5 (Ф2-аудит): смена зоны с selection на другую → чистим цели (иначе мёртвые uid в БД + «воскрешение»).
+  if (scope !== 'selection') { line.coeff_targets = [] }
   // Фаза 2: при выборе «Выбранные позиции» — сразу открыть пикер работ.
   if (scope === 'selection') { openSelection(line) }
 }
@@ -376,9 +378,10 @@ function onScopeChange(line: FormLine, val: string) {
 const selectionLine = ref<FormLine | null>(null)
 function openSelection(line: FormLine) { selectionLine.value = line }
 function closeSelection() { selectionLine.value = null }
-// работы (не коэффициенты) с путём — для списка выбора; сохраняем провенанс порядка.
+// F2-2 (Ф2-аудит): пикер предлагает ТОЛЬКО работы (kind=work) — calc множит лишь их; материал/оборуд.
+// не должны попадать в цели (иначе «выбрано: N» врёт, вклад +0).
 const selectableWorks = computed(() =>
-  lines.value.filter(l => l.kind !== 'coefficient' && l.uid))
+  lines.value.filter(l => l.kind === 'work' && l.uid))
 function isTarget(line: FormLine, uid: string): boolean { return line.coeff_targets.includes(uid) }
 function toggleTarget(line: FormLine, uid: string) {
   const i = line.coeff_targets.indexOf(uid)
@@ -393,7 +396,7 @@ function targetCount(line: FormLine): number {
 // иначе селектор пуст, а вклад тихо «+0». Сброс включает штатное «выберите зону»/валидацию.
 watch([scopeOptions, () => lines.value.map(l => l.uid).join(',')], () => {
   const valid = new Set(scopeOptions.value.map(o => o.value))
-  const validUids = new Set(lines.value.filter(l => l.kind !== 'coefficient').map(l => l.uid))
+  const validUids = new Set(lines.value.filter(l => l.kind === 'work').map(l => l.uid))
   for (const l of lines.value) {
     if (l.kind !== 'coefficient') { continue }
     if (l.coeff_scope && !valid.has(scopeValue(l))) {
@@ -467,7 +470,8 @@ function buildPayloadLines(): EstimateLineWrite[] {
       // #65 Фаза 1/2: зона коэффициента (для kind=coefficient; иначе пусто, BE игнорит на не-коэфф).
       coeff_scope: l.coeff_scope || '', coeff_scope_name: l.coeff_scope_name || '',
       coeff_scope_section: l.coeff_scope_section || '',
-      uid: l.uid || '', coeff_targets: l.kind === 'coefficient' ? (l.coeff_targets || []) : [],
+      uid: l.uid || '',
+      coeff_targets: (l.kind === 'coefficient' && l.coeff_scope === 'selection') ? (l.coeff_targets || []) : [],
     }
     if (l.work_item) {
       base.work_item = l.work_item                    // (а) существующая позиция

@@ -62,6 +62,28 @@ describe('estimateCalc — зеркало BE calc.py (Фаза 1)', () => {
     expect(total).toBe(950)              // 150+200+600
   })
 
+  it('F2-3: пустой uid работы НЕ матчится в selection даже при "" в targets (== BE)', () => {
+    const lines: CalcLine[] = [
+      { kind: 'work', quantity: '1', unit_price: '100', section_name: 'A', uid: '' },
+      { kind: 'coefficient', quantity: '1', unit_price: '1.5', coeff_scope: 'selection', coeff_targets: [''] },
+    ]
+    const { total, contributions } = computeEstimate(lines)
+    expect(total).toBe(100)
+    expect(contributions[1]).toBe(0)
+  })
+
+  it('F2-7: selection поверх section компаундится ×1.2×1.1 (== BE)', () => {
+    const lines: CalcLine[] = [
+      { kind: 'work', quantity: '1', unit_price: '100000', section_name: 'Монтаж', uid: 'w1' },
+      { kind: 'coefficient', quantity: '1', unit_price: '1.2', coeff_scope: 'section', coeff_scope_name: 'Монтаж' },
+      { kind: 'coefficient', quantity: '1', unit_price: '1.1', coeff_scope: 'selection', coeff_targets: ['w1'] },
+    ]
+    const { total, contributions } = computeEstimate(lines)
+    expect(contributions[1]).toBe(20000)
+    expect(contributions[2]).toBe(12000)
+    expect(total).toBe(132000)
+  })
+
   it('M1: множитель ≤0 (каталожный null→0) — no-op, работы не обнуляются', () => {
     const { total, contributions } = computeEstimate([work('A', '', 500000), coeff(0, 'section', 'A')])
     expect(total).toBe(500000)
