@@ -48,9 +48,23 @@
         </div>
       </div>
 
+      <!-- #65 Фаза 1: коэффициенты с вкладом + зона -->
+      <div v-if="coeffLines.length" class="card bg-base-100 border border-warning/40 overflow-hidden">
+        <div class="card-body p-3 gap-2">
+          <div class="font-semibold text-warning">Коэффициенты <span class="text-xs text-muted font-normal">(к работам зоны; перемножаются)</span></div>
+          <div v-for="ln in coeffLines" :key="ln.id" class="bg-base-200/40 rounded-lg p-2 flex justify-between gap-2">
+            <span class="flex-1 min-w-0 text-sm break-words">
+              {{ ln.name }} <span class="font-mono text-muted">×{{ formatNumberClean(ln.unit_price) }}</span>
+              <span class="text-xs text-muted">· {{ scopeText(ln) }}</span>
+            </span>
+            <span class="font-mono font-semibold shrink-0" :class="ln.contribution === null ? 'text-muted' : 'text-success'">{{ ln.contribution === null ? '×' : '+' + formatNumber(ln.contribution) }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="card bg-base-100 border border-base-300">
         <div class="card-body flex-row justify-between items-center py-3 px-4">
-          <span class="font-semibold text-lg">ИТОГО <span class="text-xs text-muted font-normal">(без коэффициентов)</span></span>
+          <span class="font-semibold text-lg">ИТОГО</span>
           <span class="font-mono font-semibold text-xl text-success">{{ formatNumber(estimate.total) }}</span>
         </div>
       </div>
@@ -117,12 +131,13 @@ const canDelete = computed(() => can('estimates', 'delete'))
 // иначе viewer/brigadier ловил бы 403 по клику.
 const canExport = computed(() => can('estimates', 'export'))
 
-// #65: группировка строк Раздел → Подраздел (по снапшот-пути) с подытогами обоих уровней.
+// #65: группировка строк Раздел → Подраздел (по снапшот-пути) с подытогами. Коэффициенты — отдельно.
 const grouped = computed(() => {
   const est = estimate.value
   const amt = (ln: EstimateLine) => (ln.amount === null ? 0 : ln.amount)
   const sections = new Map<string, Map<string, EstimateLine[]>>()
   for (const ln of est?.lines || []) {
+    if (ln.kind === 'coefficient') { continue }
     const sec = ln.section_name || 'Прочее'
     const sub = ln.subcategory_name || '—'
     if (!sections.has(sec)) { sections.set(sec, new Map()) }
@@ -137,6 +152,16 @@ const grouped = computed(() => {
     return { section, subgroups, sectionTotal: subgroups.reduce((s, sg) => s + sg.subTotal, 0) }
   })
 })
+
+// #65 Фаза 1: коэффициенты с вкладом (BE отдаёт contribution) + подпись зоны.
+const SCOPE_LABEL: Record<string, string> = { section: 'раздел', subcategory: 'подраздел', all: 'вся смета' }
+const coeffLines = computed(() =>
+  (estimate.value?.lines || []).filter(ln => ln.kind === 'coefficient'))
+function scopeText(ln: EstimateLine): string {
+  if (!ln.coeff_scope) { return 'зона не задана' }
+  const kind = SCOPE_LABEL[ln.coeff_scope] || ln.coeff_scope
+  return ln.coeff_scope_name ? `${kind}: ${ln.coeff_scope_name}` : kind
+}
 
 function editEstimate() { router.push(`/estimates/${id.value}/edit`) }
 function goBack() { router.push(estimate.value?.object ? `/estimates?object=${estimate.value.object}` : '/estimates') }

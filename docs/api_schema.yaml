@@ -8619,6 +8619,19 @@ components:
     BlankEnum:
       enum:
       - ''
+    CoeffScopeEnum:
+      enum:
+      - all
+      - section
+      - subcategory
+      - selection
+      type: string
+      description: |-
+        * `` - —
+        * `all` - Вся смета
+        * `section` - Раздел
+        * `subcategory` - Подраздел
+        * `selection` - Выбранные позиции
     CurrentStageEnum:
       enum:
       - acceptance
@@ -8885,6 +8898,13 @@ components:
         subcategory_name:
           type: string
           maxLength: 128
+        coeff_scope:
+          oneOf:
+          - $ref: '#/components/schemas/CoeffScopeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        coeff_scope_name:
+          type: string
+          maxLength: 128
         quantity:
           type: string
           format: decimal
@@ -8896,12 +8916,16 @@ components:
         amount:
           type: string
           readOnly: true
+        contribution:
+          type: string
+          readOnly: true
         order:
           type: integer
           maximum: 2147483647
           minimum: 0
       required:
       - amount
+      - contribution
       - id
       - kind_display
       - name
@@ -8923,6 +8947,13 @@ components:
           type: string
           maxLength: 128
         subcategory_name:
+          type: string
+          maxLength: 128
+        coeff_scope:
+          oneOf:
+          - $ref: '#/components/schemas/CoeffScopeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        coeff_scope_name:
           type: string
           maxLength: 128
         default_price:
@@ -8969,6 +9000,13 @@ components:
           type: string
           maxLength: 128
         subcategory_name:
+          type: string
+          maxLength: 128
+        coeff_scope:
+          oneOf:
+          - $ref: '#/components/schemas/CoeffScopeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        coeff_scope_name:
           type: string
           maxLength: 128
         default_price:

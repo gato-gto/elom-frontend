@@ -161,4 +161,27 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     await vm.handleSubmit()
     expect(create).not.toHaveBeenCalled()
   })
+
+  it('#65 коэффициент: отдельный блок (не в группах работ) + scope уходит в payload', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 10, unit: 'шт.', default_price: '500000', section_name: 'Монтаж', subcategory_name: 'Прокладка' }))
+    vm.onSearchPicked({ id: 20, name: 'Стеснённость', kind: 'coefficient', kind_display: 'Коэффициент', unit: 'коэф.', default_price: '1.2', category: 5, section_name: 'Монтаж', subcategory_name: 'Прокладка' } as unknown as Lite)
+    await nextTick()
+    const anyVm = vm as unknown as {
+      groupedLines: Array<{ subgroups: Array<{ items: unknown[] }> }>
+      coeffLines: Array<{ line: Record<string, unknown> }>
+      onScopeChange: (l: Record<string, unknown>, v: string) => void
+    }
+    // коэффициент НЕ в группах работ; он в отдельном блоке coeffLines
+    expect(anyVm.groupedLines.flatMap(g => g.subgroups.flatMap(s => s.items)).length).toBe(1)
+    expect(anyVm.coeffLines.length).toBe(1)
+    // задаём зону = раздел «Монтаж» → уходит в payload
+    anyVm.onScopeChange(anyVm.coeffLines[0].line, 'section:Монтаж')
+    await nextTick()
+    await vm.handleSubmit()
+    const payload = create.mock.calls[0][0]
+    const cp = payload.lines.find((l: Record<string, unknown>) => l.kind === 'coefficient')
+    expect(cp.coeff_scope).toBe('section')
+    expect(cp.coeff_scope_name).toBe('Монтаж')
+  })
 })
