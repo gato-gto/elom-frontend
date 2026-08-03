@@ -50,6 +50,18 @@ describe('estimateCalc — зеркало BE calc.py (Фаза 1)', () => {
     expect(total).toBe(350)
   })
 
+  it('Фаза 2 selection: коэффициент бьёт только по выбранным uid (== BE)', () => {
+    const lines: CalcLine[] = [
+      { kind: 'work', quantity: '1', unit_price: '100', section_name: 'A', uid: 'u1' },
+      { kind: 'work', quantity: '1', unit_price: '200', section_name: 'A', uid: 'u2' },
+      { kind: 'work', quantity: '1', unit_price: '400', section_name: 'A', uid: 'u3' },
+      { kind: 'coefficient', quantity: '1', unit_price: '1.5', coeff_scope: 'selection', coeff_targets: ['u1', 'u3'] },
+    ]
+    const { total, contributions } = computeEstimate(lines)
+    expect(contributions[3]).toBe(250)   // (100+400)*0.5
+    expect(total).toBe(950)              // 150+200+600
+  })
+
   it('M1: множитель ≤0 (каталожный null→0) — no-op, работы не обнуляются', () => {
     const { total, contributions } = computeEstimate([work('A', '', 500000), coeff(0, 'section', 'A')])
     expect(total).toBe(500000)
@@ -76,10 +88,9 @@ describe('estimateCalc — зеркало BE calc.py (Фаза 1)', () => {
     expect(contributions[1]).toBe(50)
   })
 
-  it("'' и 'selection' не применяются (Фаза 1)", () => {
-    const { total, contributions } = computeEstimate([work('A', '', 100), coeff(2, '', ''), coeff(2, 'selection', '')])
+  it("'' (нет зоны) не применяется", () => {
+    const { total, contributions } = computeEstimate([work('A', '', 100), coeff(2, '', '')])
     expect(total).toBe(100)
     expect(contributions[1]).toBeNull()
-    expect(contributions[2]).toBeNull()
   })
 })

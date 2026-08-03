@@ -12,9 +12,11 @@ export interface CalcLine {
   coeff_scope?: string
   coeff_scope_name?: string
   coeff_scope_section?: string
+  uid?: string
+  coeff_targets?: string[]
 }
 
-const SCOPES_ACTIVE = new Set(['all', 'section', 'subcategory']) // Фаза 1; '' и 'selection' не применяются
+const SCOPES_ACTIVE = new Set(['all', 'section', 'subcategory', 'selection']) // Фаза 1 + Фаза 2 (selection)
 
 // Точное целое из десятичного с ≤ log10(scale) знаками (float-ошибка *scale < 0.5 → Math.round точен).
 function scaledInt(v: number | string | undefined, scale: number): number {
@@ -76,6 +78,8 @@ export function computeEstimate(lines: CalcLine[]): { total: number, contributio
     if (k <= 0) { return }
     const name = ln.coeff_scope_name || ''
     const section = ln.coeff_scope_section || ''
+    // Фаза 2 (selection): целевые work по стабильному uid из coeff_targets.
+    const targets = scope === 'selection' ? new Set(ln.coeff_targets || []) : null
     let contrib = 0
     for (const wi of workIdx) {
       const w = lines[wi]
@@ -85,6 +89,7 @@ export function computeEstimate(lines: CalcLine[]): { total: number, contributio
       const hit = scope === 'all'
         || (scope === 'section' && wSec === name)
         || (scope === 'subcategory' && wSec === section && wSub === name)
+        || (scope === 'selection' && !!w.uid && targets!.has(w.uid))
       if (!hit) { continue }
       const before = eff[wi]
       const after = applyK(before, ln.unit_price)

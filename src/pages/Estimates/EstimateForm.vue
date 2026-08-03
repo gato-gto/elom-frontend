@@ -108,6 +108,10 @@
                 <option value="">— выберите зону —</option>
                 <option v-for="o in scopeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
               </select>
+              <!-- Фаза 2: для «выбранных позиций» — кнопка пикера с количеством -->
+              <button v-if="line.coeff_scope === 'selection'" type="button" class="btn btn-xs btn-outline" @click="openSelection(line)">
+                выбрано: {{ targetCount(line) }} · изменить
+              </button>
               <span class="text-muted">→</span>
               <!-- N2 (аудит): знак берём из числа (скидка k<1 → «-…» красным), не префиксуем «+» безусловно -->
               <span class="font-mono font-semibold ml-auto" :class="contribClass(idx)">{{ contribDisplay(idx) }}</span>
@@ -132,6 +136,27 @@
         <button type="submit" class="btn btn-primary" :disabled="submitting">{{ submitting ? 'Сохранение…' : (isEdit ? 'Обновить' : 'Создать') }}</button>
       </div>
     </form>
+
+    <!-- Фаза 2: пикер работ для коэффициента scope='selection' -->
+    <Modal :model-value="!!selectionLine" title="Выберите работы для коэффициента" @update:model-value="v => { if (!v) closeSelection() }">
+      <div v-if="selectionLine" class="p-4 space-y-2">
+        <p class="text-sm text-muted">Коэффициент «{{ selectionLine.name }}» ×{{ formatNumberClean(selectionLine.unit_price || '1') }} применится к отмеченным работам.</p>
+        <div class="max-h-[50vh] overflow-y-auto space-y-1">
+          <label v-for="w in selectableWorks" :key="w.uid" class="flex items-start gap-2 p-2 rounded-lg hover:bg-base-200/60 cursor-pointer">
+            <input type="checkbox" class="checkbox checkbox-sm mt-0.5" :checked="isTarget(selectionLine, w.uid)" @change="toggleTarget(selectionLine, w.uid)" />
+            <span class="flex-1 min-w-0 text-sm break-words">
+              {{ w.name }}
+              <span class="text-xs text-muted block">{{ w.section_name || 'Прочее' }}{{ w.subcategory_name ? ' / ' + w.subcategory_name : '' }} · {{ formatNumber(lineAmount(w) || 0) }}</span>
+            </span>
+          </label>
+          <div v-if="!selectableWorks.length" class="text-center text-muted py-6 text-sm">Нет работ для выбора</div>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t border-base-200">
+          <span class="text-sm text-muted">Выбрано: {{ targetCount(selectionLine) }}</span>
+          <button type="button" class="btn btn-sm btn-primary" @click="closeSelection">Готово</button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -143,6 +168,7 @@ import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
 import WorkItemSearchSelect from '@/components/WorkItemSearchSelect.vue'
 import ListHeader from '@/components/ListHeader.vue'
+import Modal from '@/components/Modal.vue'
 import { formatNumber, formatNumberClean, todayLocal, pluralizeRu } from '@/utils/formatters'
 import { computeEstimate } from '@/utils/estimateCalc'
 import type { WorkItemKind, WorkItemLite, EstimateLineWrite, Estimate } from '@/api/types/estimates'
@@ -167,9 +193,18 @@ interface FormLine {
   quantity: string
   unit_price: string
   position_no: string
-  coeff_scope: string            // #65 Фаза 1: зона коэффициента ('section'|'subcategory'|''); '' = не применён
+  coeff_scope: string            // Фаза 1/2: зона ('section'|'subcategory'|'selection'|''); '' = не применён
   coeff_scope_name: string       // section-зона: имя раздела; subcategory-зона: имя подраздела
   coeff_scope_section: string    // M4: раздел подраздела-зоны (квалификатор; для section-зоны пусто)
+  uid: string                    // Фаза 2: стабильный id строки (для ссылок selection, переживает правку)
+  coeff_targets: string[]        // Фаза 2 (scope='selection'): uid выбранных работ
+}
+
+let _uidSeq = 0
+function newUid(): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto
+  if (c && typeof c.randomUUID === 'function') { return c.randomUUID() }
+  return `ln-${Date.now().toString(36)}-${_uidSeq++}`
 }
 
 const editId = computed(() => (route.params.id ? Number(route.params.id) : null))
@@ -216,6 +251,7 @@ function onSearchPicked(item: WorkItemLite | null) {
     name: item.name, kind: item.kind, unit: item.unit,
     quantity: '1', unit_price: item.default_price || '', position_no: '',
     coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
+    uid: newUid(), coeff_targets: [],
   })
   clearSearch()
 }
@@ -226,6 +262,7 @@ function onSearchCustom(name: string) {
     section_name: '', subcategory_name: '',
     name, kind: 'work', unit: '', quantity: '1', unit_price: '', position_no: '',
     coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
+    uid: newUid(), coeff_targets: [],
   })
   nextTick(() => { searchPick.value = null })
 }
@@ -296,8 +333,13 @@ const coeffLines = computed(() =>
 // value кодирует scope+section+name через U+0001 (не встречается в именах) → устойчиво к именам с символами.
 const SEP = '\u0001'
 interface ScopeOpt { scope: string; section: string; name: string; label: string; value: string }
+const hasWork = computed(() => lines.value.some(l => l.kind !== 'coefficient'))
 const scopeOptions = computed<ScopeOpt[]>(() => {
   const opts: ScopeOpt[] = []
+  // Фаза 2: спец-опция «Выбранные позиции» (цели — через модалку, не из путей).
+  if (hasWork.value) {
+    opts.push({ scope: 'selection', section: '', name: '', label: 'Выбранные позиции…', value: `selection${SEP}${SEP}` })
+  }
   const seenSec = new Set<string>(), seenPair = new Set<string>()
   for (const l of lines.value) {
     if (l.kind === 'coefficient') { continue }
@@ -326,15 +368,41 @@ function onScopeChange(line: FormLine, val: string) {
   if (!val) { line.coeff_scope = ''; line.coeff_scope_section = ''; line.coeff_scope_name = ''; return }
   const [scope, section, name] = val.split(SEP)
   line.coeff_scope = scope; line.coeff_scope_section = section || ''; line.coeff_scope_name = name || ''
+  // Фаза 2: при выборе «Выбранные позиции» — сразу открыть пикер работ.
+  if (scope === 'selection') { openSelection(line) }
+}
+
+// ── Фаза 2: пикер «выбранные позиции» (модалка с чекбоксами работ) ──
+const selectionLine = ref<FormLine | null>(null)
+function openSelection(line: FormLine) { selectionLine.value = line }
+function closeSelection() { selectionLine.value = null }
+// работы (не коэффициенты) с путём — для списка выбора; сохраняем провенанс порядка.
+const selectableWorks = computed(() =>
+  lines.value.filter(l => l.kind !== 'coefficient' && l.uid))
+function isTarget(line: FormLine, uid: string): boolean { return line.coeff_targets.includes(uid) }
+function toggleTarget(line: FormLine, uid: string) {
+  const i = line.coeff_targets.indexOf(uid)
+  if (i >= 0) { line.coeff_targets.splice(i, 1) } else { line.coeff_targets.push(uid) }
+}
+function targetCount(line: FormLine): number {
+  const valid = new Set(selectableWorks.value.map(w => w.uid))
+  return line.coeff_targets.filter(u => valid.has(u)).length
 }
 
 // N3 (аудит): зона исчезла из опций (удалили все работы раздела/подраздела) → сбросить зону коэффициента,
 // иначе селектор пуст, а вклад тихо «+0». Сброс включает штатное «выберите зону»/валидацию.
-watch(scopeOptions, (opts) => {
-  const valid = new Set(opts.map(o => o.value))
+watch([scopeOptions, () => lines.value.map(l => l.uid).join(',')], () => {
+  const valid = new Set(scopeOptions.value.map(o => o.value))
+  const validUids = new Set(lines.value.filter(l => l.kind !== 'coefficient').map(l => l.uid))
   for (const l of lines.value) {
-    if (l.kind === 'coefficient' && l.coeff_scope && !valid.has(scopeValue(l))) {
+    if (l.kind !== 'coefficient') { continue }
+    if (l.coeff_scope && !valid.has(scopeValue(l))) {
       l.coeff_scope = ''; l.coeff_scope_section = ''; l.coeff_scope_name = ''
+    }
+    // Фаза 2: чистим ссылки на удалённые работы (иначе тихо «выбрано: 0» / несуществующие цели).
+    if (l.coeff_targets.length) {
+      const pruned = l.coeff_targets.filter(u => validUids.has(u))
+      if (pruned.length !== l.coeff_targets.length) { l.coeff_targets = pruned }
     }
   }
 })
@@ -379,6 +447,10 @@ function validate(): boolean {
     }
     // #65 Фаза 1 (аудит A#6): коэффициент без выбранной зоны инертен — не пускаем сабмит.
     if (l.kind === 'coefficient' && !l.coeff_scope) { errs.coeff = 'Выберите зону коэффициента'; ok = false }
+    // Фаза 2: selection без выбранных работ — блок сабмита.
+    if (l.kind === 'coefficient' && l.coeff_scope === 'selection' && l.coeff_targets.length === 0) {
+      errs.coeff = 'Выберите хотя бы одну позицию'; ok = false
+    }
     if (Object.keys(errs).length) { lineErrors.value[i] = errs; ok = false }
   })
   return ok
@@ -392,9 +464,10 @@ function buildPayloadLines(): EstimateLineWrite[] {
       position_no: l.position_no || '', order: i, kind: l.kind, unit: l.unit || '',
       // D8: снапшот пути с фронта → историчность на правке (BE не ре-деривит из текущего каталога).
       section_name: l.section_name || '', subcategory_name: l.subcategory_name || '',
-      // #65 Фаза 1: зона коэффициента (для kind=coefficient; иначе пусто, BE игнорит на не-коэфф).
+      // #65 Фаза 1/2: зона коэффициента (для kind=coefficient; иначе пусто, BE игнорит на не-коэфф).
       coeff_scope: l.coeff_scope || '', coeff_scope_name: l.coeff_scope_name || '',
       coeff_scope_section: l.coeff_scope_section || '',
+      uid: l.uid || '', coeff_targets: l.kind === 'coefficient' ? (l.coeff_targets || []) : [],
     }
     if (l.work_item) {
       base.work_item = l.work_item                    // (а) существующая позиция
@@ -469,6 +542,7 @@ async function loadForEdit(id: number) {
       quantity: ln.quantity, unit_price: ln.unit_price, position_no: ln.position_no,
       coeff_scope: ln.coeff_scope || '', coeff_scope_name: ln.coeff_scope_name || '',
       coeff_scope_section: ln.coeff_scope_section || '',
+      uid: ln.uid || newUid(), coeff_targets: Array.isArray(ln.coeff_targets) ? [...ln.coeff_targets] : [],
     }))
   } catch {
     ui.toast({ type: 'error', text: 'Не удалось загрузить смету' })

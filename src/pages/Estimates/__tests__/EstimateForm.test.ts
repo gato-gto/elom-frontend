@@ -200,4 +200,29 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(cp.coeff_scope_section).toBe('Разд1')
     expect(cp.coeff_scope_name).toBe('Общие')
   })
+
+  it('#65 Фаза 2 selection: строки несут uid, пикер → coeff_targets в payload', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 31, name: 'Работа1', unit: 'шт.', default_price: '100', section_name: 'A' }))
+    vm.onSearchPicked(lite({ id: 32, name: 'Работа2', unit: 'шт.', default_price: '200', section_name: 'A' }))
+    vm.onSearchPicked({ id: 40, name: 'Коэфф', kind: 'coefficient', kind_display: 'Коэффициент', unit: 'коэф.', default_price: '1.5', category: 9, section_name: 'A', subcategory_name: '' } as unknown as Lite)
+    await nextTick()
+    const anyVm = vm as unknown as {
+      lines: Array<{ uid: string; work_item: number | null; kind: string }>
+      coeffLines: Array<{ line: Record<string, unknown> }>
+      onScopeChange: (l: Record<string, unknown>, v: string) => void
+      toggleTarget: (l: Record<string, unknown>, uid: string) => void
+    }
+    // все строки получили uid
+    expect(anyVm.lines.every(l => !!l.uid)).toBe(true)
+    const coeffLine = anyVm.coeffLines[0].line
+    anyVm.onScopeChange(coeffLine, 'selection')   // scopeSEPSEP (пустые section/name)
+    const w1uid = anyVm.lines.find(l => l.work_item === 31)!.uid
+    anyVm.toggleTarget(coeffLine, w1uid)          // выбрать только Работа1
+    await nextTick()
+    await vm.handleSubmit()
+    const cp = create.mock.calls[0][0].lines.find((l: Record<string, unknown>) => l.kind === 'coefficient')
+    expect(cp.coeff_scope).toBe('selection')
+    expect(cp.coeff_targets).toEqual([w1uid])
+  })
 })

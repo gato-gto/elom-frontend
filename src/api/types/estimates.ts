@@ -74,9 +74,11 @@ export interface EstimateLine {
   unit: string
   section_name: string // #65: раздел (снапшот) — для группировки
   subcategory_name: string // #65: подраздел (снапшот)
-  coeff_scope: string // #65 Фаза 1: зона коэффициента ('section'|'subcategory'|''); '' у не-коэфф
+  coeff_scope: string // Фаза 1/2: зона ('section'|'subcategory'|'selection'|''); '' у не-коэфф
   coeff_scope_name: string // section-зона: раздел; subcategory-зона: подраздел
   coeff_scope_section: string // M4: раздел подраздела-зоны (квалификатор)
+  uid: string // Фаза 2: стабильный id строки
+  coeff_targets: string[] // Фаза 2 (selection): uid выбранных работ
   quantity: string // decimal as string
   unit_price: string // decimal as string
   amount: number | null // qty×price; null у коэффициента (не в total)
@@ -114,10 +116,12 @@ export interface EstimateLineWrite {
   // D8: снапшот пути с фронта → BE хранит его (историчность на правке, не ре-деривит из каталога).
   section_name?: string
   subcategory_name?: string
-  // #65 Фаза 1: зона коэффициента (для kind=coefficient).
+  // #65 Фаза 1/2: зона коэффициента (для kind=coefficient).
   coeff_scope?: string
   coeff_scope_name?: string
   coeff_scope_section?: string
+  uid?: string
+  coeff_targets?: string[]
   quantity: string
   unit_price?: string
   position_no?: string

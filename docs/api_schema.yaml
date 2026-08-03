@@ -8908,6 +8908,10 @@ components:
         coeff_scope_section:
           type: string
           maxLength: 128
+        uid:
+          type: string
+          maxLength: 64
+        coeff_targets: {}
         quantity:
           type: string
           format: decimal
@@ -8962,6 +8966,14 @@ components:
         coeff_scope_section:
           type: string
           maxLength: 128
+        uid:
+          type: string
+          maxLength: 64
+        coeff_targets:
+          type: array
+          items:
+            type: string
+            maxLength: 64
         default_price:
           type: string
           format: decimal
@@ -9018,6 +9030,15 @@ components:
         coeff_scope_section:
           type: string
           maxLength: 128
+        uid:
+          type: string
+          maxLength: 64
+        coeff_targets:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
         default_price:
           type: string
           format: decimal

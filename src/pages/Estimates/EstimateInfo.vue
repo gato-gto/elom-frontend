@@ -156,6 +156,10 @@ const coeffLines = computed(() =>
   (estimate.value?.lines || []).filter(ln => ln.kind === 'coefficient'))
 function scopeText(ln: EstimateLine): string {
   if (!ln.coeff_scope) { return 'зона не задана' }
+  if (ln.coeff_scope === 'selection') {
+    const n = Array.isArray(ln.coeff_targets) ? ln.coeff_targets.length : 0
+    return `выбранные позиции: ${n}`
+  }
   if (ln.coeff_scope === 'subcategory') {
     // M4: подраздел квалифицируем разделом.
     return ln.coeff_scope_section ? `${ln.coeff_scope_section} / ${ln.coeff_scope_name}` : ln.coeff_scope_name
