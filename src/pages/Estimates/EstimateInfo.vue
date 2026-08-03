@@ -20,6 +20,7 @@
       <div class="flex justify-between items-center">
         <h2 class="text-lg font-semibold">Позиции <span class="text-sm text-muted">({{ estimate.lines.length }} {{ pluralizeRu(estimate.lines.length, ['строка', 'строки', 'строк']) }})</span></h2>
         <div class="flex gap-2">
+          <button class="btn btn-sm btn-ghost" :disabled="exporting" @click="exportEstimate" title="Скачать xlsx">{{ exporting ? '…' : 'Экспорт' }}</button>
           <button v-if="canEdit" class="btn btn-sm btn-primary" @click="editEstimate">Редактировать</button>
           <button v-if="canDelete" class="btn btn-sm btn-ghost text-error" :disabled="deleting" @click="showDelete = true">Удалить</button>
         </div>
@@ -79,6 +80,8 @@ import ListHeader from '@/components/ListHeader.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
 import { formatNumber, formatNumberClean, formatDate, pluralizeRu } from '@/utils/formatters'
+import api from '@/api/client'
+import { downloadBlob } from '@/utils/export'
 import type { Estimate, EstimateLine } from '@/api/types/estimates'
 
 const route = useRoute()
@@ -92,6 +95,20 @@ const estimate = ref<Estimate | null>(null)
 const loading = ref(false)
 const deleting = ref(false)
 const showDelete = ref(false)
+const exporting = ref(false)
+
+async function exportEstimate() {
+  if (exporting.value) { return }
+  exporting.value = true
+  try {
+    const resp = await api.get(`/estimates/${id.value}/export/`, { responseType: 'blob' })
+    downloadBlob(resp.data as Blob, `smeta_${id.value}.xlsx`)
+  } catch {
+    ui.toast({ type: 'error', text: 'Не удалось экспортировать смету' })
+  } finally {
+    exporting.value = false
+  }
+}
 
 // F-912/913: гейт = ТОЧНО право BE (PATCH→edit, DELETE→delete; scope own/all чекает BE на объекте).
 const canEdit = computed(() => can('estimates', 'edit'))
