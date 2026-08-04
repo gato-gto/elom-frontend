@@ -39,7 +39,7 @@
       <div class="form-control w-full">
         <label class="label"><span class="label-text font-medium">Добавить позицию</span></label>
         <WorkItemSearchSelect
-          v-model="searchPick" :allow-custom="true"
+          v-model="searchPick" :allow-custom="canAddCatalog"
           placeholder="Найти позицию в каталоге…"
           @change="onSearchPicked" @custom-item="onSearchCustom"
         />
@@ -64,7 +64,7 @@
 
             <div v-for="{ line, idx } in sg.items" :key="line._k" class="bg-base-200/40 rounded-lg p-2">
               <div class="flex items-start gap-2">
-                <span class="flex-1 min-w-0 text-sm break-words">{{ line.name }}</span>
+                <span class="flex-1 min-w-0 text-sm break-words">{{ line.name }}<span v-if="line.is_draft" class="badge badge-warning badge-sm ml-1" title="Позиция без цены — цену поставит руководство">ждёт цены</span></span>
                 <button type="button" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить строку" title="Удалить" @click="removeLine(idx)">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg>
                 </button>
@@ -124,7 +124,7 @@
       <!-- Итого сметы -->
       <div v-if="lines.length" class="card bg-base-100 border border-base-300">
         <div class="card-body flex-row justify-between items-center py-3 px-4">
-          <span class="font-semibold text-lg">ИТОГО</span>
+          <span class="font-semibold text-lg">ИТОГО <span v-if="unpricedCount" class="text-xs text-warning font-normal">(предварительный · {{ unpricedCount }} без цены)</span></span>
           <span class="font-mono font-semibold text-xl text-success">{{ formatNumber(clientTotal) }}</span>
         </div>
       </div>
@@ -136,6 +136,9 @@
         <button type="submit" class="btn btn-primary" :disabled="submitting">{{ submitting ? 'Сохранение…' : (isEdit ? 'Обновить' : 'Создать') }}</button>
       </div>
     </form>
+
+    <!-- manual→catalog (F-739): quick-add новой позиции в каталог из строки сметы -->
+    <QuickAddWorkItem v-model="quickAddOpen" :initial-name="quickAddName" @created="onWorkItemCreated" />
 
     <!-- Фаза 2: пикер работ для коэффициента scope='selection' -->
     <Modal :model-value="!!selectionLine" title="Выберите работы для коэффициента" @update:model-value="v => { if (!v) closeSelection() }">
@@ -166,12 +169,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { useEstimatesStore } from '@/stores/estimates'
 import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
+import { useWorkCategoriesStore } from '@/stores/workCategories'
+import { usePermissions } from '@/composables/usePermissions'
 import WorkItemSearchSelect from '@/components/WorkItemSearchSelect.vue'
+import QuickAddWorkItem from '@/components/QuickAddWorkItem.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import Modal from '@/components/Modal.vue'
 import { formatNumber, formatNumberClean, todayLocal, pluralizeRu } from '@/utils/formatters'
 import { computeEstimate } from '@/utils/estimateCalc'
-import type { WorkItemKind, WorkItemLite, EstimateLineWrite, Estimate } from '@/api/types/estimates'
+import type { WorkItemKind, WorkItemLite, WorkItem, EstimateLineWrite, Estimate } from '@/api/types/estimates'
 import { ACTION_ICONS } from '@/utils/actionIcons'
 
 const route = useRoute()
@@ -179,6 +185,14 @@ const router = useRouter()
 const estimatesStore = useEstimatesStore()
 const objectsStore = useObjectsStore()
 const ui = useUiStore()
+const catStore = useWorkCategoriesStore()
+const { can } = usePermissions()
+
+// manual→catalog (F-739): «+Добавить в каталог» доступно руководству (work_items.create) ИЛИ вводящему-драфту
+// (work_items.propose). BE решает draft/priced по праву.
+const canAddCatalog = computed(() => can('work_items', 'create') || can('work_items', 'propose'))
+const quickAddOpen = ref(false)
+const quickAddName = ref('')
 
 // Строка формы: несёт снапшот пути (section/subcategory) для авто-группировки.
 interface FormLine {
@@ -198,6 +212,7 @@ interface FormLine {
   coeff_scope_section: string    // M4: раздел подраздела-зоны (квалификатор; для section-зоны пусто)
   uid: string                    // Фаза 2: стабильный id строки (для ссылок selection, переживает правку)
   coeff_targets: string[]        // Фаза 2 (scope='selection'): uid выбранных работ
+  is_draft: boolean              // manual→catalog: позиция-драфт без цены (ждёт руководства)
 }
 
 let _uidSeq = 0
@@ -251,20 +266,26 @@ function onSearchPicked(item: WorkItemLite | null) {
     name: item.name, kind: item.kind, unit: item.unit,
     quantity: '1', unit_price: item.default_price || '', position_no: '',
     coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
-    uid: newUid(), coeff_targets: [],
+    uid: newUid(), coeff_targets: [], is_draft: !!item.is_draft,
   })
   clearSearch()
 }
+// manual→catalog (F-739): «свободная строка» отменена — новая позиция идёт СРАЗУ В КАТАЛОГ через quick-add.
 function onSearchCustom(name: string) {
-  // Свободная позиция (нет в каталоге) → группа «Прочее». В каталог добавляют отдельно (Прайс-каталог).
-  lines.value.push({
-    _k: `l${_kSeq++}`, work_item: null, category: null,
-    section_name: '', subcategory_name: '',
-    name, kind: 'work', unit: '', quantity: '1', unit_price: '', position_no: '',
-    coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
-    uid: newUid(), coeff_targets: [],
-  })
+  quickAddName.value = name
+  quickAddOpen.value = true
   nextTick(() => { searchPick.value = null })
+}
+// Позиция создана в каталоге (руководство=с ценой / вводящий=драфт) → добавляем строку (как выбор из каталога).
+function onWorkItemCreated(item: WorkItem) {
+  const cat = catStore.items.find(c => c.id === item.category)
+  const lite: WorkItemLite = {
+    id: item.id, name: item.name, kind: item.kind, kind_display: item.kind_display,
+    unit: item.unit, default_price: item.default_price, category: item.category,
+    section_name: cat?.parent_name || '', subcategory_name: cat?.name || '', is_draft: item.is_draft,
+  }
+  onSearchPicked(lite)
+  quickAddOpen.value = false
 }
 function removeLine(idx: number) {
   lines.value.splice(idx, 1)
@@ -312,6 +333,8 @@ function lineAmountDisplay(line: FormLine): string {
 // #65 Фаза 1: расчёт-зеркало BE (компаундинг коэффициентов). contributions выровнен с lines.value.
 const calcResult = computed(() => computeEstimate(lines.value))
 const clientTotal = computed(() => calcResult.value.total)
+// manual→catalog: сколько строк-драфтов без цены → «предварительный итог».
+const unpricedCount = computed(() => lines.value.filter(l => l.is_draft).length)
 function contributionAt(idx: number): number | null { return calcResult.value.contributions[idx] ?? null }
 // N2 (аудит): показ вклада со знаком (скидка k<1 → отрицательный, красным; не «+−…» зелёным).
 function contribDisplay(idx: number): string {
@@ -547,6 +570,7 @@ async function loadForEdit(id: number) {
       coeff_scope: ln.coeff_scope || '', coeff_scope_name: ln.coeff_scope_name || '',
       coeff_scope_section: ln.coeff_scope_section || '',
       uid: ln.uid || newUid(), coeff_targets: Array.isArray(ln.coeff_targets) ? [...ln.coeff_targets] : [],
+      is_draft: !!ln.is_draft,
     }))
   } catch {
     ui.toast({ type: 'error', text: 'Не удалось загрузить смету' })

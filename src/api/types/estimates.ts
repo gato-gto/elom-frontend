@@ -33,7 +33,9 @@ export interface WorkItem {
   kind: WorkItemKind
   kind_display: string
   unit: string
-  default_price: string | null // decimal as string
+  default_price: string | null // decimal as string; NULL = ДРАФТ (ждёт цены руководства)
+  proposed_by: number | null // manual→catalog: кто предложил драфт (провенанс)
+  is_draft: boolean // = default_price IS NULL (позиция без цены)
   order: number
   is_active: boolean
 }
@@ -60,6 +62,7 @@ export interface WorkItemLite {
   category: number // id подраздела (leaf)
   section_name: string // раздел (верхний уровень)
   subcategory_name: string // подраздел
+  is_draft: boolean // manual→catalog: позиция без цены (ждёт руководства)
 }
 
 // ─────────────────────────── Смета (read) ───────────────────────────
@@ -83,6 +86,7 @@ export interface EstimateLine {
   unit_price: string // decimal as string
   amount: number | null // qty×price; null у коэффициента (не в total)
   contribution: number | null // #65 Фаза 1: вклад коэффициента (calc); null у не-коэфф/не-применённого
+  is_draft: boolean // manual→catalog: строка ссылается на драфт-позицию (без цены; unit_price=0, ждёт руководства)
   order: number
 }
 
@@ -97,7 +101,8 @@ export interface Estimate {
   source_ref: string
   created_by: number | null
   created_by_name: string
-  total: number // Σ amount без коэффициентов
+  total: number // Σ amount без коэффициентов (драфт-строки дают 0)
+  unpriced_lines: number // manual→catalog: сколько строк-драфтов без цены → «предварительный итог»
   lines: EstimateLine[]
   created_at: string
   updated_at: string

@@ -93,7 +93,7 @@
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" />
             </svg>
-            <span class="truncate">Добавить «{{ searchQuery.trim() }}»</span>
+            <span class="truncate">Добавить «{{ searchQuery.trim() }}» в каталог</span>
           </div>
         </button>
       </div>
@@ -212,7 +212,7 @@ async function loadSelectedItem(itemId: number) {
     if (item) {
       // #65: selectedItem — только для отображения выбранного в инпуте; цепочка категории тут не нужна
       // (её несёт @change сырым результатом поиска), поэтому section/subcategory — пустые заглушки.
-      selectedItem.value = { id: item.id, name: item.name, kind: item.kind, kind_display: (item as WorkItem).kind_display, unit: item.unit, default_price: item.default_price, category: (item as WorkItem).category, section_name: '', subcategory_name: '' }
+      selectedItem.value = { id: item.id, name: item.name, kind: item.kind, kind_display: (item as WorkItem).kind_display, unit: item.unit, default_price: item.default_price, category: (item as WorkItem).category, section_name: '', subcategory_name: '', is_draft: !!(item as WorkItem).is_draft }
       searchQuery.value = item.name
       isUserTyping.value = false
     }

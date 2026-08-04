@@ -34,8 +34,8 @@
             <div v-if="sg.subcategory && sg.subcategory !== '—'" class="text-sm font-medium text-muted">{{ sg.subcategory }}</div>
             <div v-for="ln in sg.lines" :key="ln.id" class="bg-base-200/40 rounded-lg p-2">
               <div class="flex justify-between gap-2">
-                <span class="flex-1 min-w-0 text-sm break-words">{{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}</span>
-                <span class="font-mono font-semibold shrink-0">{{ formatNumber(ln.amount || 0) }}</span>
+                <span class="flex-1 min-w-0 text-sm break-words">{{ ln.position_no ? ln.position_no + '. ' : '' }}{{ ln.name }}<span v-if="ln.is_draft" class="badge badge-warning badge-sm ml-1" title="Позиция без цены — ждёт руководства">ждёт цены</span></span>
+                <span class="font-mono font-semibold shrink-0">{{ ln.is_draft ? '—' : formatNumber(ln.amount || 0) }}</span>
               </div>
               <div class="text-xs text-muted mt-0.5">{{ ln.kind_display }} · {{ formatNumberClean(ln.quantity) }} {{ ln.unit }} × {{ formatNumber(ln.unit_price) }}</div>
             </div>
@@ -61,7 +61,7 @@
 
       <div class="card bg-base-100 border border-base-300">
         <div class="card-body flex-row justify-between items-center py-3 px-4">
-          <span class="font-semibold text-lg">ИТОГО</span>
+          <span class="font-semibold text-lg">ИТОГО <span v-if="estimate.unpriced_lines" class="text-xs text-warning font-normal">(предварительный · {{ estimate.unpriced_lines }} без цены)</span></span>
           <span class="font-mono font-semibold text-xl text-success">{{ formatNumber(estimate.total) }}</span>
         </div>
       </div>

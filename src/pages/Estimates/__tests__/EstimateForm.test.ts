@@ -226,6 +226,21 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(cp.coeff_targets).toEqual([w1uid])
   })
 
+  it('#F-739 quick-add: onWorkItemCreated добавляет строку каталожной позиции с флагом драфта', async () => {
+    const vm = mountForm(); await nextTick()
+    const anyVm = vm as unknown as { onWorkItemCreated: (i: Record<string, unknown>) => void; lines: Array<Record<string, unknown>> }
+    // руководство завело с ценой (не драфт)
+    anyVm.onWorkItemCreated({ id: 77, name: 'Новая работа', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '5000', category: 3, is_draft: false })
+    await nextTick()
+    expect(anyVm.lines.length).toBe(1)
+    expect(anyVm.lines[0]).toMatchObject({ work_item: 77, name: 'Новая работа', is_draft: false, unit_price: '5000' })
+    // вводящий завёл драфт (без цены)
+    anyVm.onWorkItemCreated({ id: 78, name: 'Драфт-поз', kind: 'work', kind_display: 'Работа', unit: '', default_price: null, category: 3, is_draft: true })
+    await nextTick()
+    const draft = anyVm.lines.find(l => l.work_item === 78)!
+    expect(draft).toMatchObject({ is_draft: true, unit_price: '' })   // драфт → цена пустая (0/pending)
+  })
+
   it('#65 Ф2-аудит F2-2: пикер selection предлагает только работы (не материалы)', async () => {
     const vm = mountForm(); await nextTick()
     vm.onSearchPicked(lite({ id: 51, name: 'Работа', kind: 'work', unit: 'шт.', default_price: '100', section_name: 'A' }))
