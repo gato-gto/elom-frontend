@@ -184,7 +184,7 @@ import QuickAddWorkItem from '@/components/QuickAddWorkItem.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import Modal from '@/components/Modal.vue'
 import { formatNumber, formatNumberClean, todayLocal, pluralizeRu } from '@/utils/formatters'
-import { computeEstimate } from '@/utils/estimateCalc'
+import { computeEstimate, baseAmount } from '@/utils/estimateCalc'
 import type { WorkItemKind, WorkItemLite, WorkItem, EstimateLineWrite, Estimate } from '@/api/types/estimates'
 import { ACTION_ICONS } from '@/utils/actionIcons'
 
@@ -258,11 +258,9 @@ function onSearchPicked(item: WorkItemLite | null) {
   // D5: гвард двойного клика — тот же item в пределах 500мс игнорируем.
   if (item.id === _lastPickId && Date.now() - _lastPickAt < 500) { clearSearch(); return }
   _lastPickId = item.id; _lastPickAt = Date.now()
-  // D5+D7: позиция уже в смете → +1 к количеству (не новая строка). M5 (аудит): НЕ для коэффициента —
-  // один каталожный коэффициент может понадобиться на РАЗНЫЕ зоны (каждая = своя строка), дедуп их сливал.
-  const existing = item.kind !== 'coefficient'
-    ? lines.value.find(l => l.work_item === item.id)
-    : undefined
+  // D5+D7: позиция уже в смете → +1 к количеству (не новая строка). F-740: коэффициент через поиск
+  // больше не приходит (search excludes coefficient; ad-hoc коэфф — отдельной кнопкой) → гард снят.
+  const existing = lines.value.find(l => l.work_item === item.id)
   if (existing) {
     existing.quantity = String(effQty(existing) + 1)
     ui.toast({ type: 'info', text: `«${item.name}» уже в смете — количество +1` })
@@ -345,7 +343,9 @@ function lineAmount(line: FormLine): number | null {
   if (line.kind === 'coefficient') { return null }
   const p = Math.max(0, parseFloat(line.unit_price || '0'))
   if (isNaN(p)) { return 0 }
-  return Math.round(effQty(line) * p)
+  // MED #2 (аудит A): десятичное HALF_UP (как движок/сервер), НЕ Math.round(float) — иначе подытоги≠ИТОГО
+  // и построчная сумма «прыгает» на 1 после сохранения (0.7×45: float→31, HALF_UP→32).
+  return baseAmount(effQty(line), p)
 }
 function lineAmountDisplay(line: FormLine): string {
   const a = lineAmount(line)
@@ -523,14 +523,13 @@ function buildPayloadLines(): EstimateLineWrite[] {
       coeff_targets: (l.kind === 'coefficient' && l.coeff_scope === 'selection') ? (l.coeff_targets || []) : [],
     }
     if (l.work_item) {
-      base.work_item = l.work_item                    // (а) существующая позиция
+      base.work_item = l.work_item                    // (а) существующая позиция каталога
       base.name = l.name.trim()                       // снапшот-имя явно (историчность, F-929)
-    } else if (l.category && l.name.trim()) {
-      base.category = l.category                       // (б) добавить в каталог
-      base.name = l.name.trim()
-      if (l.unit_price) { base.default_price = String(l.unit_price) }
     } else {
-      base.name = l.name.trim()                        // (в) свободная строка
+      // (в) ad-hoc строка без каталога: коэффициент (имя+множитель) или легаси-свободная.
+      // F-740/F-741: mode-«б» (category+name→BE заводит каталог) удалён — новую позицию заводит quick-add
+      // отдельным POST /work-items/, строка ссылается через work_item; здесь такого пути нет.
+      base.name = l.name.trim()
     }
     return base
   })

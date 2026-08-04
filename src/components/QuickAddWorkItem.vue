@@ -32,9 +32,10 @@
       </div>
 
       <!-- Цена: только руководство (work_items.create). Вводящий (propose) → драфт, цену поставит руководство. -->
+      <!-- F-740: коэффициент не заводится в каталог → тип всегда работа/материал/оборуд., цена целым сумом. -->
       <label v-if="canSetPrice" class="form-control">
-        <span class="label-text text-xs">{{ form.kind === 'coefficient' ? 'Множитель' : 'Цена' }}</span>
-        <input v-model="form.default_price" type="number" :step="form.kind === 'coefficient' ? '0.01' : '1'" min="0" class="input input-bordered input-sm text-right w-full" :placeholder="form.kind === 'coefficient' ? 'напр. 1.5' : 'целый сум'" />
+        <span class="label-text text-xs">Цена</span>
+        <input v-model="form.default_price" type="number" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" />
       </label>
       <div v-else class="text-xs text-warning bg-warning/10 rounded-lg p-2">
         Позиция добавится <b>без цены</b> (черновик) — цену поставит руководство в «Прайс-каталоге».

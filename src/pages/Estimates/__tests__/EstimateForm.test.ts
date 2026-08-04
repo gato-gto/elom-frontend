@@ -122,15 +122,6 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(payload.lines[0].category).toBeUndefined()
   })
 
-  it('режим (б) новая позиция в каталог → category+name, без work_item', async () => {
-    const vm = mountForm(); await nextTick()
-    vm.lines.splice(0, vm.lines.length, line({ category: 2, name: 'Новая работа', kind: 'material', unit: 'м', quantity: '5', unit_price: '250' }))
-    await vm.handleSubmit()
-    const payload = create.mock.calls[0][0]
-    expect(payload.lines[0]).toMatchObject({ category: 2, name: 'Новая работа', quantity: '5', unit_price: '250', default_price: '250' })
-    expect(payload.lines[0].work_item).toBeUndefined()
-  })
-
   it('режим (в) свободная строка → только name', async () => {
     const vm = mountForm(); await nextTick()
     vm.lines.splice(0, vm.lines.length, line({ name: 'Свободная', quantity: '2', unit_price: '500' }))
@@ -224,6 +215,17 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     const cp = create.mock.calls[0][0].lines.find((l: Record<string, unknown>) => l.kind === 'coefficient')
     expect(cp.coeff_scope).toBe('selection')
     expect(cp.coeff_targets).toEqual([w1uid])
+  })
+
+  it('#MED2 (аудит A): построчная сумма формы = десятичное HALF_UP (== движок), не Math.round(float)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 90, unit: 'п.м.', default_price: '45', section_name: 'A', subcategory_name: '' }))
+    ;(vm.lines[0] as Record<string, unknown>).quantity = '0.7'
+    await nextTick()
+    // 0.7×45 = 31.5 → HALF_UP = 32; Math.round(float 31.4999…) дал бы 31 (баг → подытог≠ИТОГО)
+    const sub = vm.groupedLines[0].subgroups[0].subTotal
+    expect(sub).toBe(32)
+    expect(vm.groupedLines[0].sectionTotal).toBe(32)
   })
 
   it('#F-740 ad-hoc коэффициент: addCoeffLine пушит пустую коэфф-строку; validate требует имя+множитель', async () => {

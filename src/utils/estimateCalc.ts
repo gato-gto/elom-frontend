@@ -34,8 +34,9 @@ function halfUpBig(numer: bigint, denom: bigint): number {
   return Number(neg ? -r : r)
 }
 
-// база строки = HALF_UP(qty × price); qty ≤3 знака, price ≤2 знака.
-function baseAmount(qty: number | string, price: number | string): number {
+// база строки = HALF_UP(qty × price); qty ≤3 знака, price ≤2 знака. ЭКСПОРТ — форма (lineAmount) обязана
+// считать построчные суммы/подытоги ТЕМ ЖЕ HALF_UP, что и движок/сервер (иначе подытоги≠ИТОГО, MED #2 аудита).
+export function baseAmount(qty: number | string, price: number | string): number {
   const qi = BigInt(scaledInt(qty, 1000))
   const pi = BigInt(scaledInt(price, 100))
   return halfUpBig(qi * pi, 100000n)
