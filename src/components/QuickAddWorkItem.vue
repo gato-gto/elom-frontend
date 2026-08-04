@@ -118,7 +118,8 @@ async function save() {
   if (canSetPrice.value) { payload.default_price = form.default_price ? String(form.default_price) : null }
   try {
     const created = await itemStore.create(payload) as WorkItem
-    ui.toast({ type: 'success', text: created?.is_draft ? 'Позиция добавлена (черновик, ждёт цены)' : 'Позиция добавлена в каталог' })
+    // F-739: драфт выводим из default_price==null (BE WorkItem-сериализатор is_draft не отдаёт).
+    ui.toast({ type: 'success', text: created?.default_price == null ? 'Позиция добавлена (черновик, ждёт цены)' : 'Позиция добавлена в каталог' })
     emit('created', created)
     emit('update:modelValue', false)
   } catch (e: unknown) {

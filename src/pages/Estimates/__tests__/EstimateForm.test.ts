@@ -245,13 +245,13 @@ describe('EstimateForm — #65 авто-группировка + контрак�
   it('#F-739 quick-add: onWorkItemCreated добавляет строку каталожной позиции с флагом драфта', async () => {
     const vm = mountForm(); await nextTick()
     const anyVm = vm as unknown as { onWorkItemCreated: (i: Record<string, unknown>) => void; lines: Array<Record<string, unknown>> }
-    // руководство завело с ценой (не драфт)
-    anyVm.onWorkItemCreated({ id: 77, name: 'Новая работа', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '5000', category: 3, is_draft: false })
+    // руководство завело с ценой (не драфт) — is_draft НЕ в объекте (BE его не отдаёт) → выводим из default_price
+    anyVm.onWorkItemCreated({ id: 77, name: 'Новая работа', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '5000', category: 3, category_name: 'Прокладка' })
     await nextTick()
     expect(anyVm.lines.length).toBe(1)
     expect(anyVm.lines[0]).toMatchObject({ work_item: 77, name: 'Новая работа', is_draft: false, unit_price: '5000' })
-    // вводящий завёл драфт (без цены)
-    anyVm.onWorkItemCreated({ id: 78, name: 'Драфт-поз', kind: 'work', kind_display: 'Работа', unit: '', default_price: null, category: 3, is_draft: true })
+    // вводящий завёл драфт (без цены = default_price null) → is_draft выводится true, unit_price пустой
+    anyVm.onWorkItemCreated({ id: 78, name: 'Драфт-поз', kind: 'work', kind_display: 'Работа', unit: '', default_price: null, category: 3, category_name: 'Прокладка' })
     await nextTick()
     const draft = anyVm.lines.find(l => l.work_item === 78)!
     expect(draft).toMatchObject({ is_draft: true, unit_price: '' })   // драфт → цена пустая (0/pending)

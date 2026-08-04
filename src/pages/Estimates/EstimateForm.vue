@@ -56,7 +56,7 @@
       </div>
 
       <div v-if="lines.length === 0" class="text-center text-muted py-10 border border-dashed border-base-300 rounded-lg">
-        Пусто — найдите и добавьте позицию через поиск выше
+        Пусто — найдите позицию через поиск выше или добавьте коэффициент кнопкой справа
       </div>
 
       <!-- Группы: Раздел → Подраздел → позиции, с подытогами на обоих уровнях -->
@@ -274,7 +274,8 @@ function onSearchPicked(item: WorkItemLite | null) {
     name: item.name, kind: item.kind, unit: item.unit,
     quantity: '1', unit_price: item.default_price || '', position_no: '',
     coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
-    uid: newUid(), coeff_targets: [], is_draft: !!item.is_draft,
+    // F-739: драфт = позиция без цены (BE-search не отдаёт is_draft → выводим из default_price==null).
+    uid: newUid(), coeff_targets: [], is_draft: item.default_price == null,
   })
   clearSearch()
 }
@@ -290,7 +291,10 @@ function onWorkItemCreated(item: WorkItem) {
   const lite: WorkItemLite = {
     id: item.id, name: item.name, kind: item.kind, kind_display: item.kind_display,
     unit: item.unit, default_price: item.default_price, category: item.category,
-    section_name: cat?.parent_name || '', subcategory_name: cat?.name || '', is_draft: item.is_draft,
+    // section из категорий-стора (загружен quick-add'ом); подраздел с фолбэком на category_name (BE отдаёт),
+    // чтобы новая позиция НЕ улетела в «Прочее» при пустом catStore.
+    section_name: cat?.parent_name || '', subcategory_name: cat?.name || item.category_name || '',
+    is_draft: item.default_price == null,
   }
   onSearchPicked(lite)
   quickAddOpen.value = false

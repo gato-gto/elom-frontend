@@ -212,7 +212,7 @@ async function loadSelectedItem(itemId: number) {
     if (item) {
       // #65: selectedItem — только для отображения выбранного в инпуте; цепочка категории тут не нужна
       // (её несёт @change сырым результатом поиска), поэтому section/subcategory — пустые заглушки.
-      selectedItem.value = { id: item.id, name: item.name, kind: item.kind, kind_display: (item as WorkItem).kind_display, unit: item.unit, default_price: item.default_price, category: (item as WorkItem).category, section_name: '', subcategory_name: '', is_draft: !!(item as WorkItem).is_draft }
+      selectedItem.value = { id: item.id, name: item.name, kind: item.kind, kind_display: (item as WorkItem).kind_display, unit: item.unit, default_price: item.default_price, category: (item as WorkItem).category, section_name: '', subcategory_name: '', is_draft: item.default_price == null }
       searchQuery.value = item.name
       isUserTyping.value = false
     }
