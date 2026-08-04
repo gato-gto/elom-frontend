@@ -46,8 +46,13 @@
         <label class="label"><span class="label-text-alt text-muted">Позиция сама встанет в свой раздел → подраздел. Раздел/подраздел выбирать не нужно.</span></label>
       </div>
 
-      <div class="flex items-center justify-between mt-2">
+      <div class="flex items-center justify-between mt-2 gap-2 flex-wrap">
         <h2 class="text-lg font-semibold">Позиции <span class="text-sm text-muted">({{ lines.length }} {{ pluralizeRu(lines.length, ['строка', 'строки', 'строк']) }})</span></h2>
+        <!-- F-740: коэффициент — ad-hoc строка (имя+множитель), не позиция каталога → добавляется отдельно. -->
+        <button type="button" class="btn btn-sm btn-outline btn-warning gap-1" @click="addCoeffLine">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg>
+          Добавить коэффициент
+        </button>
       </div>
 
       <div v-if="lines.length === 0" class="text-center text-muted py-10 border border-dashed border-base-300 rounded-lg">
@@ -96,8 +101,11 @@
         <div class="card-body p-3 gap-2">
           <div class="font-semibold text-warning">Коэффициенты <span class="text-xs text-muted font-normal">(к работам выбранной зоны; несколько на зону — перемножаются)</span></div>
           <div v-for="{ line, idx } in coeffLines" :key="line._k" class="bg-base-200/40 rounded-lg p-2">
-            <div class="flex items-start gap-2">
-              <span class="flex-1 min-w-0 text-sm break-words">{{ line.name }} <span class="font-mono text-muted">×{{ formatNumberClean(line.unit_price || '1') }}</span></span>
+            <!-- F-740: ad-hoc коэффициент — имя + множитель редактируемы (не из каталога). -->
+            <div class="flex items-center gap-1.5">
+              <input v-model="line.name" type="text" maxlength="256" class="input input-bordered input-sm flex-1 min-w-0" :class="{ 'input-error': lineErrors[idx]?.coeff }" placeholder="Название коэффициента" aria-label="Название коэффициента" />
+              <span class="text-muted">×</span>
+              <input v-model="line.unit_price" type="number" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.coeff }" placeholder="1.5" aria-label="Множитель" />
               <button type="button" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить коэффициент" title="Удалить" @click="removeLine(idx)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg>
               </button>
@@ -287,6 +295,16 @@ function onWorkItemCreated(item: WorkItem) {
   onSearchPicked(lite)
   quickAddOpen.value = false
 }
+// F-740: ad-hoc коэффициент (не позиция каталога) — пустая строка kind=coefficient, имя+множитель вводятся вручную.
+function addCoeffLine() {
+  lines.value.push({
+    _k: `l${_kSeq++}`, work_item: null, category: null,
+    section_name: '', subcategory_name: '',
+    name: '', kind: 'coefficient', unit: 'коэф.', quantity: '1', unit_price: '', position_no: '',
+    coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
+    uid: newUid(), coeff_targets: [], is_draft: false,
+  })
+}
 function removeLine(idx: number) {
   lines.value.splice(idx, 1)
   const remapped: Record<number, Record<string, string>> = {}
@@ -464,18 +482,22 @@ function validate(): boolean {
   if (lines.value.length === 0) { formError.value = 'Добавьте хотя бы одну позицию'; ok = false }
   lines.value.forEach((l, i) => {
     const errs: Record<string, string> = {}
-    if (!l.work_item && !l.name.trim()) { errs.name = 'Укажите позицию' }
-    const q = parseFloat(l.quantity || '')
-    if (l.quantity === '' || isNaN(q) || q < 0) { errs.quantity = 'Кол-во ≥ 0' }
-    if (l.unit_price !== '' && l.unit_price != null) {
-      const p = parseFloat(String(l.unit_price))
-      if (isNaN(p) || p < 0) { errs.unit_price = 'Цена ≥ 0' }
-    }
-    // #65 Фаза 1 (аудит A#6): коэффициент без выбранной зоны инертен — не пускаем сабмит.
-    if (l.kind === 'coefficient' && !l.coeff_scope) { errs.coeff = 'Выберите зону коэффициента'; ok = false }
-    // Фаза 2: selection без выбранных работ — блок сабмита.
-    if (l.kind === 'coefficient' && l.coeff_scope === 'selection' && l.coeff_targets.length === 0) {
-      errs.coeff = 'Выберите хотя бы одну позицию'; ok = false
+    if (l.kind === 'coefficient') {
+      // F-740: ad-hoc коэффициент — имя + множитель>0 (все ошибки в errs.coeff, коэфф-блок рендерит его).
+      if (!l.name.trim()) { errs.coeff = 'Укажите название коэффициента'; ok = false }
+      else if (!(parseFloat(l.unit_price || '0') > 0)) { errs.coeff = 'Множитель должен быть больше 0'; ok = false }
+      // #65 Фаза 1 (аудит A#6): без выбранной зоны коэффициент инертен.
+      else if (!l.coeff_scope) { errs.coeff = 'Выберите зону коэффициента'; ok = false }
+      // Фаза 2: selection без выбранных работ.
+      else if (l.coeff_scope === 'selection' && l.coeff_targets.length === 0) { errs.coeff = 'Выберите хотя бы одну позицию'; ok = false }
+    } else {
+      if (!l.work_item && !l.name.trim()) { errs.name = 'Укажите позицию' }
+      const q = parseFloat(l.quantity || '')
+      if (l.quantity === '' || isNaN(q) || q < 0) { errs.quantity = 'Кол-во ≥ 0' }
+      if (l.unit_price !== '' && l.unit_price != null) {
+        const p = parseFloat(String(l.unit_price))
+        if (isNaN(p) || p < 0) { errs.unit_price = 'Цена ≥ 0' }
+      }
     }
     if (Object.keys(errs).length) { lineErrors.value[i] = errs; ok = false }
   })

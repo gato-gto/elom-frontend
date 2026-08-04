@@ -226,6 +226,22 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(cp.coeff_targets).toEqual([w1uid])
   })
 
+  it('#F-740 ad-hoc коэффициент: addCoeffLine пушит пустую коэфф-строку; validate требует имя+множитель', async () => {
+    const vm = mountForm(); await nextTick()
+    const anyVm = vm as unknown as { addCoeffLine: () => void; lines: Array<Record<string, unknown>> }
+    anyVm.addCoeffLine(); await nextTick()
+    expect(anyVm.lines.length).toBe(1)
+    expect(anyVm.lines[0]).toMatchObject({ kind: 'coefficient', work_item: null, category: null, unit: 'коэф.', unit_price: '', coeff_scope: '' })
+    // пустой коэфф (без имени/множителя/зоны) не сабмитится
+    await vm.handleSubmit()
+    expect(create).not.toHaveBeenCalled()
+    // заполнили имя+множитель, но без зоны — всё равно не сабмит (зона обязательна)
+    ;(anyVm.lines[0] as Record<string, unknown>).name = 'Ночная'
+    ;(anyVm.lines[0] as Record<string, unknown>).unit_price = '1.5'
+    await vm.handleSubmit()
+    expect(create).not.toHaveBeenCalled()
+  })
+
   it('#F-739 quick-add: onWorkItemCreated добавляет строку каталожной позиции с флагом драфта', async () => {
     const vm = mountForm(); await nextTick()
     const anyVm = vm as unknown as { onWorkItemCreated: (i: Record<string, unknown>) => void; lines: Array<Record<string, unknown>> }
