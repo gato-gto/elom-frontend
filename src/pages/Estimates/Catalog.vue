@@ -9,6 +9,10 @@
     <!-- Панель: поиск позиции + добавить раздел -->
     <div class="flex flex-wrap gap-2 items-center mb-3">
       <input v-model="search" type="search" placeholder="Поиск позиции…" class="input input-bordered input-sm flex-1 min-w-[180px]" aria-label="Поиск позиции" />
+      <!-- manual→catalog: показать только черновики (без цены) — руководство дозаполняет цену -->
+      <label class="btn btn-sm gap-2" :class="draftOnly ? 'btn-warning' : 'btn-ghost'">
+        <input v-model="draftOnly" type="checkbox" class="checkbox checkbox-xs" /> Черновики
+      </label>
       <button v-if="canCreateCat" class="btn btn-sm btn-primary" @click="openAddRoot">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg>
         <span class="ml-1">Раздел</span>
@@ -58,13 +62,13 @@
                 <div class="flex-1 min-w-0">
                   <div class="truncate">{{ p.name }}</div>
                   <!-- моб: мета одной строкой под именем (имя получает всю ширину) -->
-                  <div class="text-xs text-muted sm:hidden mt-0.5">{{ p.kind_display }} · {{ p.unit || '—' }} · <span class="font-mono">{{ p.default_price ? formatNumber(p.default_price) : 'НЗ' }}</span></div>
+                  <div class="text-xs text-muted sm:hidden mt-0.5">{{ p.kind_display }} · {{ p.unit || '—' }} · <span v-if="p.default_price" class="font-mono">{{ formatNumber(p.default_price) }}</span><span v-else class="badge badge-warning badge-xs">ждёт цены</span></div>
                 </div>
                 <!-- desktop: колонки (контейнер hidden sm:flex — надёжно прячет на мобиле, без CSS-конфликта .badge) -->
                 <div class="hidden sm:flex items-center gap-2 shrink-0">
                   <span class="badge badge-ghost badge-sm">{{ p.kind_display }}</span>
                   <span class="text-xs text-muted w-12 text-right">{{ p.unit || '—' }}</span>
-                  <span class="font-mono text-xs w-24 text-right">{{ p.default_price ? formatNumber(p.default_price) : 'НЗ' }}</span>
+                  <span class="text-xs w-24 text-right"><span v-if="p.default_price" class="font-mono">{{ formatNumber(p.default_price) }}</span><span v-else class="badge badge-warning badge-sm">ждёт цены</span></span>
                 </div>
                 <button v-if="canEditItem" class="btn btn-ghost btn-square row-action-btn shrink-0" aria-label="Изменить позицию" title="Изменить" @click="openItemForm(p, sub.id)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
                 <button v-if="canDeleteItem" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить позицию" title="Удалить" @click="deleteItem(p)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
@@ -154,6 +158,8 @@ const canDeleteItem = computed(() => can('work_items', 'delete'))
 
 const loading = computed(() => catStore.loading || itemStore.loading)
 const search = ref('')
+// manual→catalog (F-739): фильтр черновиков (позиции без цены, заведённые вводящим) — руководство дозаполняет.
+const draftOnly = ref(false)
 
 // ── дерево на клиенте: разделы(parent==null) → подразделы(parent==root) → позиции(itemsByCategory) ──
 const byOrder = (a: { order?: number; name: string }, b: { order?: number; name: string }) =>
@@ -167,20 +173,22 @@ const itemsByCategory = computed<Record<number, WorkItem[]>>(() => {
 
 const visibleTree = computed(() => {
   const q = search.value.trim().toLowerCase()
+  const active = !!q || draftOnly.value
   const roots = catStore.items.filter(c => c.parent == null).slice().sort(byOrder)
   return roots
     .map(root => {
       const subsRaw = catStore.items.filter(c => c.parent === root.id).slice().sort(byOrder)
       const subs = subsRaw.map(sub => {
         const all = (itemsByCategory.value[sub.id] || []).slice().sort(byOrder)
-        const positions = q ? all.filter(p => p.name.toLowerCase().includes(q)) : all
+        let positions = q ? all.filter(p => p.name.toLowerCase().includes(q)) : all
+        if (draftOnly.value) { positions = positions.filter(p => p.default_price == null) }
         return { ...sub, positions, allCount: all.length }
       })
-      const filteredSubs = q ? subs.filter(s => s.positions.length) : subs
+      const filteredSubs = active ? subs.filter(s => s.positions.length) : subs
       const posCount = subs.reduce((n, s) => n + s.allCount, 0)
       return { ...root, subs: filteredSubs, posCount }
     })
-    .filter(root => (q ? root.subs.length > 0 : true))
+    .filter(root => (active ? root.subs.length > 0 : true))
 })
 
 // разворот: при активном поиске всё с совпадениями раскрыто; иначе — по клику
