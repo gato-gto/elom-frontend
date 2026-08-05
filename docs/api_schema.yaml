@@ -7730,9 +7730,10 @@ paths:
     get:
       operationId: work_items_list
       description: |-
-        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
-        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
-        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): правит/удаляет ТОЛЬКО руководство
+        (work_items.edit/delete); просмотр — всем (work_items.view). Создание (POST): руководство
+        (work_items.create) — С ЦЕНОЙ; вводящий (work_items.propose, F-739 Фаза 2) — ДРАФТ без цены
+        (default_price=NULL, proposed_by; цену ставит руководство). Коэффициент — не позиция каталога (F-740).
       parameters:
       - in: query
         name: category
@@ -7784,9 +7785,10 @@ paths:
     post:
       operationId: work_items_create
       description: |-
-        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
-        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
-        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): правит/удаляет ТОЛЬКО руководство
+        (work_items.edit/delete); просмотр — всем (work_items.view). Создание (POST): руководство
+        (work_items.create) — С ЦЕНОЙ; вводящий (work_items.propose, F-739 Фаза 2) — ДРАФТ без цены
+        (default_price=NULL, proposed_by; цену ставит руководство). Коэффициент — не позиция каталога (F-740).
       tags:
       - work-items
       requestBody:
@@ -7814,9 +7816,10 @@ paths:
     get:
       operationId: work_items_retrieve
       description: |-
-        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
-        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
-        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): правит/удаляет ТОЛЬКО руководство
+        (work_items.edit/delete); просмотр — всем (work_items.view). Создание (POST): руководство
+        (work_items.create) — С ЦЕНОЙ; вводящий (work_items.propose, F-739 Фаза 2) — ДРАФТ без цены
+        (default_price=NULL, proposed_by; цену ставит руководство). Коэффициент — не позиция каталога (F-740).
       parameters:
       - in: path
         name: id
@@ -7838,9 +7841,10 @@ paths:
     put:
       operationId: work_items_update
       description: |-
-        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
-        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
-        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): правит/удаляет ТОЛЬКО руководство
+        (work_items.edit/delete); просмотр — всем (work_items.view). Создание (POST): руководство
+        (work_items.create) — С ЦЕНОЙ; вводящий (work_items.propose, F-739 Фаза 2) — ДРАФТ без цены
+        (default_price=NULL, proposed_by; цену ставит руководство). Коэффициент — не позиция каталога (F-740).
       parameters:
       - in: path
         name: id
@@ -7874,9 +7878,10 @@ paths:
     patch:
       operationId: work_items_partial_update
       description: |-
-        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
-        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
-        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): правит/удаляет ТОЛЬКО руководство
+        (work_items.edit/delete); просмотр — всем (work_items.view). Создание (POST): руководство
+        (work_items.create) — С ЦЕНОЙ; вводящий (work_items.propose, F-739 Фаза 2) — ДРАФТ без цены
+        (default_price=NULL, proposed_by; цену ставит руководство). Коэффициент — не позиция каталога (F-740).
       parameters:
       - in: path
         name: id
@@ -7909,9 +7914,10 @@ paths:
     delete:
       operationId: work_items_destroy
       description: |-
-        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): добавляет/правит/удаляет ТОЛЬКО
-        руководство (work_items.create/edit/delete); просмотр — всем (work_items.view). Вводящий (бригадир)
-        выбирает готовые позиции в сметах, но НЕ заводит их (ни прямо, ни вложенно через смету).
+        Позиции прайса (каталог). D9 (F-951/F-735, LIVE 2026-08-03): правит/удаляет ТОЛЬКО руководство
+        (work_items.edit/delete); просмотр — всем (work_items.view). Создание (POST): руководство
+        (work_items.create) — С ЦЕНОЙ; вводящий (work_items.propose, F-739 Фаза 2) — ДРАФТ без цены
+        (default_price=NULL, proposed_by; цену ставит руководство). Коэффициент — не позиция каталога (F-740).
       parameters:
       - in: path
         name: id
@@ -8781,15 +8787,17 @@ components:
           type: string
         source_ref:
           type: string
-          readOnly: true
+          maxLength: 255
         created_by:
           type: integer
-          readOnly: true
           nullable: true
         created_by_name:
           type: string
           readOnly: true
         total:
+          type: string
+          readOnly: true
+        unpriced_lines:
           type: string
           readOnly: true
         lines:
@@ -8807,14 +8815,13 @@ components:
           readOnly: true
       required:
       - created_at
-      - created_by
       - created_by_name
       - id
       - lines
       - object
       - object_name
-      - source_ref
       - total
+      - unpriced_lines
       - updated_at
     EstimateCreate:
       type: object
@@ -8926,6 +8933,9 @@ components:
         contribution:
           type: string
           readOnly: true
+        is_draft:
+          type: string
+          readOnly: true
         order:
           type: integer
           maximum: 2147483647
@@ -8934,6 +8944,7 @@ components:
       - amount
       - contribution
       - id
+      - is_draft
       - kind_display
       - name
     EstimateLineWrite:
