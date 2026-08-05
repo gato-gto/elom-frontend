@@ -119,8 +119,8 @@ describe('formatNumber', () => {
   })
 
   it('handles string numbers', () => {
-    const result = formatNumber('1234.56')
-    expect(result).toBeTruthy()
+    // ru-RU по спеке Intl: NBSP-разделитель тысяч + запятая-десятичная, ≤2 знака → «1 234,56»
+    expect(formatNumber('1234.56')).toMatch(/1\s234,56/)
   })
 
   it('handles invalid values', () => {
@@ -144,7 +144,8 @@ describe('formatCurrency', () => {
 
   it('handles string numbers', () => {
     const result = formatCurrency('1234.56')
-    expect(result).toBeTruthy()
+    expect(result).toMatch(/1\s234/) // строку распарсило и разделило тысячи (NBSP)
+    expect(result).toMatch(/UZS/i)   // и оформило как валюту UZS
   })
 
   it('handles invalid values', () => {
@@ -154,7 +155,9 @@ describe('formatCurrency', () => {
 
   it('formats zero correctly', () => {
     const result = formatCurrency(0)
-    expect(result).toBeTruthy()
+    expect(result).not.toBe('—')  // 0 — валидная сумма, НЕ пусто (частый баг: ноль → «—»)
+    expect(result).toMatch(/0/)   // содержит цифру ноль
+    expect(result).toMatch(/UZS/i)
   })
 })
 
