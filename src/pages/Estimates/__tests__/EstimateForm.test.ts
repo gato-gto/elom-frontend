@@ -244,6 +244,26 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(create).not.toHaveBeenCalled()
   })
 
+  it('#F-742-harden ad-hoc коэфф END-TO-END: add→имя/множитель/зона→payload kind=coefficient без каталога', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 70, name: 'Монтаж', unit: 'шт.', default_price: '100000', section_name: 'Монтаж', subcategory_name: '' }))
+    const anyVm = vm as unknown as { addCoeffLine: () => void; coeffLines: Array<{ line: Record<string, unknown> }>; onScopeChange: (l: Record<string, unknown>, v: string) => void }
+    anyVm.addCoeffLine(); await nextTick()
+    const c = anyVm.coeffLines[0].line
+    c.name = 'Ночная надбавка'; c.unit_price = '1.5'
+    const sep = String.fromCharCode(1)
+    anyVm.onScopeChange(c, 'section' + sep + sep + 'Монтаж')   // scope=section, section='', name=Монтаж
+    await nextTick()
+    await vm.handleSubmit()
+    const payload = create.mock.calls[0][0]
+    const cp = payload.lines.find((l: Record<string, unknown>) => l.kind === 'coefficient')
+    expect(cp).toMatchObject({ kind: 'coefficient', name: 'Ночная надбавка', unit_price: '1.5', coeff_scope: 'section', coeff_scope_name: 'Монтаж' })
+    expect(cp.work_item).toBeUndefined()      // ad-hoc: НЕ ссылается на каталог
+    expect(cp.category).toBeUndefined()        // и не заводит каталог
+    // работа тоже в payload; ИТОГО-эффект: коэфф ×1.5 на «Монтаж» 100k → сервер посчитает вклад
+    expect(payload.lines.some((l: Record<string, unknown>) => l.work_item === 70)).toBe(true)
+  })
+
   it('#F-739 quick-add: onWorkItemCreated добавляет строку каталожной позиции с флагом драфта', async () => {
     const vm = mountForm(); await nextTick()
     const anyVm = vm as unknown as { onWorkItemCreated: (i: Record<string, unknown>) => void; lines: Array<Record<string, unknown>> }

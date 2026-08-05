@@ -48,4 +48,27 @@ describe('EstimateInfo — #65 группировка просмотра', () =>
     expect(w.text()).toContain('Монтажные работы')
     expect(w.text()).toContain('Прокладка кабеля')
   })
+
+  it('#F-742-harden: драфт-строка → бейдж «ждёт цены» + ИТОГО «предварительный»', async () => {
+    fetchOne.mockResolvedValueOnce({ ...EST, unpriced_lines: 1, lines: [
+      line({ id: 10, name: 'Драфт-позиция', work_item: 55, section_name: 'Монтажные работы', subcategory_name: 'Прокладка кабеля', amount: 0, is_draft: true }),
+    ] })
+    const w = mount(EstimateInfo)
+    await nextTick(); await nextTick()
+    const html = w.html()
+    expect(html).toContain('ждёт цены')      // бейдж драфта на строке
+    expect(html).toContain('предварительный') // подпись ИТОГО (unpriced_lines>0)
+  })
+
+  it('#F-742-harden: коэффициент со scope и contribution → показ вклада + подпись зоны', async () => {
+    fetchOne.mockResolvedValueOnce({ ...EST, lines: [
+      line({ id: 1, name: 'Монтаж', section_name: 'Монтаж', subcategory_name: '', amount: 100000 }),
+      line({ id: 2, name: 'Ночная', kind: 'coefficient', amount: null, contribution: 50000, coeff_scope: 'section', coeff_scope_name: 'Монтаж' }),
+    ] })
+    const w = mount(EstimateInfo)
+    await nextTick(); await nextTick()
+    const html = w.html()
+    expect(html).toContain('Коэффициенты')   // отдельный блок
+    expect(html).toContain('раздел: Монтаж')  // подпись зоны (scopeText)
+  })
 })
