@@ -51,8 +51,11 @@ describe('GenericList', () => {
     ],
     filters: [
       {
+        // FilterType не содержит 'input' (это тип FormField, не фильтра) — текстовый фильтр = 'text',
+        // иначе FilterField не рендерит поле ввода. Прежний 'input' был дефектом мока: search-инпут
+        // не рисовался, а слабый html()).toBeTruthy() этого не ловил.
         key: 'search',
-        type: 'input',
+        type: 'text',
         label: 'Search',
         placeholder: 'Search...',
         order: 1
@@ -145,8 +148,10 @@ describe('GenericList', () => {
       }
     })
 
-    // Проверяем наличие поиска (может быть через composable)
-    expect(wrapper.html()).toBeTruthy()
+    // Текстовый фильтр 'search' рендерится как <input> с placeholder из конфига (FilterField).
+    const searchInput = wrapper.find('input.filter-input')
+    expect(searchInput.exists()).toBe(true)
+    expect(searchInput.attributes('placeholder')).toBe('Search...')
   })
 
   it('renders filter panel when showFilters is true', () => {
@@ -160,8 +165,10 @@ describe('GenericList', () => {
       }
     })
 
-    // Проверяем наличие фильтров
-    expect(wrapper.html()).toBeTruthy()
+    // Панель фильтров рендерит select-фильтр 'status' с его опциями (FilterPanel → FilterField).
+    const statusSelect = wrapper.find('select.filter-select')
+    expect(statusSelect.exists()).toBe(true)
+    expect(statusSelect.findAll('option').map(o => o.text())).toEqual(['Active', 'Inactive'])
   })
 
   it('renders table with correct columns', () => {
@@ -210,22 +217,26 @@ describe('GenericList', () => {
     expect(buttons.length).toBeGreaterThan(0)
   })
 
-  it('renders pagination when showPagination is true', () => {
+  it('renders pagination controls when there are multiple pages', () => {
+    // ModernPagination рендерит контейнер ТОЛЬКО при totalPages>1. В базовом моке count=2/pageSize=20 →
+    // 1 страница → пагинация не рисуется. Даём count=50 (items те же 2) → 3 страницы → контролы видны.
+    const pagedStore = { ...mockStore, pagination: { ...mockStore.pagination, count: 50 } }
     const wrapper = mount(GenericList, {
       props: {
         config: mockConfig,
-        store: mockStore as any,
+        store: pagedStore as any,
         onAction: vi.fn(),
         onBulkAction: vi.fn(),
         onExport: vi.fn()
       }
     })
 
-    // Проверяем наличие пагинации
-    expect(wrapper.html()).toBeTruthy()
+    expect(wrapper.find('.modern-pagination-container').exists()).toBe(true)
+    expect(wrapper.text()).toContain('из 50 записей')   // счётчик пагинации от totalItems
   })
 
   it('shows loading state correctly', () => {
+    // loading + уже есть данные (items>0) → overlay-скелет «Обновление данных…» поверх таблицы.
     const loadingStore = { ...mockStore, loading: true }
     const wrapper = mount(GenericList, {
       props: {
@@ -237,7 +248,8 @@ describe('GenericList', () => {
       }
     })
 
-    expect(wrapper.html()).toBeTruthy()
+    expect(wrapper.find('.loading-overlay').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Обновление данных')
   })
 
   it('shows error state correctly', () => {
