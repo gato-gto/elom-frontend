@@ -87,18 +87,21 @@ export const getBrigadierOptions = () => {
 }
 
 /**
- * ✅ RBAC: Получить сотрудников, которые могут быть ответственными
- * (бригадиры и администраторы)
+ * ✅ RBAC: Получить сотрудников, которые могут быть ответственными.
+ * brigadierOnly=true → ТОЛЬКО бригадиры (инвариант F-184: ответственный ОБЪЕКТА/закупки = бригадир;
+ * BE common/serializers.py validate_responsible принимает лишь brigadier → иначе FE предлагал бы админа,
+ * а BE давал бы 400). brigadierOnly=false (дефолт) → бригадиры И админы (WriteOff: BE админа допускает,
+ * на проде есть такой ответственный — не ломаем).
  *
- * Используется в формах для выбора ответственного лица
+ * Используется в формах для выбора ответственного лица.
  */
-export const getResponsibleEmployees = () => {
+export const getResponsibleEmployees = (brigadierOnly = false) => {
   const store = useEmployeesStore()
   return store.items.filter((item: Employee) => {
     if (!item.is_active) {return false}
     // ✅ RBAC: Проверяем только через roles (legacy поле role удалено)
     if (item.roles && item.roles.length > 0) {
-      return item.roles.some(r => r.name === 'brigadier' || r.name === 'admin')
+      return item.roles.some(r => r.name === 'brigadier' || (!brigadierOnly && r.name === 'admin'))
     }
     return false  // ✅ Если нет RBAC ролей, возвращаем false (legacy поле role удалено)
   })
@@ -117,11 +120,11 @@ export const getResponsibleOptions = () => {
 /**
  * ✅ RBAC: Проверить, может ли сотрудник быть ответственным
  */
-export const canBeResponsible = (employee: Employee): boolean => {
+export const canBeResponsible = (employee: Employee, brigadierOnly = false): boolean => {
   if (!employee.is_active) {return false}
   // ✅ RBAC: Проверяем только через roles (legacy поле role удалено)
   if (employee.roles && employee.roles.length > 0) {
-    return employee.roles.some(r => r.name === 'brigadier' || r.name === 'admin')
+    return employee.roles.some(r => r.name === 'brigadier' || (!brigadierOnly && r.name === 'admin'))
   }
   return false  // ✅ Если нет RBAC ролей, возвращаем false (legacy поле role удалено)
 }

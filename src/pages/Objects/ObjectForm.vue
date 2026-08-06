@@ -71,6 +71,8 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       options: employeeOptions.value,
       order: 2,
       width: 'half',
+      // Аудит A1 / инвариант: у объекта ОБЯЗАН быть ответственный (нельзя сохранить без него).
+      required: true,
       // Для бригадиров поле заблокировано - они всегда ответственные за свои объекты
       disabled: isLimitedAccess.value,
       help: isLimitedAccess.value ? 'Вы автоматически назначены ответственным за этот объект' : undefined
@@ -224,8 +226,9 @@ const employeeOptions = computed(() => {
 
   const allEmployees = employeesStore.items
 
-  // Используем централизованную функцию для получения ответственных
-  const options = getResponsibleEmployees()
+  // Используем централизованную функцию; brigadierOnly=true — ответственный ОБЪЕКТА только бригадир
+  // (инвариант F-184; BE validate_responsible иначе даёт 400 на админа — аудит B1).
+  const options = getResponsibleEmployees(true)
     .map((emp: any) => ({
       value: Number(emp.profile_id),
       label: `${emp.first_name} ${emp.last_name}`.trim() || emp.username
