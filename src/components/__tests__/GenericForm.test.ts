@@ -1,54 +1,68 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import GenericForm from '../GenericForm.vue'
 import type { GenericFormConfig } from '@/types/generic'
 
-// Mock composables
+// F-975 (тест-мутация-аудит): раньше композаблы мокались плоскими {value:…} — Vue-шаблон разворачивает
+// ТОЛЬКО настоящие ref/computed (реальные useGenericForm.ts:303/313 отдают computed), поэтому `v-for in
+// sections` итерировал объект, section.title=undefined → секции/поля ВООБЩЕ не рендерились, а 3 теста были
+// зелёными лишь на html()).toBeTruthy(). Теперь мок отдаёт настоящие ref. ctrl.isSubmitting — управляемое
+// состояние отправки (компонент НЕ имеет пропа loading; loading-UI гонится isSubmitting из композабла).
 const mockSubmit = vi.fn()
 const mockReset = vi.fn()
 const mockSetFieldValue = vi.fn()
 const mockGetFieldError = vi.fn(() => '')
 const mockClearErrors = vi.fn()
-const mockGetSectionFields = vi.fn((index: number) => {
-  if (index === 0) {
-    return [
-      { key: 'name', type: 'input', label: 'Name', required: true, order: 1 },
-      { key: 'email', type: 'email', label: 'Email', required: true, order: 2 }
-    ]
+const ctrl = vi.hoisted(() => ({ isSubmitting: false }))
+const defaultSectionFields = (index: number) =>
+  index === 0
+    ? [
+        { key: 'name', type: 'input', label: 'Name', required: true, order: 1 },
+        { key: 'email', type: 'email', label: 'Email', required: true, order: 2 },
+      ]
+    : []
+const mockGetSectionFields = vi.fn(defaultSectionFields)
+
+vi.mock('@/composables/useGenericForm', async () => {
+  const { ref, computed } = await import('vue')
+  return {
+    useGenericForm: () => ({
+      form: ref({ name: '', email: '' }),
+      errors: ref({}),
+      isSubmitting: computed(() => ctrl.isSubmitting),
+      isDirty: ref(false),
+      isValid: ref(true),
+      submit: mockSubmit,
+      reset: mockReset,
+      setFieldValue: mockSetFieldValue,
+      getFieldError: mockGetFieldError,
+      clearErrors: mockClearErrors,
+    }),
+    useFormSections: () => ({
+      activeSection: ref(0),
+      sections: ref([
+        { title: 'Basic Info', description: 'Basic information section', fields: ['name', 'email'], order: 1 },
+      ]),
+      currentSection: ref({ title: 'Basic Info', description: 'Basic information section', fields: ['name', 'email'], order: 1 }),
+      sectionErrors: ref({}),
+      hasSectionErrors: ref(false),
+      nextSection: vi.fn(),
+      previousSection: vi.fn(),
+      goToSection: vi.fn(),
+      getSectionFields: mockGetSectionFields,
+      validateSection: vi.fn(() => true),
+    }),
   }
-  return []
 })
 
-vi.mock('@/composables/useGenericForm', () => ({
-  useGenericForm: () => ({
-    form: { value: { name: '', email: '' } },
-    errors: { value: {} },
-    isSubmitting: { value: false },
-    isDirty: { value: false },
-    isValid: { value: true },
-    submit: mockSubmit,
-    reset: mockReset,
-    setFieldValue: mockSetFieldValue,
-    getFieldError: mockGetFieldError,
-    clearErrors: mockClearErrors
-  }),
-  useFormSections: () => ({
-    activeSection: { value: 0 },
-    sections: { value: [
-      { title: 'Basic Info', description: 'Basic information section', fields: ['name', 'email'], order: 1 }
-    ] },
-    currentSection: { value: { title: 'Basic Info', description: 'Basic information section', fields: ['name', 'email'], order: 1 } },
-    sectionErrors: { value: {} },
-    hasSectionErrors: { value: false },
-    nextSection: vi.fn(),
-    previousSection: vi.fn(),
-    goToSection: vi.fn(),
-    getSectionFields: mockGetSectionFields,
-    validateSection: vi.fn(() => true)
-  })
-}))
-
 describe('GenericForm', () => {
+  // Изоляция под shuffle: сбрасываем управляемое состояние и импл getSectionFields перед каждым тестом.
+  beforeEach(() => {
+    ctrl.isSubmitting = false
+    mockSubmit.mockReset()
+    mockGetSectionFields.mockImplementation(defaultSectionFields)
+  })
+
   const mockConfig: GenericFormConfig<any> = {
     title: 'Test Form',
     subtitle: 'Test subtitle',
@@ -83,146 +97,81 @@ describe('GenericForm', () => {
     showCancel: true
   }
 
-  it('renders form with correct title and subtitle', () => {
-    const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit: vi.fn(),
-        onCancel: vi.fn()
-      }
-    })
-
-    // Компонент рендерит секции как карточки, заголовок в card-title
-    // Проверяем, что компонент рендерится
-    expect(wrapper.html()).toBeTruthy()
-    expect(wrapper.find('form').exists()).toBe(true)
-    // Проверяем, что форма содержит контент (секции или поля)
-    expect(wrapper.html().length).toBeGreaterThan(0)
+  const mountForm = (overrides = {}) => mount(GenericForm, {
+    props: { config: mockConfig, initialData: {}, onSubmit: vi.fn(), onCancel: vi.fn(), ...overrides },
   })
 
-  it('renders sections correctly', () => {
-    const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit: vi.fn(),
-        onCancel: vi.fn()
-      }
-    })
-
-    // Проверяем, что компонент рендерится
-    expect(wrapper.html()).toBeTruthy()
+  it('renders the form element and the section heading', () => {
+    const wrapper = mountForm()
+    // config.title/subtitle в секционном режиме НЕ рендерятся компонентом (их даёт обёртка-страница);
+    // видимый заголовок формы = section.title в <h2 class="card-title">.
     expect(wrapper.find('form').exists()).toBe(true)
-    // Проверяем, что форма содержит контент (секции или поля)
-    expect(wrapper.html().length).toBeGreaterThan(0)
+    expect(wrapper.find('h2.card-title').text()).toBe('Basic Info')
   })
 
-  it('renders submit and cancel buttons', () => {
-    const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit: vi.fn(),
-        onCancel: vi.fn()
-      }
-    })
+  it('renders section heading, description and its fields', () => {
+    const wrapper = mountForm()
+    expect(wrapper.find('h2.card-title').text()).toBe('Basic Info')
+    expect(wrapper.text()).toContain('Basic information section')      // section.description
+    // getSectionFields(0) → name(input)+email(email) → FormField рисует по одному <input> на поле.
+    expect(wrapper.findAll('input').length).toBeGreaterThanOrEqual(2)
+  })
 
-    const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBeGreaterThanOrEqual(1)
-    // Кнопки могут быть в разном порядке, проверяем наличие обеих
-    const buttonTexts = buttons.map(b => b.text())
-    // Проверяем наличие кнопки Cancel или кнопки Submit
-    const hasCancel = buttonTexts.some(t => t.includes('Cancel') || t.includes('Отмена'))
-    const hasSubmit = buttonTexts.some(t => t.includes('Save') || t.includes('Сохранить') || t.includes('Сохранение'))
-    expect(hasCancel || hasSubmit).toBe(true)
+  it('renders both submit and cancel buttons with their labels', () => {
+    const wrapper = mountForm()
+    const buttonTexts = wrapper.findAll('button').map(b => b.text())
+    // раньше был слабый hasCancel || hasSubmit — обе кнопки ОБЯЗАНЫ присутствовать.
+    expect(buttonTexts.some(t => t.includes('Cancel'))).toBe(true)
+    expect(buttonTexts.some(t => t.includes('Save'))).toBe(true)
   })
 
   it('emits submit event when form is submitted', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined)
     mockSubmit.mockResolvedValue(undefined)
-    
-    const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit,
-        onCancel: vi.fn()
-      }
-    })
+
+    const wrapper = mountForm({ onSubmit })
 
     await wrapper.find('form').trigger('submit')
     await wrapper.vm.$nextTick()
-    
+
     expect(mockSubmit).toHaveBeenCalled()
   })
 
   it('emits cancel event when cancel button is clicked', async () => {
     const onCancel = vi.fn()
-    const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit: vi.fn(),
-        onCancel
-      }
-    })
+    const wrapper = mountForm({ onCancel })
 
     await wrapper.vm.$nextTick()
     const cancelButton = wrapper.find('button[type="button"]')
     expect(cancelButton.exists()).toBe(true)
-    
-    // Вызываем handleCancel напрямую, так как компонент использует моки
+
+    await cancelButton.trigger('click')
     await wrapper.vm.$nextTick()
-    const handleCancel = (wrapper.vm as any).handleCancel
-    if (handleCancel) {
-      handleCancel()
-      expect(onCancel).toHaveBeenCalled()
-    } else {
-      // Если handleCancel не доступен, проверяем через клик
-      await cancelButton.trigger('click')
-      await wrapper.vm.$nextTick()
-      // Проверяем, что onCancel был вызван или событие cancelled было эмитировано
-      expect(onCancel).toHaveBeenCalled()
-    }
+    expect(onCancel).toHaveBeenCalled()
   })
 
-  it('shows loading state correctly', () => {
-    const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit: vi.fn(),
-        onCancel: vi.fn(),
-        loading: true
-      }
-    })
+  it('shows loading state when isSubmitting is true (disabled submit + "Сохранение…")', () => {
+    // Компонент НЕ имеет пропа loading — состояние отправки идёт через isSubmitting из композабла.
+    ctrl.isSubmitting = true
+    const wrapper = mountForm()
 
     const submitButton = wrapper.find('button[type="submit"]')
     expect(submitButton.attributes('disabled')).toBeDefined()
     expect(submitButton.text()).toContain('Сохранение...')
   })
 
-  it('renders custom slots correctly', () => {
+  it('renders custom field slot when the field type is custom', () => {
+    // Слот field-<key> рендерится ТОЛЬКО у поля type==='custom'. Дефолтный name='input' → слота нет
+    // (прежний тест молча падал в else html()).toBeTruthy()). Делаем name custom-полем.
+    mockGetSectionFields.mockImplementation((index: number) =>
+      index === 0 ? [{ key: 'name', type: 'custom', label: 'Name', order: 1 }] : [])
     const wrapper = mount(GenericForm, {
-      props: {
-        config: mockConfig,
-        initialData: {},
-        onSubmit: vi.fn(),
-        onCancel: vi.fn()
-      },
-      slots: {
-        'field-name': '<div class="custom-section">Custom content</div>'
-      }
+      props: { config: mockConfig, initialData: {}, onSubmit: vi.fn(), onCancel: vi.fn() },
+      slots: { 'field-name': '<div class="custom-section">Custom content</div>' },
     })
 
     const customSection = wrapper.find('.custom-section')
-    if (customSection.exists()) {
-      expect(customSection.text()).toBe('Custom content')
-    } else {
-      // Если слот не рендерится, проверяем что компонент рендерится
-      expect(wrapper.html()).toBeTruthy()
-    }
+    expect(customSection.exists()).toBe(true)
+    expect(customSection.text()).toBe('Custom content')
   })
 })
-
