@@ -1424,16 +1424,11 @@ function onFieldChange(key: string, value: any) {
   if (key === 'object' || key === 'date') {
     Object.assign(formData.value, { [key]: value })
   }
-  // Фича «Ответственный»: при выборе объекта автоподставляем ответственного объекта (для руководства).
-  // object.responsible — profile_id (EmployeeProfile); Purchase.responsible — user id → маппим через employeesStore.
-  if (key === 'object' && canAssignResponsible.value) {
-    // value из нативного select — СТРОКА; o.id/profile_id — числа → сравниваем через String (F-982:
-    // строгое === давало промах типов, автоподстановка не срабатывала).
-    const obj = objectsStore.items.find((o: any) => String(o.id) === String(value))
-    const profId = obj?.responsible ?? null
-    const emp = profId != null ? employeesStore.items.find((e: any) => String(e.profile_id) === String(profId)) : null
-    ;(formData.value as any).responsible = emp?.id ?? null
-  }
+  // Фича «Ответственный»: автоподстановка-ДИСПЛЕЙ убрана (F-982) — PurchaseForm.formData отдельный от
+  // внутреннего form GenericForm, к которому привязан select, поэтому запись сюда поле не меняла. Функционально
+  // не нужна: поле пустое → BE ставит ответственного ОБЪЕКТА (плейсхолдер «— по умолчанию: ответственный
+  // объекта —» это сообщает); руководство может выбрать любого вручную. Пред-заполнение дисплея потребовало бы
+  // правки общего GenericForm (expose setFieldValue) — вынесено отдельно, если владелец захочет.
 }
 
 // Load data on mount
