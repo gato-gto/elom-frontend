@@ -189,6 +189,21 @@ describe('useGenericForm', () => {
     expect(errors.value.name).toBeUndefined()
   })
 
+  // F-748/F-977 репро: серверная ошибка на поле БЕЗ валидации (purchase_no) должна сбрасываться при
+  // вводе нового значения (validateOnChange=true, как в PurchaseForm). Проверяем гипотезу A о stale-error.
+  it('setFieldValue clears a server-set error on an unvalidated field (purchase_no repro)', () => {
+    const config: GenericFormConfig<any> = {
+      ...mockConfig,
+      fields: [{ key: 'purchase_no', type: 'input', label: '№ закупки', order: 1 }],
+    }
+    const { errors, setFieldValue, getFieldError } = useGenericForm({
+      config, initialData: {}, onSubmit: mockOnSubmit, onCancel: mockOnCancel, validateOnChange: true,
+    })
+    errors.value['purchase_no'] = 'Номер закупки уже существует'   // симулируем ответ прошлого сабмита
+    setFieldValue('purchase_no', '1335111')                         // пользователь вводит УНИКАЛЬНЫЙ номер
+    expect(getFieldError('purchase_no')).toBe('')                   // ошибка обязана исчезнуть
+  })
+
   it('resets form to initial data', () => {
     const initialData = { name: 'John', email: 'john@example.com' }
     const { form, reset } = useGenericForm({
