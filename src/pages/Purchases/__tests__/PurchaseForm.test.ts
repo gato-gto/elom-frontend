@@ -70,17 +70,12 @@ describe('PurchaseForm', () => {
         isNewMaterial: false
       }
 
-      // Check if onCustomMaterial exists
-      if (typeof vm.onCustomMaterial === 'function') {
-        vm.onCustomMaterial(testItem, 'Новый материал')
-
-        expect(testItem.isNewMaterial).toBe(true)
-        expect(testItem.material_name).toBe('Новый материал')
-        expect(testItem.unit).toBe(0)
-      } else {
-        // Component might have different implementation
-        expect(wrapper.exists()).toBe(true)
-      }
+      // onCustomMaterial есть всегда (PurchaseForm.vue:1289); прежний escape-hatch `if (typeof===
+      // 'function'){…} else {exists()}` делал тест непадающим.
+      vm.onCustomMaterial(testItem, 'Новый материал')
+      expect(testItem.isNewMaterial).toBe(true)
+      expect(testItem.material_name).toBe('Новый материал')
+      expect(testItem.unit).toBe(0)
     })
 
     it('validates that unit is required for new materials', async () => {
@@ -229,9 +224,11 @@ describe('PurchaseForm', () => {
       
       // Access items - handle both ref and regular array
       const items = typeof vm.items === 'object' && vm.items.value !== undefined ? vm.items.value : vm.items
-      
-      // Form should have items or validation should catch empty items
-      expect(Array.isArray(items) || wrapper.exists()).toBe(true)
+
+      // Было `Array.isArray(items) || wrapper.exists()).toBe(true)` — exists() всегда true → OR никогда
+      // не падал. Позиции — реальный МАССИВ (форма стартует пустой, строки добавляются пользователем).
+      expect(Array.isArray(items)).toBe(true)
+      expect(items.length).toBe(0)
     })
   })
 

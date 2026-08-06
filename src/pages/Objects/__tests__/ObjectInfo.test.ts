@@ -211,15 +211,13 @@ describe('ObjectInfo', () => {
       await wrapper.vm.$nextTick()
       
       const vm = wrapper.vm as any
-      
-      // Check if openEditModal function exists
-      if (typeof vm.openEditModal === 'function') {
-        vm.openEditModal()
-        await wrapper.vm.$nextTick()
-        expect(vm.editModalOpen).toBe(true)
-      } else {
-        expect(wrapper.exists()).toBe(true)
-      }
+
+      // Было escape-hatch `if (typeof vm.openEditModal==='function'){…} else {exists()}` — метод есть
+      // всегда (ObjectInfo.vue:448); else делал тест непадающим. openEditModal → editModalOpen=true.
+      expect(vm.editModalOpen).toBe(false)   // до вызова закрыта
+      vm.openEditModal()
+      await wrapper.vm.$nextTick()
+      expect(vm.editModalOpen).toBe(true)    // после — открыта
     })
   })
 
