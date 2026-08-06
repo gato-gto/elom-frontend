@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import MaterialSearchSelect from '../MaterialSearchSelect.vue'
 import { useMaterialsStore } from '@/stores/materials'
+import apiClient from '@/api/client'
 
 // Mock API client
 vi.mock('@/api/client', () => ({
@@ -57,53 +58,26 @@ describe('MaterialSearchSelect', () => {
   })
 
   describe('Material Selection', () => {
-    it('emits update:modelValue when material is selected', async () => {
-      // Set up store items directly (useMaterialsStore is a store object, not a function)
-      const store = useMaterialsStore
-      store.items = [
-        { id: 1, name: 'Цемент', default_unit: 1, is_active: true } as any
-      ]
-
-      const wrapper = mount(MaterialSearchSelect, {
-        props: {
-          modelValue: null
-        }
-      })
-
-      const vm = wrapper.vm as any
-      
-      // Check if selectMaterial exists and call it
-      if (typeof vm.selectMaterial === 'function') {
-        vm.selectMaterial({ id: 1, name: 'Цемент', default_unit: 1 })
-        await wrapper.vm.$nextTick()
-        expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-        expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([1])
-      } else {
-        // Component might have different implementation
-        expect(wrapper.exists()).toBe(true)
-      }
+    it('emits update:modelValue (id) and change (material) when a material is selected', async () => {
+      // F-976: раньше был побег `if (typeof vm.selectMaterial==='function'){…} else {exists()}` —
+      // метод есть всегда (MaterialSearchSelect.vue:288), escape-ветка делала тест непадающим.
+      const wrapper = mount(MaterialSearchSelect, { props: { modelValue: null } })
+      const material = { id: 1, name: 'Цемент', default_unit: 1 }
+      ;(wrapper.vm as any).selectMaterial(material)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([1])   // id выбранного
+      expect(wrapper.emitted('change')?.[0]).toEqual([material])       // полный объект
     })
 
-    it('emits material-selected event with full material object', async () => {
+    it('emits change with the full material object (there is no material-selected event)', async () => {
+      // F-976: прежний ассёрт `emitted('material-selected') || wrapper.exists()).toBeTruthy()` НИКОГДА
+      // не падал (exists() всегда true). Компонент эмитит 'change', а НЕ 'material-selected'.
       const material = { id: 1, name: 'Цемент', default_unit: 1, is_active: true }
-      const wrapper = mount(MaterialSearchSelect, {
-        props: {
-          modelValue: null
-        }
-      })
-
-      const vm = wrapper.vm as any
-      
-      if (typeof vm.selectMaterial === 'function') {
-        vm.selectMaterial(material)
-        await wrapper.vm.$nextTick()
-        
-        // Check for either 'material-selected' or 'change' event
-        const emitted = wrapper.emitted('material-selected') || wrapper.emitted('change')
-        expect(emitted || wrapper.exists()).toBeTruthy()
-      } else {
-        expect(wrapper.exists()).toBe(true)
-      }
+      const wrapper = mount(MaterialSearchSelect, { props: { modelValue: null } })
+      ;(wrapper.vm as any).selectMaterial(material)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.emitted('material-selected')).toBeUndefined()
+      expect(wrapper.emitted('change')?.[0]).toEqual([material])
     })
   })
 
@@ -149,39 +123,21 @@ describe('MaterialSearchSelect', () => {
   })
 
   describe('Material Filtering', () => {
-    it('filters out excluded materials', () => {
-      const store = useMaterialsStore
-      store.items = [
-        { id: 1, name: 'Цемент', default_unit: 1, is_active: true } as any,
-        { id: 2, name: 'Песок', default_unit: 1, is_active: true } as any,
-        { id: 3, name: 'Щебень', default_unit: 1, is_active: true } as any
-      ]
+    it('filters out excluded materials from search results', async () => {
+      // F-976: фильтр исключений живёт ВНУТРИ async searchMaterials (через store.search, не items).
+      // Прежний тройной побег падал в trivial props-check. Мокаем store.search → проверяем реальный фильтр.
+      // base.search → api.get(list?search=) → data. Мокаем api-client (store.search — pinia-action,
+      // переприсвоить нельзя надёжно), чтобы вернуть 3 материала.
+      const m = (id: number, name: string) => ({ id, name, default_unit: 1, is_active: true })
+      vi.mocked(apiClient.get).mockResolvedValueOnce({ data: [m(1, 'Цемент'), m(2, 'Песок'), m(3, 'Щебень')] } as any)
 
       const wrapper = mount(MaterialSearchSelect, {
-        props: {
-          modelValue: null,
-          excludeMaterials: [2]
-        }
+        props: { modelValue: null, excludeMaterials: [2] }
       })
+      await (wrapper.vm as any).searchMaterials('материал')   // ≥2 симв. → реальный поиск+фильтр
 
-      const vm = wrapper.vm as any
-      
-      // Check if searchMaterials or filteredMaterials exists
-      if (typeof vm.searchMaterials === 'function') {
-        const results = vm.searchMaterials('')
-        // Results might be a Promise or array
-        if (Array.isArray(results)) {
-          expect(results.find((m: any) => m.id === 2)).toBeUndefined()
-        } else {
-          // searchMaterials might return Promise or other type
-          expect(wrapper.exists()).toBe(true)
-        }
-      } else if (vm.filteredMaterials && Array.isArray(vm.filteredMaterials)) {
-        expect(vm.filteredMaterials.find((m: any) => m.id === 2)).toBeUndefined()
-      } else {
-        // Component might filter differently - just verify excludeMaterials prop is passed
-        expect(wrapper.props('excludeMaterials')).toContain(2)
-      }
+      const ids = (wrapper.vm as any).searchResults.map((mat: any) => mat.id)
+      expect(ids).toEqual([1, 3])   // id=2 (excludeMaterials) отфильтрован, остальные сохранены
     })
   })
 
@@ -243,22 +199,22 @@ describe('MaterialSearchSelect', () => {
   })
 
   describe('Loading Selected Material', () => {
-    it('displays selected material name', async () => {
-      const store = useMaterialsStore
-      store.items = [
-        { id: 1, name: 'Цемент', default_unit: 1, is_active: true } as any
-      ]
+    it('displays selected material name in the input', async () => {
+      // F-976: было `expect(wrapper.exists()).toBe(true)` (тривиально). modelValue=1 + материал в store
+      // → watcher(immediate) loadSelectedMaterial → searchQuery=name → v-model input показывает имя.
+      // loadSelectedMaterial ищет материал в store.items (fetchOne НЕ добавляет новый). Сидлим items
+      // через $patch (переприсвоение store.items на функцию — прежний no-op баг теста).
+      // Явный pinia в mount: без него компонент берёт иной инстанс стора и не видит засеянные items.
+      const pinia = createPinia()
+      setActivePinia(pinia)
+      const store = useMaterialsStore()
+      store.$patch({ items: [{ id: 1, name: 'Цемент', default_unit: 1, is_active: true } as any] })
 
-      const wrapper = mount(MaterialSearchSelect, {
-        props: {
-          modelValue: 1
-        }
-      })
-
+      const wrapper = mount(MaterialSearchSelect, { props: { modelValue: 1 }, global: { plugins: [pinia] } })
+      await flushPromises()
       await wrapper.vm.$nextTick()
 
-      // Component should either show the material name or have the value set
-      expect(wrapper.exists()).toBe(true)
+      expect((wrapper.find('input').element as HTMLInputElement).value).toBe('Цемент')
     })
   })
 
