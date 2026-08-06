@@ -759,9 +759,18 @@ const objects = computed(() => objectsStore.items)
 const suppliers = computed(() => suppliersStore.items)
 
 // ✅ RBAC: проверяем разрешения вместо роли
-const { canCreateRequests } = usePermissions()
+const { canCreateRequests, can } = usePermissions()
 // isRequester = пользователь который может создавать заявки, но не одобрять
 const isRequester = computed(() => canCreateRequests.value)
+
+// Фича «Ответственный» (владелец 2026-08-06): руководство (purchases.assign_responsible) назначает
+// ответственного ЗАКУПКИ — ЛЮБОГО активного сотрудника (не только бригадира; объект — отдельно, brigadier-only).
+// Пусто → BE берёт ответственного объекта; не-руководство → BE форсит self. Значение = user id (Purchase.responsible = FK User).
+const canAssignResponsible = computed(() => can('purchases', 'assign_responsible'))
+const responsibleOptions = computed(() =>
+  employeesStore.items
+    .filter((e: any) => e.is_active)
+    .map((e: any) => ({ value: e.id, label: `${e.first_name || ''} ${e.last_name || ''}`.trim() || e.username })))
 
 const objectOptions = computed(() => {
   // Для requester показываем только назначенные объекты
@@ -830,7 +839,18 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       order: 2,
       width: 'half'
     },
-    // responsible убран - устанавливается автоматически из объекта (бригадир объекта)
+    // Фича «Ответственный» (владелец 2026-08-06): показываем ТОЛЬКО руководству (assign_responsible);
+    // список ВСЕХ активных сотрудников (любой); пусто → BE берёт ответственного объекта.
+    {
+      key: 'responsible',
+      type: 'select',
+      label: 'Ответственный',
+      placeholder: '— по умолчанию: ответственный объекта —',
+      options: responsibleOptions.value,
+      order: 2.5,
+      width: 'half',
+      condition: () => canAssignResponsible.value
+    },
     {
       key: 'supplier',
       type: 'select',
@@ -1022,6 +1042,9 @@ function preparePurchaseData(data: PurchaseRequest): PurchaseRequest {
     status: data.status,
     currency: data.currency || 'UZS',
     comment: data.comment,
+    // Фича «Ответственный»: шлём responsible (user id) ТОЛЬКО если руководство выбрало его в поле; иначе не
+    // шлём → BE форсит self (не-руководство) или берёт ответственного объекта (руководство без выбора).
+    ...(canAssignResponsible.value && (data as any).responsible ? { responsible: (data as any).responsible } : {}),
     // FE-1: отправляем только заполненные позиции — без пустого хвостового плейсхолдера.
     items: items.value.filter((item) => !isEmptyPurchaseItem(item)).map((item) => {
       const itemData: any = {
@@ -1400,6 +1423,14 @@ function onFieldChange(key: string, value: any) {
   // F-643 (#28): зеркалим object/date в formData → live-предупреждение о закрытом периоде.
   if (key === 'object' || key === 'date') {
     Object.assign(formData.value, { [key]: value })
+  }
+  // Фича «Ответственный»: при выборе объекта автоподставляем ответственного объекта (для руководства).
+  // object.responsible — profile_id (EmployeeProfile); Purchase.responsible — user id → маппим через employeesStore.
+  if (key === 'object' && canAssignResponsible.value) {
+    const obj = objectsStore.items.find((o: any) => o.id === value)
+    const profId = obj?.responsible ?? null
+    const emp = profId != null ? employeesStore.items.find((e: any) => e.profile_id === profId) : null
+    ;(formData.value as any).responsible = emp?.id ?? null
   }
 }
 
