@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ObjectInfo from '../ObjectInfo.vue'
 import { useObjectsStore } from '@/stores/objects'
@@ -174,11 +174,12 @@ describe('ObjectInfo', () => {
         }
       })
 
-      await wrapper.vm.$nextTick()
-      
-      // Check for quick action buttons
-      const buttons = wrapper.findAll('button, a')
-      expect(buttons.length).toBeGreaterThanOrEqual(0)
+      await flushPromises()   // ждём fetchOne (object.value ← api) → блок объекта рендерится
+
+      // Было `buttons.length >= 0` (тавтология, всегда true). Объект загружен → кнопка «Назад»
+      // (безусловная в header-actions) обязана присутствовать.
+      const buttonTexts = wrapper.findAll('button').map(b => b.text())
+      expect(buttonTexts.some(t => t.includes('Назад'))).toBe(true)
     })
   })
 
