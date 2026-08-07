@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 // #65: форма-документ с авто-группировкой. Строка несёт снапшот пути (section/subcategory) из выбранной
@@ -15,8 +15,10 @@ vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [{ id: 347
 vi.mock('@/stores/ui', () => ({ useUiStore: () => ({ toast: vi.fn() }) }))
 
 const push = vi.fn()
+// Т2 (аудит#3): params — мутируемый объект, чтобы тесты могли включать edit-режим (params.id).
+const routeParams = vi.hoisted(() => ({} as Record<string, string>))
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: {}, query: { object: '347' } }),
+  useRoute: () => ({ params: routeParams, query: { object: '347' } }),
   useRouter: () => ({ push }),
 }))
 vi.mock('@/components/WorkItemSearchSelect.vue', () => ({ default: { name: 'WorkItemSearchSelect', template: '<div />' } }))
@@ -41,7 +43,10 @@ const line = (o: Record<string, unknown>) => ({
 })
 
 describe('EstimateForm — #65 авто-группировка + контракт строк', () => {
-  beforeEach(() => { create.mockClear(); update.mockClear(); push.mockClear() })
+  beforeEach(() => {
+    create.mockClear(); update.mockClear(); push.mockClear(); fetchOne.mockReset()
+    for (const k of Object.keys(routeParams)) { delete routeParams[k] }
+  })
 
   it('object предзаполнен из ?object= и залочен', async () => {
     const vm = mountForm(); await nextTick()
@@ -324,5 +329,123 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect((coeff.coeff_targets as string[]).length).toBe(1)
     anyVm.onScopeChange(coeff, `section${sep}${sep}A`)   // сменили на раздел → цели должны обнулиться
     expect((coeff.coeff_targets as string[]).length).toBe(0)
+  })
+
+  it('Т2 (аудит#3) edit-round-trip: BE-uid строк и coeff_targets сохраняются при загрузке на правку', async () => {
+    // Мутация `uid: ln.uid || newUid()` → `uid: newUid()` проходила весь сьют зелёной — selection
+    // тихо слетал бы при любой правке сметы. Пин: uid НЕ регенерятся, цели скопированы.
+    routeParams.id = '5'
+    fetchOne.mockResolvedValueOnce({
+      id: 5, object: 347, title: 'Смета', date: '', note: '', lines: [
+        { work_item: 55, name: 'Кабель', kind: 'work', unit: 'п.м.', quantity: '2', unit_price: '6000',
+          position_no: '', section_name: 'Монтаж', subcategory_name: 'Прокладка', coeff_scope: '',
+          coeff_scope_name: '', coeff_scope_section: '', uid: 'be-w1', coeff_targets: [], is_draft: false },
+        { work_item: null, name: 'Коэфф', kind: 'coefficient', unit: 'коэф.', quantity: '1', unit_price: '1.5',
+          position_no: '', section_name: '', subcategory_name: '', coeff_scope: 'selection',
+          coeff_scope_name: '', coeff_scope_section: '', uid: 'be-c1', coeff_targets: ['be-w1'], is_draft: false },
+      ],
+    })
+    const vm = mountForm(); await flushPromises(); await nextTick()
+    expect(fetchOne).toHaveBeenCalledWith(5)
+    expect(vm.lines.map(l => l.uid)).toEqual(['be-w1', 'be-c1'])          // НЕ перегенерированы
+    expect(vm.lines[1].coeff_targets).toEqual(['be-w1'])                  // цели скопированы
+    expect(vm.lines[1].coeff_scope).toBe('selection')                     // зона пережила N3-watch
+  })
+
+  it('D2-FE (аудит#3) edit: зона «вся смета» переживает загрузку на правку (раньше N3-watch сбрасывал)', async () => {
+    routeParams.id = '6'
+    fetchOne.mockResolvedValueOnce({
+      id: 6, object: 347, title: 'Смета', date: '', note: '', lines: [
+        { work_item: 55, name: 'Кабель', kind: 'work', unit: 'п.м.', quantity: '1', unit_price: '6000',
+          position_no: '', section_name: 'Монтаж', subcategory_name: '', coeff_scope: '',
+          coeff_scope_name: '', coeff_scope_section: '', uid: 'w1', coeff_targets: [], is_draft: false },
+        { work_item: null, name: 'Квсей', kind: 'coefficient', unit: 'коэф.', quantity: '1', unit_price: '1.1',
+          position_no: '', section_name: '', subcategory_name: '', coeff_scope: 'all',
+          coeff_scope_name: '', coeff_scope_section: '', uid: 'c1', coeff_targets: [], is_draft: false },
+      ],
+    })
+    const vm = mountForm(); await flushPromises(); await nextTick(); await nextTick()
+    expect(vm.lines[1].coeff_scope).toBe('all')   // зона цела (опция «Вся смета» теперь существует)
+    const anyVm = vm as unknown as { scopeOptions: Array<{ label: string }> }
+    expect(anyVm.scopeOptions.map(o => o.label)).toContain('Вся смета')
+  })
+
+  it('D9 (аудит#3): опции selection/«Вся смета» гейтятся по РАБОТАМ, не по любым не-коэфф строкам', async () => {
+    const vm = mountForm(); await nextTick()
+    const anyVm = vm as unknown as { scopeOptions: Array<{ label: string }> }
+    // только материал → спец-опций нет (calc множит лишь работы; пикер был бы пуст)
+    vm.onSearchPicked({ id: 71, name: 'Мат', kind: 'material', kind_display: 'Материал', unit: 'шт.', default_price: '100', category: 9, section_name: 'A', subcategory_name: '' } as unknown as Lite)
+    await nextTick()
+    const labels0 = anyVm.scopeOptions.map(o => o.label)
+    expect(labels0).not.toContain('Выбранные позиции…')
+    expect(labels0).not.toContain('Вся смета')
+    // появилась работа → обе опции доступны
+    vm.onSearchPicked(lite({ id: 72, name: 'Раб', unit: 'шт.', default_price: '100', section_name: 'A' }))
+    await nextTick()
+    const labels1 = anyVm.scopeOptions.map(o => o.label)
+    expect(labels1).toContain('Выбранные позиции…')
+    expect(labels1).toContain('Вся смета')
+  })
+
+  it('D10 (аудит#3): зона выбрана, множитель пуст → «укажите множитель» (не «выберите зону»)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 81, unit: 'шт.', default_price: '100', section_name: 'A' }))
+    await nextTick()
+    const anyVm = vm as unknown as {
+      lines: Array<Record<string, unknown>>
+      addCoeffLine: () => void
+      onScopeChange: (l: Record<string, unknown>, v: string) => void
+      contribDisplay: (i: number) => string
+    }
+    anyVm.addCoeffLine(); await nextTick()
+    const idx = anyVm.lines.findIndex(l => l.kind === 'coefficient')
+    const coeff = anyVm.lines[idx]
+    expect(anyVm.contribDisplay(idx)).toBe('выберите зону')      // зоны нет — прежний текст верен
+    anyVm.onScopeChange(coeff, `all${String.fromCharCode(1)}${String.fromCharCode(1)}`)
+    coeff.unit_price = ''                                        // зона есть, множителя нет
+    await nextTick()
+    expect(anyVm.contribDisplay(idx)).toBe('укажите множитель')  // раньше врало «выберите зону»
+  })
+
+  it('D3 (аудит#3): серверный 400 по полю коэфф-строки видим — coeffLineError берёт первый доступный ключ', async () => {
+    const vm = mountForm(); await nextTick()
+    const anyVm = vm as unknown as {
+      lineErrors: Record<number, Record<string, string>>
+      coeffLineError: (i: number) => string
+    }
+    // BE-ключ (unit_price из DRF) без клиентского .coeff — раньше рендерился НИКАК (только тост)
+    anyVm.lineErrors = { 1: { unit_price: 'Множитель должен быть больше 0.' } }
+    await nextTick()
+    expect(anyVm.coeffLineError(1)).toBe('Множитель должен быть больше 0.')
+    // клиентский .coeff приоритетнее
+    anyVm.lineErrors = { 1: { coeff: 'клиентская', unit_price: 'серверная' } }
+    await nextTick()
+    expect(anyVm.coeffLineError(1)).toBe('клиентская')
+    expect(anyVm.coeffLineError(0)).toBe('')   // чужая строка чиста
+  })
+
+  it('Т6 (аудит#3): удаление работы-цели вычищает её uid из coeff_targets (watch-прунинг)', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.onSearchPicked(lite({ id: 91, name: 'Р1', unit: 'шт.', default_price: '100', section_name: 'A' }))
+    vm.onSearchPicked(lite({ id: 92, name: 'Р2', unit: 'шт.', default_price: '200', section_name: 'A' }))
+    await nextTick()
+    const anyVm = vm as unknown as {
+      lines: Array<{ uid: string; work_item: number | null; kind: string; coeff_targets: string[] }>
+      addCoeffLine: () => void
+      onScopeChange: (l: Record<string, unknown>, v: string) => void
+      toggleTarget: (l: Record<string, unknown>, uid: string) => void
+      removeLine: (i: number) => void
+    }
+    anyVm.addCoeffLine(); await nextTick()
+    const coeff = anyVm.lines.find(l => l.kind === 'coefficient')!
+    const uid1 = anyVm.lines.find(l => l.work_item === 91)!.uid
+    const uid2 = anyVm.lines.find(l => l.work_item === 92)!.uid
+    anyVm.onScopeChange(coeff as unknown as Record<string, unknown>, `selection${String.fromCharCode(1)}${String.fromCharCode(1)}`)
+    anyVm.toggleTarget(coeff as unknown as Record<string, unknown>, uid1)
+    anyVm.toggleTarget(coeff as unknown as Record<string, unknown>, uid2)
+    expect(coeff.coeff_targets).toEqual([uid1, uid2])
+    anyVm.removeLine(anyVm.lines.findIndex(l => l.work_item === 91))   // удалили Р1 (цель)
+    await nextTick(); await nextTick()
+    expect(coeff.coeff_targets).toEqual([uid2])   // uid удалённой работы вычищен, вторая цель жива
   })
 })

@@ -103,9 +103,9 @@
           <div v-for="{ line, idx } in coeffLines" :key="line._k" class="bg-base-200/40 rounded-lg p-2">
             <!-- F-740: ad-hoc коэффициент — имя + множитель редактируемы (не из каталога). -->
             <div class="flex items-center gap-1.5">
-              <input v-model="line.name" type="text" maxlength="256" class="input input-bordered input-sm flex-1 min-w-0" :class="{ 'input-error': lineErrors[idx]?.coeff }" placeholder="Название коэффициента" aria-label="Название коэффициента" />
+              <input v-model="line.name" type="text" maxlength="256" class="input input-bordered input-sm flex-1 min-w-0" :class="{ 'input-error': coeffLineError(idx) }" placeholder="Название коэффициента" aria-label="Название коэффициента" />
               <span class="text-muted">×</span>
-              <input v-model="line.unit_price" type="number" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.coeff }" placeholder="1.5" aria-label="Множитель" />
+              <input v-model="line.unit_price" type="number" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': coeffLineError(idx) }" placeholder="1.5" aria-label="Множитель" />
               <button type="button" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить коэффициент" title="Удалить" @click="removeLine(idx)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg>
               </button>
@@ -124,7 +124,7 @@
               <!-- N2 (аудит): знак берём из числа (скидка k<1 → «-…» красным), не префиксуем «+» безусловно -->
               <span class="font-mono font-semibold ml-auto" :class="contribClass(idx)">{{ contribDisplay(idx) }}</span>
             </div>
-            <div v-if="lineErrors[idx]?.coeff" class="text-xs text-error mt-1">{{ lineErrors[idx]?.coeff }}</div>
+            <div v-if="coeffLineError(idx)" class="text-xs text-error mt-1">{{ coeffLineError(idx) }}</div>
           </div>
         </div>
       </div>
@@ -362,7 +362,14 @@ function contributionAt(idx: number): number | null { return calcResult.value.co
 // N2 (аудит): показ вклада со знаком (скидка k<1 → отрицательный, красным; не «+−…» зелёным).
 function contribDisplay(idx: number): string {
   const c = contributionAt(idx)
-  if (c === null) { return 'выберите зону' }
+  if (c === null) {
+    // D10 (аудит#3): зона ВЫБРАНА, но множитель пуст/≤0 (M1-гард calc) — «выберите зону» врало
+    // пользователю; честная подсказка ведёт к реальному незаполненному полю.
+    const l = lines.value[idx]
+    const k = parseFloat(String(l?.unit_price ?? ''))
+    if (l?.coeff_scope && !(k > 0)) { return 'укажите множитель' }
+    return 'выберите зону'
+  }
   return c > 0 ? `+${formatNumber(c)}` : formatNumber(c)
 }
 function contribClass(idx: number): string {
@@ -375,16 +382,31 @@ function contribClass(idx: number): string {
 const coeffLines = computed(() =>
   lines.value.map((line, idx) => ({ line, idx })).filter(({ line }) => line.kind === 'coefficient'))
 
+// D3 (аудит#3): серверные построчные 400 по коэфф-строке (unit_price/coeff_targets/зона — DRF-ключи из
+// applyServerErrors) раньше НЕ рендерились: блок показывал только клиентский ключ .coeff → пользователь
+// получал общий тост без подсветки виноватой строки/поля. Берём первый доступный ключ.
+function coeffLineError(idx: number): string {
+  const errs = lineErrors.value[idx]
+  if (!errs) { return '' }
+  return errs.coeff || errs.unit_price || errs.coeff_targets || errs.coeff_scope_name
+    || errs.coeff_scope_section || errs.name || Object.values(errs)[0] || ''
+}
+
 // Зоны для селектора: разделы + КВАЛИФИЦИРОВАННЫЕ разделом подразделы (M4: имя «Общие» не уникально).
 // value кодирует scope+section+name через U+0001 (не встречается в именах) → устойчиво к именам с символами.
 const SEP = '\u0001'
 interface ScopeOpt { scope: string; section: string; name: string; label: string; value: string }
-const hasWork = computed(() => lines.value.some(l => l.kind !== 'coefficient'))
+// D9 (аудит#3): гейт по РЕАЛЬНЫМ работам (kind=work) — calc множит только их; смета из одних
+// материалов/оборудования давала опцию с пустым пикером «Нет работ для выбора».
+const hasWork = computed(() => lines.value.some(l => l.kind === 'work'))
 const scopeOptions = computed<ScopeOpt[]>(() => {
   const opts: ScopeOpt[] = []
   // Фаза 2: спец-опция «Выбранные позиции» (цели — через модалку, не из путей).
   if (hasWork.value) {
     opts.push({ scope: 'selection', section: '', name: '', label: 'Выбранные позиции…', value: `selection${SEP}${SEP}` })
+    // D2-FE (аудит#3): BE/calc/Info поддерживают зону 'all' («вся смета»), но в опциях её не было —
+    // N3-watch СБРАСЫВАЛ валидную зону при edit-load (невосстановимо через UI). Зеркалим BE-контракт.
+    opts.push({ scope: 'all', section: '', name: '', label: 'Вся смета', value: `all${SEP}${SEP}` })
   }
   const seenSec = new Set<string>(), seenPair = new Set<string>()
   for (const l of lines.value) {

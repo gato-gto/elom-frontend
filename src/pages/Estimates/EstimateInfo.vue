@@ -52,7 +52,7 @@
           <div v-for="ln in coeffLines" :key="ln.id" class="bg-base-200/40 rounded-lg p-2 flex justify-between gap-2">
             <span class="flex-1 min-w-0 text-sm break-words">
               {{ ln.name }} <span class="font-mono text-muted">×{{ formatNumberClean(ln.unit_price) }}</span>
-              <span class="text-xs text-muted">· {{ scopeText(ln) }}</span>
+              <span class="text-xs text-muted" :title="selectionTargetsTitle(ln)">· {{ scopeText(ln) }}</span>
             </span>
             <span class="font-mono font-semibold shrink-0" :class="contribClass(ln.contribution)">{{ contribText(ln.contribution) }}</span>
           </div>
@@ -154,6 +154,14 @@ const grouped = computed(() => {
 const SCOPE_LABEL: Record<string, string> = { section: 'раздел', subcategory: 'подраздел', all: 'вся смета' }
 const coeffLines = computed(() =>
   (estimate.value?.lines || []).filter(ln => ln.kind === 'coefficient'))
+// D12 (аудит#3): «выбранные позиции: N» не говорил, КАКИЕ позиции — tooltip резолвит uid-цели в имена
+// строк (десктоп-hover; полный список без раздувания компактной строки).
+function selectionTargetsTitle(ln: EstimateLine): string {
+  if (ln.coeff_scope !== 'selection' || !Array.isArray(ln.coeff_targets) || !ln.coeff_targets.length) { return '' }
+  const byUid = new Map((estimate.value?.lines || []).map(l => [l.uid, l.name]))
+  const names = ln.coeff_targets.map(u => byUid.get(u)).filter(Boolean)
+  return names.length ? `Цели: ${names.join(' · ')}` : ''
+}
 function scopeText(ln: EstimateLine): string {
   if (!ln.coeff_scope) { return 'зона не задана' }
   if (ln.coeff_scope === 'selection') {

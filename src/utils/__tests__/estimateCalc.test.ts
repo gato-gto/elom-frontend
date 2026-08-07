@@ -115,4 +115,16 @@ describe('estimateCalc — зеркало BE calc.py (Фаза 1)', () => {
     expect(total).toBe(100)
     expect(contributions[1]).toBeNull()
   })
+
+  it('Т5-пин (аудит#3): коэффициент РАНЬШЕ работ в списке всё равно применяется (== BE 180000)', () => {
+    // Все прежние вектора держали коэффициенты последними — стриминг-однопроходная регрессия прошла бы
+    // незамеченной. Зеркало BE tests_coeff.test_coefficient_before_works_still_applies.
+    const w1: CalcLine = { ...work('Монтаж', 'Прокладка', 100000), uid: 'w1' }
+    const sel: CalcLine = { ...coeff(1.5, 'selection', ''), coeff_targets: ['w1'] }
+    const { total, contributions } = computeEstimate([coeff(1.2, 'all', ''), w1, sel])
+    expect(contributions[0]).toBe(20000)   // 100000×1.2 (коэфф ДО работы)
+    expect(contributions[2]).toBe(60000)   // 120000×1.5 (компаунд)
+    expect(contributions[1]).toBeNull()
+    expect(total).toBe(180000)
+  })
 })
