@@ -1395,9 +1395,14 @@ paths:
     get:
       operationId: estimates_export_retrieve
       description: |-
-        Экспорт сметы в xlsx — группировка Раздел→Подраздел с подытогами обоих уровней + ИТОГО
-        (VALUES-версия; формульный round-trip =D*F — отдельный поздний этап). get_object → object-scope.
-        Имена нейтрализуются (neutralize_formula_cell) от инъекции формул в Excel.
+        Экспорт сметы в xlsx — группировка Раздел→Подраздел с подытогами обоих уровней + ИТОГО.
+        F-988 (round-trip, решение владельца, вариант A): «Сумма» строк = живые формулы =ROUND(D*F,0)
+        (построчное округление == calc._round HALF_UP → файл == экран и на дробных qty×price),
+        подытоги/итоги разделов = =SUM, ИТОГО без ПРИМЕНЁННЫХ коэффициентов = =SUM → правка
+        Кол-во/Цены в Excel пересчитывает файл. С применённым коэффициентом финальное ИТОГО = число-
+        компаундинг из calc (== экран): простым =SUM его не выразить (умножает зоны). Формулы пишутся
+        ТОЛЬКО в системную колонку «Сумма»(G); текст-колонки (имя/№/ед.) по-прежнему нейтрализуются
+        (neutralize_formula_cell, CWE-1236). get_object → object-scope.
       parameters:
       - in: path
         name: id
@@ -7934,8 +7939,45 @@ paths:
           description: No response body
   /api/v1/work-items/search/:
     get:
-      operationId: work_items_search_retrieve
+      operationId: work_items_search_list
       description: 'Автоподсказка позиций: ?q=&category=&limit= (зеркало MaterialViewSet.search).'
+      summary: Автоподсказка позиций каталога
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: ID подраздела (leaf)
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Максимум строк (дефолт 10, потолок 50)
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Подстрока имени позиции
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
       tags:
       - work-items
       security:
@@ -7945,7 +7987,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkItem'
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkItemLite'
           description: ''
   /api/v1/writeoffs/:
     get:
@@ -12612,6 +12656,51 @@ components:
       - is_draft
       - kind_display
       - name
+    WorkItemLite:
+      type: object
+      description: |-
+        Для автоподсказки позиций (лёгкий). #65: + цепочка категории (раздел/подраздел) — FE
+        авто-подставляет путь позиции в смету без ручного каскада (нужен select_related('category__parent')).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        kind_display:
+          type: string
+          readOnly: true
+        unit:
+          type: string
+          maxLength: 32
+        default_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        is_draft:
+          type: boolean
+          readOnly: true
+        category:
+          type: integer
+          readOnly: true
+        section_name:
+          type: string
+          readOnly: true
+        subcategory_name:
+          type: string
+          readOnly: true
+      required:
+      - category
+      - id
+      - is_draft
+      - kind_display
+      - name
+      - section_name
+      - subcategory_name
     WorkItemRequest:
       type: object
       properties:
