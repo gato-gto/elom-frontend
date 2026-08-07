@@ -527,6 +527,7 @@ import { useItemsForm } from '@/composables/useItemsForm'
 import type { BaseItem } from '@/composables/useItemsForm'
 import api from '@/api/client'
 import { calculateItemAmount, calculatePurchaseTotal } from '@/utils/calculations'
+import { shouldWarnCompletedWithoutReport } from './completionWarning'
 
 // Props
 const props = defineProps<{
@@ -1217,8 +1218,16 @@ async function onSaved(data: PurchaseRequest) {
     }
     
     // 6. Фото-отчёт при завершении — ОПЦИОНАЛЕН (D-019/F-302): НЕ блокируем завершение.
-    // Ненавязчиво напоминаем; в списке такая закупка несёт янтарный маркер «нет фото-отчёта».
-    if (isEdit.value && data.status === 'completed' && reportPhotos.value.length === 0) {
+    // F-757: напоминаем ТОЛЬКО при ПЕРЕХОДЕ в «Завершено» без фото-доказательства — раньше тост
+    // вылетал на КАЖДОЕ сохранение уже-завершённой закупки (даже с фото на сервере). Логика — в
+    // чистом shouldWarnCompletedWithoutReport (юнит-тест). В списке такая закупка несёт янтарный маркер.
+    if (shouldWarnCompletedWithoutReport({
+      isEdit: isEdit.value,
+      wasCompleted: props.initial?.status === 'completed',
+      newStatus: data.status ?? '',
+      stagedReportPhotos: reportPhotos.value.length,
+      hasServerReportPhotos: !!(props.initial as any)?.has_report_photos,
+    })) {
       ui.toast({ type: 'info', text: 'Закупка завершена без фото-отчёта' })
     }
     
