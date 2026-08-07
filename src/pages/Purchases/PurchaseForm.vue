@@ -9,6 +9,7 @@
     </div>
     <!-- Generic Form -->
     <GenericForm
+      ref="genericFormRef"
       :config="formConfig"
       :initial-data="initialData"
       :on-submit="onSaved"
@@ -555,6 +556,8 @@ const auth = useAuthStore()
 const { handleFormError } = useErrorHandler()
 
 const saving = ref(false)
+// F-984: ref на GenericForm для программного пред-заполнения поля (автоподстановка «Ответственного»).
+const genericFormRef = ref<{ setFieldValue: (k: string, v: any) => void } | null>(null)
 const errors = reactive<Record<string, string>>({})
 
 // F-509: ОДИН источник данных — prop `initial`. Маршрут `/purchases/:id/edit` больше не
@@ -1433,11 +1436,16 @@ function onFieldChange(key: string, value: any) {
   if (key === 'object' || key === 'date') {
     Object.assign(formData.value, { [key]: value })
   }
-  // Фича «Ответственный»: автоподстановка-ДИСПЛЕЙ убрана (F-982) — PurchaseForm.formData отдельный от
-  // внутреннего form GenericForm, к которому привязан select, поэтому запись сюда поле не меняла. Функционально
-  // не нужна: поле пустое → BE ставит ответственного ОБЪЕКТА (плейсхолдер «— по умолчанию: ответственный
-  // объекта —» это сообщает); руководство может выбрать любого вручную. Пред-заполнение дисплея потребовало бы
-  // правки общего GenericForm (expose setFieldValue) — вынесено отдельно, если владелец захочет.
+  // F-984: автоподстановка «Ответственного» из выбранного объекта (для руководства). Пишем в ВНУТРЕННИЙ
+  // form GenericForm через exposed setFieldValue (F-982/983: запись в PurchaseForm.formData поле не меняла —
+  // это разные состояния). object.responsible — profile_id (EmployeeProfile); Purchase.responsible — user id
+  // → маппим через employeesStore. Пустой объект/нет ответственного → сбрасываем в '' (BE-дефолт сработает).
+  if (key === 'object' && canAssignResponsible.value) {
+    const obj = objectsStore.items.find((o: any) => String(o.id) === String(value))
+    const profId = obj?.responsible ?? null
+    const emp = profId != null ? employeesStore.items.find((e: any) => String(e.profile_id) === String(profId)) : null
+    genericFormRef.value?.setFieldValue('responsible', emp?.id ?? '')
+  }
 }
 
 // Load data on mount

@@ -239,6 +239,11 @@ watch(
   },
 )
 
+// F-984: экспонируем setFieldValue, чтобы родитель мог программно пред-заполнить поле формы
+// (напр. PurchaseForm: автоподстановка «Ответственного» из выбранного объекта). Аддитивно —
+// на существующее поведение форм не влияет.
+defineExpose({ setFieldValue })
+
 // Lifecycle
 onMounted(() => {
   // Don't validate on mount to avoid showing errors immediately
