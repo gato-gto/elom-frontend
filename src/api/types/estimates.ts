@@ -33,11 +33,12 @@ export interface WorkItem {
   kind: WorkItemKind
   kind_display: string
   unit: string
-  default_price: string | null // decimal as string; NULL = ДРАФТ (ждёт цены руководства)
-  // ⚠ WorkItem/WorkItemLite сериализаторы BE НЕ отдают is_draft/proposed_by (F-739 — они на EstimateLine/Estimate).
-  // Драфт на FE выводим из default_price (=NULL). Поля optional — на случай будущего добавления в контракт.
+  default_price: string | null // decimal as string; NULL = нет каталожной цены (договорная ИЛИ драфт — различает is_draft)
+  // A7 (F-762): BE ТЕПЕРЬ отдаёт авторитетный is_draft на WorkItem/WorkItemLite сериализаторах
+  // (read_only BooleanField, всегда присутствует). is_draft = (default_price is None И proposed_by задан):
+  // договорная позиция без цены (proposed_by=NULL) — НЕ драфт. Больше НЕ выводим драфт из default_price==null.
   proposed_by?: number | null // manual→catalog: кто предложил драфт (провенанс)
-  is_draft?: boolean // BE не отдаёт для WorkItem — используй !default_price
+  is_draft: boolean // A7: авторитетный флаг от BE — читать напрямую, не переопределять по default_price
   order: number
   is_active: boolean
 }
@@ -64,7 +65,7 @@ export interface WorkItemLite {
   category: number // id подраздела (leaf)
   section_name: string // раздел (верхний уровень)
   subcategory_name: string // подраздел
-  is_draft?: boolean // BE-search НЕ отдаёт — драфт выводим из !default_price
+  is_draft: boolean // A7 (F-762): BE-search отдаёт авторитетный флаг (read_only BooleanField, всегда присутствует)
 }
 
 // ─────────────────────────── Смета (read) ───────────────────────────

@@ -24,7 +24,7 @@ vi.mock('@/components/ListHeader.vue', () => ({ default: { name: 'ListHeader', t
 
 import EstimateForm from '@/pages/Estimates/EstimateForm.vue'
 
-interface Lite { id: number; name: string; kind: string; kind_display: string; unit: string; default_price: string | null; category: number; section_name: string; subcategory_name: string }
+interface Lite { id: number; name: string; kind: string; kind_display: string; unit: string; default_price: string | null; category: number; section_name: string; subcategory_name: string; is_draft?: boolean }
 function mountForm() {
   const wrapper = mount(EstimateForm)
   return wrapper.vm as unknown as {
@@ -264,19 +264,37 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(payload.lines.some((l: Record<string, unknown>) => l.work_item === 70)).toBe(true)
   })
 
-  it('#F-739 quick-add: onWorkItemCreated добавляет строку каталожной позиции с флагом драфта', async () => {
+  it('#F-739/A7 quick-add: строка несёт АВТОРИТЕТНЫЙ is_draft от BE (не выводит из default_price)', async () => {
     const vm = mountForm(); await nextTick()
     const anyVm = vm as unknown as { onWorkItemCreated: (i: Record<string, unknown>) => void; lines: Array<Record<string, unknown>> }
-    // руководство завело с ценой (не драфт) — is_draft НЕ в объекте (BE его не отдаёт) → выводим из default_price
-    anyVm.onWorkItemCreated({ id: 77, name: 'Новая работа', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '5000', category: 3, category_name: 'Прокладка' })
+    // руководство завело с ценой → BE отдаёт is_draft=false (F-762)
+    anyVm.onWorkItemCreated({ id: 77, name: 'Новая работа', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '5000', category: 3, category_name: 'Прокладка', is_draft: false })
     await nextTick()
     expect(anyVm.lines.length).toBe(1)
     expect(anyVm.lines[0]).toMatchObject({ work_item: 77, name: 'Новая работа', is_draft: false, unit_price: '5000' })
-    // вводящий завёл драфт (без цены = default_price null) → is_draft выводится true, unit_price пустой
-    anyVm.onWorkItemCreated({ id: 78, name: 'Драфт-поз', kind: 'work', kind_display: 'Работа', unit: '', default_price: null, category: 3, category_name: 'Прокладка' })
+    // вводящий завёл драфт (default_price=null, proposed_by задан) → BE отдаёт is_draft=true
+    anyVm.onWorkItemCreated({ id: 78, name: 'Драфт-поз', kind: 'work', kind_display: 'Работа', unit: '', default_price: null, category: 3, category_name: 'Прокладка', is_draft: true })
     await nextTick()
-    const draft = anyVm.lines.find(l => l.work_item === 78)!
-    expect(draft).toMatchObject({ is_draft: true, unit_price: '' })   // драфт → цена пустая (0/pending)
+    expect(anyVm.lines.find(l => l.work_item === 78)).toMatchObject({ is_draft: true, unit_price: '' })
+  })
+
+  it('#A7 (F-762) РЕГРЕСС: договорная позиция (default_price=null НО is_draft=false) — НЕ драфт', async () => {
+    // Суть A7: цена по договору = default_price NULL, proposed_by NULL → BE is_draft=false.
+    // Старый FE `is_draft: item.default_price == null` метил такую позицию черновиком (ложный бейдж «ждёт цены»).
+    const vm = mountForm(); await nextTick()
+    const anyVm = vm as unknown as {
+      onWorkItemCreated: (i: Record<string, unknown>) => void
+      onSearchPicked: (i: Lite) => void
+      lines: Array<Record<string, unknown>>
+    }
+    // путь quick-add (onWorkItemCreated → lite → onSearchPicked): договорная без цены
+    anyVm.onWorkItemCreated({ id: 80, name: 'Договорная-QA', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: null, category: 3, category_name: 'Прокладка', is_draft: false })
+    await nextTick()
+    expect(anyVm.lines.find(l => l.work_item === 80)).toMatchObject({ is_draft: false, unit_price: '' })
+    // путь прямого поиска (onSearchPicked с WorkItemLite от search): договорная без цены
+    anyVm.onSearchPicked({ id: 81, name: 'Договорная-search', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: null, category: 4, section_name: 'S', subcategory_name: 'Sub', is_draft: false })
+    await nextTick()
+    expect(anyVm.lines.find(l => l.work_item === 81)).toMatchObject({ is_draft: false })
   })
 
   it('#65 Ф2-аудит F2-2: пикер selection предлагает только работы (не материалы)', async () => {

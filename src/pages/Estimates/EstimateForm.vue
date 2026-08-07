@@ -272,8 +272,9 @@ function onSearchPicked(item: WorkItemLite | null) {
     name: item.name, kind: item.kind, unit: item.unit,
     quantity: '1', unit_price: item.default_price || '', position_no: '',
     coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
-    // F-739: драфт = позиция без цены (BE-search не отдаёт is_draft → выводим из default_price==null).
-    uid: newUid(), coeff_targets: [], is_draft: item.default_price == null,
+    // A7 (F-762): читаем авторитетный is_draft от BE. Раньше default_price==null метил договорные
+    // позиции (цена по договору, proposed_by=NULL) черновиками — теперь BE различает их явно.
+    uid: newUid(), coeff_targets: [], is_draft: item.is_draft,
   })
   clearSearch()
 }
@@ -292,7 +293,7 @@ function onWorkItemCreated(item: WorkItem) {
     // section из категорий-стора (загружен quick-add'ом); подраздел с фолбэком на category_name (BE отдаёт),
     // чтобы новая позиция НЕ улетела в «Прочее» при пустом catStore.
     section_name: cat?.parent_name || '', subcategory_name: cat?.name || item.category_name || '',
-    is_draft: item.default_price == null,
+    is_draft: item.is_draft,
   }
   onSearchPicked(lite)
   quickAddOpen.value = false

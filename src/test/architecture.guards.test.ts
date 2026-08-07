@@ -242,3 +242,27 @@ describe('Правило: иконки из реестра, не инлайн SV
     })
   }
 })
+
+/**
+ * Правило (A7 / F-762 — хендофф A→B): FE НЕ переопределяет драфт-флаг сам, а читает
+ * АВТОРИТЕТНЫЙ is_draft от BE. Раньше `is_draft: item.default_price == null` молча метил
+ * договорные позиции (цена по договору: default_price=NULL, proposed_by=NULL) черновиками.
+ * BE (WorkItem/WorkItemLite сериализаторы, F-762) теперь отдаёт is_draft = (default_price is None
+ * И proposed_by задан). Оба места добавления строки (onSearchPicked, onWorkItemCreated) обязаны
+ * консумить item.is_draft; старый эвристик default_price==null для драфта — запрещён (свип обоих sibling-сайтов).
+ */
+describe('ARCH · драфт строки сметы = авторитетный BE is_draft, не default_price==null (A7/F-762)', () => {
+  const src = stripComments(readFileSync(resolve(ROOT, 'src/pages/Estimates/EstimateForm.vue'), 'utf8'))
+  it('EstimateForm консумит авторитетный item.is_draft', () => {
+    expect(
+      /is_draft:\s*item\.is_draft\b/.test(src),
+      'onSearchPicked/onWorkItemCreated должны читать item.is_draft (авторитетный флаг от BE, F-762)',
+    ).toBe(true)
+  })
+  it('EstimateForm НЕ выводит драфт из default_price==null (метило договорные черновиками)', () => {
+    expect(
+      /is_draft:\s*item\.default_price\s*==\s*null/.test(src),
+      'возвращён старый эвристик is_draft: item.default_price == null — договорные позиции снова помечаются черновиками (A7)',
+    ).toBe(false)
+  })
+})
