@@ -244,6 +244,36 @@ describe('Правило: иконки из реестра, не инлайн SV
 })
 
 /**
+ * APPLE-2 (F-996, задача владельца «iPhone Safari: select-меню прилипает к верху экрана»):
+ * (1) scrollLock НЕ смещает body (`position:fixed`+`top:-scrollY`) — нативный iOS-поповер <select>
+ *     якорится по документным координатам, смещение уводило меню к верху ровно на глубину прокрутки
+ *     (репорты MUI#3638, angular/material#11382). Лок — только overflow.
+ * (2) Модальные keyframes БЕЗ transform — во время анимации transform-предок ломает тот же якорь
+ *     и создаёт containing block для fixed-потомков.
+ */
+describe('APPLE-2 · iOS select-поповер: без смещения body и без transform в модалках (F-996)', () => {
+  it('scrollLock.ts не использует position:fixed/top-смещение body', () => {
+    const src = stripComments(readFileSync(resolve(ROOT, 'src/utils/scrollLock.ts'), 'utf8'))
+    expect(
+      /position\s*[:=]\s*['"]?fixed/.test(src),
+      'scrollLock вернулся к body{position:fixed} — iOS select-поповер снова прилипнет к верху (F-996)',
+    ).toBe(false)
+    expect(/style\.top\s*=/.test(src), 'смещение body.top вернулось (F-996)').toBe(false)
+  })
+  it('модальные keyframes (modal*) не содержат transform', () => {
+    for (const rel of ['src/styles/components.css', 'src/styles/animations.css']) {
+      const css = readFileSync(resolve(ROOT, rel), 'utf8')
+      for (const m of css.matchAll(/@keyframes\s+(modal\w*)\s*\{([\s\S]*?)\n\}/g)) {
+        expect(
+          /transform\s*:/.test(m[2]),
+          `${rel}: @keyframes ${m[1]} содержит transform — ломает якорь iOS select-поповера (F-996)`,
+        ).toBe(false)
+      }
+    }
+  })
+})
+
+/**
  * Правило (A7 / F-762 — хендофф A→B): FE НЕ переопределяет драфт-флаг сам, а читает
  * АВТОРИТЕТНЫЙ is_draft от BE. Раньше `is_draft: item.default_price == null` молча метил
  * договорные позиции (цена по договору: default_price=NULL, proposed_by=NULL) черновиками.

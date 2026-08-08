@@ -1,12 +1,17 @@
 /**
- * A-02 (F-519) — блокировка прокрутки фона при открытой модалке.
+ * A-02 (F-519) + APPLE-2 (F-996) — блокировка прокрутки фона при открытой модалке.
  *
- * Зачем: на iOS `overflow:hidden` на body НЕ останавливает инерционный скролл — фон продолжает
- * ползти под открытой модалкой (scroll-bleed). Надёжный приём для iOS — зафиксировать body
- * (`position:fixed`) со смещением на текущую прокрутку и вернуть её при разблокировке.
+ * История: F-519 фиксировал body (`position:fixed; top:-scrollY`) против iOS scroll-bleed. Но это —
+ * известный триггер iOS-Safari-бага (репорты MUI#3638, angular/material#11382, OutSystems): нативный
+ * поповер <select> якорится по ДОКУМЕНТНЫМ координатам, а смещённый на -scrollY body уводит меню к
+ * верхней части экрана ровно на глубину прокрутки (владелец: «выпадающее меню прилипает к верху» на
+ * iPhone; на Android бага нет). F-996: лок БЕЗ смещения координат — `overflow:hidden` на html И body
+ * (современный iOS 15+ это лочит; scroll-bleed древних iOS ушёл вместе с ними — таргет проекта
+ * iPhone 14/15) + `overscroll-behavior:none` против резинового прокрута. Позицию прокрутки помним и
+ * восстанавливаем защитно (без смещения она и не должна теряться).
  *
  * Счётчик ссылок: вложенные/несколько модалок не должны разблокировать раньше времени —
- * реально снимаем фиксацию только когда закрылась ПОСЛЕДНЯЯ.
+ * реально снимаем лок только когда закрылась ПОСЛЕДНЯЯ.
  */
 let lockCount = 0
 let savedScrollY = 0
@@ -17,13 +22,12 @@ export function lockBodyScroll(): void {
   if (lockCount > 1) { return } // уже заблокировано другой модалкой
 
   savedScrollY = window.scrollY || document.documentElement.scrollTop || 0
+  // ВАЖНО (F-996): НИКАКОГО position:fixed/top на body — смещение координат ломает якорь
+  // нативных iOS-поповеров (<select>). Только overflow-лок, на обоих корнях.
+  document.documentElement.style.overflow = 'hidden'
   const body = document.body
-  body.style.position = 'fixed'
-  body.style.top = `-${savedScrollY}px`
-  body.style.left = '0'
-  body.style.right = '0'
-  body.style.width = '100%'
   body.style.overflow = 'hidden'
+  body.style.overscrollBehavior = 'none'
 }
 
 export function unlockBodyScroll(): void {
@@ -32,14 +36,11 @@ export function unlockBodyScroll(): void {
   lockCount--
   if (lockCount > 0) { return } // ещё есть открытые модалки
 
+  document.documentElement.style.overflow = ''
   const body = document.body
-  body.style.position = ''
-  body.style.top = ''
-  body.style.left = ''
-  body.style.right = ''
-  body.style.width = ''
   body.style.overflow = ''
-  // Вернуть прокрутку туда, где пользователь был до открытия.
+  body.style.overscrollBehavior = ''
+  // Защитно вернуть прокрутку (при overflow-локе не сбрасывается; страховка от браузерных сюрпризов).
   // try/catch: в jsdom (тесты) window.scrollTo кидает «Not implemented».
   try { window.scrollTo(0, savedScrollY) } catch { /* среда без реального скролла */ }
 }

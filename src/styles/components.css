@@ -437,6 +437,9 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-height: 90vh;
   overflow-y: auto;
+  /* APPLE-2 (F-996): скролл модалки не передаётся фону на краях (iOS rubber-band) —
+     страхует overflow-лок scrollLock.ts (фон не «ползёт» при драге внутри модалки). */
+  overscroll-behavior: contain;
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -460,14 +463,15 @@
   }
 }
 
+/* APPLE-2 (F-996): БЕЗ transform в модальных keyframes — во время анимации transform-предок ломает
+   якорь нативного iOS-поповера <select> (меню прилипало к верху) и создаёт containing block для
+   fixed-потомков. Только opacity-fade. НЕ возвращать scale/translate (гард в architecture.guards). */
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 
