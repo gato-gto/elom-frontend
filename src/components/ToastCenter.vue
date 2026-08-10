@@ -33,8 +33,10 @@ function alertClass(type?: 'success' | 'error' | 'info') {
 <style scoped>
 /* Основные стили для toast */
 .toast {
-  top: 1rem;
-  right: 1rem;
+  /* F-1005 (Apple-аудит MED): в PWA standalone (viewport-fit=cover) top:1rem клал тосты ПОД
+     часы/Dynamic Island (инсет 47-59px) — ошибки было не прочитать. В браузере инсет=0 → как раньше. */
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
 }
 
 /* Улучшенные стили для мобильных устройств */
@@ -46,7 +48,7 @@ function alertClass(type?: 'success' | 'error' | 'info') {
     margin: 0 5vw;
     font-size: 0.9rem;
     padding: 1rem;
-    top: 0.5rem;
+    top: max(0.5rem, env(safe-area-inset-top));
     right: 5vw;
   }
   

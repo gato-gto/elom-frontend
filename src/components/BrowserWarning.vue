@@ -60,8 +60,9 @@ const dismissWarning = () => {
 <style scoped>
 .browser-warning {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  /* F-1005: sibling ToastCenter — те же safe-area инсеты (fixed-top баннер). */
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
   z-index: 9999;
   max-width: 400px;
   animation: slideInRight 0.3s ease-out;
@@ -84,8 +85,8 @@ const dismissWarning = () => {
 
 @media (max-width: 640px) {
   .browser-warning {
-    top: 0.5rem;
-    right: 0.5rem;
+    top: max(0.5rem, env(safe-area-inset-top));
+    right: max(0.5rem, env(safe-area-inset-right));
     left: 0.5rem;
     max-width: none;
   }
