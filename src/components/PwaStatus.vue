@@ -23,7 +23,17 @@ import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { usePwaUpdatePrompt } from '@/composables/usePwaUpdatePrompt'
 
 // Регистрируем service worker; needRefresh становится true, когда собрана новая версия.
-const { needRefresh, updateServiceWorker } = useRegisterSW()
+// F-1006 (Apple-аудит MED): периодический registration.update() — iOS-PWA живёт днями без
+// перезапуска и БЕЗ него не узнаёт о новом dist (стейл-версия у бригадиров; симптом «баг у
+// владельца, которого нет в коде»). Час — баланс свежесть/трафик.
+let swUpdateTimer: ReturnType<typeof setInterval> | undefined
+const { needRefresh, updateServiceWorker } = useRegisterSW({
+  onRegisteredSW(_url, registration) {
+    if (!registration) { return }
+    swUpdateTimer = setInterval(() => { registration.update().catch(() => {}) }, 60 * 60 * 1000)
+  },
+})
+onBeforeUnmount(() => { if (swUpdateTimer) { clearInterval(swUpdateTimer) } })
 
 // F-511: «Позже» переживает перезагрузку (см. usePwaUpdatePrompt). applyUpdate(true) →
 // перезагрузить страницу после активации нового SW.
