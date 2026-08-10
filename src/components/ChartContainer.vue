@@ -1,5 +1,7 @@
 <template>
-  <div class="chart-container">
+  <!-- F-1008 (Apple-LOW): :class fullscreen — кнопка «Полноэкранный режим» меняла только ref,
+       класс ни к чему не был привязан (мёртвая кнопка). -->
+  <div class="chart-container" :class="{ fullscreen: isFullscreen }">
     <!-- Chart Header -->
     <div class="chart-header">
       <div class="chart-title-section">
@@ -39,7 +41,8 @@
             v-if="showFullscreen"
             @click="toggleFullscreen"
             class="btn btn-sm btn-outline btn-square"
-            title="Полноэкранный режим"
+            :title="isFullscreen ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'"
+            :aria-label="isFullscreen ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -183,6 +186,9 @@ const emit = defineEmits<{
 const chartCanvas = ref<any>() // HTMLCanvasElement
 const chartInstance = ref<Chart | null>(null)
 const isFullscreen = ref(false)
+function onFullscreenKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && isFullscreen.value) { toggleFullscreen() }
+}
 // F-065: последний конфиг — чтобы пересобрать график с цветами новой темы
 let lastChartConfig: ChartConfiguration | null = null
 
@@ -387,6 +393,9 @@ function downloadChart() {
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
   emit('fullscreen', isFullscreen.value)
+  // F-1008: Escape закрывает fullscreen (десктоп-конвенция; на iOS есть та же кнопка).
+  if (isFullscreen.value) { document.addEventListener('keydown', onFullscreenKeydown) }
+  else { document.removeEventListener('keydown', onFullscreenKeydown) }
   
   // Resize chart after fullscreen toggle
   nextTick(() => {
@@ -663,7 +672,10 @@ watch(() => themeStore.isDark, () => {
 .chart-container.fullscreen {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  /* F-1008: выше навбаров/модалок-подложек; safe-area — шапка/кнопка выхода не под чёлкой в PWA. */
+  z-index: 10001;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   background-color: white;
 }
 
