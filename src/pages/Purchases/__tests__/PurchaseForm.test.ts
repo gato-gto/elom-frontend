@@ -140,12 +140,33 @@ describe('PurchaseForm', () => {
       })
 
       const vm = wrapper.vm as any
-      
+
       // Access isEdit - it might be a ref or a computed property
       const isEdit = typeof vm.isEdit === 'object' ? vm.isEdit.value : vm.isEdit
-      
+
       // In new form mode, isEdit should be false
       expect(isEdit === false || isEdit === undefined).toBe(true)
+    })
+
+    it('F-998 (#73, баг владельца): edit-мэппинг переносит responsible в initialData', async () => {
+      // Регресс: «responsible убран — устанавливается автоматически из объекта» — легаси-коммент
+      // эпохи ДО фичи «Ответственный» (F-751): поле в форме есть, а edit-мэппинг его терял →
+      // на редактировании закупки select «Ответственный» всегда пуст (владелец 2026-08-10).
+      const wrapper = mount(PurchaseForm, {
+        props: {
+          initial: {
+            id: 9, date: '2026-08-01', object: 3, supplier: 4, responsible: 352,
+            invoice_number: '', purchase_no: 'P-1', status: 'new', currency: 'UZS',
+            comment: '', items: [],
+          } as any,
+        },
+        global: { stubs: { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true } },
+      })
+      const vm = wrapper.vm as any
+      const init = typeof vm.initialData === 'object' && 'value' in (vm.initialData || {})
+        ? vm.initialData.value : vm.initialData
+      expect(init.responsible).toBe(352)   // BE-значение доезжает до формы (не теряется мэппингом)
+      expect(init.object).toBe(3)          // соседний ключ цел (санити мэппинга)
     })
   })
 

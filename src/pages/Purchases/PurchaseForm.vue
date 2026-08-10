@@ -962,7 +962,10 @@ const initialData = computed(() => {
     return {
       date: props.initial.date,
       object: props.initial.object,
-      // responsible убран - устанавливается автоматически из объекта
+      // F-998 (#73): responsible ОБЯЗАН доезжать до формы на edit — легаси-коммент «устанавливается
+      // автоматически из объекта» был из эпохи ДО фичи «Ответственный» (F-751): поле есть, а мэппинг
+      // его терял → select «Ответственный» на редактировании всегда пуст (баг владельца 2026-08-10).
+      responsible: props.initial.responsible ?? '',
       supplier: props.initial.supplier,
       invoice_number: props.initial.invoice_number || '',
       purchase_no: props.initial.purchase_no || '',
@@ -975,7 +978,7 @@ const initialData = computed(() => {
   return {
     date: todayLocal(),
     object: 0,
-    // responsible убран - устанавливается автоматически из объекта
+    responsible: '',   // create: пусто → авто-подстановка из выбранного объекта (F-982..984)
     supplier: 0,
     invoice_number: '',
     purchase_no: '',
