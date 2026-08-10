@@ -1,5 +1,7 @@
 <template>
-  <div v-show="busy" class="fixed left-0 top-0 right-0 z-50 h-0.5 overflow-hidden">
+  <!-- F-1009 (Apple-LOW): top через env — в standalone-PWA полоса рисовалась в строке статус-бара
+       (под часами). Фиксед-контейнер остаётся transform-free (гард APPLE-2); анимация на ребёнке. -->
+  <div v-show="busy" class="fixed left-0 right-0 z-50 h-0.5 overflow-hidden" style="top: env(safe-area-inset-top, 0px)">
     <div class="h-full bg-primary animate-topbar"></div>
   </div>
 </template>
