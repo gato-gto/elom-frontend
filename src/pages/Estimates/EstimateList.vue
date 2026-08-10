@@ -3,6 +3,12 @@
 <template>
   <div class="list-container">
     <GenericList :store="estimatesStore" :config="listConfig" @create="openCreate" @action="handleAction">
+      <!-- F-997: импорт «отчёта цен» из xlsx (BE F-766). Гейт = estimates.create (как кнопка создания). -->
+      <template #header-actions>
+        <button v-if="can('estimates', 'create')" class="btn btn-outline btn-sm" @click="importOpen = true">
+          Импорт
+        </button>
+      </template>
       <!-- Кастомная колонка «Итого» — сумма с валютой (formatNumber). -->
       <template #column-total="{ item }">
         <span class="font-mono">{{ formatNumber(item.total) }} <span class="text-xs text-muted">{{ item.currency }}</span></span>
@@ -11,23 +17,34 @@
         <span class="font-medium">{{ value || 'Без названия' }}</span>
       </template>
     </GenericList>
+    <ImportEstimateModal v-model="importOpen" @imported="onImported" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEstimatesStore } from '@/stores/estimates'
 import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
+import { usePermissions } from '@/composables/usePermissions'
 import GenericList from '@/components/GenericList.vue'
 import EstimateCard from '@/components/cards/EstimateCard.vue'
+import ImportEstimateModal from '@/components/ImportEstimateModal.vue'
 import { formatNumber, formatDate } from '@/utils/formatters'
 
 const router = useRouter()
 const estimatesStore = useEstimatesStore()
 const objectsStore = useObjectsStore()
 const ui = useUiStore()
+const { can } = usePermissions()
+
+// F-997: импорт xlsx → после создания открываем смету.
+const importOpen = ref(false)
+function onImported(id: number) {
+  estimatesStore.fetchList().catch(() => {})
+  router.push(`/estimates/${id}`)
+}
 
 const objectOptions = computed(() => objectsStore.items.map(o => ({ value: o.id, label: o.name })))
 

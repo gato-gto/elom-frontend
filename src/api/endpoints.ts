@@ -162,6 +162,9 @@ export const endpoints = {
     estimates: {
         list: join('/estimates/'),
         one: (id: number) => join(`/estimates/${id}/`),
+        // F-997 (импорт «отчёта цен», BE F-766): 2-шаговый multipart POST file → dry-run/commit.
+        importDryRun: join('/estimates/import/dry-run/'),
+        importCommit: join('/estimates/import/commit/'),
     },
 
 } as const;

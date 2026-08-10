@@ -68,6 +68,31 @@ export interface WorkItemLite {
   is_draft: boolean // A7 (F-762): BE-search отдаёт авторитетный флаг (read_only BooleanField, всегда присутствует)
 }
 
+// ────────────── Импорт «отчёта цен» (F-997 ↔ BE F-766, 2-шаговый multipart) ──────────────
+
+/** Ответ POST /estimates/import/dry-run/ — разбор файла БЕЗ записи. */
+export interface EstimateImportPreview {
+  title_hint: string
+  object_hint: string
+  groups: number
+  lines: number
+  coefficients: number
+  would_create_items: number   // новых позиций каталога создаст commit (D9: нужно work_items.create)
+  warnings: string[]
+  already_imported: boolean    // маркер content_hash уже есть в какой-то смете (E7-идемпотентность)
+  content_hash: string
+}
+
+/** Ответ POST /estimates/import/commit/ — 201 создана / 200 already imported (без id). */
+export interface EstimateImportResult {
+  id?: number
+  title?: string
+  lines?: number
+  warnings?: string[]
+  detail?: string              // 'already imported' на повторе
+  content_hash: string
+}
+
 // ─────────────────────────── Смета (read) ───────────────────────────
 
 export interface EstimateLine {
