@@ -271,6 +271,30 @@ describe('APPLE-2 · iOS select-поповер: без смещения body и 
       }
     }
   })
+  it('F-1000: SearchSelect-дропдауны позиционируются по visualViewport, не по window.innerHeight', () => {
+    // iOS-клавиатура НЕ сжимает window.innerHeight → меню рисовалось под клавиатурой (HIGH-1 аудита,
+    // 3 линзы независимо). Компоненты обязаны использовать getVisualViewportBounds + слушать visualViewport.
+    for (const rel of ['src/components/MaterialSearchSelect.vue', 'src/components/WorkItemSearchSelect.vue']) {
+      const src = stripComments(readFileSync(resolve(ROOT, rel), 'utf8'))
+      expect(/window\.innerHeight/.test(src), `${rel}: window.innerHeight вернулся (F-1000)`).toBe(false)
+      expect(/getVisualViewportBounds\(\)/.test(src), `${rel}: нет getVisualViewportBounds (F-1000)`).toBe(true)
+      expect(/visualViewport\?\.addEventListener/.test(src), `${rel}: нет visualViewport-слушателей (F-1000)`).toBe(true)
+    }
+  })
+  it('F-1001: fullscreen-модалка (F-571) несёт safe-area инсеты', () => {
+    const src = readFileSync(resolve(ROOT, 'src/components/Modal.vue'), 'utf8')
+    const block = src.match(/@media \(max-width: 639px\) \{([\s\S]*?)\n\}/)
+    expect(block, 'F-571 media-блок исчез из Modal.vue').toBeTruthy()
+    expect(
+      /env\(safe-area-inset-top\)/.test(block![1]),
+      'fullscreen-модалка без env(safe-area-inset-top) — крестик снова под Dynamic Island (F-1001)',
+    ).toBe(true)
+  })
+  it('F-1002: логин-поле несёт autocapitalize=none (iOS капитализация ломала вход)', () => {
+    const src = readFileSync(resolve(ROOT, 'src/pages/Login.vue'), 'utf8')
+    expect(/autocapitalize="none"/.test(src), 'Login username без autocapitalize=none (F-1002)').toBe(true)
+    expect(/autocomplete="current-password"/.test(src), 'Login password без autocomplete (F-1002)').toBe(true)
+  })
   it('F-999: .modal-box нейтрализует DaisyUI v5 individual-свойства (translate/scale/rotate: none)', () => {
     // DaisyUI v5 держит на открытой модалке translate:0/scale:1 — identity, но НЕ none → containing
     // block + слом якоря iOS-поповера (live-DOM подтверждён). Наш CSS обязан перебивать в none.

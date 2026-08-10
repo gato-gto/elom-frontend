@@ -47,9 +47,16 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
                 </div>
+                <!-- F-1002 (Apple-аудит HIGH-3): iOS капитализирует/автокорректит первый символ
+                     логина → невидимое несовпадение и «не войти»; autocomplete включает вставку
+                     из связки ключей iCloud. -->
                 <input
                   v-model.trim="username"
                   type="text"
+                  autocapitalize="none"
+                  autocorrect="off"
+                  spellcheck="false"
+                  autocomplete="username"
                   class="login-input w-full pl-10 pr-4 py-3 rounded border border-control bg-base-100 text-base-content transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Введите логин"
                   required
@@ -69,6 +76,7 @@
                 <input
                   v-model="password"
                   type="password"
+                  autocomplete="current-password"
                   class="login-input w-full pl-10 pr-4 py-3 rounded border border-control bg-base-100 text-base-content transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Введите пароль"
                   required
