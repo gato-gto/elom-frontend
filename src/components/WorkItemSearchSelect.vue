@@ -109,7 +109,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useWorkItemsStore, searchWorkItems } from '@/stores/workItems'
 import type { WorkItem, WorkItemLite } from '@/api/types/estimates'
-import { computeDropdownPosition } from '@/utils/dropdownPosition'
+import { computeDropdownPosition, getVisualViewportBounds } from '@/utils/dropdownPosition'
 import { formatNumber } from '@/utils/formatters'
 import { ACTION_ICONS } from '@/utils/actionIcons'
 import { getIconPath } from '@/assets/icons'
@@ -156,7 +156,7 @@ const isSuccess = computed(() => !!props.isSuccess)
 const dropdownStyle = computed(() => {
   void positionTick.value
   if (!searchInput.value || !showDropdown.value) { return {} }
-  const pos = computeDropdownPosition(searchInput.value.getBoundingClientRect(), window.innerHeight)
+  const pos = computeDropdownPosition(searchInput.value.getBoundingClientRect(), getVisualViewportBounds())
   return {
     position: 'fixed' as const,
     top: `${pos.top}px`, left: `${pos.left}px`, width: `${pos.width}px`,
@@ -309,12 +309,17 @@ function handleReposition() {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   window.addEventListener('resize', handleReposition)
+  // F-1000: iOS-клавиатура/pinch-zoom меняют ТОЛЬКО visualViewport (window.resize не стреляет)
+  window.visualViewport?.addEventListener('resize', handleReposition)
+  window.visualViewport?.addEventListener('scroll', handleReposition)
   window.addEventListener('scroll', handleReposition, true)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('resize', handleReposition)
+  window.visualViewport?.removeEventListener('resize', handleReposition)
+  window.visualViewport?.removeEventListener('scroll', handleReposition)
   window.removeEventListener('scroll', handleReposition, true)
   if (searchTimeout.value) { clearTimeout(searchTimeout.value) }
 })

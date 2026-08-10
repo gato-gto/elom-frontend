@@ -121,7 +121,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useMaterialsStore, getMaterialsInStock } from '@/stores/materials'
 import type { Material } from '@/api/types/materials'
-import { computeDropdownPosition } from '@/utils/dropdownPosition'
+import { computeDropdownPosition, getVisualViewportBounds } from '@/utils/dropdownPosition'
 
 const props = defineProps<{
   modelValue?: number | null
@@ -178,7 +178,7 @@ const dropdownStyle = computed(() => {
   // F-518: расчёт вынесен в чистую computeDropdownPosition (см. utils/dropdownPosition.ts) —
   // по умолчанию меню открывается ПОД полем и лишь ограничивает высоту; вверх откидывается,
   // только когда снизу реально мало места. Раньше улетало вверх при любом < 240px снизу.
-  const pos = computeDropdownPosition(searchInput.value.getBoundingClientRect(), window.innerHeight)
+  const pos = computeDropdownPosition(searchInput.value.getBoundingClientRect(), getVisualViewportBounds())
 
   return {
     position: 'fixed' as const,
@@ -394,6 +394,9 @@ function handleReposition() {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   window.addEventListener('resize', handleReposition)
+  // F-1000: iOS-клавиатура/pinch-zoom меняют ТОЛЬКО visualViewport (window.resize не стреляет)
+  window.visualViewport?.addEventListener('resize', handleReposition)
+  window.visualViewport?.addEventListener('scroll', handleReposition)
   // capture:true — ловим скролл ЛЮБОГО контейнера (тело модалки скроллится и не поднимает
   // событие до window без capture), иначе меню «отрывалось» от поля при прокрутке формы.
   window.addEventListener('scroll', handleReposition, true)
@@ -405,6 +408,8 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('resize', handleReposition)
+  window.visualViewport?.removeEventListener('resize', handleReposition)
+  window.visualViewport?.removeEventListener('scroll', handleReposition)
   window.removeEventListener('scroll', handleReposition, true)
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value)

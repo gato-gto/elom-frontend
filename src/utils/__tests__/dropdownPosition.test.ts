@@ -42,4 +42,23 @@ describe('F-518 · computeDropdownPosition', () => {
       expect(pos.top + pos.maxHeight).toBeLessThanOrEqual(vh)
     }
   })
+
+  it('F-1000 iOS-клавиатура: bounds visualViewport → меню НАД полем, не под клавиатурой', () => {
+    // iPhone: layout-высота 844, клавиатура съедает низ → visualViewport {top:0, bottom:390}.
+    // Поле доскроллено iOS вплотную над клавиатурой: top 340..372. По старому innerHeight=844
+    // spaceBelow=472 → 'below' → меню целиком В ЗОНЕ КЛАВИАТУРЫ (владелец видел «ничего не нашлось»).
+    // По visual-bounds: spaceBelow=390-372=18 (<160), spaceAbove=340 → 'above', низ прижат к полю.
+    const pos = computeDropdownPosition(rect(340), { top: 0, bottom: 390 })
+    expect(pos.placement).toBe('above')
+    expect(pos.top + pos.maxHeight).toBe(340 - DROPDOWN_GAP)   // низ меню у верхней грани поля
+    expect(pos.top).toBeGreaterThanOrEqual(0)
+  })
+
+  it('F-1000: pinch-zoom (visualViewport.offsetTop>0) — spaceAbove от ВИДИМОГО верха', () => {
+    // Зум: видимое окно {top:200, bottom:500}. Поле top=260 → spaceAbove=60 (не 260!),
+    // spaceBelow=500-292=208 (>=160) → 'below' и меню влезает в видимую зону.
+    const pos = computeDropdownPosition(rect(260), { top: 200, bottom: 500 })
+    expect(pos.placement).toBe('below')
+    expect(pos.top + pos.maxHeight).toBeLessThanOrEqual(500)
+  })
 })

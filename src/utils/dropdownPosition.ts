@@ -27,12 +27,29 @@ export const DROPDOWN_GAP = 4
 /** Минимум места снизу, ниже которого разумнее открыть меню вверх. */
 export const DROPDOWN_MIN_BELOW = 160
 
+/** Видимая зона вьюпорта в layout-координатах (top..bottom). */
+export interface ViewportBounds { top: number; bottom: number }
+
+/**
+ * F-1000 (Apple-аудит HIGH-1): границы РЕАЛЬНО видимой зоны. На iOS открытая экранная клавиатура
+ * НЕ уменьшает window.innerHeight (layout viewport) — меню рисовалось «в зоне клавиатуры»
+ * (пользователь видел пусто). visualViewport отражает клавиатуру И pinch-zoom; фолбэк — innerHeight
+ * (десктоп/старые браузеры, поведение прежнее).
+ */
+export function getVisualViewportBounds(): ViewportBounds {
+  const vv = typeof window !== 'undefined' ? window.visualViewport : null
+  if (vv) { return { top: vv.offsetTop, bottom: vv.offsetTop + vv.height } }
+  return { top: 0, bottom: typeof window !== 'undefined' ? window.innerHeight : 0 }
+}
+
 export function computeDropdownPosition(
   rect: DropdownAnchor,
-  viewportHeight: number,
+  viewport: number | ViewportBounds,
 ): DropdownPosition {
-  const spaceBelow = viewportHeight - rect.bottom
-  const spaceAbove = rect.top
+  // Обратная совместимость: number = высота layout-вьюпорта (top=0).
+  const vp: ViewportBounds = typeof viewport === 'number' ? { top: 0, bottom: viewport } : viewport
+  const spaceBelow = vp.bottom - rect.bottom
+  const spaceAbove = rect.top - vp.top
 
   if (spaceBelow >= DROPDOWN_MIN_BELOW || spaceBelow >= spaceAbove) {
     return {
