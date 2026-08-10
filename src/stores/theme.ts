@@ -12,9 +12,10 @@ export const useThemeStore = defineStore('theme', () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   }
 
-  // A-07 (F-523): статус-бар iOS тонируется по <meta name="theme-color">. Тема управляется
-  // приложением (не только системой), поэтому обновляем тег динамически под ТЕКУЩУЮ тему —
-  // иначе при ручном выборе, отличном от системного, статус-бар не совпал бы с шапкой.
+  // A-07 (F-523) + уточнение F-1007: <meta theme-color> тонирует ХРОМ Safari-браузера (адресную
+  // строку/тулбары), НО НЕ статус-бар standalone-PWA — тот при black-translucent прозрачен, и его
+  // читаемость в светлой теме даёт тёмная подложка-полоска body::before (components.css, F-1007).
+  // Тег всё равно обновляем под текущую тему — для браузерного хрома.
   const THEME_COLOR = { light: '#F4F7F8', dark: '#16222B' } // фон приложения сверху в каждой теме
   function updateThemeColor(dark: boolean) {
     const meta = document.querySelector('meta[name="theme-color"]')
