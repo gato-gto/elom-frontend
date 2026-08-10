@@ -208,7 +208,8 @@ function handleMultiselectChange(event: Event) {
    Замерено ВЖИВУЮ под ролью на проде: .filter-input/.filter-select рендерились 14px → зум.
    Правило в scoped-стилях компонента (та же специфичность, что базовое, но позже в каскаде),
    иначе глобальное правило не перебивало scoped-селектор. Десктоп остаётся на 14px (плотность). */
-@media (max-width: 1023px) {
+/* F-1011: + pointer:coarse (sibling components.css) — iPad-ландшафт шире 1023px, но зумит так же. */
+@media (max-width: 1023px), (pointer: coarse) {
   .filter-input,
   .filter-select,
   .filter-textarea {
