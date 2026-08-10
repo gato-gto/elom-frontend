@@ -436,6 +436,10 @@
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-height: 90vh;
+  /* F-1004 (Apple-аудит MED, missed-sibling F-514): dvh-пара и в БАЗОВОМ правиле — на ширинах >640px
+     (iPhone-ландшафт, iPad) 90vh считался от большого вьюпорта, модалка обрезалась под тулбаром Safari
+     (верх с крестиком недостижим). Фолбэк-каскад как в мобильном media ниже. */
+  max-height: 90dvh;
   overflow-y: auto;
   /* APPLE-2 (F-996): скролл модалки не передаётся фону на краях (iOS rubber-band) —
      страхует overflow-лок scrollLock.ts (фон не «ползёт» при драге внутри модалки). */
@@ -983,5 +987,24 @@
   .touch-target {
     min-width: 44px;
     min-height: 44px;
+  }
+}
+
+
+/* F-1007 (Apple-аудит MED): standalone-PWA + black-translucent → глифы статус-бара БЕЛЫЕ поверх
+   светлой темы (часы/заряд невидимы). Тёмная подложка-полоска строго под верхним инсетом; в браузере
+   (инсет=0) высота нулевая, в тёмной теме тоже уместна (глифы белые на тёмном). black-translucent
+   сохраняем — на нём вся safe-area-математика F-514/F-1001. */
+@media (display-mode: standalone) {
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: #16222B;
+    z-index: 10000;
+    pointer-events: none;
   }
 }

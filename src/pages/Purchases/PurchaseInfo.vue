@@ -178,7 +178,8 @@
 
     <!-- Photo Modal -->
     <div v-if="photoModalOpen" class="modal modal-open no-print">
-      <div class="modal-box max-w-6xl w-full h-full max-h-screen">
+      <!-- F-1004: max-h-screen(=100vh) + dvh-пара — iOS-ландшафт/тулбар (sibling базового .modal-box) -->
+      <div class="modal-box max-w-6xl w-full h-full max-h-screen max-h-[100dvh]">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold">
             {{ getPhotoTypeLabel(selectedPhoto?.type) }} - {{ currentPhotoIndex + 1 }} из {{ currentPhotoList.length }}

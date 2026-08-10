@@ -290,6 +290,28 @@ describe('APPLE-2 · iOS select-поповер: без смещения body и 
       'fullscreen-модалка без env(safe-area-inset-top) — крестик снова под Dynamic Island (F-1001)',
     ).toBe(true)
   })
+  it('F-1004/1005: dvh-пара в базовом .modal-box и safe-area у fixed-top тостов', () => {
+    const css = readFileSync(resolve(ROOT, 'src/styles/components.css'), 'utf8')
+    const box = css.match(/\.modal-box\s*\{([\s\S]*?)\n\}/)![1]
+    expect(/max-height:\s*90vh/.test(box) && /max-height:\s*90dvh/.test(box),
+      'базовый .modal-box без пары 90vh+90dvh — обрезка в iOS-ландшафте вернулась (F-1004)').toBe(true)
+    const toast = readFileSync(resolve(ROOT, 'src/components/ToastCenter.vue'), 'utf8')
+    expect(/top:\s*max\([^)]*safe-area-inset-top\)/.test(toast),
+      'тосты без env(safe-area-inset-top) — снова под часами в PWA (F-1005)').toBe(true)
+  })
+  it('F-1003: экспорт-заглушки мертвы — никто не импортирует composables/useExport, отчёты ходят на BE', () => {
+    // useExport.exportToExcel писал TSV с расширением .xlsx, exportToPDF — CSV с .pdf (битые файлы
+    // в Excel/Numbers; Apple-аудит MED). Файл удалён; отчёты excel/pdf качают настоящие BE-файлы.
+    const all = collectSources(['.vue', '.ts'])
+    // Ищем именно ИМПОРТ-стейтмент (не упоминание пути — иначе гард ловил бы сам себя в этом файле).
+    expect(/from ['"]@\/composables\/useExport['"]/.test(all),
+      'импорт composables/useExport вернулся (F-1003)').toBe(false)
+    for (const rel of ['src/pages/Reports/ByObject.vue', 'src/pages/Reports/ByPeriod.vue',
+                       'src/pages/Reports/ByResponsible.vue', 'src/pages/Reports/ByMaterial.vue']) {
+      const src = readFileSync(resolve(ROOT, rel), 'utf8')
+      expect(/exportFromBackend\(/.test(src), `${rel}: excel/pdf не через BE (F-1003)`).toBe(true)
+    }
+  })
   it('F-1002: логин-поле несёт autocapitalize=none (iOS капитализация ломала вход)', () => {
     const src = readFileSync(resolve(ROOT, 'src/pages/Login.vue'), 'utf8')
     expect(/autocapitalize="none"/.test(src), 'Login username без autocapitalize=none (F-1002)').toBe(true)
