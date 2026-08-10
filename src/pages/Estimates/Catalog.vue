@@ -115,7 +115,7 @@
         <div class="grid grid-cols-3 gap-2">
           <label class="form-control"><span class="label-text text-xs">Тип</span><select v-model="itemForm.kind" class="select select-bordered select-sm w-full"><option v-for="k in KIND_OPTIONS" :key="k.value" :value="k.value">{{ k.label }}</option></select></label>
           <label class="form-control"><span class="label-text text-xs">Ед.</span><input v-model="itemForm.unit" type="text" maxlength="32" class="input input-bordered input-sm w-full" /></label>
-          <label class="form-control"><span class="label-text text-xs">Цена</span><input v-model="itemForm.default_price" type="number" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" /></label>
+          <label class="form-control"><span class="label-text text-xs">Цена</span><input v-model="itemForm.default_price" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" /></label>
         </div>
         <div class="flex justify-end gap-2"><button class="btn btn-ghost" @click="itemModal = false">Отмена</button><button class="btn btn-primary" :disabled="savingItem" @click="saveItem">{{ savingItem ? '…' : 'Сохранить' }}</button></div>
       </div>
@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { selectAllOnFocus } from '@/utils/numberInput'  // F-1017: тап в числовое поле выделяет значение
 import { useWorkCategoriesStore } from '@/stores/workCategories'
 import { useWorkItemsStore } from '@/stores/workItems'
 import { useUiStore } from '@/stores/ui'

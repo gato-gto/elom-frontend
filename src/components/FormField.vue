@@ -279,6 +279,7 @@
 
 <script setup lang="ts">
 import { watch, computed } from 'vue'
+import { selectAllOnFocus } from '@/utils/numberInput'  // F-1017: тап в числовое поле выделяет значение
 
 // Generate unique field name to prevent browser autocomplete recognition
 const uniqueFieldName = `field_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`
@@ -392,7 +393,10 @@ const handleBlur = () => {
   emit('blur')
 }
 
-const handleFocus = () => {
+const handleFocus = (e?: Event) => {
+  // F-1017: для числовых полей тап выделяет всё значение — ввод перезаписывает «0»/«1»/префилл
+  // без ручного стирания (задача владельца). Остальные типы не трогаем (курсор-позиция важна).
+  if (props.type === 'number' && e) { selectAllOnFocus(e) }
   emit('focus')
 }
 

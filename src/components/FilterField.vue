@@ -20,6 +20,7 @@
     <input
       v-else-if="type === 'number'"
       type="number" inputmode="decimal"
+      @focus="selectAllOnFocus"
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -115,6 +116,8 @@
 </template>
 
 <script setup lang="ts">
+import { selectAllOnFocus } from '@/utils/numberInput'  // F-1017: тап выделяет значение
+
 interface Option {
   value: string | number | boolean | undefined
   label: string
