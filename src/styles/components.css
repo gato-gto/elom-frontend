@@ -219,7 +219,9 @@
 /* APPLE-4 (F-516): на мобильных поля ввода ≥16px — иначе iOS зумит страницу при фокусе.
    Замерено ВЖИВУЮ под ролью на проде: .input/.select рендерились 14px → зум на iPhone.
    Десктоп оставляем на 14px (плотность; зума там нет — брейкпоинты не пересекаются). */
-@media (max-width: 1023px) {
+/* F-1011 (Apple-LOW): + pointer:coarse — iPad Pro 11 landscape (1194px) шире брейкпоинта, но зумит
+   так же; десктоп-мышь под coarse не попадает (плотность 14px цела). */
+@media (max-width: 1023px), (pointer: coarse) {
   .input,
   .textarea,
   .select,
@@ -370,9 +372,12 @@
   transition: all 0.2s ease;
 }
 
-.card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+/* F-1012: декоратив-hover только на hover-устройствах. */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
 }
 
 .card-body {
@@ -390,9 +395,12 @@
   transition: all 0.2s ease;
 }
 
-.mobile-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+/* F-1012: декоратив-hover только на hover-устройствах. */
+@media (hover: hover) and (pointer: fine) {
+  .mobile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .mobile-card:active {
@@ -660,14 +668,7 @@
 
 @media (max-width: 768px) {
   /* Убираем hover эффекты на мобильных */
-  .btn:hover {
-    transform: none;
-  }
-  
-  .card:hover {
-    transform: none;
-  }
-  
+  /* F-1012: hover-сбросы удалены — гейт hover-медиа в базовых правилах. */
   /* Улучшенные touch targets */
   .btn {
     min-height: 44px;

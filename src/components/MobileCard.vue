@@ -105,8 +105,11 @@ defineEmits<Emits>()
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.mobile-card:hover {
-  transform: translateY(-1px);
+/* F-1012: декоратив-hover только на hover-устройствах. */
+@media (hover: hover) and (pointer: fine) {
+  .mobile-card:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .mobile-card-content {

@@ -264,6 +264,7 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
 import { useRouter, useRoute } from 'vue-router'
+import { useUiStore } from '@/stores/ui'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
 import { formatDate, formatNumber, formatNumberClean } from '@/utils/formatters'
 import { smartConvert, formatSmartQuantity } from '@/utils/unitRounding' // F-717/F-868: накладная — кол-во умным числом
@@ -282,6 +283,7 @@ defineEmits<{
 // Router
 const router = useRouter()
 const route = useRoute()
+const ui = useUiStore()
 
 // Stores
 const employeesStore = useEmployeesStore()
@@ -448,6 +450,14 @@ function handlePrint() {
   
   // Если уже на странице печати - вызываем печать
   if (route.name === 'PurchasePrint') {
+    // F-1013 (Apple-LOW): в standalone-PWA window.print() исторически no-op — вместо тихого «ничего»
+    // честная подсказка открыть накладную в Safari (кнопку не прячем: ссылку можно открыть извне).
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || (navigator as unknown as { standalone?: boolean }).standalone === true
+    if (standalone) {
+      ui.toast({ type: 'info', text: 'Печать недоступна в приложении — откройте эту страницу в Safari' })
+      return
+    }
     window.print()
     return
   }
@@ -861,9 +871,12 @@ onUnmounted(() => {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.photo-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* F-1012: декоратив-hover только на hover-устройствах. */
+@media (hover: hover) and (pointer: fine) {
+  .photo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .photo-thumbnail {

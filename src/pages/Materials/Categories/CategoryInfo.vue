@@ -668,9 +668,12 @@ onMounted(async () => {
   transition: all 0.3s ease;
 }
 
-.subcategory-card:hover .subcategory-arrow {
-  opacity: 1;
-  transform: translateX(4px);
+/* F-1012: декоратив-hover только на hover-устройствах. */
+@media (hover: hover) and (pointer: fine) {
+  .subcategory-card:hover .subcategory-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+  }
 }
 
 /* Materials Section */

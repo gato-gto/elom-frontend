@@ -822,9 +822,12 @@ onBeforeUnmount(() => {
   transition: all 0.3s ease;
 }
 
-.quick-action-card:hover .quick-action-arrow {
-  opacity: 1;
-  transform: translateX(4px);
+/* F-1012: декоратив-hover только на hover-устройствах. */
+@media (hover: hover) and (pointer: fine) {
+  .quick-action-card:hover .quick-action-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+  }
 }
 
 /* Responsive Design */

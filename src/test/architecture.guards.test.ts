@@ -290,6 +290,23 @@ describe('APPLE-2 · iOS select-поповер: без смещения body и 
       'fullscreen-модалка без env(safe-area-inset-top) — крестик снова под Dynamic Island (F-1001)',
     ).toBe(true)
   })
+  it('F-1010/1012: числовые инпуты с inputmode; декоратив-hover только под hover-медиа', () => {
+    // L3: type=number без inputmode → iOS открывает полную клавиатуру (sibling F-522).
+    const all = collectSources(['.vue'])
+    const bare = all.match(/<input[^>]*type="number"(?![^>]*inputmode)[^>]*>/g) || []
+    expect(bare, `type="number" без inputmode: ${bare.map(b => b.slice(0, 60)).join(' | ')}`).toHaveLength(0)
+    // L5: transform/scale в :hover вне @media(hover:hover) → «залипание» первого тапа на iOS.
+    for (const rel of ['src/styles/animations.css', 'src/styles/components.css']) {
+      const css = readFileSync(resolve(ROOT, rel), 'utf8')
+      for (const m of css.matchAll(/([^\n{}]+:hover[^{]*)\{([^}]*)\}/g)) {
+        if (/transform\s*:|scale\(|translateY?\(/.test(m[2])) {
+          const ctx = css.slice(Math.max(0, m.index! - 400), m.index)
+          expect(/@media \(hover: hover\)/.test(ctx),
+            `${rel}: декоратив-hover «${m[1].trim().slice(0, 50)}» вне hover-медиа (F-1012)`).toBe(true)
+        }
+      }
+    }
+  })
   it('F-1004/1005: dvh-пара в базовом .modal-box и safe-area у fixed-top тостов', () => {
     const css = readFileSync(resolve(ROOT, 'src/styles/components.css'), 'utf8')
     const box = css.match(/\.modal-box\s*\{([\s\S]*?)\n\}/)![1]

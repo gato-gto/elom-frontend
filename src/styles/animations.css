@@ -48,9 +48,12 @@
 
 /* Ripple эффект через transform вместо псевдоэлемента */
 
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* F-1012: декоратив-hover только на hover-устройствах (иначе iOS «залипание» первого тапа). */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 }
 
 /* Анимации для пустого состояния */
@@ -74,9 +77,12 @@
   transition: all 0.3s ease;
 }
 
-.filter-panel:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* F-1012: декоратив-hover только на hover-устройствах (иначе iOS «залипание» первого тапа). */
+@media (hover: hover) and (pointer: fine) {
+  .filter-panel:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* Анимации для заголовков */
@@ -84,13 +90,16 @@ th {
   transition: all 0.2s ease;
 }
 
-th:hover {
-  background: rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
-}
-
-:root.dark th:hover {
-  background: rgba(255, 255, 255, 0.05);
+/* F-1012: декоратив-hover только на hover-устройствах (иначе iOS «залипание» первого тапа). */
+@media (hover: hover) and (pointer: fine) {
+  th:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+  }
+  
+  :root.dark th:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
 /* Анимации для модальных окон */
@@ -129,19 +138,15 @@ th:hover {
   transition: all 0.2s ease;
 }
 
-.pagination-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* F-1012: декоратив-hover только на hover-устройствах (иначе iOS «залипание» первого тапа). */
+@media (hover: hover) and (pointer: fine) {
+  .pagination-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
 
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-  
-  .btn:hover {
-    transform: none;
-  }
-  
-}
+/* F-1012: width-сброс .btn:hover удалён — декоратив-hover теперь гейтится hover-медиа выше. */
 
 /* A-13 (F-524): Поддержка prefers-reduced-motion — ГЛОБАЛЬНО.
    Раньше отключались только .btn и .loading-overlay, а переходы модалок, слайды навигации и
