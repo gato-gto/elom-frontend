@@ -440,6 +440,13 @@
   /* APPLE-2 (F-996): скролл модалки не передаётся фону на краях (iOS rubber-band) —
      страхует overflow-лок scrollLock.ts (фон не «ползёт» при драге внутри модалки). */
   overscroll-behavior: contain;
+  /* APPLE-2b (F-999, Apple-аудит I1): DaisyUI v5 держит на открытой модалке INDIVIDUAL-свойства
+     translate:0/scale:1 — они НЕ 'none' даже при identity → создают containing block и ломают
+     якорь нативного iOS-поповора <select> ровно как transform (F-996 гасил только transform).
+     Live-DOM это подтвердил (computed translate:'0px', scale:'1'). Форсируем none. */
+  translate: none;
+  scale: none;
+  rotate: none;
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

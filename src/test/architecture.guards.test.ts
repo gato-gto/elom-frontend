@@ -271,6 +271,19 @@ describe('APPLE-2 · iOS select-поповер: без смещения body и 
       }
     }
   })
+  it('F-999: .modal-box нейтрализует DaisyUI v5 individual-свойства (translate/scale/rotate: none)', () => {
+    // DaisyUI v5 держит на открытой модалке translate:0/scale:1 — identity, но НЕ none → containing
+    // block + слом якоря iOS-поповера (live-DOM подтверждён). Наш CSS обязан перебивать в none.
+    const css = readFileSync(resolve(ROOT, 'src/styles/components.css'), 'utf8')
+    const box = css.match(/\.modal-box\s*\{([\s\S]*?)\n\}/)
+    expect(box, '.modal-box правило исчезло из components.css').toBeTruthy()
+    for (const prop of ['translate', 'scale', 'rotate']) {
+      expect(
+        new RegExp(`${prop}\\s*:\\s*none`).test(box![1]),
+        `.modal-box не нейтрализует ${prop} (DaisyUI v5) — iOS select-якорь снова сломается (F-999)`,
+      ).toBe(true)
+    }
+  })
 })
 
 /**
