@@ -156,7 +156,8 @@ import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createHorizontalBarChartConfig, getColor, getChartHeight, truncateLabel } from '@/utils/chartUtils'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
+// F-1003: BE-файлы для excel/pdf; клиентская заглушка useExport писала битые файлы.
+import { exportFromBackend } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
@@ -246,29 +247,13 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     const eq: ReportByResponsibleQuery = {}
     if (dateFrom.value) { eq.date_from = dateFrom.value }
     if (dateTo.value) { eq.date_to = dateTo.value }
-    (eq as any).page_size = 1000
-    const { data: full } = await api.get<ResponsibleReportResponse>(endpoints.reports.byResponsible + buildQuery(eq))
-    const rowsAll = full.results || []
     const filename = `responsible_report_${new Date().toISOString().split('T')[0]}`
 
-    const headers = ['Ответственный', 'Сумма', 'Кол-во закупок']
-    const formattedData = rowsAll.map(item => ({
-      'Ответственный': item.responsible_name || '',
-      'Сумма': item.total_amount,
-      'Кол-во закупок': item.purchases || 0
-    }))
+    // F-1003+F-1014: ВСЕ форматы собирает BE по тем же фильтрам (xlsx/pdf — F-1003;
+    // csv — A F-770: платформенный разделитель/BOM, полный отфильтрованный отчёт).
+    await exportFromBackend(endpoints.reports.byResponsible, format === 'excel' ? 'xlsx' : format, filename, eq)
+    return
 
-    switch (format) {
-      case 'csv':
-        exportToCSV(formattedData, filename, { headers })
-        break
-      case 'excel':
-        exportToExcel(formattedData, filename, { headers })
-        break
-      case 'pdf':
-        exportToPDF(formattedData, filename, { headers })
-        break
-    }
 
     // ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
   } catch (error) {

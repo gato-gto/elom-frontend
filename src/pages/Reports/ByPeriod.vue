@@ -185,7 +185,8 @@ const formatDateFn = formatDate
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createLineChartConfig, getColor, getChartHeight, formatCurrencyTooltip } from '@/utils/chartUtils'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/composables/useExport'
+// F-1003: BE-файлы для excel/pdf; клиентская заглушка useExport писала битые файлы.
+import { exportFromBackend } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
@@ -283,31 +284,13 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     if (dateFrom.value) { eq.date_from = dateFrom.value }
     if (dateTo.value) { eq.date_to = dateTo.value }
     if (period.value) { eq.period = period.value }
-    (eq as Record<string, unknown>).page_size = 1000
-    const { data: full } = await api.get<PeriodReportResponse>(endpoints.reports.byPeriod + buildQuery(eq))
-    const data = full.results || []
     const filename = `periods_report_${new Date().toISOString().split('T')[0]}`
 
-    const headers = ['Месяц', 'Сумма', 'Кол-во закупок', 'Средняя сумма', 'Объектов']
-    const formattedData = data.map(item => ({
-      'Месяц': formatDateFn(item.period),
-      'Сумма': item.total_amount,
-      'Кол-во закупок': item.purchases || 0,
-      'Средняя сумма': item.avg_amount || 0,
-      'Объектов': item.unique_objects || 0
-    }))
+    // F-1003+F-1014: ВСЕ форматы собирает BE по тем же фильтрам (xlsx/pdf — F-1003;
+    // csv — A F-770: платформенный разделитель/BOM, полный отфильтрованный отчёт).
+    await exportFromBackend(endpoints.reports.byPeriod, format === 'excel' ? 'xlsx' : format, filename, eq)
+    return
 
-    switch (format) {
-      case 'csv':
-        exportToCSV(formattedData, filename, { headers })
-        break
-      case 'excel':
-        exportToExcel(formattedData, filename, { headers })
-        break
-      case 'pdf':
-        exportToPDF(formattedData, filename, { headers })
-        break
-    }
   } catch (error) {
     ErrorHandlers.dataLoading(error)
   }

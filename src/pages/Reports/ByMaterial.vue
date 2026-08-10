@@ -172,7 +172,7 @@ import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
 import { createDoughnutChartConfig, getColors, getChartHeight, truncateLabel } from '@/utils/chartUtils'
-import { exportToCSV, exportToExcel, exportToPDF } from '@/utils/export'
+import { exportFromBackend } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterField from '@/components/FilterField.vue'
@@ -288,30 +288,13 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
     if (dateFrom.value) { eq.date_from = dateFrom.value }
     if (dateTo.value) { eq.date_to = dateTo.value }
     if (objectId.value && String(objectId.value) !== '') { eq.object = [Number(objectId.value)] }
-    (eq as any).page_size = 1000
-    const { data: full } = await api.get<MaterialReportResponse>(endpoints.reports.byMaterial + buildQuery(eq))
-    const data = full.results || []
     const filename = `materials_report_${new Date().toISOString().split('T')[0]}`
 
-    const headers = ['Материал', 'Единица', 'Сумма', 'Кол-во закупок']
-    const formattedData = data.map(item => ({
-      'Материал': item.material_name || '',
-      'Единица': item.unit || '',
-      'Сумма': item.amount_total,
-      'Кол-во закупок': item.rows || 0
-    }))
+    // F-1003+F-1014: ВСЕ форматы собирает BE по тем же фильтрам (xlsx/pdf — F-1003;
+    // csv — A F-770: платформенный разделитель/BOM, полный отфильтрованный отчёт).
+    await exportFromBackend(endpoints.reports.byMaterial, format === 'excel' ? 'xlsx' : format, filename, eq)
+    return
 
-    switch (format) {
-      case 'csv':
-        exportToCSV(formattedData, filename, headers)
-        break
-      case 'excel':
-        exportToExcel(formattedData, filename, headers)
-        break
-      case 'pdf':
-        exportToPDF(formattedData, filename, headers)
-        break
-    }
 
     // ui.toast({ type: 'success', text: `Экспорт в ${format.toUpperCase()} выполнен` })
   } catch (error) {
