@@ -75,12 +75,12 @@
                 </button>
               </div>
               <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-sm">
-                <input v-model="line.quantity" type="number" :step="qtyStep(line.unit)" min="0" :max="MAX_QTY" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" @change="sanitizeQty(line)" />
+                <input v-model="line.quantity" type="number" inputmode="decimal" :step="qtyStep(line.unit)" min="0" :max="MAX_QTY" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" @change="sanitizeQty(line)" />
                 <span class="text-muted w-10 text-center">{{ line.unit || '—' }}</span>
                 <span class="text-muted">×</span>
                 <!-- цена: каталожная позиция → read-only (прайс-книга, меняется в каталоге); произвольная одноразовая → вручную -->
                 <span v-if="line.work_item" class="font-mono w-28 text-right text-muted" title="Цена из каталога — меняется в «Прайс-каталоге»">{{ formatNumber(line.unit_price || 0) }}</span>
-                <input v-else v-model="line.unit_price" type="number" step="1" min="0" class="input input-bordered input-sm w-28 text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" aria-label="Цена" placeholder="цена" />
+                <input v-else v-model="line.unit_price" type="number" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm w-28 text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" aria-label="Цена" placeholder="цена" />
                 <span class="text-muted">=</span>
                 <span class="font-mono font-semibold ml-auto">{{ lineAmountDisplay(line) }}</span>
               </div>
@@ -105,7 +105,7 @@
             <div class="flex items-center gap-1.5">
               <input v-model="line.name" type="text" maxlength="256" class="input input-bordered input-sm flex-1 min-w-0" :class="{ 'input-error': coeffLineError(idx) }" placeholder="Название коэффициента" aria-label="Название коэффициента" />
               <span class="text-muted">×</span>
-              <input v-model="line.unit_price" type="number" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': coeffLineError(idx) }" placeholder="1.5" aria-label="Множитель" />
+              <input v-model="line.unit_price" type="number" inputmode="decimal" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': coeffLineError(idx) }" placeholder="1.5" aria-label="Множитель" />
               <button type="button" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить коэффициент" title="Удалить" @click="removeLine(idx)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg>
               </button>

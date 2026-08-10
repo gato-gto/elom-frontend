@@ -35,7 +35,7 @@
       <!-- F-740: коэффициент не заводится в каталог → тип всегда работа/материал/оборуд., цена целым сумом. -->
       <label v-if="canSetPrice" class="form-control">
         <span class="label-text text-xs">Цена</span>
-        <input v-model="form.default_price" type="number" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" />
+        <input v-model="form.default_price" type="number" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" />
       </label>
       <div v-else class="text-xs text-warning bg-warning/10 rounded-lg p-2">
         Позиция добавится <b>без цены</b> (черновик) — цену поставит руководство в «Прайс-каталоге».
