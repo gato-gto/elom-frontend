@@ -245,7 +245,7 @@
                     <div>
                       <input 
                         v-model="it.quantity" 
-                        type="number" inputmode="decimal" 
+                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.001" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -261,7 +261,7 @@
                     <div>
                       <input 
                         v-model="it.price" 
-                        type="number" inputmode="decimal" 
+                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.01" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -368,7 +368,7 @@
                       </label>
                       <input 
                         v-model="it.quantity" 
-                        type="number" inputmode="decimal" 
+                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.001" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -388,7 +388,7 @@
                       </label>
                       <input 
                         v-model="it.price" 
-                        type="number" inputmode="decimal" 
+                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.01" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -505,6 +505,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { todayLocal } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { usePurchasesStore } from '@/stores/purchases'
@@ -722,9 +723,9 @@ const {
     material: undefined,
     material_name: undefined,
     unit: 0,
-    quantity: '0',
+    quantity: '',   // F-1016: пусто вместо 0 — нечего стирать (0 не значение)
     amount: '0',
-    price: '0',
+    price: '',
     total: 0,
     isNewMaterial: false
   }),
@@ -998,7 +999,7 @@ const initialData = computed(() => {
 // FE-1/F-563: хвостовая пустая строка-плейсхолдер (без материала и с кол-вом ≤0) — НЕ позиция.
 // Раньше и валидация, и отправка её учитывали → ложная «исправьте ошибки» и отправка пустой строки.
 function isEmptyPurchaseItem(item: any): boolean {
-  const q = parseFloat(typeof item.quantity === 'string' ? item.quantity : String(item.quantity ?? 0))
+  const q = parseFloat(normalizeDecimalInput(typeof item.quantity === 'string' ? item.quantity : String(item.quantity ?? 0)))
   return !item.material && !item.material_name && (!item.quantity || isNaN(q) || q <= 0)
 }
 
@@ -1027,7 +1028,7 @@ function validatePurchaseItems(): Record<string, string> {
     
     // Проверка количества
     const quantityValue = typeof item.quantity === 'string' ? item.quantity : String(item.quantity)
-    if (!item.quantity || parseFloat(quantityValue) <= 0) {
+    if (!item.quantity || parseFloat(normalizeDecimalInput(quantityValue)) <= 0) {
       validationErrors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
     }
   })
@@ -1406,7 +1407,7 @@ function recalc(item: PurchaseItem) {
 // Format money for display
 function formatMoney(amount: number | string | undefined): string {
   if (!amount) {return '0.00'}
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount
+  const num = typeof amount === 'string' ? parseFloat(normalizeDecimalInput(amount)) : amount
   return num.toLocaleString('ru-RU', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 

@@ -116,6 +116,13 @@ describe('estimateCalc — зеркало BE calc.py (Фаза 1)', () => {
     expect(contributions[1]).toBeNull()
   })
 
+  it('F-1015: запятая в строке-значении — дробь, не тихое усечение (parseFloat("1000,50")=1000)', () => {
+    // iOS RU-клавиатура даёт запятую; parseFloat молча резал дробь → превью ИТОГО врало.
+    const commaLine: CalcLine = { ...work('A', '', 0), unit_price: '1000,50' }
+    const { total } = computeEstimate([commaLine])
+    expect(total).toBe(1001)   // 1000.50 → HALF_UP целый сум (было бы 1000 при усечении)
+  })
+
   it('Т5-пин (аудит#3): коэффициент РАНЬШЕ работ в списке всё равно применяется (== BE 180000)', () => {
     // Все прежние вектора держали коэффициенты последними — стриминг-однопроходная регрессия прошла бы
     // незамеченной. Зеркало BE tests_coeff.test_coefficient_before_works_still_applies.

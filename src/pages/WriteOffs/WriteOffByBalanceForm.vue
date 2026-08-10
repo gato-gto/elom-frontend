@@ -75,7 +75,7 @@
                     <div class="text-sm text-muted font-mono p-2">{{ balanceFor(row)?.unit_code || '—' }}</div>
                   </td>
                   <td>
-                    <input v-model="row.actual_balance" type="number" inputmode="decimal" step="0.000001" min="0"
+                    <input v-model="row.actual_balance" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.000001" min="0"
                            placeholder="0.000000" class="input input-bordered input-sm w-full" />
                   </td>
                   <td>
@@ -130,7 +130,7 @@
                 </div>
                 <div>
                   <label class="label"><span class="label-text text-xs">Фактический остаток</span></label>
-                  <input v-model="row.actual_balance" type="number" inputmode="decimal" step="0.000001" min="0"
+                  <input v-model="row.actual_balance" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.000001" min="0"
                          placeholder="0.000000" class="input input-bordered input-sm w-full" />
                 </div>
                 <div>
@@ -192,6 +192,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { useObjectsStore } from '@/stores/objects'
 import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { getMaterialsInStock } from '@/stores/materials'
@@ -330,11 +331,11 @@ function handleSubmit() {
     const idx = rows.value.indexOf(r)
     if (!r.material) { rowErrors.value[idx] = 'Выберите материал'; return }
     if (r.actual_balance === '' || r.actual_balance == null) { rowErrors.value[idx] = 'Укажите остаток'; return }
-    if (parseFloat(r.actual_balance) < 0) { rowErrors.value[idx] = 'Остаток не может быть отрицательным'; return }
+    if (parseFloat(normalizeDecimalInput(r.actual_balance)) < 0) { rowErrors.value[idx] = 'Остаток не может быть отрицательным'; return }
     // F-894: факт НЕ может превышать книжный остаток — расход = книжный − факт стал бы отрицательным,
     // и бэкенд (from_balance _compute_from_balance_row) отклонит ВЕСЬ атомарный батч. Предупреждаем на строке.
     const bal = balanceFor(r)
-    if (bal && parseFloat(r.actual_balance) > Number(bal.current_balance)) {
+    if (bal && parseFloat(normalizeDecimalInput(r.actual_balance)) > Number(bal.current_balance)) {
       rowErrors.value[idx] = `Факт не может превышать книжный остаток (${formatNumberClean(Number(bal.current_balance))})`; return
     }
     if (seen.has(r.material)) { rowErrors.value[idx] = 'Материал повторяется'; return }

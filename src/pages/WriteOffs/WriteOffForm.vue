@@ -167,7 +167,7 @@
                     <div>
                       <input 
                         v-model="item.quantity" 
-                        type="number" inputmode="decimal" 
+                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.000001" 
                         min="0.000001" 
                         class="input input-bordered input-sm w-full"
@@ -274,7 +274,7 @@
                       </label>
                       <input 
                         v-model="item.quantity" 
-                        type="number" inputmode="decimal" 
+                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.000001" 
                         min="0.000001" 
                         class="input input-bordered input-sm w-full"
@@ -392,6 +392,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, reactive } from 'vue'
+import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { useWriteOffsStore, createBulk } from '@/stores/writeOffs'
@@ -527,7 +528,7 @@ function addItem() {
     _k: Math.random().toString(36).substr(2, 9),
     material: null,
     unit: 0,
-    quantity: '0',
+    quantity: '',   // F-1016: пусто вместо 0
     currentBalance: null
   }
   items.value.push(newItem)
@@ -870,7 +871,7 @@ const handleSubmit = async () => {
     // пустая строка перед ошибочной сдвинула бы ошибку на чужую позицию (M1).
     const filledItems: WriteOffItem[] = []
     items.value.forEach((item, idx) => {
-      if (item.material && item.unit && parseFloat(String(item.quantity)) > 0) {
+      if (item.material && item.unit && parseFloat(normalizeDecimalInput(String(item.quantity))) > 0) {
         filledItems.push(item)
         filledDisplayIndexes.push(idx)
       }
@@ -916,7 +917,7 @@ const handleSubmit = async () => {
     // F-306: не отправляем списание больше доступного остатка — сразу подсказываем на клиенте.
     // Бэкенд всё равно проверяет (WriteOff.clean → 400); это UX-ограничение, не замена бэк-проверке.
     const overItems = items.value.filter(
-      (item) => item.material && item.unit && parseFloat(String(item.quantity)) > 0 && getFutureBalance(item) < 0,
+      (item) => item.material && item.unit && parseFloat(normalizeDecimalInput(String(item.quantity))) > 0 && getFutureBalance(item) < 0,
     )
     if (overItems.length > 0) {
       errors.value.non_field_errors = ['Нельзя списать больше остатка — исправьте позиции с отрицательным будущим остатком.']

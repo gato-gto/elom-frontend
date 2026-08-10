@@ -75,12 +75,12 @@
                 </button>
               </div>
               <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-sm">
-                <input v-model="line.quantity" type="number" inputmode="decimal" :step="qtyStep(line.unit)" min="0" :max="MAX_QTY" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" @change="sanitizeQty(line)" />
+                <input v-model="line.quantity" type="number" @focus="selectAllOnFocus" inputmode="decimal" :step="qtyStep(line.unit)" min="0" :max="MAX_QTY" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': lineErrors[idx]?.quantity }" aria-label="Количество" @change="sanitizeQty(line)" />
                 <span class="text-muted w-10 text-center">{{ line.unit || '—' }}</span>
                 <span class="text-muted">×</span>
                 <!-- цена: каталожная позиция → read-only (прайс-книга, меняется в каталоге); произвольная одноразовая → вручную -->
                 <span v-if="line.work_item" class="font-mono w-28 text-right text-muted" title="Цена из каталога — меняется в «Прайс-каталоге»">{{ formatNumber(line.unit_price || 0) }}</span>
-                <input v-else v-model="line.unit_price" type="number" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm w-28 text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" aria-label="Цена" placeholder="цена" />
+                <input v-else v-model="line.unit_price" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm w-28 text-right" :class="{ 'input-error': lineErrors[idx]?.unit_price }" aria-label="Цена" placeholder="цена" />
                 <span class="text-muted">=</span>
                 <span class="font-mono font-semibold ml-auto">{{ lineAmountDisplay(line) }}</span>
               </div>
@@ -105,7 +105,7 @@
             <div class="flex items-center gap-1.5">
               <input v-model="line.name" type="text" maxlength="256" class="input input-bordered input-sm flex-1 min-w-0" :class="{ 'input-error': coeffLineError(idx) }" placeholder="Название коэффициента" aria-label="Название коэффициента" />
               <span class="text-muted">×</span>
-              <input v-model="line.unit_price" type="number" inputmode="decimal" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': coeffLineError(idx) }" placeholder="1.5" aria-label="Множитель" />
+              <input v-model="line.unit_price" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.01" min="0" class="input input-bordered input-sm w-20 text-right" :class="{ 'input-error': coeffLineError(idx) }" placeholder="1.5" aria-label="Множитель" />
               <button type="button" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить коэффициент" title="Удалить" @click="removeLine(idx)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg>
               </button>
@@ -173,6 +173,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { useRoute, useRouter } from 'vue-router'
 import { useEstimatesStore } from '@/stores/estimates'
 import { useObjectsStore } from '@/stores/objects'
@@ -328,7 +329,7 @@ function qtyStep(unit: string) { return isCount(unit) ? '1' : '0.001' }
 
 // Каноническое кол-во строки: clamp [0, MAX] (D1 нет отрицательного / D3 потолок) + целое для штучных (D2).
 function effQty(line: FormLine): number {
-  const q = parseFloat(line.quantity || '0')
+  const q = parseFloat(normalizeDecimalInput(line.quantity || '0'))
   if (isNaN(q)) { return 0 }
   const c = Math.min(Math.max(0, q), MAX_QTY)
   return isCount(line.unit) ? Math.floor(c) : c
@@ -342,7 +343,7 @@ function sanitizeQty(line: FormLine) {
 // ── суммы (целый сум; отрицательное/дробное-штучное/сверх-max отсекает effQty; цена ≥0) ──
 function lineAmount(line: FormLine): number | null {
   if (line.kind === 'coefficient') { return null }
-  const p = Math.max(0, parseFloat(line.unit_price || '0'))
+  const p = Math.max(0, parseFloat(normalizeDecimalInput(line.unit_price || '0')))
   if (isNaN(p)) { return 0 }
   // MED #2 (аудит A): десятичное HALF_UP (как движок/сервер), НЕ Math.round(float) — иначе подытоги≠ИТОГО
   // и построчная сумма «прыгает» на 1 после сохранения (0.7×45: float→31, HALF_UP→32).
@@ -366,7 +367,7 @@ function contribDisplay(idx: number): string {
     // D10 (аудит#3): зона ВЫБРАНА, но множитель пуст/≤0 (M1-гард calc) — «выберите зону» врало
     // пользователю; честная подсказка ведёт к реальному незаполненному полю.
     const l = lines.value[idx]
-    const k = parseFloat(String(l?.unit_price ?? ''))
+    const k = parseFloat(normalizeDecimalInput(String(l?.unit_price ?? '')))
     if (l?.coeff_scope && !(k > 0)) { return 'укажите множитель' }
     return 'выберите зону'
   }
@@ -512,14 +513,14 @@ function validate(): boolean {
     if (l.kind === 'coefficient') {
       // F-740: ad-hoc коэффициент — имя + множитель>0 (все ошибки в errs.coeff, коэфф-блок рендерит его).
       if (!l.name.trim()) { errs.coeff = 'Укажите название коэффициента'; ok = false }
-      else if (!(parseFloat(l.unit_price || '0') > 0)) { errs.coeff = 'Множитель должен быть больше 0'; ok = false }
+      else if (!(parseFloat(normalizeDecimalInput(l.unit_price || '0')) > 0)) { errs.coeff = 'Множитель должен быть больше 0'; ok = false }
       // #65 Фаза 1 (аудит A#6): без выбранной зоны коэффициент инертен.
       else if (!l.coeff_scope) { errs.coeff = 'Выберите зону коэффициента'; ok = false }
       // Фаза 2: selection без выбранных работ.
       else if (l.coeff_scope === 'selection' && l.coeff_targets.length === 0) { errs.coeff = 'Выберите хотя бы одну позицию'; ok = false }
     } else {
       if (!l.work_item && !l.name.trim()) { errs.name = 'Укажите позицию' }
-      const q = parseFloat(l.quantity || '')
+      const q = parseFloat(normalizeDecimalInput(l.quantity || ''))
       if (l.quantity === '' || isNaN(q) || q < 0) { errs.quantity = 'Кол-во ≥ 0' }
       if (l.unit_price !== '' && l.unit_price != null) {
         const p = parseFloat(String(l.unit_price))

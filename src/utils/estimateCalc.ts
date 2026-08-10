@@ -16,11 +16,14 @@ export interface CalcLine {
   coeff_targets?: string[]
 }
 
+import { normalizeDecimalInput } from '@/utils/numberInput'
+
 const SCOPES_ACTIVE = new Set(['all', 'section', 'subcategory', 'selection']) // Фаза 1 + Фаза 2 (selection)
 
 // Точное целое из десятичного с ≤ log10(scale) знаками (float-ошибка *scale < 0.5 → Math.round точен).
 function scaledInt(v: number | string | undefined, scale: number): number {
-  const n = typeof v === 'number' ? v : parseFloat((v as string) || '0')
+  // F-1015: нормализация запятой/разрядов ДО парса (parseFloat('2,5')=2 — тихое усечение).
+  const n = typeof v === 'number' ? v : parseFloat(normalizeDecimalInput((v as string) || '0'))
   return isNaN(n) ? 0 : Math.round(n * scale)
 }
 
@@ -49,7 +52,7 @@ function applyK(before: number, k: number | string): number {
 }
 
 function num(v: number | string | undefined): number {
-  const n = typeof v === 'number' ? v : parseFloat((v as string) || '0')
+  const n = typeof v === 'number' ? v : parseFloat(normalizeDecimalInput((v as string) || '0'))
   return isNaN(n) ? 0 : n
 }
 
