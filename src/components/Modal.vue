@@ -178,6 +178,15 @@ onBeforeUnmount(() => {
     max-width: 100% !important;
     width: 100% !important;
     max-height: 100dvh !important;
+    /* F-1001 (Apple-аудит HIGH-2, missed-sibling F-514/F-571): fullscreen-модалка в PWA standalone
+       (viewport-fit=cover) шла от самого верха экрана — заголовок и крестик закрытия оказывались
+       ПОД часами/Dynamic Island (инсет 47-59px, крестик не нажать), кнопки действий — под
+       home-indicator. Зеркало AutoMobileNavigation (F-514), но с max(): базовый паддинг сохраняем
+       в браузере (инсет=0), в PWA растягиваем до инсета. */
+    padding-top: max(0.75rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+    padding-left: max(0.75rem, env(safe-area-inset-left)) !important;
+    padding-right: max(0.75rem, env(safe-area-inset-right)) !important;
   }
   /* box уже 100% ширины (w-full); убираем возможный внешний зазор грид-контейнера */
   .modal {
