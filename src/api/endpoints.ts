@@ -21,7 +21,6 @@ export const endpoints = {
         myPermissions: join('/rbac/my-permissions/'),
         permissions: {
             list: join('/rbac/permissions/'),
-            one: (id: number) => join(`/rbac/permissions/${id}/`),
         },
         roles: {
             list: join('/rbac/roles/'),
@@ -32,7 +31,6 @@ export const endpoints = {
         },
         userRoles: {
             list: join('/rbac/user-roles/'),
-            one: (id: number) => join(`/rbac/user-roles/${id}/`),
             create: join('/rbac/user-roles/'),
             delete: (id: number) => join(`/rbac/user-roles/${id}/`),
         },
@@ -80,18 +78,8 @@ export const endpoints = {
         list: join('/purchases/'),
         one: (id: number) => join(`/purchases/${id}/`),
         uploadPhoto: (id: number) => join(`/purchases/${id}/photos/upload/`),
-        bulkUploadPhotos: (id: number) => join(`/purchases/${id}/photos/bulk-upload/`),
-        getPhotos: (id: number) => join(`/purchases/${id}/photos/`),
-        updatePhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/`),
         deletePhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/`),
-        setCoverPhoto: (id: number, photoId: number) => join(`/purchases/${id}/photos/${photoId}/set-cover/`),
-        reorderPhotos: (id: number) => join(`/purchases/${id}/photos/reorder/`),
-        import: {
-            // trailing slashes required — POST to a slash-less path breaks (F-055)
-            prepare: join('/purchases/import/prepare/'),
-            dryRun: join('/purchases/import/dry_run/'),
-            commit: join('/purchases/import/commit/'),
-        },
+        // F-1025: блок import.{prepare,dryRun,commit} удалён — 0 FE-вызовов (BE-эндпоинты живы; вернуть при появлении UI).
     },
 
     // Suppliers endpoints
@@ -106,7 +94,6 @@ export const endpoints = {
         one: (id: number) => join(`/stock/snapshots/${id}/`),
         balance: join('/stock/snapshots/balance/'),
         byObjects: join('/stock/snapshots/by-objects/'),
-        history: join('/stock/snapshots/history/'),
     },
 
     // WriteOff endpoints
