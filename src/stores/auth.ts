@@ -86,6 +86,24 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
+        /**
+         * F-1021: self-service смена пароля (BE F-777, POST /users/me/password → 204).
+         * BE отзывает ВСЕ refresh-токены (в т.ч. текущей сессии) → сразу перелогиниваемся новым
+         * паролем, чтобы сессия не умерла через ≤30 мин на первом refresh. Ошибки полей пробрасываем
+         * наверх (модалка раскладывает old_password/new_password).
+         */
+        async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+            await api.post(endpoints.users.mePassword, {old_password: oldPassword, new_password: newPassword})
+            const username = this.me?.username
+            if (username) {
+                const ok = await this.login(username, newPassword)
+                if (!ok) { await this.fetchMe() }
+            } else {
+                await this.fetchMe()
+            }
+            if (this.me) { this.me.must_change_password = false }
+        },
+
         async fetchMe() {
             const {data} = await api.get<Me>(endpoints.users.me)
             this.me = data

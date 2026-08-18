@@ -91,6 +91,15 @@
               </li>
               <li><div class="divider my-2"></div></li>
               <li>
+                <!-- F-1021: self-service смена пароля (BE F-777) -->
+                <button type="button" @click="pwModalOpen = true" class="w-full text-left transition-all duration-200 rounded-lg">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" :d="getIconPath('shield')" />
+                  </svg>
+                  Сменить пароль
+                </button>
+              </li>
+              <li>
                 <!-- F-915 (a11y): было <a @click> без href → недостижимо/неактивируемо с клавиатуры
                      (клавиатурный юзер не мог выйти). <button> фокусируется и активируется Enter/Space. -->
                 <button type="button" @click="logout" class="w-full text-left text-error hover:bg-error/10 hover:text-error transition-all duration-200 rounded-lg">
@@ -107,7 +116,11 @@
     </div>
     
     <!-- Мобильная навигация -->
-    <AutoMobileNavigation />
+    <AutoMobileNavigation @change-password="pwModalOpen = true" />
+    <!-- F-1021: смена пароля — из меню (закрываемая) или ФОРС при must_change_password (временный пароль от админа);
+       forced-модалка не закрывается и перекрывает весь лейаут (все защищённые роуты идут через AppLayout). -->
+  <ChangePasswordModal :model-value="pwModalOpen || mustChangePassword" :forced="mustChangePassword"
+                       @update:model-value="v => { if (!v) pwModalOpen = false }" @logout="logout" />
   </div>
 </template>
 
@@ -115,6 +128,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
+import { getIconPath } from '@/assets/icons'
 import { usePermissionsStore } from '@/stores/permissions'
 import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
@@ -173,6 +188,9 @@ const toggleTheme = () => {
 }
 
 // Logout function
+const pwModalOpen = ref(false)
+const mustChangePassword = computed(() => !!auth.me?.must_change_password)
+
 const logout = async () => {
   try {
     auth.logout()

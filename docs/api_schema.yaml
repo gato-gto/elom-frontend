@@ -901,12 +901,27 @@ paths:
   /api/v1/employees/:
     get:
       operationId: employees_list
-      description: "\n        Получить пагинированный список сотрудников системы.\n\
-        \        \n        Поддерживает поиск по username, first_name, last_name,\
-        \ email.\n        Фильтрация по роли, активности и объекту.\n        \n  \
-        \      **Примечание:** Доступ к списку зависит от роли пользователя.\n   \
-        \     "
-      summary: Список сотрудников
+      description: |-
+        ViewSet для управления сотрудниками системы ELOM.
+
+        Сотрудник — пользователь системы с определенной ролью.
+        Каждый сотрудник имеет профиль (EmployeeProfile) с ролью.
+
+        **Роли:**
+        - admin — Администратор (полный доступ ко всем функциям)
+        - manager — Управляющий (полный доступ без учета изменений)
+        - warehouse — Склад/Цех/Проект (полный доступ без учета изменений)
+        - brigadier — Бригадир/Инженер (работа с назначенными объектами)
+        - requester — Заявитель (просмотр и подача заявок на материалы)
+
+        **Дополнительные действия:**
+        - `set_password` — смена пароля сотруднику (только admin)
+
+        **Права доступа:**
+        - Чтение списка: все авторизованные
+        - Создание/изменение/удаление: admin
+
+        **Примечание:** Суперпользователи (superuser) не отображаются в списке.
       parameters:
       - in: query
         name: email
@@ -920,7 +935,6 @@ paths:
         name: is_active
         schema:
           type: boolean
-        description: 'Фильтр: активность (true/false)'
       - in: query
         name: is_staff
         schema:
@@ -936,14 +950,13 @@ paths:
       - in: query
         name: object
         schema:
-          type: integer
-        description: 'Фильтр: ID объекта (сотрудники ответственные за объект)'
-      - in: query
-        name: ordering
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
         schema:
           type: string
-        description: 'Сортировка: username|first_name|last_name|id (используйте ''-''
-          для desc)'
       - name: page
         required: false
         in: query
@@ -959,25 +972,19 @@ paths:
       - in: query
         name: role
         schema:
-          type: string
-          enum:
-          - admin
-          - brigadier
-          - manager
-          - requester
-          - warehouse
-        description: 'Фильтр: роль сотрудника'
-      - in: query
-        name: search
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
         schema:
           type: string
-        description: 'Поиск: username|first_name|last_name|email'
       - in: query
         name: username
         schema:
           type: string
       tags:
-      - Employees
+      - employees
       security:
       - jwtAuth: []
       responses:
@@ -987,33 +994,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedEmployeeList'
           description: ''
-        '401':
-          description: Не авторизован
     post:
       operationId: employees_create
-      description: "\n        Создать нового сотрудника в системе.\n        \n   \
-        \     **Обязательные поля:** username, password, role\n        **Опциональные:**\
-        \ first_name, last_name, email\n        \n        Требуется роль admin.\n\
-        \        "
-      summary: Создать сотрудника
+      description: |-
+        ViewSet для управления сотрудниками системы ELOM.
+
+        Сотрудник — пользователь системы с определенной ролью.
+        Каждый сотрудник имеет профиль (EmployeeProfile) с ролью.
+
+        **Роли:**
+        - admin — Администратор (полный доступ ко всем функциям)
+        - manager — Управляющий (полный доступ без учета изменений)
+        - warehouse — Склад/Цех/Проект (полный доступ без учета изменений)
+        - brigadier — Бригадир/Инженер (работа с назначенными объектами)
+        - requester — Заявитель (просмотр и подача заявок на материалы)
+
+        **Дополнительные действия:**
+        - `set_password` — смена пароля сотруднику (только admin)
+
+        **Права доступа:**
+        - Чтение списка: все авторизованные
+        - Создание/изменение/удаление: admin
+
+        **Примечание:** Суперпользователи (superuser) не отображаются в списке.
       tags:
-      - Employees
+      - employees
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/EmployeeRequest'
-            examples:
-              СозданиеБригадира:
-                value:
-                  username: brigadier_new
-                  password: SecurePass123!
-                  first_name: Азиз
-                  last_name: Иброхимов
-                  email: aziz@elom.uz
-                  role: brigadier
-                  is_active: true
-                summary: Создание бригадира
         required: true
       security:
       - jwtAuth: []
@@ -1024,17 +1034,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
-        '400':
-          description: Ошибка валидации (username занят, слабый пароль и т.д.)
-        '401':
-          description: Не авторизован
-        '403':
-          description: Нет прав доступа
   /api/v1/employees/{id}/:
     get:
       operationId: employees_retrieve
-      description: Получить детальную информацию о сотруднике по ID.
-      summary: Получить сотрудника
+      description: |-
+        ViewSet для управления сотрудниками системы ELOM.
+
+        Сотрудник — пользователь системы с определенной ролью.
+        Каждый сотрудник имеет профиль (EmployeeProfile) с ролью.
+
+        **Роли:**
+        - admin — Администратор (полный доступ ко всем функциям)
+        - manager — Управляющий (полный доступ без учета изменений)
+        - warehouse — Склад/Цех/Проект (полный доступ без учета изменений)
+        - brigadier — Бригадир/Инженер (работа с назначенными объектами)
+        - requester — Заявитель (просмотр и подача заявок на материалы)
+
+        **Дополнительные действия:**
+        - `set_password` — смена пароля сотруднику (только admin)
+
+        **Права доступа:**
+        - Чтение списка: все авторизованные
+        - Создание/изменение/удаление: admin
+
+        **Примечание:** Суперпользователи (superuser) не отображаются в списке.
       parameters:
       - in: path
         name: id
@@ -1043,7 +1066,7 @@ paths:
         description: A unique integer value identifying this пользователь.
         required: true
       tags:
-      - Employees
+      - employees
       security:
       - jwtAuth: []
       responses:
@@ -1053,17 +1076,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
-        '401':
-          description: Не авторизован
-        '403':
-          description: Нет прав доступа
-        '404':
-          description: Сотрудник не найден
     put:
       operationId: employees_update
-      description: Полное обновление данных сотрудника. Для смены пароля используйте
-        action set_password.
-      summary: Полное обновление сотрудника
+      description: |-
+        ViewSet для управления сотрудниками системы ELOM.
+
+        Сотрудник — пользователь системы с определенной ролью.
+        Каждый сотрудник имеет профиль (EmployeeProfile) с ролью.
+
+        **Роли:**
+        - admin — Администратор (полный доступ ко всем функциям)
+        - manager — Управляющий (полный доступ без учета изменений)
+        - warehouse — Склад/Цех/Проект (полный доступ без учета изменений)
+        - brigadier — Бригадир/Инженер (работа с назначенными объектами)
+        - requester — Заявитель (просмотр и подача заявок на материалы)
+
+        **Дополнительные действия:**
+        - `set_password` — смена пароля сотруднику (только admin)
+
+        **Права доступа:**
+        - Чтение списка: все авторизованные
+        - Создание/изменение/удаление: admin
+
+        **Примечание:** Суперпользователи (superuser) не отображаются в списке.
       parameters:
       - in: path
         name: id
@@ -1072,7 +1107,7 @@ paths:
         description: A unique integer value identifying this пользователь.
         required: true
       tags:
-      - Employees
+      - employees
       requestBody:
         content:
           application/json:
@@ -1088,19 +1123,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
-        '400':
-          description: Ошибка валидации
-        '401':
-          description: Не авторизован
-        '403':
-          description: Нет прав доступа
-        '404':
-          description: Сотрудник не найден
     patch:
       operationId: employees_partial_update
-      description: Частичное обновление данных сотрудника. Для смены пароля используйте
-        action set_password.
-      summary: Частичное обновление сотрудника
+      description: |-
+        ViewSet для управления сотрудниками системы ELOM.
+
+        Сотрудник — пользователь системы с определенной ролью.
+        Каждый сотрудник имеет профиль (EmployeeProfile) с ролью.
+
+        **Роли:**
+        - admin — Администратор (полный доступ ко всем функциям)
+        - manager — Управляющий (полный доступ без учета изменений)
+        - warehouse — Склад/Цех/Проект (полный доступ без учета изменений)
+        - brigadier — Бригадир/Инженер (работа с назначенными объектами)
+        - requester — Заявитель (просмотр и подача заявок на материалы)
+
+        **Дополнительные действия:**
+        - `set_password` — смена пароля сотруднику (только admin)
+
+        **Права доступа:**
+        - Чтение списка: все авторизованные
+        - Создание/изменение/удаление: admin
+
+        **Примечание:** Суперпользователи (superuser) не отображаются в списке.
       parameters:
       - in: path
         name: id
@@ -1109,7 +1154,7 @@ paths:
         description: A unique integer value identifying this пользователь.
         required: true
       tags:
-      - Employees
+      - employees
       requestBody:
         content:
           application/json:
@@ -1124,19 +1169,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Employee'
           description: ''
-        '400':
-          description: Ошибка валидации
-        '401':
-          description: Не авторизован
-        '403':
-          description: Нет прав доступа
-        '404':
-          description: Сотрудник не найден
     delete:
       operationId: employees_destroy
-      description: Удалить сотрудника из системы. Рекомендуется деактивировать (is_active=false)
-        вместо удаления.
-      summary: Удалить сотрудника
+      description: |-
+        ViewSet для управления сотрудниками системы ELOM.
+
+        Сотрудник — пользователь системы с определенной ролью.
+        Каждый сотрудник имеет профиль (EmployeeProfile) с ролью.
+
+        **Роли:**
+        - admin — Администратор (полный доступ ко всем функциям)
+        - manager — Управляющий (полный доступ без учета изменений)
+        - warehouse — Склад/Цех/Проект (полный доступ без учета изменений)
+        - brigadier — Бригадир/Инженер (работа с назначенными объектами)
+        - requester — Заявитель (просмотр и подача заявок на материалы)
+
+        **Дополнительные действия:**
+        - `set_password` — смена пароля сотруднику (только admin)
+
+        **Права доступа:**
+        - Чтение списка: все авторизованные
+        - Создание/изменение/удаление: admin
+
+        **Примечание:** Суперпользователи (superuser) не отображаются в списке.
       parameters:
       - in: path
         name: id
@@ -1145,18 +1200,12 @@ paths:
         description: A unique integer value identifying this пользователь.
         required: true
       tags:
-      - Employees
+      - employees
       security:
       - jwtAuth: []
       responses:
         '204':
-          description: Успешно удалено
-        '401':
-          description: Не авторизован
-        '403':
-          description: Нет прав доступа
-        '404':
-          description: Сотрудник не найден
+          description: No response body
   /api/v1/employees/{id}/set_password/:
     post:
       operationId: employees_set_password
@@ -7617,6 +7666,45 @@ paths:
           description: ''
         '401':
           description: Не авторизован. Требуется JWT токен.
+  /api/v1/users/me/password:
+    post:
+      operationId: auth_me_password_change
+      description: |-
+        F-777 · Self-service смена пароля текущего пользователя.
+
+        POST /users/me/password {old_password, new_password} → 204.
+        - старый пароль проверяется; политика F-727 (≥6) + ≠старому + ≠username;
+        - throttle per-user 5/min (PasswordChangeThrottle);
+        - снимает флаг EmployeeProfile.must_change_password (онбординг с временным паролем);
+        - отзывает ВСЕ выданные refresh-токены пользователя (token_blacklist), кроме текущей сессии
+          ничего не остаётся живым: украденный до смены refresh больше не продлит доступ;
+        - аудит `password_change`.
+      summary: Сменить свой пароль
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Пароль изменён; все refresh-токены отозваны.
+        '400':
+          description: Неверный текущий пароль / политика пароля.
+        '401':
+          description: Не авторизован.
+        '429':
+          description: Слишком много попыток (5/мин).
   /api/v1/work-categories/:
     get:
       operationId: work_categories_list
@@ -9056,8 +9144,9 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - amount
       - contribution
@@ -9641,8 +9730,7 @@ components:
           type: integer
           readOnly: true
         profile_id:
-          type: integer
-          description: Получить ID профиля без загрузки удаленного поля role
+          type: string
           readOnly: true
         username:
           type: string
@@ -9687,10 +9775,14 @@ components:
             type: integer
           description: Список ID назначенных объектов
           readOnly: true
+        must_change_password:
+          type: integer
+          readOnly: true
       required:
       - assigned_object_ids
       - id
       - is_superuser
+      - must_change_password
       - profile_id
       - roles
       - username
@@ -10381,6 +10473,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WriteOff'
+    PasswordChangeRequest:
+      type: object
+      description: |-
+        F-777 · self-service смена пароля (POST /users/me/password).
+
+        Политика — та же, что F-727 (≥6 символов), плюс: новый ≠ старому, новый ≠ username.
+        Проверка старого пароля — в validate (нужен request.user из context).
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_password
+      - old_password
     PatchedArchivePeriodRequest:
       type: object
       description: |-
@@ -10639,8 +10750,9 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -10806,8 +10918,9 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -10898,8 +11011,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedWorkItemRequest:
@@ -10923,8 +11037,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedWriteOffRequest:
@@ -11397,8 +11512,9 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11452,8 +11568,9 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11936,8 +12053,9 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -12027,8 +12145,9 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -12653,8 +12772,9 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         children_count:
@@ -12681,8 +12801,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:
@@ -12719,8 +12840,9 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:
@@ -12796,8 +12918,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:

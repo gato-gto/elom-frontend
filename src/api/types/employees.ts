@@ -130,4 +130,6 @@ export interface Me {
     is_superuser?: boolean;  // ✅ Добавлено поле is_superuser
     is_active: boolean;
     assigned_object_ids: number[];
+  /** F-777/F-1021: обязан сменить пароль (временный от админа) — FE блокирует UI до смены */
+  must_change_password?: boolean
 }

@@ -13,6 +13,7 @@ export const endpoints = {
     // User endpoints
     users: {
         me: join('/users/me'),
+        mePassword: join('/users/me/password'),  // F-1021 self-service смена пароля (BE F-777)
     },
 
     // RBAC endpoints

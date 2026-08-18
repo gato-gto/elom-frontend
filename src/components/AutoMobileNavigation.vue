@@ -257,6 +257,19 @@
                     </div>
                   </div>
 
+                  <!-- F-1021: смена пароля (self-service, BE F-777) — сиблинг десктоп-меню AppLayout -->
+                  <button
+                    type="button"
+                    class="mobile-menu-action-btn"
+                    title="Сменить пароль"
+                    aria-label="Сменить пароль"
+                    @click="handleChangePassword"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" :d="getIconPath('shield')" />
+                    </svg>
+                  </button>
+
                   <!-- Logout button -->
                   <button 
                     class="mobile-menu-action-btn mobile-menu-logout"
@@ -548,6 +561,10 @@
   }
 
   // Logout function
+  // F-1021: закрыть полноэкранное меню и попросить лейаут открыть модалку смены пароля.
+  const emit = defineEmits<{ (e: 'change-password'): void }>()
+  const handleChangePassword = () => { closeFullMenu(); emit('change-password') }
+
   const handleLogout = async () => {
     try {
       closeFullMenu()
