@@ -1,30 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { exportToCSV, exportToExcel, exportToPDF } from '../export'
 
-// Mock xlsx
-vi.mock('xlsx', () => ({
-  utils: {
-    json_to_sheet: vi.fn(() => ({})),
-    book_new: vi.fn(() => ({})),
-    book_append_sheet: vi.fn()
-  },
-  writeFile: vi.fn()
-}))
-
-// Mock jsPDF
-vi.mock('jspdf', () => ({
-  jsPDF: vi.fn().mockImplementation(() => ({
-    text: vi.fn(),
-    autoTable: vi.fn(),
-    save: vi.fn()
-  }))
-}))
-
-// Mock autoTable
-vi.mock('jspdf-autotable', () => ({
-  default: vi.fn()
-}))
-
 describe('Export Utils', () => {
   const mockData = [
     { id: 1, name: 'Test 1', value: 100 },
