@@ -18,6 +18,38 @@ const ROOT = process.cwd()
 const routerSrc = readFileSync(resolve(ROOT, 'src/router/index.ts'), 'utf8')
 
 /** Рекурсивно собирает исходники src с нужными расширениями (для сканов по всему проекту). */
+/** F-1022: список файлов src/** по regex имени (для гардов, которым нужен путь, а не слитый текст). */
+function listFiles(root: string, re: RegExp): string[] {
+  const acc: string[] = []
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name)
+      if (statSync(p).isDirectory()) { walk(p) } else if (re.test(name)) { acc.push(p) }
+    }
+  }
+  walk(root)
+  return acc
+}
+
+/** F-1022: все @keyframes в тексте (имя + тело) через баланс скобок — регекс с `\n}` пропускал
+ *  однострочные блоки (поймано мутацией). */
+function keyframesBlocks(src: string): Array<{ name: string; body: string }> {
+  const out: Array<{ name: string; body: string }> = []
+  const re = /@keyframes\s+([\w-]+)\s*\{/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(src)) !== null) {
+    let depth = 1
+    let i = m.index + m[0].length
+    const start = i
+    while (i < src.length && depth > 0) {
+      if (src[i] === '{') { depth++ } else if (src[i] === '}') { depth-- }
+      i++
+    }
+    out.push({ name: m[1], body: src.slice(start, i - 1) })
+  }
+  return out
+}
+
 function collectSources(exts: string[]): string {
   const acc: string[] = []
   const walk = (dir: string) => {
@@ -260,16 +292,34 @@ describe('APPLE-2 · iOS select-поповер: без смещения body и 
     ).toBe(false)
     expect(/style\.top\s*=/.test(src), 'смещение body.top вернулось (F-996)').toBe(false)
   })
-  it('модальные keyframes (modal*) не содержат transform', () => {
-    for (const rel of ['src/styles/components.css', 'src/styles/animations.css']) {
-      const css = readFileSync(resolve(ROOT, rel), 'utf8')
-      for (const m of css.matchAll(/@keyframes\s+(modal\w*)\s*\{([\s\S]*?)\n\}/g)) {
+  it('модальные keyframes (modal*) не содержат transform — во ВСЕХ .css и <style> .vue (F-1022)', () => {
+    // F-1022: прежний гард читал только 2 css-файла — keyframes внутри SFC <style> были слепой зоной.
+    const files = [...listFiles(resolve(ROOT, 'src'), /\.(css|vue)$/)]
+    let scanned = 0
+    for (const abs of files) {
+      const rel = abs.slice(ROOT.length + 1)
+      const src = readFileSync(abs, 'utf8')
+      for (const kf of keyframesBlocks(src)) {
+        if (!/^modal/.test(kf.name)) { continue }
+        scanned++
         expect(
-          /transform\s*:/.test(m[2]),
-          `${rel}: @keyframes ${m[1]} содержит transform — ломает якорь iOS select-поповера (F-996)`,
+          /transform\s*:/.test(kf.body),
+          `${rel}: @keyframes ${kf.name} содержит transform — ломает якорь iOS select-поповера (F-996)`,
         ).toBe(false)
       }
     }
+    expect(scanned, 'гард ничего не просканировал — регекс/список файлов сломан').toBeGreaterThan(0)
+  })
+  it('F-1022: fixed-контейнер с transform-анимацией (slideUp мобильного меню) не содержит select/SearchSelect', () => {
+    // Мобильное полноэкранное меню анимируется transform (slideUp) — это допустимо ТОЛЬКО пока внутри нет
+    // нативного <select> / *SearchSelect (иначе iOS-поповер прилипнет к верху — F-996-класс). Мутация:
+    // добавить <select> в AutoMobileNavigation.vue → красный.
+    const src = readFileSync(resolve(ROOT, 'src/components/AutoMobileNavigation.vue'), 'utf8')
+    const tpl = src.slice(0, src.indexOf('<script'))
+    expect(/@keyframes\s+slideUp[\s\S]*?transform\s*:/.test(src), 'slideUp больше не transform — гард можно упростить').toBe(true)
+    expect(/<select\b/i.test(tpl) || /SearchSelect/.test(tpl),
+      'в transform-анимируемом мобильном меню появился select/SearchSelect — iOS-якорь сломается (F-996); '
+      + 'перепишите slideUp без transform (top/opacity) или вынесите контрол').toBe(false)
   })
   it('F-1000: SearchSelect-дропдауны позиционируются по visualViewport, не по window.innerHeight', () => {
     // iOS-клавиатура НЕ сжимает window.innerHeight → меню рисовалось под клавиатурой (HIGH-1 аудита,
@@ -370,5 +420,18 @@ describe('ARCH · драфт строки сметы = авторитетный 
       /is_draft:\s*item\.default_price\s*==\s*null/.test(src),
       'возвращён старый эвристик is_draft: item.default_price == null — договорные позиции снова помечаются черновиками (A7)',
     ).toBe(false)
+  })
+})
+
+describe('F-1023 · DaisyUI drawer: чекбокс #drawer-toggle обязателен (якорь селектора desktop-сайдбара)', () => {
+  it('AppLayout содержит input#drawer-toggle.drawer-toggle перед .drawer-side', () => {
+    // DaisyUI v5: `.lg\:drawer-open>.drawer-toggle~.drawer-side{visibility:visible}` — без чекбокса
+    // desktop-сайдбар невидим (регресс пойман live-скрином 2026-08-18 при «чистке мёртвого кода»).
+    const src = readFileSync(resolve(ROOT, 'src/layouts/AppLayout.vue'), 'utf8')
+    const tpl = src.slice(0, src.indexOf('<script'))
+    const toggle = tpl.search(/<input[^>]*id="drawer-toggle"[^>]*class="[^"]*\bdrawer-toggle\b/)
+    const side = tpl.indexOf('class="drawer-side"')
+    expect(toggle, 'input#drawer-toggle.drawer-toggle отсутствует — сайдбар пропадёт').toBeGreaterThan(-1)
+    expect(side).toBeGreaterThan(toggle)
   })
 })
