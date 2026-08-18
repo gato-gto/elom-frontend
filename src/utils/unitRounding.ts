@@ -3,7 +3,7 @@
  * Умная система округления единиц измерения
  * Основана на логике из бэкенда с категориями и умными правилами
  */
-import { formatNumber, formatNumberClean, formatNumberWithOptions } from '@/utils/formatters'
+import { formatNumberWithOptions } from '@/utils/formatters'
 
 export interface UnitRoundingRule {
   fromUnit: string

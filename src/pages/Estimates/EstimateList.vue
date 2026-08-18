@@ -13,7 +13,7 @@
       <template #column-total="{ item }">
         <span class="font-mono">{{ formatNumber(item.total) }} <span class="text-xs text-muted">{{ item.currency }}</span></span>
       </template>
-      <template #column-title="{ item, value }">
+      <template #column-title="{ value }">
         <span class="font-medium">{{ value || 'Без названия' }}</span>
       </template>
     </GenericList>

@@ -37,7 +37,7 @@ onMounted(async () => {
   if (!Number.isFinite(id)) {return}
   try {
     await purchasesStore.fetchOne(id)
-  } catch (e) {
+  } catch {
     // Ошибка уже сохранена в store.error
   }
 })

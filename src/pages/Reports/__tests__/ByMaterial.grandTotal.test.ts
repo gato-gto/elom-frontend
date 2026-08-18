@@ -28,7 +28,7 @@ vi.mock('vue-router', () => ({
 vi.mock('@/api/client', () => ({
   default: {
     get: vi.fn((url: string) => {
-      if (String(url).includes('by-material')) return Promise.resolve({ data: reportResponse })
+      if (String(url).includes('by-material')) { return Promise.resolve({ data: reportResponse }) }
       return Promise.resolve({ data: { results: [], count: 0 } })
     }),
     post: vi.fn().mockResolvedValue({ data: {} }),

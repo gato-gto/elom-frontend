@@ -94,7 +94,7 @@ const deletingSupplier = ref<PurchaseSupplier | null>(null)
 const deleting = ref(false)
 
 // ✅ RBAC: проверка через permissions
-const { can, canExportReports } = usePermissions()
+const { can } = usePermissions()
 const canEdit = computed(() => can('suppliers', 'edit'))
 const canCreate = computed(() => can('suppliers', 'create'))  // F-877: create-кнопка гейтилась по .edit (fail-open, класс F-872/F-863)
 const canDelete = computed(() => can('suppliers', 'delete'))

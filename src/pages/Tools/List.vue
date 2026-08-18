@@ -343,7 +343,7 @@ async function openReturn(tool: Tool) {
     } else {
       ui.toast({ type: 'info', text: 'Активная выдача не найдена' })
     }
-  } catch (error) {
+  } catch {
     ui.toast({ type: 'error', text: 'Ошибка при поиске выдачи' })
   }
 }

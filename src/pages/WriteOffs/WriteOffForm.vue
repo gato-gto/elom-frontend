@@ -395,7 +395,7 @@ import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
-import { useWriteOffsStore, createBulk } from '@/stores/writeOffs'
+import { createBulk } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
@@ -411,13 +411,11 @@ import { endpoints } from '@/api/endpoints'
 import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
 import type { 
   WriteOff,
-  WriteOffCreateRequest,
   SiteObject,
   Material,
   Unit
 } from '@/api/types'
 
-const writeOffsStore = useWriteOffsStore()
 const objectsStore = useObjectsStore()
 const archivePeriodsStore = useArchivePeriodsStore()
 const materialsStore = useMaterialsStore()

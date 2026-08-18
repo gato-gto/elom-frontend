@@ -62,7 +62,7 @@ const ui = useUiStore()
 const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
 // ✅ RBAC: используем permissions
-const { can, canExportReports } = usePermissions()
+const { can } = usePermissions()
 const canEdit = computed(() => can('employees', 'edit'))
 // F-867: фильтр по RBAC-роли доступен лишь тем, кто может читать /rbac/roles/ (rbac.manage_roles ИЛИ
 // manage_user_roles) — иначе fetchRoles даёт 403 (F-559). Обычно = администратор.

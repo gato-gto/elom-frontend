@@ -78,7 +78,7 @@
 import { ref } from 'vue'
 import { ObjectBalance, MaterialBalance } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
-import { formatNumberClean, pluralizeRu } from '@/utils/formatters'
+import { pluralizeRu } from '@/utils/formatters'
 import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки «умным» числом (F-867)
 
 interface Props {
@@ -94,9 +94,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const expanded = ref(false)
 
-function formatQuantity(quantity: string): string {
-  return formatNumberClean(quantity)
-}
 
 function toggleExpanded() {
   expanded.value = !expanded.value

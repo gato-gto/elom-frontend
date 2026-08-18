@@ -126,7 +126,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { formatNumberClean, todayLocal } from '@/utils/formatters'
+import { todayLocal } from '@/utils/formatters'
 import { formatSmartQuantity } from '@/utils/unitRounding' // F-717: остатки/приход/расход — «умное» число (9 750 км), как в карточках (F-867)
 import { useObjectsStore } from '@/stores/objects'
 import { useBalancesStore, fetchBalancesList, setBalancesFilters, resetBalancesFilters, getBalancesFilters } from '@/stores/balances'
@@ -221,9 +221,6 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
 }))
 
 // Methods
-function formatQuantity(quantity: string): string {
-  return formatNumberClean(quantity)
-}
 
 function toggleExpanded(objectId: number) {
   if (expandedRows.value.has(objectId)) {

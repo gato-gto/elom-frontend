@@ -1544,7 +1544,7 @@ async function loadData() {
           existingReportPhotos.value = reportPhotos
         }
       }
-    } catch (error) {
+    } catch {
       ui.toast({ type: 'error', text: 'Ошибка загрузки закупки' })
       // Error handling is done by ErrorHandlers
     }

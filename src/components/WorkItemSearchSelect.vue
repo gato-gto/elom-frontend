@@ -197,7 +197,7 @@ async function runSearch(query: string) {
     if (mySeq !== searchSeq) { return } // гонка: пришёл более новый поиск
     searchResults.value = results
     if (isUserTyping.value) { showDropdown.value = true }
-  } catch (error) {
+  } catch {
     if (mySeq === searchSeq) { searchResults.value = [] }
   } finally {
     if (mySeq === searchSeq) { loading.value = false }
@@ -216,7 +216,7 @@ async function loadSelectedItem(itemId: number) {
       searchQuery.value = item.name
       isUserTyping.value = false
     }
-  } catch (error) {
+  } catch {
     // позиция могла быть удалена из каталога (SET_NULL в строке) — молча оставляем как есть
   }
 }
