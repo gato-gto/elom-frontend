@@ -434,6 +434,8 @@ watch(() => themeStore.isDark, () => {
 </script>
 
 <style scoped>
+/* F-1024: цвета — только токены темы (hsl(var(--bc/--b1/--b2/--b3/--p))); .dark-дубли удалены —
+   токены сами переключаются с темой (DESIGN_LANGUAGE §graphite). Хардкод-hex запрещён гардом. */
 .chart-container {
   background-color: hsl(var(--b1));
   border-radius: 0.375rem;
@@ -446,12 +448,9 @@ watch(() => themeStore.isDark, () => {
   align-items: flex-start;
   justify-content: space-between;
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid hsl(var(--b3));
 }
 
-.dark .chart-header {
-  border-bottom-color: #374151;
-}
 
 .chart-title-section {
   flex: 1;
@@ -460,22 +459,16 @@ watch(() => themeStore.isDark, () => {
 .chart-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: hsl(var(--bc));
   margin-bottom: 0.25rem;
 }
 
-.dark .chart-title {
-  color: #f9fafb;
-}
 
 .chart-subtitle {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: hsl(var(--bc) / 0.65);
 }
 
-.dark .chart-subtitle {
-  color: #9ca3af;
-}
 
 .chart-controls {
   display: flex;
@@ -505,12 +498,9 @@ watch(() => themeStore.isDark, () => {
 
 .legend-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: hsl(var(--bc) / 0.65);
 }
 
-.dark .legend-label {
-  color: #9ca3af;
-}
 
 .chart-actions {
   display: flex;
@@ -552,12 +542,9 @@ watch(() => themeStore.isDark, () => {
 
 .loading-text {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: hsl(var(--bc) / 0.65);
 }
 
-.dark .loading-text {
-  color: #9ca3af;
-}
 
 .chart-empty {
   display: flex;
@@ -573,7 +560,7 @@ watch(() => themeStore.isDark, () => {
 
 .empty-text {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: hsl(var(--bc) / 0.65);
 }
 
 .chart-wrapper {
@@ -586,14 +573,10 @@ watch(() => themeStore.isDark, () => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border-top: 1px solid hsl(var(--b3));
+  background-color: hsl(var(--b2));
 }
 
-.dark .chart-footer {
-  border-top-color: #374151;
-  background-color: #111827;
-}
 
 .chart-stats {
   display: flex;
@@ -609,26 +592,20 @@ watch(() => themeStore.isDark, () => {
 
 .stat-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: hsl(var(--bc) / 0.65);
 }
 
-.dark .stat-label {
-  color: #9ca3af;
-}
 
 .stat-value {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #111827;
+  color: hsl(var(--bc));
 }
 
-.dark .stat-value {
-  color: #f9fafb;
-}
 
 .chart-updated {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: hsl(var(--bc) / 0.65);
 }
 
 /* Responsive adjustments */
@@ -679,9 +656,6 @@ watch(() => themeStore.isDark, () => {
   background-color: white;
 }
 
-.dark .chart-container.fullscreen {
-  background-color: #1f2937;
-}
 
 .chart-container.fullscreen .chart-wrapper {
   height: 100%;

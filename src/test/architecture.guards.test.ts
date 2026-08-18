@@ -435,3 +435,15 @@ describe('F-1023 · DaisyUI drawer: чекбокс #drawer-toggle обязате
     expect(side).toBeGreaterThan(toggle)
   })
 })
+
+describe('F-1024 · ChartContainer: цвета в <style> только токенами темы (без hex / .dark-дублей)', () => {
+  it('scoped style ChartContainer.vue не содержит #hex и правил .dark', () => {
+    // Хардкод Tailwind-серых (#6b7280/#9ca3af/#111827…) требовал .dark-двойника на каждое правило и
+    // расходился с graphite-палитрой DESIGN_LANGUAGE. Токены hsl(var(--bc/--b1/--b2/--b3)) сами
+    // переключаются с темой. JS-палитра Chart.js (getThemeColors) — отдельно, реактивна по isDark.
+    const src = readFileSync(resolve(ROOT, 'src/components/ChartContainer.vue'), 'utf8')
+    const style = src.slice(src.indexOf('<style'))
+    expect(style.match(/#[0-9a-fA-F]{6}\b/g) || [], 'hex в <style> ChartContainer').toEqual([])
+    expect(/\.dark\s+\./.test(style), '.dark-дубль правила в ChartContainer').toBe(false)
+  })
+})
