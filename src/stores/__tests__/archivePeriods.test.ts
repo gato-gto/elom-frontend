@@ -18,7 +18,7 @@ describe('ArchivePeriods Store', () => {
       data: { results: [{ id: 1, month: '2026-01-01', object: 1, object_name: 'O', closed_at: '', closed_by: 2, closed_by_name: 'A', is_closed: true }] },
     } as any)
     await store.fetchList()
-    expect(api.get).toHaveBeenCalledWith(endpoints.archivePeriods.list + '?page_size=1000')
+    expect(api.get).toHaveBeenCalledWith(endpoints.archivePeriods.list, { params: { page_size: 1000 } })  // F-1028: params, не строка (F-510-алярм)
     expect(store.items).toHaveLength(1)
     expect(store.loading).toBe(false)
   })
@@ -36,7 +36,7 @@ describe('ArchivePeriods Store', () => {
     vi.mocked(api.get).mockResolvedValue({ data: { results: [] } } as any)
     await store.close(3, '2026-02')
     expect(api.post).toHaveBeenCalledWith(endpoints.archivePeriods.close, { object: 3, month: '2026-02' })
-    expect(api.get).toHaveBeenCalledWith(endpoints.archivePeriods.list + '?page_size=1000') // refresh after close
+    expect(api.get).toHaveBeenCalledWith(endpoints.archivePeriods.list, { params: { page_size: 1000 } })  // F-1028: params, не строка (F-510-алярм) // refresh after close
   })
 
   it('reopen POSTs {object, month} to the reopen endpoint and refreshes', async () => {

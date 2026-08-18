@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
+import { warnIfNearPageSize } from '@/stores/base'
 import { parseApiError } from '@/utils/errorHandler'
 
 export interface ArchivePeriod {
@@ -31,8 +32,11 @@ export const useArchivePeriodsStore = defineStore('archivePeriods', () => {
       // F-895: page_size=1000 — иначе список закрытых периодов резался дефолтом (~20) и пред-
       // предупреждение о закрытом периоде (PurchaseForm/WriteOffForm/WriteOffByBalance) молча
       // пропускало периоды за пределами первой страницы (A F-718 этот стор оставил без page_size).
-      const { data } = await api.get(endpoints.archivePeriods.list + '?page_size=1000')
+      // F-1028 (S): page_size через params + F-510-алярм усечения (хардкод-строка обходила warnIfNearPageSize).
+      const PAGE = 1000
+      const { data } = await api.get(endpoints.archivePeriods.list, { params: { page_size: PAGE } })
       items.value = Array.isArray(data) ? data : (data?.results ?? [])
+      if (!Array.isArray(data)) { warnIfNearPageSize(endpoints.archivePeriods.list, Number(data?.count ?? items.value.length), PAGE, Boolean(data?.next)) }
     } catch (e: any) {
       // EH-FE-9 (F-552): единый parseApiError вместо сырого data.detail.
       error.value = parseApiError(e).detail
