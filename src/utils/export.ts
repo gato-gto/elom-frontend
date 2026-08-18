@@ -31,7 +31,8 @@ export function downloadBlob(blob: Blob, filename: string) {
 // Экспорт через backend API
 export async function exportFromBackend(
   url: string,
-  format: 'xlsx' | 'csv',
+  // F-1003: + 'pdf' — отчёты reports/* отдают настоящий PDF (проверено live, док «501 MVP» устарел).
+  format: 'xlsx' | 'csv' | 'pdf',
   filename: string,
   filters?: Record<string, any>
 ) {
@@ -63,8 +64,7 @@ export async function exportFromBackend(
       throw new Error('Экспорт в этом формате пока не поддерживается сервером')
     }
 
-    const extension = format === 'csv' ? 'csv' : 'xlsx'
-    downloadBlob(blob, `${filename}.${extension}`)
+    downloadBlob(blob, `${filename}.${format}`)
     return true
   } catch (error) {
     console.error('Ошибка экспорта:', error)

@@ -1441,6 +1441,9 @@ paths:
                 object:
                   type: integer
                   description: целевой объект (E5)
+                only_filled:
+                  type: boolean
+                  description: 'E4: только строки с количеством (книги)'
                 title:
                   type: string
               required:
@@ -1478,6 +1481,9 @@ paths:
                 file:
                   type: string
                   format: binary
+                only_filled:
+                  type: boolean
+                  description: 'E4: только строки с количеством (книги)'
               required:
               - file
       security:
