@@ -1,6 +1,9 @@
 <template>
+  <!-- F-1023: чекбокс #drawer-toggle НЕ мёртвый — DaisyUI v5 показывает desktop-сайдбар правилом
+       `.lg\:drawer-open>.drawer-toggle~.drawer-side` (чекбокс = якорь селектора; удаление ломало сайдбар,
+       поймано live-скрином). Никто его не переключает — мобильного drawer нет (AutoMobileNavigation). -->
   <div class="drawer" :class="{ 'lg:drawer-open': !sidebarCollapsed }">
-    <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
+    <input id="drawer-toggle" type="checkbox" class="drawer-toggle" aria-hidden="true" tabindex="-1" />
 
     <!-- Main content -->
     <div class="drawer-content flex flex-col">
@@ -145,16 +148,11 @@ const auth = useAuthStore()
 const sidebarCollapsed = ref(localStorage.getItem('elom_sidebar_collapsed') === '1')
 watch(sidebarCollapsed, (v) => localStorage.setItem('elom_sidebar_collapsed', v ? '1' : '0'))
 
-// F-577: одна кнопка на все разрешения. На desktop (lg+) сворачиваем постоянный сайдбар;
-// на мобиле закрываем drawer, НЕ меняя desktop-состояние collapsed (иначе сворачивание на
-// телефоне «прилипало» бы к десктопу через localStorage).
+// F-577: кнопка сворачивает постоянный desktop-сайдбар (lg+). F-1023: мобильной ветки нет —
+// на <1024px сайдбар не рендерится видимым (drawer-side скрыт, навигация = AutoMobileNavigation),
+// поэтому кнопка там недостижима; прежний `#drawer-toggle.checked=false` был мёртвым кодом.
 function collapseSidebar() {
-  if (window.matchMedia('(min-width: 1024px)').matches) {
-    sidebarCollapsed.value = true
-  } else {
-    const t = document.getElementById('drawer-toggle') as HTMLInputElement | null
-    if (t) { t.checked = false }
-  }
+  sidebarCollapsed.value = true
 }
 const ui = useUiStore()
 const permissionsStore = usePermissionsStore()

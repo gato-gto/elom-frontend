@@ -701,34 +701,10 @@
    МОБИЛЬНАЯ АДАПТАЦИЯ SIDEBAR
    ======================================== */
 
-/* Мобильные устройства - полная ширина sidebar */
+/* F-1023: мобильный блок .sidebar(fixed/translateX)+.drawer-open .sidebar+.drawer-overlay удалён — недостижим:
+   на <1024px sidebar не открывается ничем (мобильная навигация = AutoMobileNavigation), а селектор
+   `.drawer-open` никогда не совпадает (класс ставится как `lg:drawer-open`). */
 @media (max-width: 1023px) {
-  .sidebar {
-    width: 100vw;
-    max-width: 320px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    /* APPLE-3 (F-514): dvh с фолбэком vh — мобильный drawer не прыгает под адресной строкой iOS. */
-    height: 100vh;
-    height: 100dvh;
-    /* APPLE-1 (F-514): шапка сайдбара не уходит под часы/чёлку при открытом drawer. */
-    padding-top: env(safe-area-inset-top);
-    z-index: 50;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  /* Показать sidebar когда drawer открыт */
-  .drawer-open .sidebar {
-    transform: translateX(0);
-  }
-  
-  /* Overlay для мобильных */
-  .drawer-overlay {
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-  
   /* Адаптация заголовка для мобильных */
   .sidebar-header {
     height: 60px;
