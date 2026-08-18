@@ -13,6 +13,9 @@ const { create, update, fetchOne } = vi.hoisted(() => ({
 vi.mock('@/stores/estimates', () => ({ useEstimatesStore: () => ({ create, update, fetchOne }) }))
 vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [{ id: 347, name: 'Тест-объект' }], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/ui', () => ({ useUiStore: () => ({ toast: vi.fn() }) }))
+// QuickAddWorkItem (всегда смонтирован) в onMounted зовёт catStore.fetchList → без мока = реальный XHR
+// в jsdom (AggregateError-шум ×27 в выводе vitest). Поведение теста не зависит от каталога.
+vi.mock('@/stores/workCategories', () => ({ useWorkCategoriesStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 
 const push = vi.fn()
 // Т2 (аудит#3): params — мутируемый объект, чтобы тесты могли включать edit-режим (params.id).
