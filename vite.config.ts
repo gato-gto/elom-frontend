@@ -46,6 +46,9 @@ export default defineConfig({
             workbox: {
                 // App-shell: прекэшируем сборку (cache-first по хэшу — файлы неизменяемы)
                 globPatterns: ['**/*.{js,css,html,svg,woff2,woff,ttf,ico,png}'],
+                // F-1027: splash-PNG (84 шт, ~1 МБ) iOS берёт сам при установке на экран «Домой» —
+                // в precache SW им не место (каждый клиент качал бы весь набор при каждом обновлении).
+                globIgnores: ['**/splash/**'],
                 // Офлайн-загрузка SPA: навигации отдаём закэшированный index.html …
                 navigateFallback: '/index.html',
                 // … но НЕ для API — бизнес-данные никогда не подменяем оболочкой

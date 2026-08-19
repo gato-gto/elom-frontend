@@ -197,6 +197,51 @@ describe('ARCH · Apple-стандарты — исполнимые стражи
   it('манифест иконок и apple-touch-icon — PNG на месте (A-11/F-514)', () => {
     expect(/apple-touch-icon\.png/.test(html), 'apple-touch-icon должен быть PNG (iOS игнорит SVG).').toBe(true)
   })
+
+  /**
+   * F-1027 (A-11): iOS показывает splash ТОЛЬКО при точном совпадении media-запроса с экраном И точном
+   * совпадении пикселей PNG с (device-width×dpr, device-height×dpr). Ошибка в одном числе = молча
+   * белый экран. Страж читает КАЖДЫЙ <link rel="apple-touch-startup-image">: файл существует, media
+   * содержит все 4 ключа + явную тему, размеры PNG (IHDR) == media×dpr, light/dark парные, и splash
+   * не попадает в SW-precache (иначе каждый клиент тянет ~1 МБ при каждом обновлении).
+   */
+  it('apple-touch-startup-image: файл есть, размеры PNG == media×dpr, обе темы, вне SW-precache (F-1027)', () => {
+    const links = html.match(/<link[^>]*rel=["']apple-touch-startup-image["'][^>]*>/g) ?? []
+    expect(links.length, 'ожидался набор splash-ссылок (сгенерируй: node tools/apple-splash/generate.mjs)').toBeGreaterThanOrEqual(40)
+    const pngSize = (file: string) => {
+      const b = readFileSync(file)
+      expect(b.subarray(1, 4).toString(), `${file}: не PNG`).toBe('PNG')
+      return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) }  // IHDR width/height
+    }
+    const seen = new Set<string>()
+    const bad: string[] = []
+    for (const tag of links) {
+      const media = tag.match(/media=["']([^"']+)["']/)?.[1] ?? ''
+      const href = tag.match(/href=["']([^"']+)["']/)?.[1] ?? ''
+      const dw = Number(media.match(/device-width:\s*(\d+)px/)?.[1])
+      const dh = Number(media.match(/device-height:\s*(\d+)px/)?.[1])
+      const dpr = Number(media.match(/-webkit-device-pixel-ratio:\s*(\d+)/)?.[1])
+      const orient = media.match(/orientation:\s*(portrait|landscape)/)?.[1]
+      const scheme = media.match(/prefers-color-scheme:\s*(light|dark)/)?.[1]
+      if (!dw || !dh || !dpr || !orient || !scheme) { bad.push(`${href}: неполный media «${media}»`); continue }
+      const key = `${dw}x${dh}@${dpr}:${orient}:${scheme}`
+      if (seen.has(key)) { bad.push(`${href}: дубль media ${key}`) }
+      seen.add(key)
+      const file = resolve(ROOT, 'public', href.replace(/^\//, ''))
+      if (!existsSync(file)) { bad.push(`${href}: файла нет в public/`); continue }
+      const { w, h } = pngSize(file)
+      const [ew, eh] = orient === 'portrait' ? [dw * dpr, dh * dpr] : [dh * dpr, dw * dpr]
+      if (w !== ew || h !== eh) { bad.push(`${href}: PNG ${w}x${h} ≠ media ${ew}x${eh}`) }
+    }
+    // парность тем: для каждого (размер, ориентация) обязаны быть и light, и dark
+    for (const key of seen) {
+      const twin = key.endsWith(':light') ? key.replace(/:light$/, ':dark') : key.replace(/:dark$/, ':light')
+      if (!seen.has(twin)) { bad.push(`${key}: нет парной темы`) }
+    }
+    expect(bad, bad.join('\n')).toEqual([])
+    const vite = readFileSync(resolve(ROOT, 'vite.config.ts'), 'utf8')
+    expect(/globIgnores:\s*\[[^\]]*splash/.test(vite), 'vite.config: splash/ должен быть в workbox.globIgnores').toBe(true)
+  })
 })
 
 describe('A11Y · иконочные destructive-кнопки имеют доступное имя (F-917)', () => {

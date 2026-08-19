@@ -129,9 +129,14 @@ print`). На iOS фон скроллится под открытой модал
 В standalone это ЗАБЛОКИРУЕТ ландшафт — конфликт с требованием «ландшафт работает». Решение
 владельца: телефонное приложение только в портрете, или разрешить ротацию (`orientation: any`).
 
-### A-11 · MEDIUM · Нет apple splash-экранов `[требует устройства + ассеты]`
+### A-11 · MEDIUM · Нет apple splash-экранов `[требует устройства + ассеты]` — ✅ ЗАКРЫТО F-1027 (2026-08-19)
 `apple-touch-startup-image` отсутствует → при запуске standalone белая вспышка. Полный набор —
 много размеров под каждое устройство; можно ограничиться `background_color` и парой ключевых.
+**F-1027:** генератор `tools/apple-splash/generate.mjs` (sharp) → `public/splash/` 84 PNG (21 устройство
+iPhone/iPad × портрет/ландшафт × light/dark, ~950 КБ) + блок `<link>` в `index.html` с явными media
+(`prefers-color-scheme` в обеих темах, media взаимоисключающие); splash вне SW-precache (`globIgnores`);
+гард в `architecture.guards.test.ts` (файл есть, IHDR-размер == media×dpr, парность тем, globIgnores;
+3 мутации красные). Live: 84 ссылки в `elom.uz/index.html`, PNG 200. Приёмка на реальном iPhone — O-7 (C2).
 
 ### ✅ Манифест и apple-мета в целом `[измерено]`
 `display: standalone`, `scope: /`, `start_url: /`, `theme_color`, `background_color`, иконки
