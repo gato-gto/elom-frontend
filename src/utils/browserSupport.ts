@@ -64,19 +64,15 @@ export class BrowserSupportChecker {
   }
 
   private checkES6(): boolean {
-    try {
-      // Проверяем поддержку arrow functions, const/let, template literals
-      // Используем Function constructor вместо eval для безопасности
-      const testArrowFunction = new Function('return () => "test"')();
-      const testConst = new Function('return (() => { const x = 1; return x; })()')();
-      const testTemplateLiteral = new Function('return `test-${1}`')();
-      
-      return typeof testArrowFunction === 'function' && 
-             testConst === 1 && 
-             testTemplateLiteral === 'test-1';
-    } catch {
-      return false;
-    }
+    // F-1030 (CSP F-779b): раньше здесь был конструктор Function с eval-семантикой — под Content-Security-Policy без
+    // 'unsafe-eval' он бросает EvalError → catch → es6=false → ЛОЖНОЕ «браузер не поддерживается».
+    // Бандл собран ES-модулями (arrow/const/template-literal в самом этом файле): если код исполняется,
+    // синтаксис ES6 уже работает. Проверяем рантайм-API ES2015+ без eval-вызовов; гард — architecture.guards.
+    return typeof Symbol === 'function' &&
+           typeof Map === 'function' &&
+           typeof Set === 'function' &&
+           typeof Array.from === 'function' &&
+           typeof Object.assign === 'function';
   }
 
   private checkWebP(): boolean {

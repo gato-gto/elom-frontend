@@ -562,6 +562,31 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/v1/csp-report/:
+    post:
+      operationId: csp_report
+      description: 'Без аутентификации; Content-Type application/csp-report или application/json;
+        тело {"csp-report": {...}}. Белый список полей пишется в журнал.'
+      summary: Приёмник CSP-отчётов браузера (report-uri)
+      tags:
+      - Security
+      requestBody:
+        content:
+          application/csp-report:
+            schema:
+              type: object
+          application/json:
+            schema:
+              type: object
+      security:
+      - {}
+      responses:
+        '204':
+          description: Принято
+        '400':
+          description: Не JSON-объект
+        '429':
+          description: Слишком много отчётов с IP
   /api/v1/employees/:
     get:
       operationId: employees_list

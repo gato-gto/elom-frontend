@@ -244,6 +244,56 @@ describe('ARCH · Apple-стандарты — исполнимые стражи
   })
 })
 
+describe('ARCH · CSP-совместимость (F-779b/F-1030)', () => {
+  /**
+   * На elom.uz включён Content-Security-Policy без 'unsafe-eval' и без inline-скриптов. Любой
+   * `eval(...)` / `new Function(...)` / `setTimeout('строка')` в бандле упадёт EvalError'ом — и, как
+   * в browserSupport.checkES6, может тихо переродиться в ложный «браузер не поддерживается».
+   * Страж скана реальных исходников src/ (кроме тестов).
+   */
+  it('в src нет eval / new Function / setTimeout(строка) — CSP без unsafe-eval', () => {
+    const offenders: string[] = []
+    for (const f of listFiles(resolve(ROOT, 'src'), /\.(ts|vue)$/)) {
+      if (/\.test\.ts$|\/test\//.test(f)) { continue }
+      const code = readFileSync(f, 'utf8')
+      if (/\bnew\s+Function\s*\(|(?<![\w.])eval\s*\(|set(?:Timeout|Interval)\s*\(\s*['"`]/.test(code)) {
+        offenders.push(f.replace(ROOT + '/', ''))
+      }
+    }
+    expect(offenders, 'eval-подобные вызовы ломаются под CSP:\n' + offenders.join('\n')).toEqual([])
+  })
+})
+
+describe('ARCH · CSP meta в index.html (F-1030/F-779b)', () => {
+  const html = readFileSync(resolve(ROOT, 'index.html'), 'utf8')
+  const meta = html.match(/<meta[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/i)?.[0] ?? ''
+  const policy = meta.match(/content="([^"]*)"/)?.[1] ?? ''
+  const directive = (name: string) => policy.split(';').map(d => d.trim()).find(d => d.startsWith(name + ' ') || d === name)
+
+  it('meta-CSP присутствует и стоит ДО первого <script>/<link> (иначе ресурсы до неё вне политики)', () => {
+    expect(meta, 'нет <meta http-equiv="Content-Security-Policy"> — SW-оболочка остаётся без CSP').not.toBe('')
+    const firstLoad = html.search(/<(script|link)\b/i)
+    expect(html.indexOf(meta)).toBeLessThan(firstLoad)
+  })
+
+  it('ключевые директивы строгие: script-src только self (без unsafe-eval/inline), object-src none, api в img/connect', () => {
+    expect(directive('script-src')).toBe("script-src 'self'")
+    expect(directive('object-src')).toBe("object-src 'none'")
+    expect(directive('base-uri')).toBe("base-uri 'self'")
+    expect(directive('default-src')).toBe("default-src 'self'")
+    expect(directive('img-src')).toContain('https://api.elom.uz')   // фото идут с API
+    expect(directive('img-src')).toContain('blob:')                 // превью до загрузки
+    expect(directive('connect-src')).toContain('https://api.elom.uz')
+    expect(directive('worker-src')).toBe("worker-src 'self'")      // Service Worker
+    expect(directive('manifest-src')).toBe("manifest-src 'self'")
+    expect(policy).not.toMatch(/unsafe-eval|unsafe-inline/)
+  })
+
+  it('в meta нет директив, которые meta игнорирует (frame-ancestors/report-uri/sandbox) — они только в nginx', () => {
+    expect(policy).not.toMatch(/frame-ancestors|report-uri|report-to|sandbox/)
+  })
+})
+
 describe('A11Y · иконочные destructive-кнопки имеют доступное имя (F-917)', () => {
   it('каждая icon-only btn-error (удаление позиции/строки/фото) несёт aria-label', () => {
     // Замерено ВЖИВУЮ на реальном iOS WebKit (iPhone, pointer:coarse): кнопка удаления позиции

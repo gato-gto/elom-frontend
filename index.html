@@ -12,6 +12,12 @@
     <!-- viewport-fit=cover: включает env(safe-area-inset-*). Без него инсеты на iOS всегда 0,
          и весь safe-area-код (баннеры PwaStatus, нижняя навигация, отступы main) не работает. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- F-1030 (CSP F-779b): политика ДУБЛИРУЕТСЯ здесь, а не только в nginx (deploy/nginx-csp.conf):
+         PWA-оболочку Service Worker отдаёт из precache с заголовками ВРЕМЕНИ КЭШИРОВАНИЯ (замерено:
+         transferSize 0 → заголовок nginx до клиента не доходит). Meta-CSP живёт в самом HTML и действует
+         всегда. frame-ancestors/report-uri в meta не поддерживаются — они только в nginx-заголовке.
+         Сверка с nginx — руками при изменении; гард: architecture.guards «CSP meta». -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://api.elom.uz; font-src 'self' data:; connect-src 'self' https://api.elom.uz; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; base-uri 'self'; form-action 'self'; object-src 'none'" />
     
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
