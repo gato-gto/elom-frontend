@@ -1,6 +1,7 @@
 // src/api/client.ts
 import axios, {AxiosError, InternalAxiosRequestConfig, AxiosInstance} from 'axios'
 import {endpoints, API_PREFIX} from './endpoints'
+import {detectTruncation} from './truncationGuard'
 
 // Глобальные ключи (совпадают со стором)
 const ACCESS_KEY = 'elom_access'
@@ -161,6 +162,10 @@ api.interceptors.response.use(
             if (ui && typeof ui.done === 'function') {
                 ui.done()
             }
+            // F-1031: «грузим всё» (page_size≥500) пришло с next → усечение, не пагинация → сигнал.
+            detectTruncation(r.config, r.data, (text) => {
+                if (ui?.toast) { ui.toast({ type: 'warning', text, timeout: 8000 }) }
+            })
         } catch {
             // no-op
         }
