@@ -1477,36 +1477,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialCategoryLite'
           description: ''
-  /api/v1/material-categories/tree/:
-    get:
-      operationId: material_categories_tree
-      description: Возвращает иерархическое дерево всех категорий материалов с ограничением
-        глубины
-      summary: Получить дерево категорий
-      parameters:
-      - in: query
-        name: max_depth
-        schema:
-          type: integer
-        description: 'Максимальная глубина дерева (по умолчанию: 3)'
-      - in: query
-        name: page
-        schema:
-          type: integer
-        description: 'Номер страницы (по умолчанию: 1)'
-      - in: query
-        name: page_size
-        schema:
-          type: integer
-        description: 'Размер страницы (по умолчанию: 50, максимум: 200)'
-      tags:
-      - Material Categories
-      security:
-      - jwtAuth: []
-      deprecated: true
-      responses:
-        '200':
-          description: Дерево категорий
   /api/v1/material-requests/:
     get:
       operationId: material_requests_list
@@ -2295,39 +2265,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialLite'
           description: ''
-  /api/v1/materials/lite/:
-    get:
-      operationId: materials_lite
-      description: Быстрый список материалов для выпадающих списков
-      summary: Упрощенный список материалов
-      parameters:
-      - in: query
-        name: category
-        schema:
-          type: integer
-        description: Фильтр по категории
-      - in: query
-        name: is_active
-        schema:
-          type: boolean
-        description: Только активные
-      - in: query
-        name: search
-        schema:
-          type: string
-        description: Поиск по названию
-      tags:
-      - Materials
-      security:
-      - jwtAuth: []
-      deprecated: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MaterialLite'
-          description: ''
   /api/v1/materials/search/:
     get:
       operationId: materials_search
@@ -2774,7 +2711,6 @@ paths:
         **Дополнительные действия:**
         - `bulk-create` — массовое создание позиций
         - `bulk-update` — массовое обновление
-        - `stats` — статистика по позициям
 
         **Права доступа:**
         - Наследуются от закупки
@@ -2819,7 +2755,6 @@ paths:
         **Дополнительные действия:**
         - `bulk-create` — массовое создание позиций
         - `bulk-update` — массовое обновление
-        - `stats` — статистика по позициям
 
         **Права доступа:**
         - Наследуются от закупки
@@ -2858,7 +2793,6 @@ paths:
         **Дополнительные действия:**
         - `bulk-create` — массовое создание позиций
         - `bulk-update` — массовое обновление
-        - `stats` — статистика по позициям
 
         **Права доступа:**
         - Наследуются от закупки
@@ -2909,7 +2843,6 @@ paths:
         **Дополнительные действия:**
         - `bulk-create` — массовое создание позиций
         - `bulk-update` — массовое обновление
-        - `stats` — статистика по позициям
 
         **Права доступа:**
         - Наследуются от закупки
@@ -2959,7 +2892,6 @@ paths:
         **Дополнительные действия:**
         - `bulk-create` — массовое создание позиций
         - `bulk-update` — массовое обновление
-        - `stats` — статистика по позициям
 
         **Права доступа:**
         - Наследуются от закупки
@@ -3075,19 +3007,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPurchaseItemList'
           description: ''
-  /api/v1/purchase-items/stats/:
-    get:
-      operationId: purchase_items_stats_retrieve
-      description: Получить статистику по позициям закупок
-      summary: Статистика по позициям
-      tags:
-      - Purchase Items
-      security:
-      - jwtAuth: []
-      deprecated: true
-      responses:
-        '200':
-          description: Статистика
   /api/v1/purchase-photos/:
     get:
       operationId: purchase_photos_list
@@ -3516,7 +3435,6 @@ paths:
         - `bulk-delete` — массовое удаление
         - `duplicate` — дублирование закупки
         - `stats` — статистика
-        - `supplier-analysis` — анализ поставщиков
 
         **Права доступа:**
         - Директор/Админ/Координатор — полный доступ
@@ -3571,7 +3489,6 @@ paths:
         - `bulk-delete` — массовое удаление
         - `duplicate` — дублирование закупки
         - `stats` — статистика
-        - `supplier-analysis` — анализ поставщиков
 
         **Права доступа:**
         - Директор/Админ/Координатор — полный доступ
@@ -3640,7 +3557,6 @@ paths:
         - `bulk-delete` — массовое удаление
         - `duplicate` — дублирование закупки
         - `stats` — статистика
-        - `supplier-analysis` — анализ поставщиков
 
         **Права доступа:**
         - Директор/Админ/Координатор — полный доступ
@@ -3708,7 +3624,6 @@ paths:
         - `bulk-delete` — массовое удаление
         - `duplicate` — дублирование закупки
         - `stats` — статистика
-        - `supplier-analysis` — анализ поставщиков
 
         **Права доступа:**
         - Директор/Админ/Координатор — полный доступ
@@ -4277,19 +4192,6 @@ paths:
       responses:
         '200':
           description: Статистика
-  /api/v1/purchases/supplier-analysis/:
-    get:
-      operationId: purchases_supplier_analysis_retrieve
-      description: Детальный анализ по поставщикам
-      summary: Анализ поставщиков
-      tags:
-      - Purchases
-      security:
-      - jwtAuth: []
-      deprecated: true
-      responses:
-        '200':
-          description: Анализ поставщиков
   /api/v1/rbac/my-permissions/:
     get:
       operationId: rbac_my_permissions_retrieve
