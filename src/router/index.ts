@@ -579,6 +579,9 @@ const routes = [
       title: 'Отчет по периодам',
       breadcrumb: 'Отчеты / По периодам',
       description: 'Отчеты по периодам времени',
+      // F-1032: без icon AutoNavigation/AutoMobileNavigation молча выкидывают роут из меню
+      // (`if (!meta?.icon) return` — класс F-930): все 4 отчёта были недостижимы из навигации.
+      icon: 'chart',
       category: 'reports',
       order: 11,
       permissions: ['reports.view']
@@ -592,6 +595,7 @@ const routes = [
       title: 'Отчет по объектам',
       breadcrumb: 'Отчеты / По объектам',
       description: 'Отчеты по объектам строительства',
+      icon: 'dashboard',   // F-1032
       category: 'reports',
       order: 12,
       permissions: ['reports.view']
@@ -605,6 +609,7 @@ const routes = [
       title: 'Отчет по материалам',
       breadcrumb: 'Отчеты / По материалам',
       description: 'Отчеты по материалам и номенклатуре',
+      icon: 'category',    // F-1032
       category: 'reports',
       order: 13,
       permissions: ['reports.view']
@@ -618,6 +623,7 @@ const routes = [
       title: 'Отчет по ответственным',
       breadcrumb: 'Отчеты / По ответственным',
       description: 'Отчеты по ответственным лицам',
+      icon: 'people',      // F-1032
       category: 'reports',
       order: 14,
       permissions: ['reports.view']

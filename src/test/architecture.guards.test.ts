@@ -294,6 +294,32 @@ describe('ARCH · CSP meta в index.html (F-1030/F-779b)', () => {
   })
 })
 
+describe('ARCH · навигация строится только из роутов с icon (класс F-930/F-1032)', () => {
+  /**
+   * AutoNavigation/AutoMobileNavigation молча выкидывают роут без meta.icon (`if (!meta?.icon) return`).
+   * Дважды пойманный класс: F-930 («Смета» была построена, но не рендерилась) и F-1032 (все 4 отчёта
+   * /reports/* годами недостижимы из меню ни для одной роли — только прямым URL). Страж: каждый
+   * top-level роут router/index.ts с meta.order (= позиция в меню ⇒ кандидат в навигацию) ОБЯЗАН нести meta.icon,
+   * и имя иконки обязано существовать в реестре @/assets/icons.
+   */
+  it('каждый роут с meta.order несёт meta.icon из реестра', async () => {
+    const src = readFileSync(resolve(ROOT, 'src/router/index.ts'), 'utf8')
+    const { icons } = await import('@/assets/icons')
+    const bad: string[] = []
+    // meta-блоки: от "meta: {" до закрывающей скобки того же уровня (грубо: до "}" на той же глубине)
+    const re = /path:\s*'([^']+)'[\s\S]*?meta:\s*\{([\s\S]*?)\n\s*\}/g
+    let m: RegExpExecArray | null
+    while ((m = re.exec(src)) !== null) {
+      const [, path, meta] = m
+      if (!/\border:\s*\d/.test(meta)) { continue }
+      const icon = meta.match(/icon:\s*'([^']+)'/)?.[1]
+      if (!icon) { bad.push(`${path}: есть order (пункт меню), нет icon — роут молча выпадет из навигации`) }
+      else if (!(icon in icons)) { bad.push(`${path}: icon '${icon}' отсутствует в реестре @/assets/icons`) }
+    }
+    expect(bad, bad.join('\n')).toEqual([])
+  })
+})
+
 describe('A11Y · иконочные destructive-кнопки имеют доступное имя (F-917)', () => {
   it('каждая icon-only btn-error (удаление позиции/строки/фото) несёт aria-label', () => {
     // Замерено ВЖИВУЮ на реальном iOS WebKit (iPhone, pointer:coarse): кнопка удаления позиции
