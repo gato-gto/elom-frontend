@@ -47,6 +47,23 @@ describe('FormField', () => {
     expect(wrapper.findAll('option')).toHaveLength(3) // 1 placeholder + 2 options
   })
 
+  it('F-1035: пустое значение селекта показывает плейсхолдер, а не пустое поле (selectedIndex −1)', () => {
+    // Плейсхолдер-опция была :value="undefined" → Vue снимает атрибут, значением опции становится её текст,
+    // а селекту с пустым modelValue Vue ставит value='' → ни одна опция не совпадает → WebKit рисует пустой
+    // селект (живой репро 2026-08-29: «Ответственный» и «Текущий этап работ» в форме объекта).
+    const options = [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }]
+    for (const empty of [undefined, '', null]) {
+      const wrapper = mount(FormField, {
+        props: { modelValue: empty, type: 'select', label: 'Этап', placeholder: '— выберите этап —', options }
+      })
+      const select = wrapper.find('select').element as HTMLSelectElement
+      expect(select.selectedIndex, `modelValue=${String(empty)}`).toBe(0)
+      expect(select.options[0].text).toBe('— выберите этап —')
+      expect(select.options[0].disabled).toBe(true)
+      expect(select.value).toBe('')
+    }
+  })
+
   it('renders date input for date type', () => {
     const wrapper = mount(FormField, {
       props: {

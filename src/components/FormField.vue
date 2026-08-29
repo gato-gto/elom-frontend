@@ -87,7 +87,9 @@
       @blur="handleBlur"
       @focus="handleFocus"
     >
-      <option v-if="placeholder" :value="undefined" disabled selected class="text-subtle">{{ placeholder }}</option>
+      <!-- F-1035: value="" (не :value="undefined" — Vue снимал атрибут, значением опции становился её текст, и при
+           пустом modelValue селект оставался без выбранной опции → пустое поле вместо плейсхолдера на WebKit) -->
+      <option v-if="placeholder" value="" disabled selected class="text-subtle">{{ placeholder }}</option>
       <slot name="options">
         <option
           v-for="option in options"
