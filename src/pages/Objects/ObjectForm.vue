@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { DEFAULT_STAGE, stageSelectOptions } from '@/constants/stages'
+import { stageSelectOptions } from '@/constants/stages'
 import { computed, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore, getResponsibleEmployees } from '@/stores/employees'
@@ -112,7 +112,7 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       required: true,
       order: 5,
       width: 'half',
-      help: 'Текущий этап строительных работ на объекте'
+      help: 'Этап строительства самого объекта — он идёт независимо от нас; выберите фактический'
     },
     {
       key: 'key_person_contacts',
@@ -183,7 +183,7 @@ const initialFormData = computed<ObjectRequest>(() => {
       location_url: props.initial.location_url,
       // Для бригадиров ответственный всегда они сами
       responsible: isLimitedAccess.value ? currentUserProfileId : props.initial.responsible,
-      current_stage: props.initial.current_stage || DEFAULT_STAGE,
+      current_stage: props.initial.current_stage || undefined,
       key_person_name: props.initial.key_person_name || '',
       key_person_contacts: props.initial.key_person_contacts || '',
       date_start: props.initial.date_start,
@@ -198,7 +198,7 @@ const initialFormData = computed<ObjectRequest>(() => {
     is_active: true,
     location_url: undefined,
     responsible: isLimitedAccess.value ? currentUserProfileId : undefined,
-    current_stage: DEFAULT_STAGE,
+    current_stage: undefined, // F-1034: объект берём на любом этапе — предзаполнять нечем, выбор обязателен
     key_person_name: '',
     key_person_contacts: '',
     date_start: undefined,

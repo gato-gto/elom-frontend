@@ -588,8 +588,11 @@ describe('ARCH · этапы работ — единый источник src/co
     expect(files.filter(p => pair.test(read(p))).map(rel)).toEqual(['src/constants/stages.ts'])
   })
 
-  it('этап по умолчанию не хардкодится в формах — только DEFAULT_STAGE', () => {
+  it('этап нового объекта не предзаполняется: ни литералом, ни константой (F-1034, D-028a)', () => {
+    // Этапы — состояние самой стройки (идёт независимо от нас), объект берём на любом → «дефолтного»
+    // этапа нет; предзаполнение молча штамповало бы неверный этап в каждое движение по складу.
     const literalDefault = /current_stage:\s*(?:[^,\n]*\|\|\s*)?["'](?:start|installation|rework|acceptance|handover)["']/
     expect(files.filter(p => literalDefault.test(read(p))).map(rel)).toEqual([])
+    expect(files.filter(p => /\bDEFAULT_STAGE\b/.test(read(p))).map(rel)).toEqual([])
   })
 })
