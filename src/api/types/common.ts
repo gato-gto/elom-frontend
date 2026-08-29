@@ -20,12 +20,8 @@ export type UserRole =
   | "director"
   | "coordinator";
 
-export type Stage = 
-  | "acceptance"
-  | "request"
-  | "delivery_fixed"
-  | "post_rough"
-  | "handover";
+// F-1033: набор этапов — из единого источника src/constants/stages.ts (там же подписи и дефолт)
+export type { Stage } from '@/constants/stages';
 
 export type SourceType = 
   | "purchase_item"

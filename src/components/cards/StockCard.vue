@@ -83,6 +83,7 @@
 </template>
 
 <script setup lang="ts">
+import { stageLabel } from '@/constants/stages'
 import { StockSnapshot } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
@@ -125,19 +126,9 @@ const getQuantityColorClass = () => {
   return isIncome() ? 'text-success' : 'text-error'
 }
 
-const getStageLabel = (stage: string) => {
-  // F-910: ключи ДОЛЖНЫ совпадать с BE StockSnapshot.STAGE_CHOICES и desktop-списком (Stocks/List
-  // getStageDisplayName). Раньше карта (planning/procurement/…) не совпадала → мобильная карточка
-  // печатала сырой код («acceptance»), а desktop — «Приемка». Тот же ряд для одной строки расходился.
-  const stageMap: Record<string, string> = {
-    'acceptance': 'Приемка',
-    'request': 'Заявка',
-    'delivery_fixed': 'Доставка',
-    'post_rough': 'После черновых',
-    'handover': 'Сдача'
-  }
-  return stageMap[stage] || stage
-}
+// F-910 → F-1033: подписи этапов из единого источника src/constants/stages.ts (раньше —
+// рукописная карта, которая расходилась с desktop-списком и печатала сырой код).
+const getStageLabel = (stage: string) => stageLabel(stage)
 
 const getSourceTypeLabel = () => {
   // F-910: BE source_type = 'purchase_item' | 'writeoff' (не 'purchase'/'transfer'/'adjustment').

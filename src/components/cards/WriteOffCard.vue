@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { stageLabel } from '@/constants/stages'
 import { WriteOff } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
@@ -125,19 +126,7 @@ const getBalanceBefore = () => {
   return formatSmartQuantity(current + writeOffQty, props.writeOff.unit_code)
 }
 
-const getStageLabel = (stage: string) => {
-  // F-918: пропущенный сиблинг F-910 (StockCard). Ключи ДОЛЖНЫ совпадать с BE WriteOff.STAGE_CHOICES
-  // (stock/models.py) и desktop-списком (WriteOffs/List stageOptions). Старая карта
-  // (planning/procurement/…) не совпадала ни с одним кодом → getStageLabel('post_rough') падал в
-  // `|| stage` и печатал сырой «post_rough» на мобильной карточке, тогда как desktop показывал
-  // «После черновых» — мобильная и desktop-версии одной записи расходились.
-  const stageMap: Record<string, string> = {
-    'acceptance': 'Приемка',
-    'request': 'Заявка',
-    'delivery_fixed': 'Доставка',
-    'post_rough': 'После черновых',
-    'handover': 'Сдача'
-  }
-  return stageMap[stage] || stage
-}
+// F-918 → F-1033: подписи этапов из единого источника src/constants/stages.ts (раньше —
+// рукописная карта, которая расходилась с desktop-списком и печатала сырой код).
+const getStageLabel = (stage: string) => stageLabel(stage)
 </script>

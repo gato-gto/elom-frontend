@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { stageSelectOptions } from '@/constants/stages'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEditQuery } from '@/composables/useEditQuery'
@@ -146,14 +147,7 @@ const employeeOptions = computed(() => [
   }))
 ])
 
-const stageOptions = computed(() => [
-  { value: '', label: 'Все этапы' },
-  { value: 'acceptance', label: 'Приемка' },
-  { value: 'request', label: 'Заявка' },
-  { value: 'delivery_fixed', label: 'Доставка' },
-  { value: 'post_rough', label: 'После черновых' },
-  { value: 'handover', label: 'Сдача' }
-])
+const stageOptions = computed(() => stageSelectOptions(true))  // F-1033: единый источник
 
 // Maps for name lookups
 const oMap = computed(() => new Map(objects.value.map((o: SiteObject) => [o.id, o.name])))

@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import { DEFAULT_STAGE, stageSelectOptions } from '@/constants/stages'
 import { computed, onMounted } from 'vue'
 import { useObjectsStore } from '@/stores/objects'
 import { useEmployeesStore, getResponsibleEmployees } from '@/stores/employees'
@@ -167,14 +168,8 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
   showCancel: true
 }))
 
-// Stage options
-const stageOptions = [
-  { value: 'acceptance', label: 'Приемка' },
-  { value: 'request', label: 'Заявка' },
-  { value: 'delivery_fixed', label: 'Доставка' },
-  { value: 'post_rough', label: 'После черновых' },
-  { value: 'handover', label: 'Сдача' }
-]
+// Stage options — F-1033: из единого источника
+const stageOptions = stageSelectOptions()
 
 // Initial form data
 const initialFormData = computed<ObjectRequest>(() => {
@@ -188,7 +183,7 @@ const initialFormData = computed<ObjectRequest>(() => {
       location_url: props.initial.location_url,
       // Для бригадиров ответственный всегда они сами
       responsible: isLimitedAccess.value ? currentUserProfileId : props.initial.responsible,
-      current_stage: props.initial.current_stage || 'acceptance',
+      current_stage: props.initial.current_stage || DEFAULT_STAGE,
       key_person_name: props.initial.key_person_name || '',
       key_person_contacts: props.initial.key_person_contacts || '',
       date_start: props.initial.date_start,
@@ -203,7 +198,7 @@ const initialFormData = computed<ObjectRequest>(() => {
     is_active: true,
     location_url: undefined,
     responsible: isLimitedAccess.value ? currentUserProfileId : undefined,
-    current_stage: 'acceptance',
+    current_stage: DEFAULT_STAGE,
     key_person_name: '',
     key_person_contacts: '',
     date_start: undefined,

@@ -568,3 +568,28 @@ describe('F-1024 · ChartContainer: цвета в <style> только токе�
     expect(/\.dark\s+\./.test(style), '.dark-дубль правила в ChartContainer').toBe(false)
   })
 })
+
+describe('ARCH · этапы работ — единый источник src/constants/stages.ts (F-1033, BE F-791)', () => {
+  // Владелец 2026-08-29 сменил набор этапов; до этого список жил в ШЕСТИ рукописных копиях
+  // (ObjectForm, ObjectInfo, Stocks/List, WriteOffs/List, StockCard, WriteOffCard) и уже расходился
+  // (F-910/F-918: мобильная карточка печатала сырой код, desktop — подпись). Теперь — одна константа.
+  const files = listFiles(resolve(ROOT, 'src'), /\.(vue|ts)$/)
+    .filter(p => !/__tests__|\.test\.ts$|[\\/]src[\\/]test[\\/]/.test(p))
+  const read = (p: string) => readFileSync(p, 'utf8')
+  const rel = (p: string) => p.slice(ROOT.length + 1)
+
+  it('старые коды этапов не используются как литералы', () => {
+    const needle = new RegExp(`["'](?:${'delivery_' + 'fixed'}|${'post_' + 'rough'})["']`)
+    expect(files.filter(p => needle.test(read(p))).map(rel)).toEqual([])
+  })
+
+  it('пары «код → подпись» этапов — только в constants/stages.ts', () => {
+    const pair = /["']?\b(?:start|installation|rework|acceptance|handover)\b["']?\s*[:,]\s*\{?\s*(?:label\s*:\s*)?["'](?:Начало работ|Монтажные работы|Переделки|Приемка|Сдача)["']/
+    expect(files.filter(p => pair.test(read(p))).map(rel)).toEqual(['src/constants/stages.ts'])
+  })
+
+  it('этап по умолчанию не хардкодится в формах — только DEFAULT_STAGE', () => {
+    const literalDefault = /current_stage:\s*(?:[^,\n]*\|\|\s*)?["'](?:start|installation|rework|acceptance|handover)["']/
+    expect(files.filter(p => literalDefault.test(read(p))).map(rel)).toEqual([])
+  })
+})

@@ -290,6 +290,7 @@
 </template>
 
 <script setup lang="ts">
+import { STAGE_META } from '@/constants/stages'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { SiteObject as SiteObject } from '@/api/types'
@@ -323,16 +324,8 @@ const ui = useUiStore()
 
 const objectId = computed(() => Number(route.params.id))
 
-const stageDictionary: Record<
-  string,
-  { label: string; description: string }
-> = {
-  acceptance: { label: 'Приемка', description: 'Подготовка площадки и приём материалов' },
-  request: { label: 'Заявка', description: 'Сбор потребностей и согласование' },
-  delivery_fixed: { label: 'Доставка', description: 'Поставка материалов на объект' },
-  post_rough: { label: 'После черновых', description: 'Работы после черновой отделки' },
-  handover: { label: 'Сдача', description: 'Этап подготовки к передаче' }
-}
+// F-1033: подписи и описания этапов — из единого источника
+const stageDictionary: Record<string, { label: string; description: string }> = STAGE_META
 
 // ✅ RBAC: проверка через permissions вместо хардкода ролей
 const canEdit = computed(() => can('objects', 'edit'))

@@ -283,7 +283,7 @@ describe('ObjectInfo', () => {
         {
           id: 1,
           name: 'Test Object',
-          current_stage: 'delivery_fixed',
+          current_stage: 'installation',
           is_active: true
         } as any
       ]

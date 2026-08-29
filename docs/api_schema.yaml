@@ -2445,7 +2445,7 @@ paths:
                   name: ЖК Солнечный
                   address: г. Ташкент, ул. Амира Темура, 15
                   is_active: true
-                  current_stage: request
+                  current_stage: start
                   key_person_name: Иванов И.И.
                   key_person_contacts: '+998901234567'
                   date_start: '2025-01-15'
@@ -5383,7 +5383,7 @@ paths:
         name: stage
         schema:
           type: string
-        description: acceptance|request|delivery_fixed|post_rough|handover
+        description: start|installation|rework|acceptance|handover
       - in: query
         name: unit
         schema:
@@ -5418,7 +5418,7 @@ paths:
                         unit: 2
                         unit_code: м
                         quantity_signed: '12.500'
-                        stage: post_rough
+                        stage: installation
                         responsible: 3
                         comment: ''
                         is_archived: false
@@ -5442,10 +5442,10 @@ paths:
         - `import` — из импорта
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **Дополнительные действия:**
@@ -5472,7 +5472,7 @@ paths:
                   material: 5
                   unit: 2
                   quantity: '12.500'
-                  stage: post_rough
+                  stage: installation
                   responsible: 3
                   comment: ''
                 summary: Пример запроса
@@ -5510,10 +5510,10 @@ paths:
         - `import` — из импорта
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **Дополнительные действия:**
@@ -5558,10 +5558,10 @@ paths:
         - `import` — из импорта
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **Дополнительные действия:**
@@ -5618,10 +5618,10 @@ paths:
         - `import` — из импорта
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **Дополнительные действия:**
@@ -5820,7 +5820,7 @@ paths:
                       snapshots:
                       - id: 1
                         quantity: '8.500'
-                        stage: after_rough
+                        stage: installation
                   summary: Пример ответа
           description: ''
   /api/v1/suppliers/:
@@ -7832,7 +7832,7 @@ paths:
         name: stage
         schema:
           type: string
-        description: acceptance|request|delivery_fixed|post_rough|handover
+        description: start|installation|rework|acceptance|handover
       - in: query
         name: unit
         schema:
@@ -7867,7 +7867,7 @@ paths:
                         unit: 2
                         unit_code: м
                         quantity: '30.000'
-                        stage: post_rough
+                        stage: installation
                         responsible: 3
                         comment: Списание на работы
                         is_archived: false
@@ -7900,10 +7900,10 @@ paths:
         - comment — комментарий
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **SmartQuantity:**
@@ -7934,7 +7934,7 @@ paths:
                   material: 5
                   unit: 2
                   quantity: '30.000'
-                  stage: post_rough
+                  stage: installation
                   responsible: 3
                   comment: Списание на работы
                 summary: Пример запроса
@@ -7976,10 +7976,10 @@ paths:
         - comment — комментарий
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **SmartQuantity:**
@@ -8032,10 +8032,10 @@ paths:
         - comment — комментарий
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **SmartQuantity:**
@@ -8100,10 +8100,10 @@ paths:
         - comment — комментарий
 
         **Этапы работ (stage):**
-        - `acceptance` — приёмка
-        - `request` — заявка
-        - `delivery_fixed` — фиксированная доставка
-        - `post_rough` — после черновой отделки
+        - `start` — начало работ
+        - `installation` — монтажные работы
+        - `rework` — переделки
+        - `acceptance` — приемка
         - `handover` — сдача
 
         **SmartQuantity:**
@@ -8437,17 +8437,17 @@ components:
         * `selection` - Выбранные позиции
     CurrentStageEnum:
       enum:
+      - start
+      - installation
+      - rework
       - acceptance
-      - request
-      - delivery_fixed
-      - post_rough
       - handover
       type: string
       description: |-
+        * `start` - Начало работ
+        * `installation` - Монтажные работы
+        * `rework` - Переделки
         * `acceptance` - Приемка
-        * `request` - Заявка
-        * `delivery_fixed` - Доставка
-        * `post_rough` - После черновых
         * `handover` - Сдача
     Employee:
       type: object
@@ -8735,9 +8735,8 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
       required:
       - amount
       - contribution
@@ -9431,10 +9430,10 @@ components:
           description: |-
             Текущий этап работ на объекте
 
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
             * `acceptance` - Приемка
-            * `request` - Заявка
-            * `delivery_fixed` - Доставка
-            * `post_rough` - После черновых
             * `handover` - Сдача
         current_stage_display:
           type: string
@@ -9535,10 +9534,10 @@ components:
           description: |-
             Текущий этап работ на объекте
 
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
             * `acceptance` - Приемка
-            * `request` - Заявка
-            * `delivery_fixed` - Доставка
-            * `post_rough` - После черновых
             * `handover` - Сдача
         key_person_name:
           type: string
@@ -10281,10 +10280,10 @@ components:
           description: |-
             Текущий этап работ на объекте
 
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
             * `acceptance` - Приемка
-            * `request` - Заявка
-            * `delivery_fixed` - Доставка
-            * `post_rough` - После черновых
             * `handover` - Сдача
         key_person_name:
           type: string
@@ -10341,9 +10340,8 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -10493,11 +10491,11 @@ components:
           description: |-
             Этап работ
 
-            * `acceptance` - Acceptance
-            * `request` - Request
-            * `delivery_fixed` - Delivery Fixed
-            * `post_rough` - Post Rough
-            * `handover` - Handover
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
+            * `acceptance` - Приемка
+            * `handover` - Сдача
         source_type:
           allOf:
           - $ref: '#/components/schemas/SourceTypeEnum'
@@ -10509,9 +10507,8 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -10602,9 +10599,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedWorkItemRequest:
@@ -10628,9 +10624,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedWriteOffRequest:
@@ -10661,11 +10656,11 @@ components:
           description: |-
             Этап работ (опционально, deprecated - используйте Object.current_stage)
 
-            * `acceptance` - Acceptance
-            * `request` - Request
-            * `delivery_fixed` - Delivery Fixed
-            * `post_rough` - Post Rough
-            * `handover` - Handover
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
+            * `acceptance` - Приемка
+            * `handover` - Сдача
           oneOf:
           - $ref: '#/components/schemas/StageEnum'
           - $ref: '#/components/schemas/BlankEnum'
@@ -11103,9 +11098,8 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11159,9 +11153,8 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11575,18 +11568,18 @@ components:
         * `writeoff` - Write Off
     StageEnum:
       enum:
+      - start
+      - installation
+      - rework
       - acceptance
-      - request
-      - delivery_fixed
-      - post_rough
       - handover
       type: string
       description: |-
-        * `acceptance` - Acceptance
-        * `request` - Request
-        * `delivery_fixed` - Delivery Fixed
-        * `post_rough` - Post Rough
-        * `handover` - Handover
+        * `start` - Начало работ
+        * `installation` - Монтажные работы
+        * `rework` - Переделки
+        * `acceptance` - Приемка
+        * `handover` - Сдача
     StockSnapshot:
       type: object
       description: Сериализатор для журнала движений материалов (Unified Ledger Model)
@@ -11628,11 +11621,11 @@ components:
           description: |-
             Этап работ
 
-            * `acceptance` - Acceptance
-            * `request` - Request
-            * `delivery_fixed` - Delivery Fixed
-            * `post_rough` - Post Rough
-            * `handover` - Handover
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
+            * `acceptance` - Приемка
+            * `handover` - Сдача
         source_type:
           allOf:
           - $ref: '#/components/schemas/SourceTypeEnum'
@@ -11644,9 +11637,8 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -11720,11 +11712,11 @@ components:
           description: |-
             Этап работ
 
-            * `acceptance` - Acceptance
-            * `request` - Request
-            * `delivery_fixed` - Delivery Fixed
-            * `post_rough` - Post Rough
-            * `handover` - Handover
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
+            * `acceptance` - Приемка
+            * `handover` - Сдача
         source_type:
           allOf:
           - $ref: '#/components/schemas/SourceTypeEnum'
@@ -11736,9 +11728,8 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -12363,9 +12354,8 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         children_count:
@@ -12392,9 +12382,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -12431,9 +12420,8 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -12509,9 +12497,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -12557,11 +12544,11 @@ components:
           description: |-
             Этап работ (опционально, deprecated - используйте Object.current_stage)
 
-            * `acceptance` - Acceptance
-            * `request` - Request
-            * `delivery_fixed` - Delivery Fixed
-            * `post_rough` - Post Rough
-            * `handover` - Handover
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
+            * `acceptance` - Приемка
+            * `handover` - Сдача
           oneOf:
           - $ref: '#/components/schemas/StageEnum'
           - $ref: '#/components/schemas/BlankEnum'
@@ -12659,11 +12646,11 @@ components:
           description: |-
             Этап работ (опционально, deprecated - используйте Object.current_stage)
 
-            * `acceptance` - Acceptance
-            * `request` - Request
-            * `delivery_fixed` - Delivery Fixed
-            * `post_rough` - Post Rough
-            * `handover` - Handover
+            * `start` - Начало работ
+            * `installation` - Монтажные работы
+            * `rework` - Переделки
+            * `acceptance` - Приемка
+            * `handover` - Сдача
           oneOf:
           - $ref: '#/components/schemas/StageEnum'
           - $ref: '#/components/schemas/BlankEnum'

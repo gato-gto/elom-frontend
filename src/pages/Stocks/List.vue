@@ -65,6 +65,7 @@
 </template>
 
 <script setup lang="ts">
+import { stageLabel, stageSelectOptions } from '@/constants/stages'
 import { computed, onMounted } from 'vue'
 import type { StockSnapshot, SiteObject, Material, Employee } from '@/api/types'
 import type { GenericListConfig } from '@/types/generic'
@@ -107,14 +108,7 @@ const materialOptions = computed(() => [
   ...materials.value.map((m: Material) => ({ value: m.id, label: m.name }))
 ])
 
-const stageOptions = computed(() => [
-  { value: '', label: 'Все этапы' },
-  { value: 'acceptance', label: 'Приемка' },
-  { value: 'request', label: 'Заявка' },
-  { value: 'delivery_fixed', label: 'Доставка' },
-  { value: 'post_rough', label: 'После черновых' },
-  { value: 'handover', label: 'Сдача' }
-])
+const stageOptions = computed(() => stageSelectOptions(true))  // F-1033: единый источник
 
 const sourceTypeOptions = computed(() => [
   { value: '', label: 'Все источники' },
@@ -149,14 +143,7 @@ function responsibleName(id: number | null | undefined) {
 }
 
 function getStageDisplayName(stage: string) {
-  const stageNames: Record<string, string> = {
-    'acceptance': 'Приемка',
-    'request': 'Заявка',
-    'delivery_fixed': 'Доставка',
-    'post_rough': 'После черновых',
-    'handover': 'Сдача'
-  }
-  return stageNames[stage] || stage
+  return stageLabel(stage)  // F-1033: единый источник (был рукописный словарь)
 }
 
 function getSourceTypeDisplayName(sourceType: string) {

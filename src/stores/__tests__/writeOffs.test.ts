@@ -301,7 +301,7 @@ describe('WriteOff Business Logic', () => {
       const object = {
         id: 1,
         name: 'Test Object',
-        current_stage: 'delivery_fixed'
+        current_stage: 'installation'
       }
       
       const writeoff = {
@@ -312,14 +312,14 @@ describe('WriteOff Business Logic', () => {
       // Auto-fill stage
       writeoff.stage = object.current_stage
       
-      expect(writeoff.stage).toBe('delivery_fixed')
+      expect(writeoff.stage).toBe('installation')
     })
 
     it('allows selecting different stage', () => {
       const availableStages = [
-        { value: 'request', label: 'Заявка' },
-        { value: 'acceptance', label: 'Приёмка' },
-        { value: 'delivery_fixed', label: 'Фикс. доставка' }
+        { value: 'start', label: 'Начало работ' },
+        { value: 'acceptance', label: 'Приемка' },
+        { value: 'installation', label: 'Монтажные работы' }
       ]
       
       const writeoff = {
