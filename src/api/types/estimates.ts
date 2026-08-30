@@ -169,3 +169,24 @@ export interface EstimateWriteRequest {
   note?: string
   lines: EstimateLineWrite[]
 }
+
+// ─────────────────────── Пресеты коэффициентов (F-1036 ↔ BE F-794, D-029 вопрос 2) ───────────────────────
+// Справочник руководства для диалога «+ Добавить коэффициент»: имя + множитель (+ подсказка зоны = имя подраздела).
+// НЕ позиция каталога: в смете коэффициент остаётся ad-hoc строкой (kind=coefficient), пресет лишь подставляет
+// имя/множитель. multiplier — Decimal(6,2) строкой (конвенция COERCE_DECIMAL_TO_STRING).
+export interface CoefficientPreset {
+  id: number
+  name: string
+  multiplier: string
+  scope_hint: string
+  order: number
+  is_active: boolean
+}
+
+export interface CoefficientPresetRequest {
+  name: string
+  multiplier: string
+  scope_hint?: string
+  order?: number
+  is_active?: boolean
+}

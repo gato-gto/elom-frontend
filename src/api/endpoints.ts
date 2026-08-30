@@ -147,6 +147,11 @@ export const endpoints = {
         one: (id: number) => join(`/work-items/${id}/`),
         search: join('/work-items/search/'),
     },
+    // F-1036 (BE F-794): пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства)
+    coefficientPresets: {
+        list: join('/coefficient-presets/'),
+        one: (id: number) => join(`/coefficient-presets/${id}/`),
+    },
     estimates: {
         list: join('/estimates/'),
         one: (id: number) => join(`/estimates/${id}/`),

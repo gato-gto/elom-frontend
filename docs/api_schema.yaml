@@ -562,6 +562,210 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/v1/coefficient-presets/:
+    get:
+      operationId: coefficient_presets_list
+      description: |-
+        F-794: пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства, D-029).
+
+        RBAC — ресурс `work_items` (отдельный ресурс не заводим, init_rbac не трогаем): руководство create/edit/delete,
+        все с `work_items.view` читают; бригадир с `work_items.propose` пресеты НЕ заводит (_WorkItemCreateOrPropose
+        сюда не распространяется). Object-scope нет (глобальный справочник). Пикер в смете берёт `?is_active=true`.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - coefficient-presets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCoefficientPresetList'
+          description: ''
+    post:
+      operationId: coefficient_presets_create
+      description: |-
+        F-794: пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства, D-029).
+
+        RBAC — ресурс `work_items` (отдельный ресурс не заводим, init_rbac не трогаем): руководство create/edit/delete,
+        все с `work_items.view` читают; бригадир с `work_items.propose` пресеты НЕ заводит (_WorkItemCreateOrPropose
+        сюда не распространяется). Object-scope нет (глобальный справочник). Пикер в смете берёт `?is_active=true`.
+      tags:
+      - coefficient-presets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoefficientPresetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CoefficientPresetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CoefficientPresetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoefficientPreset'
+          description: ''
+  /api/v1/coefficient-presets/{id}/:
+    get:
+      operationId: coefficient_presets_retrieve
+      description: |-
+        F-794: пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства, D-029).
+
+        RBAC — ресурс `work_items` (отдельный ресурс не заводим, init_rbac не трогаем): руководство create/edit/delete,
+        все с `work_items.view` читают; бригадир с `work_items.propose` пресеты НЕ заводит (_WorkItemCreateOrPropose
+        сюда не распространяется). Object-scope нет (глобальный справочник). Пикер в смете берёт `?is_active=true`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пресет коэффициента.
+        required: true
+      tags:
+      - coefficient-presets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoefficientPreset'
+          description: ''
+    put:
+      operationId: coefficient_presets_update
+      description: |-
+        F-794: пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства, D-029).
+
+        RBAC — ресурс `work_items` (отдельный ресурс не заводим, init_rbac не трогаем): руководство create/edit/delete,
+        все с `work_items.view` читают; бригадир с `work_items.propose` пресеты НЕ заводит (_WorkItemCreateOrPropose
+        сюда не распространяется). Object-scope нет (глобальный справочник). Пикер в смете берёт `?is_active=true`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пресет коэффициента.
+        required: true
+      tags:
+      - coefficient-presets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoefficientPresetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CoefficientPresetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CoefficientPresetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoefficientPreset'
+          description: ''
+    patch:
+      operationId: coefficient_presets_partial_update
+      description: |-
+        F-794: пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства, D-029).
+
+        RBAC — ресурс `work_items` (отдельный ресурс не заводим, init_rbac не трогаем): руководство create/edit/delete,
+        все с `work_items.view` читают; бригадир с `work_items.propose` пресеты НЕ заводит (_WorkItemCreateOrPropose
+        сюда не распространяется). Object-scope нет (глобальный справочник). Пикер в смете берёт `?is_active=true`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пресет коэффициента.
+        required: true
+      tags:
+      - coefficient-presets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCoefficientPresetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCoefficientPresetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCoefficientPresetRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoefficientPreset'
+          description: ''
+    delete:
+      operationId: coefficient_presets_destroy
+      description: |-
+        F-794: пресеты коэффициентов для диалога «+ Добавить коэффициент» (справочник руководства, D-029).
+
+        RBAC — ресурс `work_items` (отдельный ресурс не заводим, init_rbac не трогаем): руководство create/edit/delete,
+        все с `work_items.view` читают; бригадир с `work_items.propose` пресеты НЕ заводит (_WorkItemCreateOrPropose
+        сюда не распространяется). Object-scope нет (глобальный справочник). Пикер в смете берёт `?is_active=true`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пресет коэффициента.
+        required: true
+      tags:
+      - coefficient-presets
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/csp-report/:
     post:
       operationId: csp_report
@@ -8435,6 +8639,67 @@ components:
         * `section` - Раздел
         * `subcategory` - Подраздел
         * `selection` - Выбранные позиции
+    CoefficientPreset:
+      type: object
+      description: |-
+        F-794: пресет коэффициента (имя + множитель + подсказка зоны). Множитель — открытый интервал (0; 1000):
+        поле объявлено явно, чтобы одно сообщение об ошибке шло из validate_multiplier, а не из модельных валидаторов.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        multiplier:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        scope_hint:
+          type: string
+          description: 'Подсказка зоны: имя подраздела, к работам которого коэффициент
+            обычно применяют'
+          maxLength: 128
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_active:
+          type: boolean
+      required:
+      - id
+      - multiplier
+      - name
+    CoefficientPresetRequest:
+      type: object
+      description: |-
+        F-794: пресет коэффициента (имя + множитель + подсказка зоны). Множитель — открытый интервал (0; 1000):
+        поле объявлено явно, чтобы одно сообщение об ошибке шло из validate_multiplier, а не из модельных валидаторов.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        multiplier:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        scope_hint:
+          type: string
+          description: 'Подсказка зоны: имя подраздела, к работам которого коэффициент
+            обычно применяют'
+          maxLength: 128
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_active:
+          type: boolean
+      required:
+      - multiplier
+      - name
     CurrentStageEnum:
       enum:
       - start
@@ -8735,8 +9000,9 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - amount
       - contribution
@@ -9603,6 +9869,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuditLog'
+    PaginatedCoefficientPresetList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoefficientPreset'
     PaginatedEmployeeList:
       type: object
       required:
@@ -10097,6 +10386,32 @@ components:
           format: date
         object:
           type: integer
+    PatchedCoefficientPresetRequest:
+      type: object
+      description: |-
+        F-794: пресет коэффициента (имя + множитель + подсказка зоны). Множитель — открытый интервал (0; 1000):
+        поле объявлено явно, чтобы одно сообщение об ошибке шло из validate_multiplier, а не из модельных валидаторов.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        multiplier:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        scope_hint:
+          type: string
+          description: 'Подсказка зоны: имя подраздела, к работам которого коэффициент
+            обычно применяют'
+          maxLength: 128
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_active:
+          type: boolean
     PatchedEmployeeRequest:
       type: object
       description: |-
@@ -10340,8 +10655,9 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -10507,8 +10823,9 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -10599,8 +10916,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedWorkItemRequest:
@@ -10624,8 +10942,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedWriteOffRequest:
@@ -11098,8 +11417,9 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11153,8 +11473,9 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11637,8 +11958,9 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -11728,8 +12050,9 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -12354,8 +12677,9 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         children_count:
@@ -12382,8 +12706,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:
@@ -12420,8 +12745,9 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:
@@ -12497,8 +12823,9 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:

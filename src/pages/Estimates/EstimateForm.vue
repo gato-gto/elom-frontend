@@ -49,7 +49,7 @@
       <div class="flex items-center justify-between mt-2 gap-2 flex-wrap">
         <h2 class="text-lg font-semibold">Позиции <span class="text-sm text-muted">({{ lines.length }} {{ pluralizeRu(lines.length, ['строка', 'строки', 'строк']) }})</span></h2>
         <!-- F-740: коэффициент — ad-hoc строка (имя+множитель), не позиция каталога → добавляется отдельно. -->
-        <button type="button" class="btn btn-sm btn-outline btn-warning gap-1" @click="addCoeffLine">
+        <button type="button" class="btn btn-sm btn-outline btn-warning gap-1" @click="openCoeffChooser">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg>
           Добавить коэффициент
         </button>
@@ -148,6 +148,18 @@
     <!-- manual→catalog (F-739): quick-add новой позиции в каталог из строки сметы -->
     <QuickAddWorkItem v-model="quickAddOpen" :initial-name="quickAddName" @created="onWorkItemCreated" />
 
+    <!-- F-1036 (BE F-794): выбор пресета коэффициента — имя и множитель подставляются, зона выбирается в строке -->
+    <Modal v-model="coeffChooserOpen" title="Добавить коэффициент">
+      <div class="space-y-2">
+        <p class="text-sm text-muted">Пресеты из прайса: имя и множитель подставятся, зону укажете в строке коэффициента.</p>
+        <button v-for="p in activePresets" :key="p.id" type="button" class="btn btn-outline btn-sm w-full h-auto min-h-0 py-2 justify-between gap-2 text-left normal-case" @click="addCoeffLine(p)">
+          <span class="flex-1 min-w-0 break-words whitespace-normal">{{ p.name }}<span v-if="p.scope_hint" class="block text-xs text-muted font-normal">зона: {{ p.scope_hint }}</span></span>
+          <span class="font-mono shrink-0">×{{ formatNumberClean(p.multiplier) }}</span>
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm w-full" @click="addCoeffLine()">Свой коэффициент (ввести вручную)</button>
+      </div>
+    </Modal>
+
     <!-- Фаза 2: пикер работ для коэффициента scope='selection' -->
     <Modal :model-value="!!selectionLine" title="Выберите работы для коэффициента" @update:model-value="v => { if (!v) closeSelection() }">
       <div v-if="selectionLine" class="p-4 space-y-2">
@@ -179,6 +191,7 @@ import { useEstimatesStore } from '@/stores/estimates'
 import { useObjectsStore } from '@/stores/objects'
 import { useUiStore } from '@/stores/ui'
 import { useWorkCategoriesStore } from '@/stores/workCategories'
+import { useCoefficientPresetsStore } from '@/stores/coefficientPresets'
 import { usePermissions } from '@/composables/usePermissions'
 import WorkItemSearchSelect from '@/components/WorkItemSearchSelect.vue'
 import QuickAddWorkItem from '@/components/QuickAddWorkItem.vue'
@@ -186,7 +199,7 @@ import ListHeader from '@/components/ListHeader.vue'
 import Modal from '@/components/Modal.vue'
 import { formatNumber, formatNumberClean, todayLocal, pluralizeRu } from '@/utils/formatters'
 import { computeEstimate, baseAmount } from '@/utils/estimateCalc'
-import type { WorkItemKind, WorkItemLite, WorkItem, EstimateLineWrite, Estimate } from '@/api/types/estimates'
+import type { WorkItemKind, WorkItemLite, WorkItem, EstimateLineWrite, Estimate, CoefficientPreset } from '@/api/types/estimates'
 import { ACTION_ICONS } from '@/utils/actionIcons'
 
 const route = useRoute()
@@ -195,6 +208,7 @@ const estimatesStore = useEstimatesStore()
 const objectsStore = useObjectsStore()
 const ui = useUiStore()
 const catStore = useWorkCategoriesStore()
+const presetStore = useCoefficientPresetsStore()
 const { can } = usePermissions()
 
 // manual→catalog (F-739): «+Добавить в каталог» доступно руководству (work_items.create) ИЛИ вводящему-драфту
@@ -299,15 +313,37 @@ function onWorkItemCreated(item: WorkItem) {
   onSearchPicked(lite)
   quickAddOpen.value = false
 }
-// F-740: ad-hoc коэффициент (не позиция каталога) — пустая строка kind=coefficient, имя+множитель вводятся вручную.
-function addCoeffLine() {
+// F-740: ad-hoc коэффициент (не позиция каталога) — строка kind=coefficient; без пресета имя+множитель вводятся
+// вручную. F-1036 (BE F-794): с пресетом имя и множитель подставляются, зона предвыбирается по подсказке scope_hint
+// ТОЛЬКО если такой подраздел уже есть среди строк сметы (иначе остаётся пустой — зону не выдумываем).
+function addCoeffLine(preset?: CoefficientPreset) {
   lines.value.push({
     _k: `l${_kSeq++}`, work_item: null, category: null,
     section_name: '', subcategory_name: '',
-    name: '', kind: 'coefficient', unit: 'коэф.', quantity: '1', unit_price: '', position_no: '',
+    name: preset?.name || '', kind: 'coefficient', unit: 'коэф.', quantity: '1',
+    unit_price: preset ? String(Number(preset.multiplier)) : '', position_no: '',
     coeff_scope: '', coeff_scope_name: '', coeff_scope_section: '',
     uid: newUid(), coeff_targets: [], is_draft: false,
   })
+  if (preset?.scope_hint) {
+    const hinted = scopeOptions.value.find(o => o.scope === 'subcategory' && o.name === preset.scope_hint)
+    if (hinted) { onScopeChange(lines.value[lines.value.length - 1], hinted.value) }
+  }
+  coeffChooserOpen.value = false
+}
+
+// F-1036: выбор пресета по кнопке «Добавить коэффициент». Активные пресеты грузятся один раз на форму; нет ни
+// одного (или справочник недоступен) → сразу ручная строка, как до F-1036.
+const coeffChooserOpen = ref(false)
+let presetsLoaded = false
+const activePresets = computed(() => presetStore.items.filter(p => p.is_active))
+async function openCoeffChooser() {
+  if (!presetsLoaded) {
+    presetsLoaded = true
+    try { await presetStore.fetchList({ is_active: true, page_size: 100 }) } catch { /* тост показал стор; работаем без пресетов */ }
+  }
+  if (!activePresets.value.length) { addCoeffLine(); return }
+  coeffChooserOpen.value = true
 }
 function removeLine(idx: number) {
   lines.value.splice(idx, 1)

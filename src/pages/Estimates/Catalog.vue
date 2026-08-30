@@ -83,6 +83,55 @@
       <div v-if="!visibleTree.length" class="text-center text-muted py-10">{{ search ? 'Ничего не найдено' : 'Каталог пуст — добавьте раздел' }}</div>
     </div>
 
+    <!-- F-1036 (BE F-794): пресеты коэффициентов — справочник для диалога «+ Добавить коэффициент» сметы (не позиции) -->
+    <div class="card bg-base-100 border border-warning/40 mt-4">
+      <div class="card-body p-3 gap-2">
+        <div class="flex items-start gap-2 flex-wrap">
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-warning">Пресеты коэффициентов</div>
+            <div class="text-xs text-muted">Подставляются в диалоге «+ Добавить коэффициент» сметы: имя и множитель; зону указывают в смете. Это не позиции каталога.</div>
+          </div>
+          <button v-if="canAddItem" class="btn btn-sm btn-outline btn-warning gap-1 shrink-0" aria-label="Добавить пресет" title="Добавить пресет" @click="openPresetForm(null)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.add" /></svg>
+            <span>Пресет</span>
+          </button>
+        </div>
+        <div v-for="p in presets" :key="p.id" data-testid="preset-row" class="flex items-center gap-2 py-1.5 border-t border-base-200 text-sm">
+          <div class="flex-1 min-w-0">
+            <div class="break-words" :class="{ 'text-muted line-through': !p.is_active }">{{ p.name }}</div>
+            <div class="text-xs text-muted"><span class="font-mono">×{{ formatNumberClean(p.multiplier) }}</span><span v-if="p.scope_hint"> · зона: {{ p.scope_hint }}</span><span v-if="!p.is_active"> · выкл</span></div>
+          </div>
+          <button v-if="canEditItem" class="btn btn-ghost btn-square row-action-btn shrink-0" aria-label="Изменить пресет" title="Изменить" @click="openPresetForm(p)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.edit" /></svg></button>
+          <button v-if="canDeleteItem" class="btn btn-ghost btn-square row-action-btn text-error shrink-0" aria-label="Удалить пресет" title="Удалить" @click="deletePreset(p)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ACTION_ICONS.delete" /></svg></button>
+        </div>
+        <div v-if="!presets.length" class="text-xs text-muted py-1">Пресетов нет — коэффициенты в смете вводятся вручную</div>
+      </div>
+    </div>
+
+    <!-- Модалка пресета коэффициента -->
+    <Modal v-model="presetModal" :title="editingPreset?.id ? 'Изменить пресет' : 'Новый пресет коэффициента'">
+      <div class="space-y-3">
+        <div class="form-control"><label class="label"><span class="label-text">Название</span><span class="label-text-alt text-error">*</span></label>
+          <input v-model="presetForm.name" type="text" maxlength="256" class="input input-bordered w-full" :class="{ 'input-error': presetErr.name }" />
+          <label v-if="presetErr.name" class="label"><span class="label-text-alt text-error">{{ presetErr.name }}</span></label>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="form-control"><span class="label-text text-xs">Множитель</span><input v-model="presetForm.multiplier" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.01" min="0.01" class="input input-bordered input-sm w-full text-right" :class="{ 'input-error': presetErr.multiplier }" placeholder="1.5" /></label>
+          <label class="form-control"><span class="label-text text-xs">Порядок</span><input v-model.number="presetForm.order" type="number" inputmode="numeric" min="0" step="1" class="input input-bordered input-sm w-full text-right" /></label>
+        </div>
+        <div v-if="presetErr.multiplier" class="text-xs text-error">{{ presetErr.multiplier }}</div>
+        <div class="form-control"><label class="label"><span class="label-text">Подсказка зоны (подраздел)</span></label>
+          <select v-model="presetForm.scope_hint" class="select select-bordered w-full">
+            <option value="">— без подсказки (зону выберут в смете) —</option>
+            <option v-for="o in scopeHintOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+          </select>
+          <div v-if="presetForm.scope_hint" class="text-xs text-muted break-words leading-snug mt-1">{{ presetForm.scope_hint }}</div>
+        </div>
+        <label class="label cursor-pointer justify-start gap-2"><input v-model="presetForm.is_active" type="checkbox" class="checkbox checkbox-sm" /><span class="label-text">Активен (виден в диалоге сметы)</span></label>
+        <div class="flex justify-end gap-2"><button class="btn btn-ghost" @click="presetModal = false">Отмена</button><button class="btn btn-primary" :disabled="savingPreset" @click="savePreset">{{ savingPreset ? '…' : 'Сохранить' }}</button></div>
+      </div>
+    </Modal>
+
     <!-- Модалка раздела/подраздела -->
     <Modal v-model="catModal" :title="catModalTitle">
       <div class="space-y-3">
@@ -128,18 +177,20 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { selectAllOnFocus } from '@/utils/numberInput'  // F-1017: тап в числовое поле выделяет значение
 import { useWorkCategoriesStore } from '@/stores/workCategories'
 import { useWorkItemsStore } from '@/stores/workItems'
+import { useCoefficientPresetsStore } from '@/stores/coefficientPresets'
 import { useUiStore } from '@/stores/ui'
 import { usePermissions } from '@/composables/usePermissions'
 import ListHeader from '@/components/ListHeader.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
-import { formatNumber } from '@/utils/formatters'
+import { formatNumber, formatNumberClean } from '@/utils/formatters'
 import { getIconPath } from '@/assets/icons'
 import { ACTION_ICONS } from '@/utils/actionIcons'
-import type { WorkCategory, WorkItem, WorkItemKind } from '@/api/types/estimates'
+import type { WorkCategory, WorkItem, WorkItemKind, CoefficientPreset } from '@/api/types/estimates'
 
 const catStore = useWorkCategoriesStore()
 const itemStore = useWorkItemsStore()
+const presetStore = useCoefficientPresetsStore()
 const ui = useUiStore()
 const { can } = usePermissions()
 
@@ -317,11 +368,74 @@ async function deleteItem(it: WorkItem) {
   }
 }
 
-// ── загрузка: все категории + все позиции разом (дерево группируем на клиенте) ──
+// ── F-1036 (BE F-794): пресеты коэффициентов — справочник для диалога «+ Добавить коэффициент» сметы ──
+// Права как у позиций (work_items.*). Подсказка зоны — имя подраздела каталога (выбор из списка, не свободный текст).
+const presets = computed(() => presetStore.items.slice().sort(byOrder))
+const presetModal = ref(false)
+const editingPreset = ref<CoefficientPreset | null>(null)
+const presetForm = reactive<{ name: string; multiplier: string; scope_hint: string; order: number; is_active: boolean }>(
+  { name: '', multiplier: '', scope_hint: '', order: 0, is_active: true })
+const presetErr = reactive<Record<string, string>>({})
+const savingPreset = ref(false)
+const scopeHintOptions = computed(() => {
+  const opts = catStore.items.filter(c => c.parent != null).slice()
+    .sort((a, b) => (a.parent_name || '').localeCompare(b.parent_name || '') || a.name.localeCompare(b.name))
+    .map(c => ({ value: c.name, label: `${c.parent_name} / ${c.name}` }))
+  // подсказка из прежнего каталога (подраздела уже нет) — показываем как есть, чтобы правка её не теряла
+  if (presetForm.scope_hint && !opts.some(o => o.value === presetForm.scope_hint)) {
+    opts.unshift({ value: presetForm.scope_hint, label: presetForm.scope_hint })
+  }
+  return opts
+})
+function openPresetForm(p: CoefficientPreset | null) {
+  editingPreset.value = p
+  presetForm.name = p?.name || ''
+  presetForm.multiplier = p?.multiplier || ''
+  presetForm.scope_hint = p?.scope_hint || ''
+  presetForm.order = p?.order ?? (presets.value.length ? Math.max(...presets.value.map(x => x.order)) + 1 : 1)
+  presetForm.is_active = p?.is_active ?? true
+  presetErr.name = ''; presetErr.multiplier = ''
+  presetModal.value = true
+}
+async function savePreset() {
+  presetErr.name = ''; presetErr.multiplier = ''
+  const name = presetForm.name.trim()
+  const multiplier = String(presetForm.multiplier).replace(',', '.').trim()
+  const k = Number(multiplier)
+  if (!name) { presetErr.name = 'Укажите название' }
+  if (!(k > 0) || k >= 1000) { presetErr.multiplier = 'Множитель должен быть больше 0' }
+  if (presetErr.name || presetErr.multiplier) { return }
+  savingPreset.value = true
+  const payload = { name, multiplier, scope_hint: presetForm.scope_hint || '', order: Number(presetForm.order) || 0, is_active: presetForm.is_active }
+  try {
+    if (editingPreset.value?.id) { await presetStore.update(editingPreset.value.id, payload) } else { await presetStore.create(payload) }
+    ui.toast({ type: 'success', text: 'Пресет сохранён' })
+    presetModal.value = false
+    await reload()
+  } catch (e: any) {
+    const d = e?.response?.data?.errors || e?.response?.data
+    if (d?.name) { presetErr.name = Array.isArray(d.name) ? d.name[0] : String(d.name) }
+    if (d?.multiplier) { presetErr.multiplier = Array.isArray(d.multiplier) ? d.multiplier[0] : String(d.multiplier) }
+    if (!presetErr.name && !presetErr.multiplier) { ui.toast({ type: 'error', text: e?.response?.data?.detail || 'Не удалось сохранить пресет' }) }
+  } finally { savingPreset.value = false }
+}
+async function deletePreset(p: CoefficientPreset) {
+  if (!confirm(`Удалить пресет «${p.name}»?`)) { return }
+  try {
+    await presetStore.remove(p.id)
+    ui.toast({ type: 'success', text: 'Пресет удалён' })
+    await reload()
+  } catch (e: any) {
+    ui.toast({ type: 'error', text: e?.response?.data?.detail || 'Не удалось удалить пресет' })
+  }
+}
+
+// ── загрузка: все категории + все позиции + пресеты разом (дерево группируем на клиенте) ──
 async function reload() {
   await Promise.all([
     catStore.fetchList({ page_size: 1000 }).catch(() => {}),
     itemStore.fetchList({ page: 1, page_size: 1000 }).catch(() => {}),
+    presetStore.fetchList({ page_size: 100 }).catch(() => {}),
   ])
 }
 onMounted(reload)
