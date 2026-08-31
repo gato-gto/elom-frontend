@@ -174,7 +174,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { selectAllOnFocus } from '@/utils/numberInput'  // F-1017: тап в числовое поле выделяет значение
+import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015/F-1017
 import { useWorkCategoriesStore } from '@/stores/workCategories'
 import { useWorkItemsStore } from '@/stores/workItems'
 import { useCoefficientPresetsStore } from '@/stores/coefficientPresets'
@@ -400,7 +400,7 @@ function openPresetForm(p: CoefficientPreset | null) {
 async function savePreset() {
   presetErr.name = ''; presetErr.multiplier = ''
   const name = presetForm.name.trim()
-  const multiplier = String(presetForm.multiplier).replace(',', '.').trim()
+  const multiplier = normalizeDecimalInput(String(presetForm.multiplier)).trim()
   const k = Number(multiplier)
   if (!name) { presetErr.name = 'Укажите название' }
   if (!(k > 0) || k >= 1000) { presetErr.multiplier = 'Множитель должен быть больше 0' }
@@ -411,7 +411,7 @@ async function savePreset() {
     if (editingPreset.value?.id) { await presetStore.update(editingPreset.value.id, payload) } else { await presetStore.create(payload) }
     ui.toast({ type: 'success', text: 'Пресет сохранён' })
     presetModal.value = false
-    await reload()
+    await reloadPresets()   // CRUD пресета не меняет дерево каталога — категории/позиции не перечитываем
   } catch (e: any) {
     const d = e?.response?.data?.errors || e?.response?.data
     if (d?.name) { presetErr.name = Array.isArray(d.name) ? d.name[0] : String(d.name) }
@@ -424,18 +424,21 @@ async function deletePreset(p: CoefficientPreset) {
   try {
     await presetStore.remove(p.id)
     ui.toast({ type: 'success', text: 'Пресет удалён' })
-    await reload()
+    await reloadPresets()
   } catch (e: any) {
     ui.toast({ type: 'error', text: e?.response?.data?.detail || 'Не удалось удалить пресет' })
   }
 }
 
 // ── загрузка: все категории + все позиции + пресеты разом (дерево группируем на клиенте) ──
+function reloadPresets() {
+  return presetStore.fetchList({ page_size: 100 }).catch(() => {})
+}
 async function reload() {
   await Promise.all([
     catStore.fetchList({ page_size: 1000 }).catch(() => {}),
     itemStore.fetchList({ page: 1, page_size: 1000 }).catch(() => {}),
-    presetStore.fetchList({ page_size: 100 }).catch(() => {}),
+    reloadPresets(),
   ])
 }
 onMounted(reload)
