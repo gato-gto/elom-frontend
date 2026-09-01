@@ -13,17 +13,19 @@
 
 <script setup lang="ts">
 import {storeToRefs} from 'pinia'
-import {useUiStore} from '@/stores/ui'
+import {useUiStore, type Toast} from '@/stores/ui'
 
 const ui = useUiStore()
 const {toasts} = storeToRefs(ui)
 
-function alertClass(type?: 'success' | 'error' | 'info') {
+function alertClass(type?: Toast['type']) {
   switch (type) {
     case 'success':
       return 'alert alert-success'
     case 'error':
       return 'alert alert-error'
+    case 'warning':
+      return 'alert alert-warning'
     default:
       return 'alert alert-info'
   }
@@ -71,6 +73,11 @@ function alertClass(type?: 'success' | 'error' | 'info') {
   .alert-info {
     border-color: var(--color-info);
     background-color: color-mix(in oklab, var(--color-info) 10%, var(--color-base-100));
+  }
+
+  .alert-warning {
+    border-color: var(--color-warning);
+    background-color: color-mix(in oklab, var(--color-warning) 10%, var(--color-base-100));
   }
 }
 

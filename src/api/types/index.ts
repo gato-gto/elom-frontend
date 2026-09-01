@@ -30,9 +30,6 @@ export * from './suppliers';
 // Report types
 export * from './reports';
 
-// Import types
-export * from './import';
-
 // Tools types
 export * from './tools';
 

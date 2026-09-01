@@ -1,18 +1,26 @@
 // src/api/client.ts
-import axios, {AxiosError, InternalAxiosRequestConfig, AxiosInstance} from 'axios'
+import axios, {AxiosError, AxiosHeaders, InternalAxiosRequestConfig, AxiosInstance} from 'axios'
 import {endpoints, API_PREFIX} from './endpoints'
 import {detectTruncation} from './truncationGuard'
+// ТОЛЬКО типы: import type стирается при сборке, runtime-цикла client↔stores не создаёт
+import type {useAuthStore} from '@/stores/auth'
+import type {useUiStore} from '@/stores/ui'
 
 // Глобальные ключи (совпадают со стором)
 const ACCESS_KEY = 'elom_access'
 const REFRESH_KEY = 'elom_refresh'
 
+type AuthStore = ReturnType<typeof useAuthStore>
+type UiStore = ReturnType<typeof useUiStore>
+// SimpleJWT-ретрай помечается прямо на конфиге запроса (флаг «уже пробовали рефреш»)
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
+
 // Доступ к сторам без циклических импортов
 declare global {
     interface Window {
         __piniaStores?: {
-            auth?: { useAuthStore?: () => any }
-            ui?: { useUiStore?: () => any }
+            auth?: { useAuthStore?: () => AuthStore }
+            ui?: { useUiStore?: () => UiStore }
         }
     }
 }
@@ -36,13 +44,13 @@ function uiStoreSafe() {
 // Работа с токенами через localStorage (и стор, если есть)
 function getAccessToken(): string | null {
     const s = authStoreSafe()
-    if (s?.accessToken) { return s.accessToken as string }
+    if (s?.accessToken) { return s.accessToken }
     return localStorage.getItem(ACCESS_KEY)
 }
 
 function getRefreshToken(): string | null {
     const s = authStoreSafe()
-    if (s?.refreshToken) { return s.refreshToken as string }
+    if (s?.refreshToken) { return s.refreshToken }
     return localStorage.getItem(REFRESH_KEY)
 }
 
@@ -134,9 +142,10 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
         } catch {
             // no-op
         }
-        const err: any = new Error('Нет соединения — изменения недоступны в офлайн-режиме.')
-        err.isOfflineBlock = true
-        err.config = config
+        const err = Object.assign(new Error('Нет соединения — изменения недоступны в офлайн-режиме.'), {
+            isOfflineBlock: true,
+            config,
+        })
         return Promise.reject(err)
     }
     try {
@@ -149,8 +158,8 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
     const access = getAccessToken()
     if (access) {
-        config.headers = config.headers ?? {}
-        ;(config.headers as any).Authorization = `Bearer ${access}`
+        config.headers = AxiosHeaders.from(config.headers)
+        config.headers.set('Authorization', `Bearer ${access}`)
     }
     return config
 })
@@ -184,13 +193,14 @@ api.interceptors.response.use(
         }
 
         // Попытка рефреша при 401
-        if (response?.status === 401 && config && !(config as any)._retry) {
-            (config as any)._retry = true
+        const cfg = config as RetriableConfig | undefined
+        if (response?.status === 401 && cfg && !cfg._retry) {
+            cfg._retry = true
             
             // FE-2: на auth-эндпоинтах (логин /auth/token/, refresh, verify) 401 означает
             // неверные креды или мёртвый refresh, а НЕ «истёкшую сессию рабочего запроса».
             // Не рефрешим и НЕ показываем «Сессия истекла» — ошибку логина покажет auth.login.
-            if (config.url?.includes('/auth/token')) {
+            if (cfg.url?.includes('/auth/token')) {
                 return Promise.reject(error)
             }
             
@@ -209,9 +219,9 @@ api.interceptors.response.use(
             }
             
             // Обновляем заголовок авторизации и повторяем запрос
-            config.headers = config.headers ?? {}
-            ;(config.headers as any).Authorization = `Bearer ${newToken}`
-            return api(config)
+            cfg.headers = AxiosHeaders.from(cfg.headers)
+            cfg.headers.set('Authorization', `Bearer ${newToken}`)
+            return api(cfg)
         }
 
         // FE-3: интерцептор БОЛЬШЕ НЕ показывает тосты для 403/404/500 — иначе на каждую такую

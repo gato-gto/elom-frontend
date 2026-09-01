@@ -22,7 +22,7 @@ export const STAGE_META: Record<Stage, { label: string; description: string }> =
 
 /** Подпись этапа. Неизвестный код — как есть (старые данные не должны ронять карточку), пустой — ''. */
 export function stageLabel(code: string | null | undefined): string {
-  if (!code) return ''
+  if (!code) { return '' }
   return (STAGE_META as Record<string, { label: string }>)[code]?.label ?? code
 }
 

@@ -3,7 +3,7 @@ import {defineStore} from 'pinia'
 
 export type Toast = {
     id: number
-    type?: 'success' | 'error' | 'info'
+    type?: 'success' | 'error' | 'info' | 'warning'
     text: string
     timeout?: number
     _ts?: number   // F-558: время добавления — для подавления мгновенных дублей

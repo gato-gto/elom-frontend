@@ -12,7 +12,7 @@ export interface ParsedApiError {
     statusCode?: number
     errorType: ErrorType
     displayConfig?: ErrorDisplayConfig
-    originalError?: any
+    originalError?: unknown
 }
 
 export type ErrorType =
