@@ -192,15 +192,15 @@
                       <div
                         class="font-mono"
                         :class="{
-                          'text-error font-bold': getFutureBalance(item) < 0,
+                          'text-error font-bold': exceedsAvailable(item),
                           'text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1
                         }"
                       >
                         {{ formatNumberClean(getFutureBalance(item)) }}
                       </div>
                       <div class="text-xs text-muted">{{ getUnitName(item.unit) || '' }}</div>
-                      <div v-if="getFutureBalance(item) < 0" class="text-xs text-error mt-1">
-                        Отрицательный остаток!
+                      <div v-if="exceedsAvailable(item)" class="text-xs text-error mt-1">
+                        {{ availabilityHint(item) }}
                       </div>
                     </div>
                     <div v-else class="text-sm text-subtle">—</div>
@@ -309,14 +309,14 @@
                         v-if="item.currentBalance !== null && item.material" 
                         class="text-sm font-mono p-2 rounded border"
                         :class="{
-                          'bg-error/10 border-error text-error': getFutureBalance(item) < 0,
+                          'bg-error/10 border-error text-error': exceedsAvailable(item),
                           'bg-warning/10 border-warning text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1,
                           '': getFutureBalance(item) >= item.currentBalance * 0.1
                         }"
                       >
                         {{ formatNumberClean(getFutureBalance(item)) }} {{ getUnitName(item.unit) || '' }}
-                        <div v-if="getFutureBalance(item) < 0" class="text-xs mt-1 font-bold">
-                          Отрицательный остаток!
+                        <div v-if="exceedsAvailable(item)" class="text-xs mt-1 font-bold">
+                          {{ availabilityHint(item) }}
                         </div>
                       </div>
                       <div v-else class="text-sm text-subtle p-2  rounded border">
@@ -462,6 +462,7 @@ interface WriteOffItem {
   unit: number
   quantity: string
   currentBalance: number | null
+  available?: number | null
 }
 
 const items = ref<WriteOffItem[]>([])
@@ -625,23 +626,21 @@ const loadCurrentBalance = async (item: WriteOffItem, _index: number) => {
   itemAny._balanceToken = token
 
   try {
+    // F-1044 (B10): в правке исключаем собственную строку журнала на сервере (exclude_writeoff) вместо
+    // прежнего «прибавить своё количество обратно» (F-229), которое было неверно при смене даты/объекта.
     const { data } = await api.get(endpoints.stockSnapshots.balance, {
       params: {
         object_id: formData.value.object,
         material_id: item.material,
-        date: formData.value.date
+        date: formData.value.date,
+        ...(props.initial?.id ? { exclude_writeoff: props.initial.id } : {}),
       }
     })
 
     if (itemAny._balanceToken !== token) { return }  // устарел — новее уже в полёте
-    let balance = parseFloat(data.current_balance || 0)
-    // F-229: в edit-режиме /balance возвращает остаток, УЖЕ уменьшенный на собственный снапшот
-    // этого списания, поэтому getFutureBalance вычитал бы количество ДВАЖДЫ. Возвращаем своё
-    // количество обратно (только для отображения «текущий/будущий остаток»; сабмит не затрагивается).
-    if (props.initial && item.material === props.initial.material) {
-      balance += parseFloat(String(props.initial.quantity)) || 0
-    }
-    item.currentBalance = balance
+    item.currentBalance = parseFloat(data.current_balance || 0)
+    // available — ровно проверка сервера (минимум на эту и последующие даты); старый BE без поля → остаток на дату
+    item.available = data.available !== undefined ? parseFloat(data.available) : item.currentBalance
   } catch (error) {
     console.error('Error loading current balance:', error)
     item.currentBalance = null
@@ -836,6 +835,22 @@ function getUnitName(unitId: number) {
   return unit ? unit.code : null
 }
 
+// F-1044 (B10): списать можно не больше available (сервер проверяет минимум на эту и последующие даты).
+function exceedsAvailable(item: WriteOffItem): boolean {
+  if (item.currentBalance === null || !item.material) return false
+  const qty = parseFloat(normalizeDecimalInput(String(item.quantity)))
+  if (isNaN(qty) || qty <= 0) return false
+  return qty > (item.available ?? item.currentBalance)
+}
+
+function availabilityHint(item: WriteOffItem): string {
+  const avail = item.available ?? item.currentBalance ?? 0
+  if (item.currentBalance !== null && avail < item.currentBalance) {
+    return `Можно списать не больше ${formatNumberClean(avail)}: дальше по датам уже есть списания`
+  }
+  return 'Отрицательный остаток!'
+}
+
 // Вычисление будущего остатка для позиции
 function getFutureBalance(item: WriteOffItem): number {
   if (item.currentBalance === null || !item.material) {
@@ -915,7 +930,7 @@ const handleSubmit = async () => {
     // F-306: не отправляем списание больше доступного остатка — сразу подсказываем на клиенте.
     // Бэкенд всё равно проверяет (WriteOff.clean → 400); это UX-ограничение, не замена бэк-проверке.
     const overItems = items.value.filter(
-      (item) => item.material && item.unit && parseFloat(normalizeDecimalInput(String(item.quantity))) > 0 && getFutureBalance(item) < 0,
+      (item) => item.material && item.unit && exceedsAvailable(item),
     )
     if (overItems.length > 0) {
       errors.value.non_field_errors = ['Нельзя списать больше остатка — исправьте позиции с отрицательным будущим остатком.']
