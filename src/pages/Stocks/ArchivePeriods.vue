@@ -21,11 +21,12 @@
         </label>
         <label class="block">
           <span class="block text-xs mb-1 text-muted">Месяц</span>
-          <input v-model="form.month" type="month" :max="currentMonth" class="input input-bordered w-full" />
+          <input v-model="form.month" type="month" :max="currentMonth()" class="input input-bordered w-full" />
+          <span v-if="monthIsFuture" class="block text-xs mt-1 text-error">Будущий месяц закрыть нельзя</span>
         </label>
         <button
           class="btn btn-primary"
-          :disabled="!form.object || !form.month || busy"
+          :disabled="!form.object || !form.month || monthIsFuture || busy"
           @click="askClose"
         >
           Закрыть период
@@ -119,8 +120,11 @@ const canEdit = computed(() => can('stock', 'edit_all'))
 const busy = ref(false)
 // F-1047 (B14): будущий месяц закрыть нельзя (BE F-814) — ограничиваем выбор; месяц по местному
 // времени (toISOString давал UTC: 1-го числа с 00:00 до 05:00 по Ташкенту — прошлый месяц, F-884).
-const currentMonth = todayLocal().slice(0, 7)
-const form = reactive({ object: 0, month: currentMonth })
+// F-1069: текущий месяц считается при каждом обращении (PWA может быть открыт через смену месяца);
+// max у <input type=month> не везде соблюдается (ввод с клавиатуры, Safari/Firefox, iOS) — запрет в логике.
+const currentMonth = (): string => todayLocal().slice(0, 7)
+const form = reactive({ object: 0, month: currentMonth() })
+const monthIsFuture = computed(() => !!form.month && form.month > currentMonth())
 
 const objectOptions = computed(() =>
   objectsStore.items.map((o: SiteObject) => ({ value: o.id, label: o.name }))
@@ -152,7 +156,7 @@ function objectName(id: number): string {
 }
 
 function askClose() {
-  if (!form.object || !form.month) {return}
+  if (!form.object || !form.month || form.month > currentMonth()) {return}
   confirm.title = 'Закрыть период'
   confirm.message = `Закрыть ${formatMonth(form.month + '-01')} по объекту «${objectName(form.object)}»? `
     + 'Закупки, движения и списания этого периода станут архивными (только для чтения).'

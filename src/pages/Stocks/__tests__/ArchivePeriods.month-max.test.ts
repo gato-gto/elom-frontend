@@ -25,4 +25,19 @@ describe('ArchivePeriods: месяц не позже текущего (F-1047)',
     expect(input.attributes('max')).toBe('2026-11')
     expect((input.element as HTMLInputElement).value).toBe('2026-11')
   })
+
+  // F-1069 (ревью F-1047): атрибут max не мешает набрать будущий месяц с клавиатуры (Chrome), Safari на
+  // macOS/Firefox показывают текстовое поле, пикер iOS max не соблюдает → нужен запрет в самой логике.
+  it('будущий месяц: кнопка неактивна, подсказка видна, askClose не открывает подтверждение', async () => {
+    const w = mount(ArchivePeriods, { global: { stubs: { Modal: true, ListHeader: true } } })
+    const vm = w.vm as any
+    vm.form.object = 5
+    vm.form.month = '2026-12'
+    await w.vm.$nextTick()
+    const btn = w.findAll('button').find(b => b.text() === 'Закрыть период')!
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(w.text()).toContain('Будущий месяц закрыть нельзя')
+    vm.askClose()
+    expect(vm.confirm.open).toBe(false)
+  })
 })
