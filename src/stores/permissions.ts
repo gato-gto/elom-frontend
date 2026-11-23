@@ -45,7 +45,20 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * 
    * @param force - Принудительное обновление (игнорировать кэш)
    */
-  const fetchPermissions = async (force = false): Promise<void> => {
+  // F-1061: запрос в полёте общий — роутер, меню, мобильное меню и PermissionGuard вызывают fetch
+  // одновременно при холодной загрузке, кэш ещё пуст → раньше уходило по запросу на каждого (логи прода:
+  // 485 из 721 my-permissions — повторы в пределах секунды).
+  let inflight: Promise<void> | null = null
+
+  const fetchPermissions = (force = false): Promise<void> => {
+    if (inflight) {
+      return inflight
+    }
+    inflight = doFetchPermissions(force).finally(() => { inflight = null })
+    return inflight
+  }
+
+  const doFetchPermissions = async (force: boolean): Promise<void> => {
     // F-069: без токена не запрашиваем my-permissions (иначе 401 на странице логина)
     if (typeof localStorage !== 'undefined' && !localStorage.getItem('elom_access')) {
       return
