@@ -70,4 +70,25 @@ describe('F-1068 · выход во время запроса прав: B не �
     expect(getMock).toHaveBeenCalledTimes(2)
     expect(store.permissions.map((p) => p.codename)).toEqual(['B.view'])
   })
+
+  it('F-1075: ошибка запроса прошлого пользователя не даёт тост и не сбрасывает loading нового', async () => {
+    const ui = (await import('../ui')).useUiStore()
+    const toast = vi.spyOn(ui, 'toast')
+    let rejectA!: (e: unknown) => void
+    getMock.mockReturnValueOnce(new Promise((_, rej) => { rejectA = rej }))
+    let resolveB!: (v: unknown) => void
+    getMock.mockReturnValueOnce(new Promise((r) => { resolveB = r }))
+    const store = usePermissionsStore()
+    const a = store.fetchPermissions()
+    store.clearCache()
+    const b = store.fetchPermissions(true)
+    rejectA(new Error('boom'))
+    await a.catch(() => undefined)
+    expect(toast).not.toHaveBeenCalled()
+    expect(store.loading).toBe(true)
+    resolveB({ data: { permissions: [{ codename: 'b.view' }], roles: [] } })
+    await b
+    expect(store.error).toBeNull()
+    expect(store.permissions.map((p) => p.codename)).toEqual(['b.view'])
+  })
 })

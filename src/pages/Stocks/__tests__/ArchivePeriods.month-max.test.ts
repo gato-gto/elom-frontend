@@ -40,4 +40,16 @@ describe('ArchivePeriods: месяц не позже текущего (F-1047)',
     vm.askClose()
     expect(vm.confirm.open).toBe(false)
   })
+
+  // F-1075 (ревью): в текстовом поле (Safari/Firefox) месяц сравнивался строкой: «2026-9» и «2026-11 » —
+  // «будущие», а « 2026-12» — нет. Теперь — числами.
+  it('месяц без ведущего нуля и с пробелами сравнивается числами', async () => {
+    const w = mount(ArchivePeriods, { global: { stubs: { Modal: true, ListHeader: true } } })
+    const vm = w.vm as any
+    for (const [v, future] of [['2026-9', false], ['2026-11 ', false], [' 2026-12', true], ['2027-01', true]] as const) {
+      vm.form.month = v
+      await w.vm.$nextTick()
+      expect(vm.monthIsFuture, v).toBe(future)
+    }
+  })
 })

@@ -109,13 +109,11 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { SiteObject as SiteObject } from '@/api/types'
 import { useObjectsStore } from '@/stores/objects'
-import { usePurchasesStore } from '@/stores/purchases'
-import { getByObject as getPurchasesByObject } from '@/stores/purchases'
-import { useWriteOffsStore } from '@/stores/writeOffs'
-import { getByObject as getWriteOffsByObject } from '@/stores/writeOffs'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
 import { formatDate } from '@/utils/formatters'
+import api from '@/api/client'
+import { endpoints } from '@/api/endpoints'
 import { getIconPath } from '@/assets/icons'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -126,8 +124,6 @@ import { useUiStore } from '@/stores/ui'
 const route = useRoute()
 const router = useRouter()
 const objectsStore = useObjectsStore()
-const purchasesStore = usePurchasesStore()
-const writeOffsStore = useWriteOffsStore()
 const _authStore = useAuthStore()
 const { can } = usePermissions()
 const { handleLoadingError } = useErrorHandler()
@@ -171,17 +167,24 @@ const projectProgress = computed(() => {
 // закупки объекта, как в /purchases?object= (отменённые тоже — сколько их, сказано в подсказке);
 // «Списания» — как в /writeoffs?object=. У «Остатков» числа нет: на клиенте нет числа строк остатков,
 // а «материалов из закупок» — не то же самое (F-06).
-const objectStats = computed(() => {
-  if (!object.value) {
-    return { purchasesCount: 0, cancelledCount: 0, writeoffsCount: 0 }
-  }
-  const purchases = getPurchasesByObject(object.value.id)
-  return {
-    purchasesCount: purchases.length,
-    cancelledCount: purchases.filter(p => p.status === 'cancelled').length,
-    writeoffsCount: getWriteOffsByObject(object.value.id).length
-  }
-})
+// F-1074 (ревью): счётчики — отдельными запросами с ЯВНЫМИ параметрами (только object/status) и count с BE.
+// Раньше fetchList общего стора подмешивал фильтры, оставшиеся от списка закупок (поиск, статус, даты), и
+// число не совпадало со списком по ссылке; заодно ушёл потолок page_size=1000.
+const objectStats = ref({ purchasesCount: 0, cancelledCount: 0, writeoffsCount: 0 })
+
+async function countOf(url: string, params: Record<string, unknown>): Promise<number> {
+  const { data } = await api.get(url, { params: { ...params, page_size: 1 } })
+  return Number((data as { count?: number })?.count ?? 0)
+}
+
+async function loadStats(id: number) {
+  const [purchasesCount, cancelledCount, writeoffsCount] = await Promise.all([
+    countOf(endpoints.purchases.list, { object: id }),
+    countOf(endpoints.purchases.list, { object: id, status: 'cancelled' }),
+    countOf(endpoints.writeOffs.list, { object: id }),
+  ])
+  objectStats.value = { purchasesCount, cancelledCount, writeoffsCount }
+}
 
 type QuickAction = { key: string; title: string; count: number | null; hint?: string; handler: () => void }
 const quickActions = computed<QuickAction[]>(() => [
@@ -212,11 +215,7 @@ async function loadObject(id: number) {
     const data = await objectsStore.fetchOne(id)
     object.value = data
     
-    // F-885: карточки статистики (Закупки/Материалов/Списаний) считают по store.items.length —
-    // грузим ПОЛНЫМ списком для объекта (page_size:1000, паттерн F-718), иначе items = только 1
-    // страница (~20) и объект с >20 закупок показывал «Закупки: 20» (undercount). if/else были дублем.
-    await purchasesStore.fetchList({ object: id, page_size: 1000 })
-    await writeOffsStore.fetchList({ object: id, page_size: 1000 })
+    await loadStats(id)
   } catch (error) {
     await handleLoadingError(error, 'object')
     router.push('/objects')

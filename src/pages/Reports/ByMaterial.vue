@@ -409,6 +409,8 @@ function updateChart() {
           afterLabel: (context: any) => {
             const index = context.dataIndex
             const row = sortedRows[index]
+            // F-1074 (ревью): сегмент «Другие» — строки нет (раньше TypeError на каждое наведение)
+            if (!row) { return [`Материалов: ${sortedAll.length - TOP}`] }
             return [
               `Закупок: ${row.rows || 0}`,
               `Средняя цена: ${formatCurrency(row.avg_price || 0)}`,

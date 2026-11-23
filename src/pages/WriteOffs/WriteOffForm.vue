@@ -909,6 +909,10 @@ const handleSubmit = async () => {
         itemErrors[`items[${idx}].quantity`] = 'Укажите количество больше 0, например 2 или 1,5'
         badQty = true
       }
+      if (!item.unit) {  // F-1075 (ревью): без единицы строка раньше молча выпадала из отправки
+        itemErrors[`items[${idx}].unit`] = 'У материала не задана единица — выберите материал заново'
+        badQty = true
+      }
     })
     if (badQty) {
       errors.value.non_field_errors = ['Исправьте количество в отмеченных позициях']
@@ -918,7 +922,7 @@ const handleSubmit = async () => {
 
     const filledItems: WriteOffItem[] = []
     items.value.forEach((item, idx) => {
-      if (item.material && item.unit && parseFloat(normalizeDecimalInput(String(item.quantity))) > 0) {
+      if (item.material && item.unit && parseDecimalInput(String(item.quantity ?? '')) > 0) {
         filledItems.push(item)
         filledDisplayIndexes.push(idx)
       }

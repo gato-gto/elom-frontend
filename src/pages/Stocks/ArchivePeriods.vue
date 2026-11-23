@@ -124,7 +124,20 @@ const busy = ref(false)
 // max у <input type=month> не везде соблюдается (ввод с клавиатуры, Safari/Firefox, iOS) — запрет в логике.
 const currentMonth = (): string => todayLocal().slice(0, 7)
 const form = reactive({ object: 0, month: currentMonth() })
-const monthIsFuture = computed(() => !!form.month && form.month > currentMonth())
+// F-1075 (ревью): месяц разбираем как числа — в текстовом поле (Safari/Firefox) «2026-9» и «2026-11 »
+// строковое сравнение считало будущими, а « 2026-12» — нет.
+function monthIndex(v: string): number | null {
+  const m = /^\s*(\d{4})-(\d{1,2})\s*$/.exec(v || '')
+  if (!m) { return null }
+  const mm = Number(m[2])
+  return mm >= 1 && mm <= 12 ? Number(m[1]) * 12 + mm : null
+}
+const isFutureMonth = (v: string): boolean => {
+  const i = monthIndex(v)
+  const cur = monthIndex(currentMonth())
+  return i === null || cur === null ? false : i > cur
+}
+const monthIsFuture = computed(() => !!form.month && isFutureMonth(form.month))
 
 const objectOptions = computed(() =>
   objectsStore.items.map((o: SiteObject) => ({ value: o.id, label: o.name }))
@@ -156,7 +169,7 @@ function objectName(id: number): string {
 }
 
 function askClose() {
-  if (!form.object || !form.month || form.month > currentMonth()) {return}
+  if (!form.object || !form.month || isFutureMonth(form.month)) {return}
   confirm.title = 'Закрыть период'
   confirm.message = `Закрыть ${formatMonth(form.month + '-01')} по объекту «${objectName(form.object)}»? `
     + 'Закупки, движения и списания этого периода станут архивными (только для чтения).'

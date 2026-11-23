@@ -306,27 +306,35 @@ describe('ObjectInfo', () => {
   })
 })
 
-import { getByObject as getPurchasesByObjectMock } from '@/stores/purchases'
 
-describe('F-1073: числа у ссылок карточки объекта совпадают с открываемыми списками', () => {
+describe('F-1073/F-1075: числа у ссылок карточки объекта = count списков по ссылке', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
-  it('«Закупки» = все закупки объекта (как /purchases?object=), отменённые — в подсказке; у «Остатков» числа нет', async () => {
-    vi.mocked(getPurchasesByObjectMock).mockReturnValue([
-      { id: 1, status: 'completed', items: [] }, { id: 2, status: 'completed', items: [] },
-      { id: 3, status: 'new', items: [] }, { id: 4, status: 'cancelled', items: [] },
-    ] as never)
+  it('счётчики — отдельными запросами только с object/status (без фильтров списка), из count', async () => {
+    const api = (await import('@/api/client')).default
+    vi.mocked(api.get).mockImplementation(async (url: string, cfg?: any) => {
+      const p = cfg?.params || {}
+      if (String(url).includes('/purchases/')) { return { data: { count: p.status === 'cancelled' ? 1 : 4, results: [] } } as never }
+      if (String(url).includes('/writeoffs/')) { return { data: { count: 7, results: [] } } as never }
+      return { data: {} } as never
+    })
     const store = useObjectsStore()
     store.fetchOne = vi.fn().mockResolvedValue({ id: 1, name: 'Объект', is_active: true }) as never
     const wrapper = mount(ObjectInfo, { global: { stubs: { Modal: ModalStub, ObjectForm: ObjectFormStub } } })
     await flushPromises()
     const vm = wrapper.vm as any
     const qa = (vm.quickActions?.value ?? vm.quickActions) as Array<{ key: string; count: number | null; hint?: string }>
-    const purchases = qa.find(a => a.key === 'purchases')!
-    expect(purchases.count).toBe(4)
-    expect(purchases.hint).toBe('В том числе отменённых: 1')
+    expect(qa.find(a => a.key === 'purchases')!.count).toBe(4)
+    expect(qa.find(a => a.key === 'purchases')!.hint).toBe('В том числе отменённых: 1')
+    expect(qa.find(a => a.key === 'writeoffs')!.count).toBe(7)
     expect(qa.find(a => a.key === 'balances')!.count).toBeNull()
+    // никаких «залипших» фильтров из списка закупок (search/ordering/даты) — только object [+status] и page_size
+    const countCalls = vi.mocked(api.get).mock.calls.filter(c => /purchases|writeoffs/.test(String(c[0])))
+    for (const c of countCalls) {
+      expect(Object.keys((c[1] as any).params).sort()).toEqual(
+        (c[1] as any).params.status ? ['object', 'page_size', 'status'] : ['object', 'page_size'])
+    }
   })
 })

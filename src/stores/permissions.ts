@@ -88,6 +88,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
       roles.value = data.roles || []  // Сохраняем для UI, но не используем для логики!
       lastFetch.value = new Date()
     } catch (err: any) {
+      if (gen !== generation) { return }  // F-1074: ошибка запроса прошлого пользователя — не его тост
       const parsedError = parseApiError(err)
       error.value = parsedError.detail
       console.error('Failed to fetch permissions:', err)
@@ -98,7 +99,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
         useUiStore().toast({ type: 'error', text: 'Не удалось загрузить права — часть функций может быть скрыта' })
       }
     } finally {
-      loading.value = false
+      if (gen === generation) { loading.value = false }
     }
   }
   
