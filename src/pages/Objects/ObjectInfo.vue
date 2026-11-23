@@ -23,263 +23,77 @@
         </div>
       </div>
 
-      <!-- Main content -->
-      <div v-else>
-        <!-- Modern Header -->
-        <div class="object-header">
-          <div class="header-content">
-            <div class="header-title-section">
-              <div class="title-icon-wrapper">
-                <div class="h-16 w-16 bg-primary/10 rounded border border-base-300 flex items-center justify-center">
-                  <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-              </div>
-              <div class="title-content">
-                <h1 class="object-title">{{ object.name }}</h1>
-                <p class="object-subtitle">
-                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 12.414A4 4 0 1012.414 13.414l4.243 4.243a1 1 0 001.414-1.414z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {{ object.address || 'Адрес не указан' }}
-                </p>
-                <div class="flex flex-wrap gap-2 mt-2">
-                  <span class="badge text-xs px-3 py-1.5" :class="statusBadgeClass">
-                    {{ statusLabel }}
-                  </span>
-                  <span v-if="currentStageMeta" class="badge badge-outline text-xs px-3 py-1.5">
-                    {{ currentStageMeta.label }}
-                  </span>
-                </div>
-              </div>
+      <!-- Main content. D-030: без карточек-плиток и медных полос — шапка, факты списком, ссылки со счётчиками. -->
+      <div v-else class="object-page">
+        <header class="object-head">
+          <div class="min-w-0">
+            <h1 class="object-title">{{ object.name }}</h1>
+            <p class="object-address">{{ object.address || 'Адрес не указан' }}</p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <span class="badge" :class="statusBadgeClass">{{ statusLabel }}</span>
+              <span v-if="currentStageMeta" class="badge badge-ghost">{{ currentStageMeta.label }}</span>
             </div>
-            
-            <div class="header-actions">
-              <button 
-                v-if="canEdit"
-                class="action-btn action-btn-primary"
-                @click="openEditModal"
-              >
-                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </div>
+          <div class="object-actions">
+            <button v-if="canEdit" type="button" class="btn btn-primary btn-sm" @click="openEditModal">Редактировать</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="router.push('/objects')">Назад</button>
+          </div>
+        </header>
+
+        <section class="panel">
+          <dl class="facts">
+            <div class="fact">
+              <dt>Ответственный</dt>
+              <dd>{{ responsibleName }}</dd>
+            </div>
+            <div class="fact">
+              <dt>Ключевое лицо</dt>
+              <dd>
+                {{ object.key_person_name || 'Не указано' }}
+                <span v-if="object.key_person_contacts" class="fact-note">{{ object.key_person_contacts }}</span>
+              </dd>
+            </div>
+            <div class="fact">
+              <dt>Этап работ</dt>
+              <dd>
+                {{ currentStageMeta?.label || 'Не указан' }}
+                <span v-if="currentStageMeta?.description" class="fact-note">{{ currentStageMeta.description }}</span>
+              </dd>
+            </div>
+            <div class="fact">
+              <dt>Сроки</dt>
+              <dd>
+                <span class="tabular-nums">{{ formatDate(object.date_start || null) }} — {{ formatDate(object.date_end || null) }}</span>
+                <template v-if="projectProgress !== null">
+                  <div class="term-bar" role="presentation"><div class="term-bar__value" :style="{ width: `${projectProgress}%` }" /></div>
+                  <span class="fact-note">Прошло {{ projectProgress }} % срока</span>
+                </template>
+              </dd>
+            </div>
+            <div class="fact">
+              <dt>Карта</dt>
+              <dd>
+                <a v-if="object.location_url" :href="object.location_url" target="_blank" rel="noopener noreferrer" class="link link-primary break-all">Открыть карту</a>
+                <span v-else>Не указана</span>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">По объекту</h2>
+          <ul class="object-links">
+            <li v-for="action in quickActions" :key="action.key">
+              <button type="button" class="object-link" @click="action.handler()">
+                <span class="object-link__title">{{ action.title }}</span>
+                <span v-if="action.count !== null" class="object-link__count">{{ action.count }}</span>
+                <svg class="object-link__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath('chevron_right')" />
                 </svg>
-                Редактировать
               </button>
-              <button 
-                class="action-btn action-btn-outline"
-                @click="router.push('/objects')"
-              >
-                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Назад
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Unified Info Card -->
-        <div class="info-card">
-          <div class="card-header">
-            <div class="card-icon">
-              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 class="text-lg font-semibold">Информация об объекте</h2>
-          </div>
-          <div class="card-content">
-            <div class="info-grid-unified">
-              <!-- Основная информация -->
-              <div class="info-section">
-                <h3 class="info-section-title">Основная информация</h3>
-                <div class="info-item">
-                  <label class="info-label">Ответственный</label>
-                  <p class="info-value">{{ responsibleName }}</p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Этап работ</label>
-                  <p class="info-value">
-                    {{ currentStageMeta?.label || 'Не указан' }}
-                    <span v-if="currentStageMeta?.description" class="info-hint">
-                      {{ currentStageMeta.description }}
-                    </span>
-                  </p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Статус объекта</label>
-                  <p class="info-value">{{ statusLabel }}</p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Ключевое лицо</label>
-                  <p class="info-value">{{ object.key_person_name || 'Не указано' }}</p>
-                </div>
-              </div>
-
-              <!-- Статистика -->
-              <div class="info-section">
-                <h3 class="info-section-title">Статистика</h3>
-                <div class="stat-item">
-                  <div class="stat-icon">
-                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h2l3.6 7.59a1 1 0 00.9.59H17a1 1 0 00.95-.68L21 7H6" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 13a4 4 0 11-8 0" />
-                    </svg>
-                  </div>
-                  <div class="stat-content">
-                    <div class="stat-title">Закупок</div>
-                    <div class="stat-value font-mono">{{ objectStats.purchasesCount }}</div>
-                  </div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-icon">
-                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </div>
-                  <div class="stat-content">
-                    <div class="stat-title">Материалов</div>
-                    <div class="stat-value font-mono">{{ objectStats.materialsCount }}</div>
-                  </div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-icon">
-                    <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11m0 0l-4-4m4 4l-4 4m13-7v10" />
-                    </svg>
-                  </div>
-                  <div class="stat-content">
-                    <div class="stat-title">Списаний</div>
-                    <div class="stat-value font-mono">{{ objectStats.writeoffsCount }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Контакты и расположение -->
-              <div class="info-section">
-                <h3 class="info-section-title">Контакты и расположение</h3>
-                <div class="info-item">
-                  <label class="info-label">Контакты ключевого лица</label>
-                  <p class="info-value">{{ object.key_person_contacts || 'Не указаны' }}</p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Ссылка на карту</label>
-                  <p class="info-value">
-                    <a
-                      v-if="object.location_url"
-                      :href="object.location_url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="link link-primary break-all"
-                    >
-                      Открыть карту
-                    </a>
-                    <span v-else>Не указана</span>
-                  </p>
-                </div>
-              </div>
-
-              <!-- Сроки и прогресс -->
-              <div class="info-section">
-                <h3 class="info-section-title">Сроки и прогресс</h3>
-                <div class="info-item">
-                  <label class="info-label">Дата начала</label>
-                  <p class="info-value font-mono">{{ formatDate(object.date_start || null) }}</p>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Дата окончания</label>
-                  <p class="info-value font-mono">{{ formatDate(object.date_end || null) }}</p>
-                </div>
-                <div class="info-item" v-if="projectProgress !== null">
-                  <label class="info-label">Прогресс выполнения</label>
-                  <div class="mt-2">
-                    <div class="progress-bar">
-                      <div
-                        class="progress-bar__value"
-                        :style="{ width: `${projectProgress}%` }"
-                      />
-                    </div>
-                    <p class="text-sm text-muted mt-1">
-                      <span class="font-mono">{{ projectProgress }}%</span> завершено
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Быстрые действия -->
-        <div class="quick-actions-section mt-8">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h2 class="section-title">Быстрые действия</h2>
-          </div>
-          <div class="quick-actions-grid">
-            <div 
-              v-for="action in quickActions" 
-              :key="action.key"
-              class="quick-action-card"
-              @click="action.handler()"
-            >
-              <div class="quick-action-icon" :class="action.iconClass">
-                <svg
-                  v-if="action.key === 'purchases'"
-                  class="w-6 h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h2l3.6 7.59a1 1 0 00.9.59H17a1 1 0 00.95-.68L21 7H6" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 13a4 4 0 11-8 0" />
-                </svg>
-                <svg
-                  v-else-if="action.key === 'balances'"
-                  class="w-6 h-6 text-success"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 00-2-2H5a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2zm6 0v-2a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16" />
-                </svg>
-                <svg
-                  v-else-if="action.key === 'writeoffs'"
-                  class="w-6 h-6 text-warning"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11m0 0l-4-4m4 4l-4 4m13-7v10" />
-                </svg>
-                <svg
-                  v-else
-                  class="w-6 h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 11V3a1 1 0 00-1-1H4a1 1 0 00-1 1v8m8 0a4 4 0 11-8 0m8 0h4m0 0h4M7 21v-4m4 4v-8m4 8V9m4 12V5" />
-                </svg>
-              </div>
-              <div class="quick-action-content">
-                <h3 class="quick-action-title">{{ action.title }}</h3>
-                <p class="quick-action-description">{{ action.description }}</p>
-              </div>
-              <div class="quick-action-arrow">
-                <svg class="w-5 h-5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+            </li>
+          </ul>
+        </section>
       </div>
 
     <!-- Modal for editing -->
@@ -302,6 +116,7 @@ import { getByObject as getWriteOffsByObject } from '@/stores/writeOffs'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
 import { formatDate } from '@/utils/formatters'
+import { getIconPath } from '@/assets/icons'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Modal from '@/components/Modal.vue'
@@ -330,7 +145,7 @@ const stageDictionary: Record<string, { label: string; description: string }> = 
 // ✅ RBAC: проверка через permissions вместо хардкода ролей
 const canEdit = computed(() => can('objects', 'edit'))
 
-const statusLabel = computed(() => (object.value?.is_active ? 'Активный объект' : 'Неактивный объект'))
+const statusLabel = computed(() => (object.value?.is_active ? 'Активный' : 'Неактивный'))
 const statusBadgeClass = computed(() => (object.value?.is_active ? 'badge-success' : 'badge-error'))
 const currentStageMeta = computed(() => (object.value?.current_stage ? stageDictionary[object.value.current_stage] : null))
 
@@ -357,12 +172,13 @@ const objectStats = computed(() => {
     return { purchasesCount: 0, materialsCount: 0, writeoffsCount: 0 }
   }
   
-  const purchases = getPurchasesByObject(object.value.id)
+  // F-1060 (аудит F-06): отменённые закупки не считаем; материалы — только из проведённых закупок
+  // (раньше отменённая добавляла материал, которого на объекте не было).
+  const purchases = getPurchasesByObject(object.value.id).filter(p => p.status !== 'cancelled')
   const writeoffs = getWriteOffsByObject(object.value.id)
-  
-  // Уникальные материалы из закупок
+
   const materialIds = new Set<number>()
-  purchases.forEach(purchase => {
+  purchases.filter(p => p.status === 'completed').forEach(purchase => {
     purchase.items?.forEach(item => {
       if (item.material) {
         materialIds.add(item.material)
@@ -380,30 +196,21 @@ const objectStats = computed(() => {
 const quickActions = computed(() => [
   {
     key: 'purchases',
-    title: 'Закупки по объекту',
-    description: 'Фильтрованные заявки и накладные',
-    iconClass: 'quick-action-icon--primary',
-    handler: () => {
-      router.push({ path: '/purchases', query: { object: String(objectId.value) } })
-    }
+    title: 'Закупки',
+    count: objectStats.value.purchasesCount as number | null,
+    handler: () => { router.push({ path: '/purchases', query: { object: String(objectId.value) } }) }
   },
   {
     key: 'balances',
     title: 'Остатки материалов',
-    description: 'Состояние склада по объекту',
-    iconClass: 'quick-action-icon--success',
-    handler: () => {
-      router.push({ path: '/balances', query: { object: String(objectId.value) } })
-    }
+    count: objectStats.value.materialsCount as number | null,
+    handler: () => { router.push({ path: '/balances', query: { object: String(objectId.value) } }) }
   },
   {
     key: 'writeoffs',
     title: 'Списания',
-    description: 'Расход материалов по объекту',
-    iconClass: 'quick-action-icon--warning',
-    handler: () => {
-      router.push({ path: '/writeoffs', query: { object: String(objectId.value) } })
-    }
+    count: objectStats.value.writeoffsCount as number | null,
+    handler: () => { router.push({ path: '/writeoffs', query: { object: String(objectId.value) } }) }
   }
 ])
 
@@ -455,397 +262,65 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Modern Header Styles */
-.object-header {
-  background: hsl(var(--b1));
-  border: 1px solid hsl(var(--b3));
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 2rem;
-}
+/* D-030: страница объекта — шапка на фоне страницы, одна плоская панель на блок, без медных полос. */
+.object-page { display: flex; flex-direction: column; gap: 1rem; }
 
-.object-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: hsl(var(--p));
-}
-
-.header-content {
+.object-head {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 2rem;
-  gap: 2rem;
+  gap: 0.75rem;
 }
+.object-title { font-size: 1.375rem; font-weight: 600; line-height: 1.25; color: hsl(var(--bc)); margin: 0; overflow-wrap: anywhere; }
+.object-address { margin: 0.25rem 0 0; color: hsl(var(--tx-2)); font-size: 0.875rem; overflow-wrap: anywhere; }
+.object-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
-.header-title-section {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.title-icon-wrapper {
-  flex-shrink: 0;
-}
-
-.title-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.object-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: hsl(var(--bc));
-  margin: 0;
-  line-height: 1.2;
-}
-
-.object-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: hsl(var(--tx-2));
-  font-size: 1rem;
-  line-height: 1.4;
-  display: flex;
-  align-items: center;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
-  position: relative;
-  text-decoration: none;
-}
-
-.action-btn-primary {
-  background: hsl(var(--p));
-  color: hsl(var(--pc));
-}
-
-.action-btn-primary:hover:not(:disabled) {
-  background: hsl(var(--p) / 0.9);
-}
-
-.action-btn-outline {
-  background: transparent;
-  color: hsl(var(--tx-2));
-  border: 1px solid hsl(var(--b3));
-}
-
-.action-btn-outline:hover:not(:disabled) {
-  background: hsl(var(--b2));
-  color: hsl(var(--p));
-  border-color: hsl(var(--p));
-}
-
-.btn-icon {
-  width: 1rem;
-  height: 1rem;
-}
-
-/* Unified Info Grid Styles */
-.info-grid-unified {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.info-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.info-section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: hsl(var(--bc));
-  margin: 0 0 0.5rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid hsl(var(--b3));
-}
-
-.info-card {
+.panel {
   background: hsl(var(--b1));
   border: 1px solid hsl(var(--b3));
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
 }
+.panel-title { font-size: 0.9375rem; font-weight: 600; margin: 0 0 0.25rem; color: hsl(var(--bc)); }
 
-.info-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: hsl(var(--p));
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
+.facts { display: grid; grid-template-columns: 1fr; margin: 0; }
+.fact {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
   gap: 0.75rem;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  padding: 0.5rem 0;
   border-bottom: 1px solid hsl(var(--b3));
 }
-
-.card-icon {
-  flex-shrink: 0;
+.fact:last-child { border-bottom: 0; }
+.fact dt { color: hsl(var(--tx-2)); font-size: 0.875rem; }
+.fact dd { margin: 0; color: hsl(var(--bc)); font-size: 0.9375rem; overflow-wrap: anywhere; }
+.fact-note { display: block; margin-top: 0.125rem; color: hsl(var(--tx-2)); font-size: 0.8125rem; }
+@media (max-width: 639px) {
+  .fact { grid-template-columns: 1fr; gap: 0.125rem; }
 }
 
+.term-bar { margin-top: 0.375rem; height: 4px; max-width: 16rem; border-radius: 2px; background: hsl(var(--b3)); overflow: hidden; }
+.term-bar__value { height: 100%; background: hsl(var(--tx-2)); }
 
-.card-content {
-  padding: 1.5rem;
-}
-
-.info-item {
-  margin-bottom: 1rem;
-}
-
-.info-item:last-child {
-  margin-bottom: 0;
-}
-
-.info-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: hsl(var(--tx-2));
-  margin-bottom: 0.25rem;
-}
-
-.info-value {
-  font-size: 1rem;
-  color: hsl(var(--bc));
-  margin: 0;
-  word-break: break-word;
-}
-
-.info-hint {
-  display: block;
-  font-size: 0.75rem;
-  color: hsl(var(--tx-2));
-  margin-top: 0.25rem;
-}
-
-/* Stat Items */
-.stat-item {
+.object-links { list-style: none; margin: 0; padding: 0; }
+.object-links li + li { border-top: 1px solid hsl(var(--b3)); }
+.object-link {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.stat-item:last-child {
-  margin-bottom: 0;
-}
-
-.stat-icon {
-  flex-shrink: 0;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-title {
-  font-size: 0.875rem;
-  color: hsl(var(--tx-2));
-  margin-bottom: 0.25rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: hsl(var(--p));
-}
-
-/* Progress Bar */
-.progress-bar {
   width: 100%;
-  height: 0.75rem;
-  border-radius: 4px;
-  background-color: hsl(var(--b3));
-  overflow: hidden;
-}
-
-.progress-bar__value {
-  height: 100%;
-  background-color: hsl(var(--p));
-  transition: all 0.3s ease;
-}
-
-/* Quick Actions Section */
-.quick-actions-section {
-  background: hsl(var(--b1));
-  border: 1px solid hsl(var(--b3));
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 2rem;
-}
-
-.quick-actions-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: hsl(var(--p));
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-bottom: 1px solid hsl(var(--b3));
-}
-
-.section-icon {
-  flex-shrink: 0;
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: hsl(var(--bc));
-  margin: 0;
-}
-
-.quick-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  padding: 1.5rem;
-}
-
-.quick-action-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: hsl(var(--b2));
-  border: 1px solid hsl(var(--b3));
-  border-radius: 4px;
+  min-height: 44px;
+  padding: 0.5rem 0;
+  background: none;
+  border: 0;
+  text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.quick-action-card:hover {
-  border-color: hsl(var(--p));
-}
-
-.quick-action-icon {
-  height: 3rem;
-  width: 3rem;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.quick-action-icon--primary {
-  background: hsl(var(--p) / 0.1);
-}
-
-.quick-action-icon--success {
-  background: hsl(var(--su) / 0.1);
-}
-
-.quick-action-icon--warning {
-  background: hsl(var(--wa) / 0.1);
-}
-
-.quick-action-icon--accent {
-  background: hsl(var(--p) / 0.1);
-}
-
-.quick-action-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.quick-action-title {
-  font-size: 1rem;
-  font-weight: 600;
   color: hsl(var(--bc));
-  margin: 0 0 0.25rem 0;
-  line-height: 1.2;
 }
-
-.quick-action-description {
-  font-size: 0.875rem;
-  color: hsl(var(--tx-2));
-  margin: 0;
-  line-height: 1.4;
-}
-
-.quick-action-arrow {
-  flex-shrink: 0;
-  opacity: 0.5;
-  transition: all 0.3s ease;
-}
-
-/* F-1012: декоратив-hover только на hover-устройствах. */
-@media (hover: hover) and (pointer: fine) {
-  .quick-action-card:hover .quick-action-arrow {
-    opacity: 1;
-    transform: translateX(4px);
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1.5rem;
-  }
-  
-  .header-actions {
-    justify-content: flex-end;
-  }
-  
-  .info-grid-unified {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .quick-actions-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .object-title {
-    font-size: 1.5rem;
-  }
-}
+.object-link:hover .object-link__title { text-decoration: underline; text-underline-offset: 2px; }
+.object-link:focus-visible { outline: 2px solid hsl(var(--p) / 0.5); outline-offset: 2px; border-radius: 4px; }
+.object-link__title { flex: 1; font-size: 0.9375rem; }
+.object-link__count { color: hsl(var(--tx-2)); font-variant-numeric: tabular-nums; }
+.object-link__chevron { width: 1rem; height: 1rem; color: hsl(var(--tx-3)); flex-shrink: 0; }
 </style>

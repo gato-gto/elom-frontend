@@ -3,7 +3,6 @@
     <!-- Header -->
     <ListHeader
       title="Отчёт по ответственным"
-      subtitle="Анализ закупок по ответственным лицам"
       icon="chart"
       :show-create="false"
       :show-stats="true"
@@ -44,7 +43,6 @@
       <ChartContainer
         ref="chartContainer"
         title="Рейтинг ответственных по закупкам"
-        subtitle="Горизонтальная диаграмма показывает сумму закупок по каждому ответственному"
         :loading="loading"
         :has-data="rows.length > 0"
         :chart-height="getChartHeight(rows.length)"
@@ -340,7 +338,7 @@ function updateChart() {
       {
         label: 'Сумма закупок',
         data: amounts,
-        backgroundColor: getColor(0) + '80',
+        backgroundColor: getColor(0), // D-030: сплошная заливка, без полупрозрачности
         borderColor: getColor(0),
         borderWidth: 1
       }

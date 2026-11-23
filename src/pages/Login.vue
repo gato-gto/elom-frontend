@@ -40,7 +40,7 @@
           <form @submit.prevent="submit" class="login-form">
             <!-- Username field -->
             <div class="space-y-1.5">
-              <label class="text-xs font-medium uppercase tracking-wide text-muted">Логин</label>
+              <label class="text-sm font-medium text-muted">Логин</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg class="w-5 h-5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +66,7 @@
 
             <!-- Password field -->
             <div class="space-y-1.5">
-              <label class="text-xs font-medium uppercase tracking-wide text-muted">Пароль</label>
+              <label class="text-sm font-medium text-muted">Пароль</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg class="w-5 h-5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">

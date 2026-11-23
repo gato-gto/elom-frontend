@@ -69,7 +69,9 @@
 @theme {
   --color-*: initial;
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  /* D-030: роль font-mono = «табличные данные». Моноширинный шрифт для дат/денег/количеств — главный
+     признак шаблонной ИИ-вёрстки; данные теперь в основном шрифте с выровненными цифрами (tabular-nums). */
+  --font-mono: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* база — сталь/графит */
   --color-base-100: 0 0% 100%;
@@ -101,7 +103,9 @@
 @theme dark {
   --color-*: initial;
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  /* D-030: роль font-mono = «табличные данные». Моноширинный шрифт для дат/денег/количеств — главный
+     признак шаблонной ИИ-вёрстки; данные теперь в основном шрифте с выровненными цифрами (tabular-nums). */
+  --font-mono: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --color-base-100: 200 24% 8%;
   --color-base-200: 204 22% 11%;
@@ -266,17 +270,9 @@ html, body, #app {
         }
     }
     
-    /* Мобильные карточки - анимации */
-    .mobile-only .card {
-        @apply transition-all duration-200;
-    }
-    
-    .mobile-only .card:hover {
-        @apply scale-[1.01] shadow-lg;
-    }
-    
+    /* D-030: мобильные карточки без масштабирования/теней — отклик только на нажатие. */
     .mobile-only .card:active {
-        @apply scale-[0.99];
+        background-color: hsl(var(--b2));
     }
     
     /* Скрытие компонентов в зависимости от размера экрана */

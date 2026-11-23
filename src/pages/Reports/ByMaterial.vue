@@ -3,7 +3,6 @@
     <!-- Header -->
     <ListHeader
       title="Отчёт по материалам"
-      subtitle="Анализ закупок по материалам и объектам"
       icon="chart"
       :show-create="false"
       :show-stats="true"
@@ -51,7 +50,6 @@
       <ChartContainer
         ref="chartContainer"
         title="Доли материалов в закупках"
-        subtitle="Круговая диаграмма показывает распределение сумм по материалам"
         :loading="loading"
         :has-data="rows.length > 0"
         :chart-height="getChartHeight(rows.length)"
@@ -171,7 +169,7 @@ import type {SiteObject, PageResponse, MaterialReportRow, MaterialReportResponse
 import {formatCurrency} from '@/utils/formatters'
 import { debounce } from '@/utils/debounce'
 import { ErrorHandlers } from '@/utils/errorHandler'
-import { createDoughnutChartConfig, getColors, getChartHeight, truncateLabel } from '@/utils/chartUtils'
+import { createDoughnutChartConfig, getColors, getChartHeight, truncateLabel, OTHER_COLOR, OTHER_COLOR_DARK } from '@/utils/chartUtils'
 import { exportFromBackend } from '@/utils/export'
 import ListHeader from '@/components/ListHeader.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
@@ -375,16 +373,22 @@ function updateChart() {
     return
   }
 
-  // Sort by amount_total descending and take top 10 for better visualization
-  const sortedRows = [...rows.value]
-    .sort((a, b) => b.amount_total - a.amount_total)
-    .slice(0, 10)
-  
+  // D-030: 5 крупнейших материалов + «Другие» (сумма остальных). Цвета не повторяются по кругу —
+  // больше 6 сегментов круговой диаграммы различить нельзя.
+  const sortedAll = [...rows.value].sort((a, b) => b.amount_total - a.amount_total)
+  const TOP = sortedAll.length > 6 ? 5 : sortedAll.length
+  const sortedRows = sortedAll.slice(0, TOP)
+  const restSum = sortedAll.slice(TOP).reduce((s, r) => s + (Number(r.amount_total) || 0), 0)
+
   const labels = sortedRows.map(row => truncateLabel(row.material_name || 'Неизвестный материал', 20))
   const amounts = sortedRows.map(row => Number(row.amount_total) || 0)
-  
+  if (restSum > 0) {
+    labels.push('Другие')
+    amounts.push(restSum)
+  }
+
   const isDark = document.documentElement.classList.contains('dark')
-  const colors = getColors(isDark)
+  const colors = [...getColors(isDark).slice(0, TOP), ...(restSum > 0 ? [isDark ? OTHER_COLOR_DARK : OTHER_COLOR] : [])]
 
   const config = createDoughnutChartConfig({
     labels,
@@ -392,8 +396,8 @@ function updateChart() {
       {
         label: 'Сумма закупок',
         data: amounts,
-        backgroundColor: colors.slice(0, labels.length),
-        borderColor: '#ffffff',
+        backgroundColor: colors,
+        borderColor: isDark ? '#161D22' : '#ffffff',
         borderWidth: 2
       }
     ],

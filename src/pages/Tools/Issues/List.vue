@@ -117,7 +117,6 @@ const statusFilterOptions = computed(() => [
 // GenericList configuration
 const listConfig = computed<GenericListConfig<ToolIssue>>(() => ({
   title: 'Выдачи инструментов',
-  subtitle: 'Журнал выдач и возвратов инструментов',
   icon: 'assignment',
   showCreate: false,
   showStats: true,

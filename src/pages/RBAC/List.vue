@@ -3,7 +3,6 @@
     <!-- Header -->
     <ListHeader
       :title="'Управление ролями'"
-      :subtitle="'Создание и редактирование ролей с назначением разрешений'"
       :icon="'shield'"
       :show-create="canCreate"
       :create-text="'Создать роль'"

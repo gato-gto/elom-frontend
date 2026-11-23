@@ -2,11 +2,11 @@
   <div class="list-header">
     <div class="header-content">
       <div class="header-title-section">
+        <!-- D-030: шапка — не карточка: заголовок, число записей рядом приглушённо, действия справа.
+             Иконка раздела уже есть в меню — здесь не повторяем. -->
         <h1 class="list-title">
-          <svg v-if="headerIcon" class="title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(headerIcon)" />
-          </svg>
           {{ title }}
+          <span v-if="showStats" class="list-count" :title="`Всего записей: ${totalCount}`">{{ totalCount }}</span>
         </h1>
         <p v-if="subtitle" class="list-subtitle">{{ subtitle }}</p>
       </div>
@@ -29,23 +29,10 @@
       </div>
     </div>
     
-    <div v-if="showStats" class="header-stats">
-      <div class="stat-item">
-        <span class="stat-label">Всего записей:</span>
-        <span class="stat-value">{{ totalCount }}</span>
-      </div>
-      <div v-if="filteredCount !== totalCount" class="stat-item">
-        <span class="stat-label">На странице:</span>
-        <span class="stat-value">{{ filteredCount }}</span>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { getIconPath } from '@/assets/icons'
 
 interface Props {
   title: string
@@ -60,7 +47,7 @@ interface Props {
   filteredCount?: number
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   showCreate: true,
   createText: 'Добавить',
   canCreate: true,
@@ -70,15 +57,6 @@ const props = withDefaults(defineProps<Props>(), {
   filteredCount: 0
 })
 
-// F-898: иконка заголовка страницы = иконка НАВИГАЦИИ (route.meta.icon → getIconPath), а НЕ сырой
-// SVG-путь из config.icon. Раньше страницы передавали сырой path; getIconPath его не знал → fallback
-// на «дом»: ВСЕ заголовки списков показывали домик вместо своей иконки и не совпадали с меню.
-// Приоритет: имя из маршрута (совпадает с навигацией) → иначе переданный prop (для страниц вне меню).
-const route = useRoute()
-// route?. — в юнит-тестах ListHeader/GenericList монтируются без установленного роутера (useRoute()
-// возвращает undefined); без optional chaining это падало (15 тестов). В приложении route всегда есть.
-const headerIcon = computed(() => ((route?.meta?.icon as string | undefined) || props.icon))
-
 defineEmits<{
   create: []
 }>()
@@ -86,41 +64,30 @@ defineEmits<{
 
 <style scoped>
 .list-header {
-  background: hsl(var(--b1));
-  border: 1px solid hsl(var(--b3));
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
-  /* F-864: было `overflow: hidden` (нужно лишь чтобы скруглить ::before top-rule по углам хедера) —
-     но оно ОБРЕЗАЛО выпадающее меню экспорта (.dropdown-content выходит за нижнюю границу хедера,
-     часть пунктов пряталась). Скругляем ::before напрямую, а overflow оставляем visible. */
+  /* D-030: шапка страницы лежит на фоне страницы — без рамки, тени и медной полосы. overflow остаётся
+     visible (F-864: меню экспорта выходит за нижнюю границу). */
   position: relative;
 }
 
-/* copper top-rule — the one accent, spent with restraint */
-.list-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: hsl(var(--p));
-  /* F-864: скругляем сам top-rule (раньше это делал parent overflow:hidden, теперь его нет). */
-  border-top-left-radius: 0.375rem;
-  border-top-right-radius: 0.375rem;
+.list-count {
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: hsl(var(--tx-2));
+  font-variant-numeric: tabular-nums;
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.25rem 0 0.5rem;
   gap: 0.75rem;
 }
 
 @media (min-width: 768px) {
   .header-content {
-    padding: 1.5rem;
+    padding: 0.25rem 0 0.75rem;
     gap: 1rem;
   }
 }
@@ -133,20 +100,14 @@ defineEmits<{
 .list-title {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.5rem;
-  font-weight: 700;
+  gap: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
   color: hsl(var(--bc));
   margin: 0;
   line-height: 1.2;
 }
 
-.title-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: hsl(var(--p));
-  flex-shrink: 0;
-}
 
 .list-subtitle {
   margin: 0.5rem 0 0 0;
@@ -160,7 +121,7 @@ defineEmits<{
   .header-content {
     flex-direction: column;
     align-items: stretch;
-    padding: 0.75rem;
+    padding: 0.25rem 0 0.5rem;
     gap: 0.5rem;
   }
   
@@ -174,10 +135,6 @@ defineEmits<{
     flex-wrap: wrap;
   }
   
-  .title-icon {
-    width: 1.125rem;
-    height: 1.125rem;
-  }
   
   .list-subtitle {
     font-size: 0.75rem;
@@ -200,26 +157,9 @@ defineEmits<{
     font-size: 0.75rem;
   }
   
-  .header-stats {
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0.5rem 0.75rem;
-    gap: 0.75rem;
-  }
   
-  .stat-item {
-    flex: 1 1 auto;
-    min-width: fit-content;
-    gap: 0.375rem;
-  }
   
-  .stat-label {
-    font-size: 0.75rem;
-  }
   
-  .stat-value {
-    font-size: 0.75rem;
-  }
 }
 
 .header-actions {
@@ -283,42 +223,11 @@ defineEmits<{
   height: 1rem;
 }
 
-.header-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.75rem;
-  background: hsl(var(--b2));
-  border-top: 1px solid hsl(var(--b3));
-}
 
-@media (min-width: 768px) {
-  .header-stats {
-    gap: 2rem;
-    padding: 1rem 1.5rem;
-  }
-}
 
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
-.stat-label {
-  font-size: 0.875rem;
-  color: hsl(var(--tx-2));
-  font-weight: 500;
-}
 
 /* stat value is DATA → monospace, per the design language */
-.stat-value {
-  font-size: 0.875rem;
-  color: hsl(var(--p-text)); /* H-2 (F-591): читаемая медь на тёмном (было hsl(var(--p)) = 3.51:1) */
-  font-weight: 600;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-variant-numeric: tabular-nums;
-}
 
 /* Дополнительные стили для очень маленьких экранов */
 @media (max-width: 480px) {
@@ -332,10 +241,6 @@ defineEmits<{
     gap: 0.25rem;
   }
   
-  .title-icon {
-    width: 1rem;
-    height: 1rem;
-  }
   
   .list-subtitle {
     font-size: 0.6875rem;
@@ -352,18 +257,7 @@ defineEmits<{
     min-height: 44px; /* A-06 (F-520): тач-цель ≥44pt (было 2.5rem=40px, перебивало coarse-правило) */
   }
   
-  .header-stats {
-    padding: 0.4375rem 0.5rem;
-    gap: 0.5rem;
-  }
   
-  .stat-item {
-    gap: 0.25rem;
-  }
   
-  .stat-label,
-  .stat-value {
-    font-size: 0.75rem; /* F-865 (mobile-audit): было 0.6875rem (11px) — числа записей = данные */
-  }
 }
 </style>

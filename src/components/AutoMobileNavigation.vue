@@ -730,10 +730,8 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 0.8125rem;
+    font-weight: 500;
     color: hsl(var(--tx-2));
     margin-bottom: 0.75rem;
     padding: 0 0.5rem;

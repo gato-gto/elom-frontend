@@ -12,12 +12,7 @@
       @keydown.enter.prevent="toggle"
       @keydown.space.prevent="toggle"
     >
-      <h2 class="filter-title">
-        <svg class="filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        Фильтры и поиск
-      </h2>
+      <h2 class="filter-title">Фильтры</h2>
       <svg class="filter-chevron" :class="{ 'filter-chevron-open': !collapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
       </svg>
@@ -29,14 +24,12 @@
       </div>
       
       <div class="filter-actions">
-        <button 
-          class="filter-btn filter-btn-outline" 
+        <button
+          type="button"
+          class="filter-reset"
           @click="$emit('reset')"
           :disabled="loading"
         >
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
           Сбросить фильтры
         </button>
         
@@ -94,48 +87,32 @@ const gridClass = computed(() => {
 </script>
 
 <style scoped>
+/* D-030: фильтры — компактная строка на одной плоской панели; на десктопе без заголовка, на мобиле —
+   простая строка «Фильтры», сворачивающая панель (F-585). Без тени и тонированной шапки. */
 .filter-panel {
   background: hsl(var(--b1));
   border: 1px solid hsl(var(--b3));
   border-radius: 0.375rem;
-  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
   overflow: hidden;
   position: relative;
 }
 
 .filter-header {
-  background: hsl(var(--b2));
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid hsl(var(--b3));
-  padding: 0.625rem 0.75rem;
 }
 
 @media (min-width: 768px) {
   .filter-header {
-    padding: 1rem 1.5rem;
+    display: none !important;
   }
 }
 
 .filter-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 500;
   color: hsl(var(--bc));
   margin: 0;
-}
-
-@media (min-width: 768px) {
-  .filter-title {
-    gap: 0.75rem;
-    font-size: 1.125rem;
-  }
-}
-
-.filter-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: hsl(var(--p));
 }
 
 /* F-585: шапка-переключатель. Десктоп — не интерактивна (курсор обычный, шеврон скрыт). */
@@ -181,7 +158,7 @@ const gridClass = computed(() => {
 
 @media (min-width: 768px) {
   .filter-content {
-    padding: 1.5rem;
+    padding: 0.75rem 1rem;
   }
 }
 
@@ -241,18 +218,24 @@ const gridClass = computed(() => {
 .filter-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid hsl(var(--b3));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
-@media (min-width: 768px) {
-  .filter-actions {
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-  }
+.filter-reset {
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: hsl(var(--tx-2));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.filter-reset:hover:not(:disabled) { color: hsl(var(--bc)); }
+.filter-reset:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (pointer: coarse) {
+  .filter-reset { min-height: 44px; }
 }
 
 .filter-btn {

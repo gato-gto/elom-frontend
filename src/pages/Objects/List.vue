@@ -109,7 +109,6 @@ const responsibleOptions = computed(() => [
 // GenericList configuration
 const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
   title: 'Объекты',
-  subtitle: 'Управление строительными объектами и их характеристиками',
   icon: 'M3 21h18v-2H3v2zM5 10h14V8H5v2zm0-4h14V4H5v2z',
   showCreate: canCreate.value,
   createText: 'Добавить объект',

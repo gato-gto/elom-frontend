@@ -1,33 +1,13 @@
 import type { ChartConfiguration, ChartOptions } from 'chart.js'
 import { formatCurrencyWithCode, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
 
-// DaisyUI color palette
-export const DAISY_COLORS = [
-  '#3b82f6', // blue-500
-  '#ef4444', // red-500
-  '#10b981', // emerald-500
-  '#f59e0b', // amber-500
-  '#8b5cf6', // violet-500
-  '#06b6d4', // cyan-500
-  '#84cc16', // lime-500
-  '#f97316', // orange-500
-  '#ec4899', // pink-500
-  '#6366f1'  // indigo-500
-]
-
-// Dark theme colors
-export const DAISY_COLORS_DARK = [
-  '#60a5fa', // blue-400
-  '#f87171', // red-400
-  '#34d399', // emerald-400
-  '#fbbf24', // amber-400
-  '#a78bfa', // violet-400
-  '#22d3ee', // cyan-400
-  '#a3e635', // lime-400
-  '#fb923c', // orange-400
-  '#f472b6', // pink-400
-  '#818cf8'  // indigo-400
-]
+// D-030: палитра графиков из токенов ELOM (сталь-синий, медь, зелёный, слива, охра, бирюза), проверена
+// валидатором dataviz (яркость, насыщенность, различимость при дальтонизме, контраст) для светлой
+// поверхности и тёмной #161D22. Цвета по порядку, БЕЗ повтора по кругу: 7-я и дальше категории — «Другие».
+export const DAISY_COLORS = ['#2f6ea8', '#b0500f', '#1f7a54', '#8a4fa0', '#a07c00', '#008aa8']
+export const DAISY_COLORS_DARK = ['#5a93cc', '#d06a28', '#3fa577', '#a874c0', '#b38c18', '#2a9bb0']
+export const OTHER_COLOR = '#8a969c'
+export const OTHER_COLOR_DARK = '#6b7a82'
 
 export interface ChartDataset {
   label: string
@@ -58,7 +38,7 @@ export function getColors(isDark: boolean = false): string[] {
 // Get color by index
 export function getColor(index: number, isDark: boolean = false): string {
   const colors = getColors(isDark)
-  return colors[index % colors.length]
+  return index < colors.length ? colors[index] : (isDark ? OTHER_COLOR_DARK : OTHER_COLOR)
 }
 
 // Generate gradient colors

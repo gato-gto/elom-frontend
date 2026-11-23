@@ -3,7 +3,6 @@
     <!-- Header -->
     <ListHeader
       title="Отчёт по периодам"
-      subtitle="Анализ закупок по временным периодам"
       icon="chart"
       :show-create="false"
       :show-stats="true"
@@ -54,7 +53,6 @@
       <ChartContainer
         ref="chartContainer"
         title="Динамика закупок по периодам"
-        subtitle="График показывает изменение суммы закупок во времени"
         :loading="loading"
         :has-data="rows.length > 0"
         :chart-height="getChartHeight(rows.length)"
@@ -396,18 +394,11 @@ function updateChart() {
         borderColor: getColor(0),
         backgroundColor: getColor(0) + '20',
         fill: true,
-        tension: 0.4,
+        tension: 0, // D-030: без сглаживания — сглаженная кривая рисует значения, которых не было
         yAxisID: 'y'
-      },
-      {
-        label: 'Количество закупок',
-        data: purchases,
-        borderColor: getColor(1),
-        backgroundColor: getColor(1) + '20',
-        fill: false,
-        tension: 0.4,
-        yAxisID: 'y1'
       }
+      // D-030: второй ряд «Количество закупок» на второй оси убран — две шкалы на одном графике
+      // визуально сравнивают несравнимое; количество есть в таблице под графиком.
     ],
     type: 'line'
   }, {
@@ -418,17 +409,6 @@ function updateChart() {
         position: 'left',
         ticks: {
           callback: (value: any) => formatCurrencyTooltip(Number(value))
-        }
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        grid: {
-          drawOnChartArea: false,
-        },
-        ticks: {
-          callback: (value: any) => formatNumberWithOptions(Number(value))
         }
       }
     }
@@ -442,8 +422,7 @@ function updateChart() {
 }
 
 const chartLegendItems = computed(() => [
-  { label: 'Сумма закупок', color: getColor(0) },
-  { label: 'Количество закупок', color: getColor(1) }
+  { label: 'Сумма закупок', color: getColor(0) }
 ])
 
 const chartStats = computed(() => {

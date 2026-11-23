@@ -93,7 +93,6 @@ const statusFilterOptions = computed(() => [
 // GenericList configuration
 const listConfig = computed<GenericListConfig<Employee>>(() => ({
   title: 'Сотрудники',
-  subtitle: 'Управление пользователями системы и их ролями',
   icon: 'people',
   showCreate: true, // Видимость контролируется через canCreate и resource
   createText: 'Добавить сотрудника',

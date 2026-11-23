@@ -187,7 +187,6 @@ const categoryOptions = computed(() => [
 // GenericList configuration
 const listConfig = computed<GenericListConfig<Tool>>(() => ({
   title: 'Инструменты',
-  subtitle: 'Учёт и управление инструментами',
   icon: 'build',
   showCreate: true,
   createText: 'Добавить инструмент',

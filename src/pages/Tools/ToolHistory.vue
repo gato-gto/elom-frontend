@@ -320,9 +320,7 @@ onMounted(() => {
   }
   
   .table th {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
+    font-weight: 500;
   }
 }
 </style>

@@ -87,7 +87,6 @@ const modalTitle = computed(() => {
 // GenericList configuration
 const listConfig = computed<GenericListConfig<Unit>>(() => ({
   title: 'Единицы измерения',
-  subtitle: 'Управление базовыми единицами для материалов и закупок',
   icon: 'straighten',
   showCreate: canCreate.value,
   createText: 'Добавить единицу',

@@ -3,7 +3,6 @@
     <!-- Header -->
     <ListHeader
       title="Отчёт по объектам"
-      subtitle="Анализ закупок по объектам и ответственным"
       icon="chart"
       :show-create="false"
       :show-stats="true"
@@ -58,7 +57,6 @@
       <ChartContainer
         ref="chartContainer"
         title="Сравнение объектов по закупкам"
-        subtitle="График показывает сумму закупок по каждому объекту"
         :loading="loading"
         :has-data="rows.length > 0"
         :chart-height="getChartHeight(rows.length)"
@@ -376,7 +374,7 @@ function updateChart() {
       {
         label: 'Сумма закупок',
         data: amounts,
-        backgroundColor: getColor(0) + '80',
+        backgroundColor: getColor(0), // D-030: сплошная заливка, без полупрозрачности
         borderColor: getColor(0),
         borderWidth: 1
       }
