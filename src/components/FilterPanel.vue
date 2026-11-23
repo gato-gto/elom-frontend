@@ -238,49 +238,4 @@ const gridClass = computed(() => {
   .filter-reset { min-height: 44px; }
 }
 
-.filter-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  cursor: pointer;
-  border: none;
-  position: relative;
-}
-
-.filter-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.filter-btn-primary {
-  background: hsl(var(--p));
-  color: hsl(var(--pc));
-  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
-}
-
-.filter-btn-primary:hover:not(:disabled) {
-  background: color-mix(in oklab, hsl(var(--p)) 88%, black);
-}
-
-.filter-btn-outline {
-  background: transparent;
-  color: hsl(var(--tx-2));
-  border: 1px solid hsl(var(--b3));
-}
-
-.filter-btn-outline:hover:not(:disabled) {
-  background: hsl(var(--b2));
-  color: hsl(var(--p));
-  border-color: hsl(var(--p));
-}
-
-.btn-icon {
-  width: 1rem;
-  height: 1rem;
-}
 </style>

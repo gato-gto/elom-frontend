@@ -108,7 +108,6 @@ defineEmits<{
   line-height: 1.2;
 }
 
-
 .list-subtitle {
   margin: 0.5rem 0 0 0;
   color: hsl(var(--tx-2));
@@ -134,8 +133,7 @@ defineEmits<{
     gap: 0.375rem;
     flex-wrap: wrap;
   }
-  
-  
+
   .list-subtitle {
     font-size: 0.75rem;
     margin-top: 0.25rem;
@@ -156,10 +154,7 @@ defineEmits<{
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
   }
-  
-  
-  
-  
+
 }
 
 .header-actions {
@@ -205,33 +200,15 @@ defineEmits<{
   background: color-mix(in oklab, hsl(var(--p)) 88%, black);
 }
 
-.action-btn-outline {
-  background: transparent;
-  color: hsl(var(--tx-2));
-  border: 1px solid hsl(var(--b3));
-}
-
-.action-btn-outline:hover:not(:disabled) {
-  background: hsl(var(--b2));
-  color: hsl(var(--p));
-  border-color: hsl(var(--p));
-}
-
 .btn-icon {
   width: 1rem;
   height: 1rem;
 }
 
-
-
-
-
-/* stat value is DATA → monospace, per the design language */
-
 /* Дополнительные стили для очень маленьких экранов */
 @media (max-width: 480px) {
   .header-content {
-    padding: 0.5rem;
+    padding: 0.25rem 0 0.5rem; /* F-1070: без карточного отступа (D-030 — шапка на фоне страницы) */
     gap: 0.375rem;
   }
   
@@ -239,8 +216,7 @@ defineEmits<{
     font-size: 1rem;
     gap: 0.25rem;
   }
-  
-  
+
   .list-subtitle {
     font-size: 0.6875rem;
     margin-top: 0.125rem;
@@ -255,8 +231,6 @@ defineEmits<{
     font-size: 0.75rem; /* F-865 (mobile-audit): было 0.6875rem (11px) — CTA-лейбл читаемее */
     min-height: 44px; /* A-06 (F-520): тач-цель ≥44pt (было 2.5rem=40px, перебивало coarse-правило) */
   }
-  
-  
-  
+
 }
 </style>
