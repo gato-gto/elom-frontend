@@ -84,7 +84,7 @@
           <h2 class="panel-title">По объекту</h2>
           <ul class="object-links">
             <li v-for="action in quickActions" :key="action.key">
-              <button type="button" class="object-link" @click="action.handler()">
+              <button type="button" class="object-link" :title="action.hint" @click="action.handler()">
                 <span class="object-link__title">{{ action.title }}</span>
                 <span v-if="action.count !== null" class="object-link__count">{{ action.count }}</span>
                 <svg class="object-link__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -167,49 +167,41 @@ const projectProgress = computed(() => {
 })
 
 // Статистика по объекту
+// F-1073 (ревью D-030): число у ссылки = число строк в списке, который она открывает. «Закупки» — все
+// закупки объекта, как в /purchases?object= (отменённые тоже — сколько их, сказано в подсказке);
+// «Списания» — как в /writeoffs?object=. У «Остатков» числа нет: на клиенте нет числа строк остатков,
+// а «материалов из закупок» — не то же самое (F-06).
 const objectStats = computed(() => {
   if (!object.value) {
-    return { purchasesCount: 0, materialsCount: 0, writeoffsCount: 0 }
+    return { purchasesCount: 0, cancelledCount: 0, writeoffsCount: 0 }
   }
-  
-  // F-1060 (аудит F-06): отменённые закупки не считаем; материалы — только из проведённых закупок
-  // (раньше отменённая добавляла материал, которого на объекте не было).
-  const purchases = getPurchasesByObject(object.value.id).filter(p => p.status !== 'cancelled')
-  const writeoffs = getWriteOffsByObject(object.value.id)
-
-  const materialIds = new Set<number>()
-  purchases.filter(p => p.status === 'completed').forEach(purchase => {
-    purchase.items?.forEach(item => {
-      if (item.material) {
-        materialIds.add(item.material)
-      }
-    })
-  })
-  
+  const purchases = getPurchasesByObject(object.value.id)
   return {
     purchasesCount: purchases.length,
-    materialsCount: materialIds.size,
-    writeoffsCount: writeoffs.length
+    cancelledCount: purchases.filter(p => p.status === 'cancelled').length,
+    writeoffsCount: getWriteOffsByObject(object.value.id).length
   }
 })
 
-const quickActions = computed(() => [
+type QuickAction = { key: string; title: string; count: number | null; hint?: string; handler: () => void }
+const quickActions = computed<QuickAction[]>(() => [
   {
     key: 'purchases',
     title: 'Закупки',
-    count: objectStats.value.purchasesCount as number | null,
+    count: objectStats.value.purchasesCount,
+    hint: objectStats.value.cancelledCount ? `В том числе отменённых: ${objectStats.value.cancelledCount}` : undefined,
     handler: () => { router.push({ path: '/purchases', query: { object: String(objectId.value) } }) }
   },
   {
     key: 'balances',
     title: 'Остатки материалов',
-    count: objectStats.value.materialsCount as number | null,
+    count: null,
     handler: () => { router.push({ path: '/balances', query: { object: String(objectId.value) } }) }
   },
   {
     key: 'writeoffs',
     title: 'Списания',
-    count: objectStats.value.writeoffsCount as number | null,
+    count: objectStats.value.writeoffsCount,
     handler: () => { router.push({ path: '/writeoffs', query: { object: String(objectId.value) } }) }
   }
 ])

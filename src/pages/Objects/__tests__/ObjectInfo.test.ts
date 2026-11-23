@@ -305,3 +305,28 @@ describe('ObjectInfo', () => {
     })
   })
 })
+
+import { getByObject as getPurchasesByObjectMock } from '@/stores/purchases'
+
+describe('F-1073: числа у ссылок карточки объекта совпадают с открываемыми списками', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('«Закупки» = все закупки объекта (как /purchases?object=), отменённые — в подсказке; у «Остатков» числа нет', async () => {
+    vi.mocked(getPurchasesByObjectMock).mockReturnValue([
+      { id: 1, status: 'completed', items: [] }, { id: 2, status: 'completed', items: [] },
+      { id: 3, status: 'new', items: [] }, { id: 4, status: 'cancelled', items: [] },
+    ] as never)
+    const store = useObjectsStore()
+    store.fetchOne = vi.fn().mockResolvedValue({ id: 1, name: 'Объект', is_active: true }) as never
+    const wrapper = mount(ObjectInfo, { global: { stubs: { Modal: ModalStub, ObjectForm: ObjectFormStub } } })
+    await flushPromises()
+    const vm = wrapper.vm as any
+    const qa = (vm.quickActions?.value ?? vm.quickActions) as Array<{ key: string; count: number | null; hint?: string }>
+    const purchases = qa.find(a => a.key === 'purchases')!
+    expect(purchases.count).toBe(4)
+    expect(purchases.hint).toBe('В том числе отменённых: 1')
+    expect(qa.find(a => a.key === 'balances')!.count).toBeNull()
+  })
+})
