@@ -21,7 +21,7 @@
         </label>
         <label class="block">
           <span class="block text-xs mb-1 text-muted">Месяц</span>
-          <input v-model="form.month" type="month" class="input input-bordered w-full" />
+          <input v-model="form.month" type="month" :max="currentMonth" class="input input-bordered w-full" />
         </label>
         <button
           class="btn btn-primary"
@@ -100,7 +100,7 @@ import { useObjectsStore } from '@/stores/objects'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { parseApiError } from '@/utils/errorHandler'
-import { formatDateTime } from '@/utils/formatters'
+import { formatDateTime, todayLocal } from '@/utils/formatters'
 import type { SiteObject } from '@/api/types'
 import Modal from '@/components/Modal.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -117,7 +117,10 @@ const { can } = usePermissions()
 const canEdit = computed(() => can('stock', 'edit_all'))
 
 const busy = ref(false)
-const form = reactive({ object: 0, month: new Date().toISOString().slice(0, 7) })
+// F-1047 (B14): будущий месяц закрыть нельзя (BE F-814) — ограничиваем выбор; месяц по местному
+// времени (toISOString давал UTC: 1-го числа с 00:00 до 05:00 по Ташкенту — прошлый месяц, F-884).
+const currentMonth = todayLocal().slice(0, 7)
+const form = reactive({ object: 0, month: currentMonth })
 
 const objectOptions = computed(() =>
   objectsStore.items.map((o: SiteObject) => ({ value: o.id, label: o.name }))
