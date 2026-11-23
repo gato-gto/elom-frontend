@@ -27,6 +27,11 @@ export function parseDecimalInput(value: string | number | null | undefined): nu
   if (typeof value === 'number') { return value }
   if (value === null || value === undefined) { return NaN }
   const s = normalizeDecimalInput(String(value))
-  if (s === '') { return NaN }
-  return Number(s)
+  // F-1074: только обычная десятичная запись. Number() принимал «0x1A» (26), «0b11», «1e400»/«Infinity»
+  // (бесконечность роняла расчёт сметы через BigInt) — такие значения ввод не должен пропускать.
+  if (!DECIMAL_RE.test(s)) { return NaN }
+  const n = Number(s)
+  return Number.isFinite(n) ? n : NaN
 }
+
+const DECIMAL_RE = /^[+-]?(\d+(\.\d*)?|\.\d+)$/
