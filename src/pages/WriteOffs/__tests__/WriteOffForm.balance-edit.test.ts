@@ -102,3 +102,23 @@ describe('F-1063: правка при старом BE (без available) — с�
     expect(item.currentBalance).toBe(10)
   })
 })
+
+describe('F-1067: тон остатка — ошибка и предупреждение не смешиваются', () => {
+  beforeEach(() => getMock.mockReset())
+
+  it('превышение доступного → только error, даже если «будущий остаток» в зоне предупреждения', async () => {
+    getMock.mockResolvedValue({ data: { current_balance: '10', available: '2' } })
+    const vm = (await setup()) as unknown as Vm & { balanceTone: (i: Record<string, unknown>) => string }
+    const item: Record<string, unknown> = { material: 100, quantity: '9.5', unit: 1, currentBalance: null }
+    await vm.loadCurrentBalance(item)
+    expect(vm.balanceTone(item)).toBe('error')
+  })
+
+  it('в пределах доступного, но остаток < 10 % → warning', async () => {
+    getMock.mockResolvedValue({ data: { current_balance: '10', available: '10' } })
+    const vm = (await setup()) as unknown as Vm & { balanceTone: (i: Record<string, unknown>) => string }
+    const item: Record<string, unknown> = { material: 100, quantity: '9.5', unit: 1, currentBalance: null }
+    await vm.loadCurrentBalance(item)
+    expect(vm.balanceTone(item)).toBe('warning')
+  })
+})

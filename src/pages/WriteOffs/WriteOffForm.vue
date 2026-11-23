@@ -191,8 +191,8 @@
                       <div
                         class="font-mono"
                         :class="{
-                          'text-error font-bold': exceedsAvailable(item),
-                          'text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1
+                          'text-error font-bold': balanceTone(item) === 'error',
+                          'text-warning': balanceTone(item) === 'warning'
                         }"
                       >
                         {{ formatNumberClean(getFutureBalance(item)) }}
@@ -307,9 +307,8 @@
                         v-if="item.currentBalance !== null && item.material" 
                         class="text-sm font-mono p-2 rounded border"
                         :class="{
-                          'bg-error/10 border-error text-error': exceedsAvailable(item),
-                          'bg-warning/10 border-warning text-warning': getFutureBalance(item) >= 0 && getFutureBalance(item) < item.currentBalance * 0.1,
-                          '': getFutureBalance(item) >= item.currentBalance * 0.1
+                          'bg-error/10 border-error text-error': balanceTone(item) === 'error',
+                          'bg-warning/10 border-warning text-warning': balanceTone(item) === 'warning'
                         }"
                       >
                         {{ formatNumberClean(getFutureBalance(item)) }} {{ getUnitName(item.unit) || '' }}
@@ -853,6 +852,14 @@ function exceedsAvailable(item: WriteOffItem): boolean {
   return qty > (item.available ?? item.currentBalance)
 }
 
+// F-1067: один тон на ячейку — превышение доступного (ошибка) важнее «мало осталось» (предупреждение).
+function balanceTone(item: WriteOffItem): 'error' | 'warning' | '' {
+  if (exceedsAvailable(item)) { return 'error' }
+  if (item.currentBalance === null || !item.material) { return '' }
+  const fut = getFutureBalance(item)
+  return fut >= 0 && fut < item.currentBalance * 0.1 ? 'warning' : ''
+}
+
 function availabilityHint(item: WriteOffItem): string {
   const avail = item.available ?? item.currentBalance ?? 0
   if (item.currentBalance !== null && avail < item.currentBalance) {
@@ -960,8 +967,8 @@ const handleSubmit = async () => {
       (item) => item.material && item.unit && exceedsAvailable(item),
     )
     if (overItems.length > 0) {
-      errors.value.non_field_errors = ['Нельзя списать больше остатка — исправьте позиции с отрицательным будущим остатком.']
-      ui.toast({ type: 'error', text: 'Нельзя списать больше остатка' })
+      errors.value.non_field_errors = ['Нельзя списать больше доступного — исправьте отмеченные позиции']
+      ui.toast({ type: 'error', text: 'Нельзя списать больше доступного' })
       isSubmitting.value = false
       return
     }
