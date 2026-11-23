@@ -253,6 +253,44 @@ describe('PurchaseForm', () => {
     })
   })
 
+  describe('F-1043 (B4): «Создать» с названием существующего материала', () => {
+    const mountForm = () => mount(PurchaseForm, {
+      global: { stubs: { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true } }
+    })
+    const newItem = () => ({
+      material: undefined as number | undefined, material_name: '' as string | undefined, unit: 0,
+      quantity: 500, price: '10', amount: '0', isNewMaterial: false
+    })
+
+    it('совпадение без учёта регистра и лишних пробелов → выбран существующий материал с его единицей', async () => {
+      const wrapper = mountForm()
+      await flushPromises() // форма грузит справочники на mount — подставляем материалы после загрузки
+      const store = useMaterialsStore()
+      store.items = [{ id: 7, name: 'Гофра ПВХ  25', default_unit: 3, is_active: true } as any]
+      const vm = wrapper.vm as any
+      const item = newItem()
+      vm.onCustomMaterial(item, '  гофра пвх 25 ')
+      expect(item.material).toBe(7)
+      expect(item.isNewMaterial).toBe(false)
+      expect(item.unit).toBe(3)
+      expect(item.material_name).toBeUndefined()
+    })
+
+    it('новое название → новый материал, единицу выбирает пользователь', async () => {
+      const wrapper = mountForm()
+      await flushPromises()
+      const store = useMaterialsStore()
+      store.items = [{ id: 7, name: 'Гипс', default_unit: 3, is_active: true } as any]
+      const vm = wrapper.vm as any
+      const item = newItem()
+      vm.onCustomMaterial(item, 'Гипс строительный')
+      expect(item.material).toBeUndefined()
+      expect(item.isNewMaterial).toBe(true)
+      expect(item.material_name).toBe('Гипс строительный')
+      expect(item.unit).toBe(0)
+    })
+  })
+
   describe('Material Loading in Edit Mode', () => {
     it('loads materials correctly', async () => {
       // Set up materials store

@@ -1325,7 +1325,25 @@ function onMaterialChange(item: PurchaseItem, material: Material | null) {
   clearItemsDuplicateErrors()
 }
 
+function normalizeMaterialName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
 function onCustomMaterial(item: PurchaseItem, materialName: string) {
+  // F-1043 (B4): «Создать» с названием УЖЕ существующего материала раньше давал выбрать любую единицу,
+  // а BE переиспользует материал по названию → количество в чужой единице (500 г → 500 000 кг).
+  // Совпадение без учёта регистра и лишних пробелов → выбираем существующий материал с его единицей.
+  const wanted = normalizeMaterialName(materialName)
+  const existing = materials.value.find((m: Material) => normalizeMaterialName(m.name || '') === wanted)
+  if (existing) {
+    onMaterialChange(item, existing)
+    const unitCode = existing.default_unit ? getUnitName(existing.default_unit) : null
+    ui.toast({
+      type: 'info',
+      text: `Материал «${existing.name}» уже есть в справочнике — выбран он${unitCode ? ` (единица «${unitCode}»)` : ''}`,
+    })
+    return
+  }
   // F-594: создание нового материала из позиции доступно И в редактировании (owner). Раньше здесь
   // был ранний выход по isEdit — он и блокировал «Создать» в форме редактирования закупки.
   // Пользователь ввёл новый материал
