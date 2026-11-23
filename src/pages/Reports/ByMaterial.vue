@@ -49,7 +49,7 @@
     <div v-if="rows.length > 0" class="chart-section mb-6">
       <ChartContainer
         ref="chartContainer"
-        title="Доли материалов в закупках"
+        title="Доли материалов в закупках (на этой странице)"
         :loading="loading"
         :has-data="rows.length > 0"
         :chart-height="getChartHeight(rows.length)"
@@ -441,7 +441,9 @@ const chartLegendItems = computed(() => {
     label: truncateLabel(row.material_name || 'Неизвестный материал', 20),
     color: colors[index]
   }))
-  if (sortedAll.length > TOP) {
+  // F-1072: «Другие» — только если сегмент на круге есть (сумма вне топ-5 > 0), как в updateChart.
+  const restSum = sortedAll.slice(TOP).reduce((s, r) => s + (Number(r.amount_total) || 0), 0)
+  if (restSum > 0) {
     items.push({ label: 'Другие', color: isDark ? OTHER_COLOR_DARK : OTHER_COLOR })
   }
   return items
