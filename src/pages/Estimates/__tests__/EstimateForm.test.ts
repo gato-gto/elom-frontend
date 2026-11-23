@@ -154,6 +154,29 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     expect(create).not.toHaveBeenCalled()
   })
 
+  // F-1064 (ревью F-1046): DecimalInput снял встроенную проверку type=number — кривой ввод больше не
+  // блокируется браузером. parseFloat брал первую цифровую часть: «1,500,000» → модель «1.500,000» → 1.5.
+  it('F-1064: неоднозначное число в цене (1,500,000) → ошибка, не тихое 1.5', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ name: 'Свободная', quantity: '1', unit_price: '1.500,000' }))
+    await vm.handleSubmit()
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('F-1064: неоднозначное количество (1.250.5) → ошибка, не тихое 1.25', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ name: 'Свободная', quantity: '1.250.5', unit_price: '100' }))
+    await vm.handleSubmit()
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('F-1064: «1 000,5» (пробел-разряды, запятая) → 1000.5 в payload', async () => {
+    const vm = mountForm(); await nextTick()
+    vm.lines.splice(0, vm.lines.length, line({ name: 'Свободная', quantity: '1', unit_price: '1 000,5' }))
+    await vm.handleSubmit()
+    expect(create.mock.calls[0][0].lines[0].unit_price).toBe('1000.5')
+  })
+
   it('F-929: не сабмитит строку с отрицательной ценой', async () => {
     const vm = mountForm(); await nextTick()
     vm.lines.splice(0, vm.lines.length, line({ work_item: 10, name: 'X', quantity: '1', unit_price: '-5' }))

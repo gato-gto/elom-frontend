@@ -186,7 +186,7 @@
 <script setup lang="ts">
 import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
-import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { parseDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { useRoute, useRouter } from 'vue-router'
 import { useEstimatesStore } from '@/stores/estimates'
 import { useObjectsStore } from '@/stores/objects'
@@ -366,7 +366,8 @@ function qtyStep(unit: string) { return isCount(unit) ? '1' : '0.001' }
 
 // Каноническое кол-во строки: clamp [0, MAX] (D1 нет отрицательного / D3 потолок) + целое для штучных (D2).
 function effQty(line: FormLine): number {
-  const q = parseFloat(normalizeDecimalInput(line.quantity || '0'))
+  // F-1064: строгий разбор (Number) — неоднозначное «1.250.5» не превращается молча в 1.25 (ловит валидация)
+  const q = parseDecimalInput(line.quantity || '0')
   if (isNaN(q)) { return 0 }
   const c = Math.min(Math.max(0, q), MAX_QTY)
   return isCount(line.unit) ? Math.floor(c) : c
@@ -380,7 +381,7 @@ function sanitizeQty(line: FormLine) {
 // ── суммы (целый сум; отрицательное/дробное-штучное/сверх-max отсекает effQty; цена ≥0) ──
 function lineAmount(line: FormLine): number | null {
   if (line.kind === 'coefficient') { return null }
-  const p = Math.max(0, parseFloat(normalizeDecimalInput(line.unit_price || '0')))
+  const p = Math.max(0, parseDecimalInput(line.unit_price || '0'))
   if (isNaN(p)) { return 0 }
   // MED #2 (аудит A): десятичное HALF_UP (как движок/сервер), НЕ Math.round(float) — иначе подытоги≠ИТОГО
   // и построчная сумма «прыгает» на 1 после сохранения (0.7×45: float→31, HALF_UP→32).
@@ -404,7 +405,7 @@ function contribDisplay(idx: number): string {
     // D10 (аудит#3): зона ВЫБРАНА, но множитель пуст/≤0 (M1-гард calc) — «выберите зону» врало
     // пользователю; честная подсказка ведёт к реальному незаполненному полю.
     const l = lines.value[idx]
-    const k = parseFloat(normalizeDecimalInput(String(l?.unit_price ?? '')))
+    const k = parseDecimalInput(String(l?.unit_price ?? ''))
     if (l?.coeff_scope && !(k > 0)) { return 'укажите множитель' }
     return 'выберите зону'
   }
@@ -550,18 +551,21 @@ function validate(): boolean {
     if (l.kind === 'coefficient') {
       // F-740: ad-hoc коэффициент — имя + множитель>0 (все ошибки в errs.coeff, коэфф-блок рендерит его).
       if (!l.name.trim()) { errs.coeff = 'Укажите название коэффициента'; ok = false }
-      else if (!(parseFloat(normalizeDecimalInput(l.unit_price || '0')) > 0)) { errs.coeff = 'Множитель должен быть больше 0'; ok = false }
+      else if (!(parseDecimalInput(l.unit_price || '0') > 0)) { errs.coeff = 'Множитель должен быть числом больше 0'; ok = false }
       // #65 Фаза 1 (аудит A#6): без выбранной зоны коэффициент инертен.
       else if (!l.coeff_scope) { errs.coeff = 'Выберите зону коэффициента'; ok = false }
       // Фаза 2: selection без выбранных работ.
       else if (l.coeff_scope === 'selection' && l.coeff_targets.length === 0) { errs.coeff = 'Выберите хотя бы одну позицию'; ok = false }
     } else {
       if (!l.work_item && !l.name.trim()) { errs.name = 'Укажите позицию' }
-      const q = parseFloat(normalizeDecimalInput(l.quantity || ''))
-      if (l.quantity === '' || isNaN(q) || q < 0) { errs.quantity = 'Кол-во ≥ 0' }
+      // F-1064: строгий разбор — «1,500,000» / «1.250.5» неоднозначны → ошибка поля, а не усечение
+      const q = parseDecimalInput(l.quantity || '')
+      if (l.quantity === '' || isNaN(q)) { errs.quantity = 'Введите число, например 2 или 1,5' }
+      else if (q < 0) { errs.quantity = 'Кол-во ≥ 0' }
       if (l.unit_price !== '' && l.unit_price != null) {
-        const p = parseFloat(String(l.unit_price))
-        if (isNaN(p) || p < 0) { errs.unit_price = 'Цена ≥ 0' }
+        const p = parseDecimalInput(String(l.unit_price))
+        if (isNaN(p)) { errs.unit_price = 'Введите число, например 15000 или 1 500,5' }
+        else if (p < 0) { errs.unit_price = 'Цена ≥ 0' }
       }
     }
     if (Object.keys(errs).length) { lineErrors.value[i] = errs; ok = false }
@@ -573,7 +577,7 @@ function buildPayloadLines(): EstimateLineWrite[] {
   return lines.value.map((l, i) => {
     const base: EstimateLineWrite = {
       quantity: String(effQty(l)),
-      unit_price: String(Math.max(0, parseFloat(l.unit_price || '0')) || 0),
+      unit_price: String(Math.max(0, parseDecimalInput(l.unit_price || '0')) || 0),
       position_no: l.position_no || '', order: i, kind: l.kind, unit: l.unit || '',
       // D8: снапшот пути с фронта → историчность на правке (BE не ре-деривит из текущего каталога).
       section_name: l.section_name || '', subcategory_name: l.subcategory_name || '',
