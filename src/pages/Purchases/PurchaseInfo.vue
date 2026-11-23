@@ -104,8 +104,8 @@
             <tr v-for="(item, index) in purchase.items" :key="item.id">
               <td class="col-number">{{ index + 1 }}</td>
               <td class="col-material">{{ item.material_name || '—' }}</td>
-              <td class="col-unit">{{ smartQty(item.quantity, item.unit_code).unit || '—' }}</td>
-              <td class="col-quantity font-mono">{{ smartQty(item.quantity, item.unit_code).value }}</td>
+              <td class="col-unit">{{ item.unit_code || '—' }}</td>
+              <td class="col-quantity font-mono">{{ docQty(item.quantity) }}</td>
               <td class="col-price font-mono">{{ formatNumber(item.price) }}<span class="cur-code"> UZS</span></td>
               <td class="col-amount font-mono">{{ formatNumber(item.amount) }}<span class="cur-code"> UZS</span></td>
             </tr>
@@ -266,8 +266,7 @@ import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
 import { useRouter, useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
-import { formatDate, formatNumber, formatNumberClean } from '@/utils/formatters'
-import { smartConvert, formatSmartQuantity } from '@/utils/unitRounding' // F-717/F-868: накладная — кол-во умным числом
+import { formatDate, formatNumber, formatNumberClean, formatNumberWithOptions } from '@/utils/formatters'
 import { useEmployeesStore } from '@/stores/employees'
 
 interface Props {
@@ -324,23 +323,19 @@ const totalQuantity = computed(() => {
   }, 0)
 })
 
-// F-717/F-868: позиция накладной — количество умным числом одним значением+единицей (согласованно
-// с колонкой «Ед.»). Конвертируем ОБЕ ячейки из одного smartConvert, чтобы «9 750» и «км» не разошлись.
-function smartQty(quantity: string, unit: string): { value: string; unit: string } {
-  const n = parseFloat(quantity)
-  if (isNaN(n)) { return { value: '—', unit: unit || '' } }
-  const r = smartConvert(n, unit || '')
-  return { value: formatNumber(r.value), unit: r.unit }
+// F-1045 (B7): накладная — документ: количество в единице позиции (к ней относится цена), без умного
+// укрупнения (F-717/F-868 давали «1 км × 13 230 = 13 230 000» при цене за м), до 3 знаков, как хранит BE.
+function docQty(quantity: string | number): string {
+  return formatNumberWithOptions(quantity, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
 }
 
-// ИТОГО по количеству: укрупняем только если у ВСЕХ позиций единая единица (иначе сумма разных единиц
-// бессмысленна как одно число → сырьё с разделителями, как было). Строка ИТОГО без отдельной «Ед.» —
-// поэтому показываем значение+единицу вместе (formatSmartQuantity).
+// ИТОГО по количеству: при единой единице — число + единица (тоже без укрупнения); при разных — как было
+// (F-717: сырьё; показывать ли сумму разных единиц — вопрос владельцу).
 const totalQtyDisplay = computed(() => {
   const items = props.purchase?.items || []
   if (!items.length) { return formatNumberClean(totalQuantity.value) }
   const units = new Set(items.map(i => i.unit_code))
-  if (units.size === 1) { return formatSmartQuantity(totalQuantity.value, items[0].unit_code) }
+  if (units.size === 1) { return `${docQty(totalQuantity.value)} ${items[0].unit_code || ''}`.trim() }
   return formatNumberClean(totalQuantity.value)
 })
 
