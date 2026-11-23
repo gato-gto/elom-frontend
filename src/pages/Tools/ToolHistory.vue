@@ -4,7 +4,7 @@
     <div class="bg-base-200 rounded p-4 mb-4">
       <div class="flex flex-wrap justify-between items-start gap-4">
         <div class="flex-1 min-w-0">
-          <h3 class="text-lg font-bold font-mono text-primary">{{ tool.inventory_number }}</h3>
+          <h3 class="text-lg font-bold font-code text-primary">{{ tool.inventory_number }}</h3>
           <p class="text-sm font-medium mt-1">
             {{ [
               tool.category?.split(',')[0]?.trim(),

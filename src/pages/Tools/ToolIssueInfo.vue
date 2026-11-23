@@ -5,7 +5,7 @@
       <div class="card-body">
         <h4 class="card-title text-sm">Инструмент</h4>
         <div class="grid grid-cols-2 gap-2 text-sm">
-          <div><span class="font-semibold">Инв. номер:</span> <span class="font-mono">{{ issue.tool_inventory_number }}</span></div>
+          <div><span class="font-semibold">Инв. номер:</span> <span class="font-code">{{ issue.tool_inventory_number }}</span></div>
           <div><span class="font-semibold">Название:</span> {{ issue.tool_name }}</div>
         </div>
       </div>

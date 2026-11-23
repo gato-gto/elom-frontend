@@ -32,6 +32,7 @@
       v-if="config.filters && config.filters.length > 0"
       :columns="config.filterColumns || 3"
       :loading="store.loading"
+      :active="filtersActive"
       @reset="handleResetFilters"
     >
       <FilterField
@@ -114,7 +115,7 @@
                   :key="column.key"
                   :class="[
                     colAlign(column),
-                    isMonoColumn(column) ? 'font-mono' : ''
+                    isCodeColumn(column) ? 'font-code' : (isMonoColumn(column) ? 'font-mono' : '')
                   ]"
                 >
                   <slot
@@ -439,6 +440,12 @@ const isCardVisible = (index: number): boolean => {
 // чтобы мобильные карточки рисовали те же чипы). actionIconPath/actionBtnClass импортированы выше.
 
 const MONO_KEY_RE = /^(id|date|created_at|updated_at|closed_at|month|quantity|quantity_signed|qty|price|amount|total|sum|sku|purchase_no|invoice_number|inventory_number|code|balance|current_balance|current_stock|target_balance|expires_at|assigned_at)$/i
+// F-1071 (D-030 правило 1): моноширинный — только коды (SKU, инвентарный №, код); даты/деньги/количества —
+// основной шрифт с табличными цифрами (font-mono → tabular-nums).
+const CODE_KEY_RE = /^(sku|inventory_number|code)$/i
+function isCodeColumn(column: ColumnConfig): boolean {
+  return CODE_KEY_RE.test(column.key)
+}
 function isMonoColumn(column: ColumnConfig): boolean {
   return !!column.mono || column.align === 'right' || MONO_KEY_RE.test(column.key)
 }
@@ -613,6 +620,12 @@ async function updateFilter(key: string, value: any) {
   }
   // setFilters сам вызывает fetchList()
 }
+
+// F-1071 (D-030 правило 6): «Сбросить фильтры» — только когда хоть один фильтр задан.
+const filtersActive = computed(() => (props.config.filters || []).some((f) => {
+  const v = props.store.filters?.[f.key]
+  return v !== undefined && v !== null && String(v) !== ''
+}))
 
 // Reset filters
 async function handleResetFilters() {

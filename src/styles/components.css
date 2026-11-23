@@ -990,3 +990,7 @@
 
 /* D-030: «табличные данные» (класс font-mono) — основной шрифт с цифрами одинаковой ширины. */
 .font-mono { font-variant-numeric: tabular-nums; }
+
+/* F-1071 (D-030 правило 1): коды (SKU, инвентарный №) — системный моноширинный, без загрузки шрифта. */
+.font-code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-variant-numeric: normal; }
+.modern-table td.font-code { white-space: nowrap; }

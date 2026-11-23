@@ -10,7 +10,7 @@
       <div class="space-y-2 text-sm">
         <div v-if="material.sku">
           <span class="text-muted">SKU:</span>
-          <span class="font-medium ml-2 font-mono">{{ material.sku }}</span>
+          <span class="font-medium ml-2 font-code">{{ material.sku }}</span>
         </div>
         
         <div>

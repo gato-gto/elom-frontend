@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="flex items-start justify-between gap-2 mb-3">
         <div class="flex-1 min-w-0">
-          <h3 class="font-mono font-bold text-primary text-base md:text-lg mb-1 break-words">
+          <h3 class="font-code font-bold text-primary text-base md:text-lg mb-1 break-words">
             {{ tool.inventory_number }}
           </h3>
           <p class="text-sm md:text-base font-medium text-base-content break-words">

@@ -25,6 +25,7 @@
       
       <div class="filter-actions">
         <button
+          v-if="active"
           type="button"
           class="filter-reset"
           @click="$emit('reset')"
@@ -45,11 +46,15 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 interface Props {
   columns?: number
   loading?: boolean
+  // F-1071: задан ли хоть один фильтр (кнопка «Сбросить» видна только тогда); по умолчанию true —
+  // обратная совместимость для страниц, которые не передают состояние.
+  active?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   columns: 4,
-  loading: false
+  loading: false,
+  active: true
 })
 
 // F-585: сворачиваемость фильтров ТОЛЬКО на мобиле (<768px). На десктопе всегда развёрнуто

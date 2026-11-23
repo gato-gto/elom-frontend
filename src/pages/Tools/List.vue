@@ -25,7 +25,7 @@
       <template #column-inventory_number="{ item, value }">
         <div class="flex items-center gap-2">
           <span 
-            class="font-mono font-bold text-primary cursor-pointer hover:underline transition-colors duration-200 break-words" 
+            class="font-code font-bold text-primary cursor-pointer hover:underline transition-colors duration-200 break-words" 
             @click="openHistory(item)"
             title="Нажмите для просмотра истории"
           >
