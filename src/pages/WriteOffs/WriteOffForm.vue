@@ -165,9 +165,8 @@
                   </td>
                   <td>
                     <div>
-                      <input 
+                      <DecimalInput 
                         v-model="item.quantity" 
-                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.000001" 
                         min="0.000001" 
                         class="input input-bordered input-sm w-full"
@@ -272,9 +271,8 @@
                       <label class="label">
                         <span class="label-text text-xs">Количество</span>
                       </label>
-                      <input 
+                      <DecimalInput 
                         v-model="item.quantity" 
-                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.000001" 
                         min="0.000001" 
                         class="input input-bordered input-sm w-full"
@@ -391,8 +389,9 @@
 </template>
 
 <script setup lang="ts">
+import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, computed, watch, onMounted, reactive } from 'vue'
-import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { createBulk } from '@/stores/writeOffs'

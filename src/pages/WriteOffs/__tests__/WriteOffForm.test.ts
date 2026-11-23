@@ -102,7 +102,7 @@ describe('WriteOffForm.vue', () => {
     // Кликаем по заглушке выбора материала, чтобы эмитить change
     await wrapper.find('.material-select-stub').trigger('click')
     // Введем количество в первое поле количества
-    const qtyInput = wrapper.find('input[type="number"]')
+    const qtyInput = wrapper.find('input[inputmode="decimal"]')  // F-1046: поле теперь text+inputmode=decimal
     await qtyInput.setValue('2.5')
 
     // Ждем обновления и загрузки баланса
@@ -120,6 +120,24 @@ describe('WriteOffForm.vue', () => {
     const text = wrapper.text()
     // Проверяем что баланс загружен (может быть в разных форматах)
     expect(html.includes('12.5') || html.includes('12,5') || text.includes('12.5') || text.includes('12,5')).toBe(true)
+  })
+
+  // F-1046 (B6): type="number" в браузере с «точечным» языком интерфейса выбрасывал запятую: «1,5» → 15.
+  it('F-1046: «1,5» в поле количества даёт 1.5 в позиции (а не 15)', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: { current_balance: '100', available: '100' } })
+    const wrapper = mount(WriteOffForm, {
+      props: { isOpen: true, initial: null },
+      global: { stubs: { Modal: ModalStub, MaterialSearchSelect: MaterialSearchSelectStub } }
+    })
+    await wrapper.vm.$nextTick()
+    ;(wrapper.vm as any).formData.object = 1
+    await (wrapper.vm as any).onObjectChange()
+    await wrapper.find('.material-select-stub').trigger('click')
+    const qty = wrapper.find('input[inputmode="decimal"]')
+    expect((qty.element as HTMLInputElement).type).toBe('text')
+    await qty.setValue('1,5')
+    expect((wrapper.vm as any).items[0].quantity).toBe('1.5')
+    expect((qty.element as HTMLInputElement).value).toBe('1,5')
   })
 
   // FE-3/F-563: раньше отправка одних пустых строк давала «Списание создано» при НУЛЕ записей

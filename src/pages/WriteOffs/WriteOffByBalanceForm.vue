@@ -75,7 +75,7 @@
                     <div class="text-sm text-muted font-mono p-2">{{ balanceFor(row)?.unit_code || '—' }}</div>
                   </td>
                   <td>
-                    <input v-model="row.actual_balance" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.000001" min="0"
+                    <DecimalInput v-model="row.actual_balance" step="0.000001" min="0"
                            placeholder="0.000000" class="input input-bordered input-sm w-full" />
                   </td>
                   <td>
@@ -130,7 +130,7 @@
                 </div>
                 <div>
                   <label class="label"><span class="label-text text-xs">Фактический остаток</span></label>
-                  <input v-model="row.actual_balance" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.000001" min="0"
+                  <DecimalInput v-model="row.actual_balance" step="0.000001" min="0"
                          placeholder="0.000000" class="input input-bordered input-sm w-full" />
                 </div>
                 <div>
@@ -191,8 +191,9 @@
 </template>
 
 <script setup lang="ts">
+import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, computed, watch, onMounted } from 'vue'
-import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { useObjectsStore } from '@/stores/objects'
 import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { getMaterialsInStock } from '@/stores/materials'

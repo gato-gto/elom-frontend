@@ -116,7 +116,7 @@
           <label v-if="presetErr.name" class="label"><span class="label-text-alt text-error">{{ presetErr.name }}</span></label>
         </div>
         <div class="grid grid-cols-2 gap-2">
-          <label class="form-control"><span class="label-text text-xs">Множитель</span><input v-model="presetForm.multiplier" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="0.01" min="0.01" class="input input-bordered input-sm w-full text-right" :class="{ 'input-error': presetErr.multiplier }" placeholder="1.5" /></label>
+          <label class="form-control"><span class="label-text text-xs">Множитель</span><DecimalInput v-model="presetForm.multiplier" step="0.01" min="0.01" class="input input-bordered input-sm w-full text-right" :class="{ 'input-error': presetErr.multiplier }" placeholder="1.5" /></label>
           <label class="form-control"><span class="label-text text-xs">Порядок</span><input v-model.number="presetForm.order" type="number" inputmode="numeric" min="0" step="1" class="input input-bordered input-sm w-full text-right" /></label>
         </div>
         <div v-if="presetErr.multiplier" class="text-xs text-error">{{ presetErr.multiplier }}</div>
@@ -164,7 +164,7 @@
         <div class="grid grid-cols-3 gap-2">
           <label class="form-control"><span class="label-text text-xs">Тип</span><select v-model="itemForm.kind" class="select select-bordered select-sm w-full"><option v-for="k in KIND_OPTIONS" :key="k.value" :value="k.value">{{ k.label }}</option></select></label>
           <label class="form-control"><span class="label-text text-xs">Ед.</span><input v-model="itemForm.unit" type="text" maxlength="32" class="input input-bordered input-sm w-full" /></label>
-          <label class="form-control"><span class="label-text text-xs">Цена</span><input v-model="itemForm.default_price" type="number" @focus="selectAllOnFocus" inputmode="decimal" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" /></label>
+          <label class="form-control"><span class="label-text text-xs">Цена</span><DecimalInput v-model="itemForm.default_price" step="1" min="0" class="input input-bordered input-sm text-right w-full" placeholder="целый сум" /></label>
         </div>
         <div class="flex justify-end gap-2"><button class="btn btn-ghost" @click="itemModal = false">Отмена</button><button class="btn btn-primary" :disabled="savingItem" @click="saveItem">{{ savingItem ? '…' : 'Сохранить' }}</button></div>
       </div>
@@ -173,8 +173,9 @@
 </template>
 
 <script setup lang="ts">
+import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, reactive, computed, onMounted } from 'vue'
-import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015/F-1017
+import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015/F-1017
 import { useWorkCategoriesStore } from '@/stores/workCategories'
 import { useWorkItemsStore } from '@/stores/workItems'
 import { useCoefficientPresetsStore } from '@/stores/coefficientPresets'

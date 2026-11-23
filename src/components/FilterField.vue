@@ -19,7 +19,7 @@
     <!-- Number Input -->
     <input
       v-else-if="type === 'number'"
-      type="number" inputmode="decimal"
+      type="text" inputmode="decimal"
       @focus="selectAllOnFocus"
       :value="modelValue"
       :placeholder="placeholder"
@@ -28,7 +28,7 @@
       :max="max"
       :step="step"
       class="filter-input"
-      @input="$emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
+      @input="$emit('update:modelValue', parseDecimalInput(($event.target as HTMLInputElement).value))"
     />
     
     <!-- Date Input -->
@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { selectAllOnFocus } from '@/utils/numberInput'  // F-1017: тап выделяет значение
+import { selectAllOnFocus, parseDecimalInput } from '@/utils/numberInput'  // F-1017: тап выделяет значение
 
 interface Option {
   value: string | number | boolean | undefined

@@ -243,9 +243,8 @@
                   </td>
                   <td>
                     <div>
-                      <input 
+                      <DecimalInput 
                         v-model="it.quantity" 
-                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.001" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -259,9 +258,8 @@
                   </td>
                   <td>
                     <div>
-                      <input 
+                      <DecimalInput 
                         v-model="it.price" 
-                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.01" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -366,9 +364,8 @@
                       <label class="label">
                         <span class="label-text text-xs">Количество</span>
                       </label>
-                      <input 
+                      <DecimalInput 
                         v-model="it.quantity" 
-                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.001" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -386,9 +383,8 @@
                       <label class="label">
                         <span class="label-text text-xs">Цена за единицу</span>
                       </label>
-                      <input 
+                      <DecimalInput 
                         v-model="it.price" 
-                        type="number" @focus="selectAllOnFocus" inputmode="decimal" 
                         step="0.01" 
                         min="0" 
                         class="input input-bordered input-sm w-full"
@@ -504,8 +500,9 @@
 </template>
 
 <script setup lang="ts">
+import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { normalizeDecimalInput, selectAllOnFocus } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { todayLocal } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { usePurchasesStore } from '@/stores/purchases'
