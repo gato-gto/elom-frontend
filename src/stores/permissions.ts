@@ -49,16 +49,20 @@ export const usePermissionsStore = defineStore('permissions', () => {
   // одновременно при холодной загрузке, кэш ещё пуст → раньше уходило по запросу на каждого (логи прода:
   // 485 из 721 my-permissions — повторы в пределах секунды).
   let inflight: Promise<void> | null = null
+  // F-1068: поколение кэша — clearCache (выход) его увеличивает; ответ запроса прошлого поколения
+  // (пользователя, который уже вышел) отбрасывается, а новый вход не присоединяется к его запросу.
+  let generation = 0
 
   const fetchPermissions = (force = false): Promise<void> => {
     if (inflight) {
       return inflight
     }
-    inflight = doFetchPermissions(force).finally(() => { inflight = null })
-    return inflight
+    const p = doFetchPermissions(force, generation).finally(() => { if (inflight === p) { inflight = null } })
+    inflight = p
+    return p
   }
 
-  const doFetchPermissions = async (force: boolean): Promise<void> => {
+  const doFetchPermissions = async (force: boolean, gen: number): Promise<void> => {
     // F-069: без токена не запрашиваем my-permissions (иначе 401 на странице логина)
     if (typeof localStorage !== 'undefined' && !localStorage.getItem('elom_access')) {
       return
@@ -78,7 +82,8 @@ export const usePermissionsStore = defineStore('permissions', () => {
       const { data } = await api.get<UserPermissionsResponse>(
         endpoints.rbac.myPermissions
       )
-      
+      if (gen !== generation) { return }  // F-1068: пользователь сменился, пока шёл запрос
+
       permissions.value = data.permissions || []
       roles.value = data.roles || []  // Сохраняем для UI, но не используем для логики!
       lastFetch.value = new Date()
@@ -143,6 +148,8 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * Очистить кэш разрешений
    */
   const clearCache = (): void => {
+    generation += 1
+    inflight = null
     permissions.value = []
     roles.value = []
     lastFetch.value = null

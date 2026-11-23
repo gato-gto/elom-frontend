@@ -49,3 +49,25 @@ describe('F-1061 · один запрос прав на параллельные
     expect(getMock).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('F-1068 · выход во время запроса прав: B не получает права A', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    getMock.mockReset()
+    vi.mocked(localStorage.getItem).mockImplementation((k: string) => (k === 'elom_access' ? 'token' : null))
+  })
+
+  it('A-запрос в полёте → clearCache (выход) → B fetch(true) идёт отдельным запросом, в сторе права B', async () => {
+    let resolveA!: (v: unknown) => void
+    getMock.mockReturnValueOnce(new Promise((r) => { resolveA = r }))
+    getMock.mockResolvedValueOnce({ data: { permissions: [{ codename: 'B.view' }], roles: [] } })
+    const store = usePermissionsStore()
+    const a = store.fetchPermissions()
+    store.clearCache()                         // выход пользователя A
+    const b = store.fetchPermissions(true)     // вход пользователя B
+    resolveA({ data: { permissions: [{ codename: 'A.admin' }], roles: [] } })
+    await Promise.all([a, b])
+    expect(getMock).toHaveBeenCalledTimes(2)
+    expect(store.permissions.map((p) => p.codename)).toEqual(['B.view'])
+  })
+})
