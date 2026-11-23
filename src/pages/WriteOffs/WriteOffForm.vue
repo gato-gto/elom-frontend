@@ -892,6 +892,23 @@ const handleSubmit = async () => {
     // Построчные ошибки bulk-create бэкенд отдаёт в индексах ЭТОГО (отфильтрованного) массива,
     // а шаблон рендерит ошибки по индексу в полном items.value → сохраняем соответствие, иначе
     // пустая строка перед ошибочной сдвинула бы ошибку на чужую позицию (M1).
+    // F-1065: строка с выбранным материалом, но количеством не > 0 (строгий разбор) — ошибка строки, а не
+    // тихий пропуск (раньше её отсекала браузерная проверка type=number; DecimalInput её не делает).
+    let badQty = false
+    items.value.forEach((item, idx) => {
+      if (!item.material) { return }
+      const q = parseDecimalInput(String(item.quantity ?? ''))
+      if (isNaN(q) || q <= 0) {
+        itemErrors[`items[${idx}].quantity`] = 'Укажите количество больше 0, например 2 или 1,5'
+        badQty = true
+      }
+    })
+    if (badQty) {
+      errors.value.non_field_errors = ['Исправьте количество в отмеченных позициях']
+      isSubmitting.value = false
+      return
+    }
+
     const filledItems: WriteOffItem[] = []
     items.value.forEach((item, idx) => {
       if (item.material && item.unit && parseFloat(normalizeDecimalInput(String(item.quantity))) > 0) {

@@ -166,6 +166,17 @@ describe('WriteOffByBalanceForm — только материалы в нали�
     expect(Object.values(vm.rowErrors).some((e: any) => /отрицат/i.test(e))).toBe(true)
   })
 
+  it('F-1065: нечисловой факт («abc», «1.000,5») → ошибка строки, запрос не уходит', async () => {
+    getMaterialsInStock.mockResolvedValue([bal(1, 'Кабель', '10')])
+    const { vm } = await mountWithObject(7)
+    vm.rows[0].material = 1
+    vm.rows[0].actual_balance = 'abc'
+    vm.handleSubmit()
+    await flushPromises()
+    expect(post).not.toHaveBeenCalled()
+    expect(Object.values(vm.rowErrors).some((e: any) => /число/i.test(e))).toBe(true)
+  })
+
   it('построчная ошибка бэка ложится на ПРАВИЛЬНую строку (индекс filled → индекс rows)', async () => {
     getMaterialsInStock.mockResolvedValue([bal(1, 'Кабель', '10'), bal(2, 'Труба', '3')])
     const { vm } = await mountWithObject(7)

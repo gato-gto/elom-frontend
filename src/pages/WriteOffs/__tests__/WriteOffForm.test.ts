@@ -193,6 +193,26 @@ describe('WriteOffForm.vue', () => {
     expect(wrapper.emitted('success')).toBeTruthy()
   })
 
+  // F-1065 (ревью F-1046): без браузерной проверки type=number строка с материалом и количеством
+  // «0»/«-1»/«abc» молча отфильтровывалась как «пустая» — из двух строк уходила одна, тост «создано».
+  it('F-1065: строка с материалом и неверным количеством — ошибка строки, отправки нет', async () => {
+    vi.mocked(createBulk).mockResolvedValue({ count: 1, created: [] } as any)
+    const wrapper = mount(WriteOffForm, {
+      props: { isOpen: true, initial: null },
+      global: { stubs: { Modal: ModalStub, MaterialSearchSelect: MaterialSearchSelectStub } }
+    })
+    await wrapper.vm.$nextTick()
+    const vm = wrapper.vm as any
+    Object.assign(vm.formData, { object: 1, responsible: 10, date: '2026-02-01' })
+    vm.addItem()
+    Object.assign(vm.items[0], { material: 100, unit: 5, quantity: '3', currentBalance: 100 })
+    vm.addItem()
+    Object.assign(vm.items[1], { material: 101, unit: 5, quantity: 'abc', currentBalance: 100 })
+    await vm.handleSubmit()
+    expect(createBulk).not.toHaveBeenCalled()
+    expect(vm.getItemFieldError(1, 'quantity')).toContain('больше 0')
+  })
+
   // F-270: построчные ошибки bulk-create (errors.items[{index, detail}]) раскладываются по
   // позициям; __all__ (напр. «Недостаточно остатка») ложится на поле quantity строки.
   it('F-270: maps bulk-create row errors onto the failing item', async () => {

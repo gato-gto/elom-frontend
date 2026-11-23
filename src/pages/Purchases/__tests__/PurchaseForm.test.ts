@@ -291,6 +291,17 @@ describe('PurchaseForm', () => {
     })
   })
 
+  describe('F-1065: количество позиции — строгий разбор', () => {
+    it('«abc» у позиции с материалом → ошибка «больше 0», а не уход на сервер', async () => {
+      const wrapper = mount(PurchaseForm, { global: { stubs: { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true } } })
+      await flushPromises()
+      const vm = wrapper.vm as any
+      vm.items.splice(0, vm.items.length, { material: 7, material_name: undefined, unit: 3, quantity: 'abc', price: '10', amount: '0', isNewMaterial: false })
+      const errs = vm.validatePurchaseItems()
+      expect(errs['items[0].quantity']).toBe('Количество должно быть больше 0')
+    })
+  })
+
   describe('Material Loading in Edit Mode', () => {
     it('loads materials correctly', async () => {
       // Set up materials store

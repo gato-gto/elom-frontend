@@ -193,7 +193,7 @@
 <script setup lang="ts">
 import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, computed, watch, onMounted } from 'vue'
-import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { parseDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { useObjectsStore } from '@/stores/objects'
 import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { getMaterialsInStock } from '@/stores/materials'
@@ -332,11 +332,14 @@ function handleSubmit() {
     const idx = rows.value.indexOf(r)
     if (!r.material) { rowErrors.value[idx] = 'Выберите материал'; return }
     if (r.actual_balance === '' || r.actual_balance == null) { rowErrors.value[idx] = 'Укажите остаток'; return }
-    if (parseFloat(normalizeDecimalInput(r.actual_balance)) < 0) { rowErrors.value[idx] = 'Остаток не может быть отрицательным'; return }
+    // F-1065: строгий разбор — без браузерной проверки type=number «abc» уходил на сервер
+    const actual = parseDecimalInput(r.actual_balance)
+    if (isNaN(actual)) { rowErrors.value[idx] = 'Введите число, например 4 или 2,5'; return }
+    if (actual < 0) { rowErrors.value[idx] = 'Остаток не может быть отрицательным'; return }
     // F-894: факт НЕ может превышать книжный остаток — расход = книжный − факт стал бы отрицательным,
     // и бэкенд (from_balance _compute_from_balance_row) отклонит ВЕСЬ атомарный батч. Предупреждаем на строке.
     const bal = balanceFor(r)
-    if (bal && parseFloat(normalizeDecimalInput(r.actual_balance)) > Number(bal.current_balance)) {
+    if (bal && actual > Number(bal.current_balance)) {
       rowErrors.value[idx] = `Факт не может превышать книжный остаток (${formatNumberClean(Number(bal.current_balance))})`; return
     }
     if (seen.has(r.material)) { rowErrors.value[idx] = 'Материал повторяется'; return }

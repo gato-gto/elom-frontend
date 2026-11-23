@@ -502,7 +502,7 @@
 <script setup lang="ts">
 import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { normalizeDecimalInput, parseDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import { todayLocal } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { usePurchasesStore } from '@/stores/purchases'
@@ -1024,8 +1024,9 @@ function validatePurchaseItems(): Record<string, string> {
     }
     
     // Проверка количества
-    const quantityValue = typeof item.quantity === 'string' ? item.quantity : String(item.quantity)
-    if (!item.quantity || parseFloat(normalizeDecimalInput(quantityValue)) <= 0) {
+    // F-1065: строгий разбор — «abc» давал NaN, а NaN <= 0 === false → позиция уходила на сервер
+    const qtyNum = parseDecimalInput(typeof item.quantity === 'string' ? item.quantity : String(item.quantity ?? ''))
+    if (!item.quantity || isNaN(qtyNum) || qtyNum <= 0) {
       validationErrors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
     }
   })
