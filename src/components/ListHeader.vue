@@ -199,7 +199,6 @@ defineEmits<{
 .action-btn-primary {
   background: hsl(var(--p));
   color: hsl(var(--pc));
-  box-shadow: 0 1px 2px rgba(14, 20, 23, 0.06);
 }
 
 .action-btn-primary:hover:not(:disabled) {

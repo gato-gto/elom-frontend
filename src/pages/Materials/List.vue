@@ -13,7 +13,7 @@
         <div class="flex items-center gap-2 md:gap-3 flex-wrap">
           <!-- Кнопка Категории - видна на всех устройствах -->
           <button 
-            class="btn btn-outline hover:btn-secondary transition-all duration-300 btn-sm shadow-sm hover:shadow-md"
+            class="btn btn-outline btn-sm"
             @click="$router.push('/material_categories')"
           >
             <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,7 +25,7 @@
           <!-- Кнопка Массовое добавление - только для desktop -->
           <button 
             v-if="canEdit"
-            class="hidden md:flex btn btn-primary hover:btn-primary-focus transition-all duration-300 btn-sm shadow-sm hover:shadow-md hover:scale-105"
+            class="hidden md:flex btn btn-outline btn-sm"
             @click="openBulkCreate"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -242,9 +242,9 @@ function getDefaultOptions(): ChartOptions {
                size: 13,
                weight: 'bold'
              },
-      // tooltip body shows values (DATA) → monospace
+      // D-030: значения — основной шрифт (моноширинный для данных убран)
       bodyFont: {
-        family: 'IBM Plex Mono, ui-monospace, monospace',
+        family: 'IBM Plex Sans, system-ui, sans-serif',
         size: 12
       },
       padding: 12
@@ -255,10 +255,10 @@ function getDefaultOptions(): ChartOptions {
              grid: {
                color: c.grid
              },
-             // axis tick labels are DATA → monospace
+             // D-030: подписи осей — основной шрифт
              ticks: {
                font: {
-                 family: 'IBM Plex Mono, ui-monospace, monospace',
+                 family: 'IBM Plex Sans, system-ui, sans-serif',
                  size: 11
                },
                color: c.ticks
@@ -270,7 +270,7 @@ function getDefaultOptions(): ChartOptions {
              },
              ticks: {
                font: {
-                 family: 'IBM Plex Mono, ui-monospace, monospace',
+                 family: 'IBM Plex Sans, system-ui, sans-serif',
                  size: 11
                },
                color: c.ticks
@@ -295,6 +295,10 @@ function getDefaultOptions(): ChartOptions {
 // Мёржим plugins.tooltip/legend по-отдельности: цвета из base (тема) + колбэки/формат из страницы.
 function mergeChartOptions(config: ChartConfiguration): ChartOptions {
   const base = getDefaultOptions() as any
+  // D-030: у круговых диаграмм нет осей — умолчания x/y рисовали на doughnut сетку 0…1 / 0…5.
+  if (['doughnut', 'pie', 'polarArea'].includes((config as any).type)) {
+    delete base.scales
+  }
   const o = (config.options || {}) as any
   const bp = base.plugins || {}
   const op = o.plugins || {}

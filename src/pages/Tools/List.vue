@@ -10,7 +10,7 @@
       <!-- Header actions -->
       <template #header-actions>
         <button 
-          class="btn btn-outline btn-sm md:btn-md shadow-sm hover:shadow-md transition-all duration-200" 
+          class="btn btn-outline btn-sm md:btn-md" 
           @click="openBulkAdd"
         >
           <svg class="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

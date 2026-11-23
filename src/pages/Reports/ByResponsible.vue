@@ -6,7 +6,7 @@
       icon="chart"
       :show-create="false"
       :show-stats="true"
-      :total-count="rows.length"
+      :total-count="totalItems"
       :filtered-count="rows.length"
     >
       <template #actions>

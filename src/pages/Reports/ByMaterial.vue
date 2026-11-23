@@ -6,7 +6,7 @@
       icon="chart"
       :show-create="false"
       :show-stats="true"
-      :total-count="rows.length"
+      :total-count="totalItems"
       :filtered-count="rows.length"
     >
       <template #actions>
@@ -432,17 +432,19 @@ function updateChart() {
 const chartLegendItems = computed(() => {
   if (rows.value.length === 0) {return []}
   
-  const sortedRows = [...rows.value]
-    .sort((a, b) => b.amount_total - a.amount_total)
-    .slice(0, 10)
-  
+  // D-030: легенда = сегменты диаграммы: 5 крупнейших + «Другие» (тот же разрез, что в updateChart).
+  const sortedAll = [...rows.value].sort((a, b) => b.amount_total - a.amount_total)
+  const TOP = sortedAll.length > 6 ? 5 : sortedAll.length
   const isDark = document.documentElement.classList.contains('dark')
   const colors = getColors(isDark)
-  
-  return sortedRows.map((row, index) => ({
+  const items = sortedAll.slice(0, TOP).map((row, index) => ({
     label: truncateLabel(row.material_name || 'Неизвестный материал', 20),
-    color: colors[index % colors.length]
+    color: colors[index]
   }))
+  if (sortedAll.length > TOP) {
+    items.push({ label: 'Другие', color: isDark ? OTHER_COLOR_DARK : OTHER_COLOR })
+  }
+  return items
 })
 
 const chartStats = computed(() => {
@@ -460,7 +462,7 @@ const chartStats = computed(() => {
       value: formatCurrency(totalAmount)
     },
     totalPurchases: {
-      label: 'Всего закупок',
+      label: 'Позиций закупок', // F-1062 (аудит R-05/F-08): это строки позиций, а не закупки
       value: totalPurchases.toString()
     },
     uniqueMaterials: {
