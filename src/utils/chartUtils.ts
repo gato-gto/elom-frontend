@@ -89,15 +89,15 @@ export function createLineChartConfig(
   
   const datasets = config.datasets.map((dataset, index) => ({
     ...dataset,
-    borderColor: dataset.borderColor || colors[index % colors.length],
-    backgroundColor: dataset.backgroundColor || colors[index % colors.length] + '20',
-    borderWidth: dataset.borderWidth || 2,
-    fill: dataset.fill || false,
-    tension: dataset.tension || 0.4,
-    pointBackgroundColor: dataset.pointBackgroundColor || colors[index % colors.length],
-    pointBorderColor: dataset.pointBorderColor || '#ffffff',
-    pointRadius: dataset.pointRadius || 4,
-    pointHoverRadius: dataset.pointHoverRadius || 6
+    borderColor: dataset.borderColor ?? colors[index % colors.length],
+    backgroundColor: dataset.backgroundColor ?? colors[index % colors.length] + '20',
+    borderWidth: dataset.borderWidth ?? 2,
+    fill: dataset.fill ?? false,
+    tension: dataset.tension ?? 0.4,
+    pointBackgroundColor: dataset.pointBackgroundColor ?? colors[index % colors.length],
+    pointBorderColor: dataset.pointBorderColor ?? '#ffffff',
+    pointRadius: dataset.pointRadius ?? 4,
+    pointHoverRadius: dataset.pointHoverRadius ?? 6
   }))
 
   return {
@@ -157,9 +157,9 @@ export function createBarChartConfig(
   
   const datasets = config.datasets.map((dataset, index) => ({
     ...dataset,
-    backgroundColor: dataset.backgroundColor || colors[index % colors.length] + '80',
-    borderColor: dataset.borderColor || colors[index % colors.length],
-    borderWidth: dataset.borderWidth || 1
+    backgroundColor: dataset.backgroundColor ?? colors[index % colors.length] + '80',
+    borderColor: dataset.borderColor ?? colors[index % colors.length],
+    borderWidth: dataset.borderWidth ?? 1
   }))
 
   return {
@@ -219,9 +219,9 @@ export function createHorizontalBarChartConfig(
   
   const datasets = config.datasets.map((dataset, index) => ({
     ...dataset,
-    backgroundColor: dataset.backgroundColor || colors[index % colors.length] + '80',
-    borderColor: dataset.borderColor || colors[index % colors.length],
-    borderWidth: dataset.borderWidth || 1
+    backgroundColor: dataset.backgroundColor ?? colors[index % colors.length] + '80',
+    borderColor: dataset.borderColor ?? colors[index % colors.length],
+    borderWidth: dataset.borderWidth ?? 1
   }))
 
   return {
@@ -290,9 +290,9 @@ export function createPieChartConfig(
   
   const datasets = config.datasets.map((dataset) => ({
     ...dataset,
-    backgroundColor: dataset.backgroundColor || colors.slice(0, config.labels.length),
-    borderColor: dataset.borderColor || '#ffffff',
-    borderWidth: dataset.borderWidth || 2
+    backgroundColor: dataset.backgroundColor ?? colors.slice(0, config.labels.length),
+    borderColor: dataset.borderColor ?? '#ffffff',
+    borderWidth: dataset.borderWidth ?? 2
   }))
 
   return {
@@ -335,9 +335,9 @@ export function createDoughnutChartConfig(
   
   const datasets = config.datasets.map((dataset) => ({
     ...dataset,
-    backgroundColor: dataset.backgroundColor || colors.slice(0, config.labels.length),
-    borderColor: dataset.borderColor || '#ffffff',
-    borderWidth: dataset.borderWidth || 2
+    backgroundColor: dataset.backgroundColor ?? colors.slice(0, config.labels.length),
+    borderColor: dataset.borderColor ?? '#ffffff',
+    borderWidth: dataset.borderWidth ?? 2
   }))
 
   return {
