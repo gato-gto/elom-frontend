@@ -72,3 +72,33 @@ describe('WriteOffForm: остаток в форме = проверка серв
     expect(vm.exceedsAvailable(item)).toBe(true)
   })
 })
+
+describe('F-1063: правка при старом BE (без available) — своё количество прибавляется обратно', () => {
+  beforeEach(() => getMock.mockReset())
+
+  it('тот же объект/материал, дата не раньше своей → остаток + своё количество, сохранение не блокируется', async () => {
+    // старый BE игнорирует exclude_writeoff и отдаёт остаток уже БЕЗ этого списания (10 − 6 = 4)
+    getMock.mockResolvedValue({ data: { current_balance: '4' } })
+    const vm = await setup({ id: 42, object: 1, responsible: 5, date: '2026-11-05', material: 100, quantity: '6' })
+    const item: Record<string, unknown> = { material: 100, quantity: '6', unit: 1, currentBalance: null }
+    await vm.loadCurrentBalance(item)
+    expect(item.currentBalance).toBe(10)
+    expect(vm.exceedsAvailable(item)).toBe(false)
+  })
+
+  it('другой объект — своё количество НЕ прибавляется (своя строка на другом объекте)', async () => {
+    getMock.mockResolvedValue({ data: { current_balance: '4' } })
+    const vm = await setup({ id: 42, object: 2, responsible: 5, date: '2026-11-05', material: 100, quantity: '6' })
+    const item: Record<string, unknown> = { material: 100, quantity: '6', unit: 1, currentBalance: null }
+    await vm.loadCurrentBalance(item)
+    expect(item.currentBalance).toBe(4)
+  })
+
+  it('новый BE (есть available) — прибавки нет, работает exclude_writeoff', async () => {
+    getMock.mockResolvedValue({ data: { current_balance: '10', available: '10' } })
+    const vm = await setup({ id: 42, object: 1, responsible: 5, date: '2026-11-05', material: 100, quantity: '6' })
+    const item: Record<string, unknown> = { material: 100, quantity: '6', unit: 1, currentBalance: null }
+    await vm.loadCurrentBalance(item)
+    expect(item.currentBalance).toBe(10)
+  })
+})

@@ -391,7 +391,7 @@
 <script setup lang="ts">
 import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, computed, watch, onMounted, reactive } from 'vue'
-import { normalizeDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
+import { normalizeDecimalInput, parseDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
 import Modal from '@/components/Modal.vue'
 import MaterialSearchSelect from '@/components/MaterialSearchSelect.vue'
 import { createBulk } from '@/stores/writeOffs'
@@ -637,7 +637,18 @@ const loadCurrentBalance = async (item: WriteOffItem, _index: number) => {
     })
 
     if (itemAny._balanceToken !== token) { return }  // устарел — новее уже в полёте
-    item.currentBalance = parseFloat(data.current_balance || 0)
+    let balance = parseFloat(data.current_balance || 0)
+    if (data.available === undefined) {
+      // F-1063: старый BE (до F-810) игнорирует exclude_writeoff и отдаёт остаток уже БЕЗ этого списания —
+      // в правке возвращаем своё количество, если своя строка журнала влияет на этот остаток (тот же
+      // объект и материал, своя дата не позже выбранной). Окно «FE выкачен раньше BE».
+      const init = props.initial as { id?: number; object?: number; material?: number; date?: string; quantity?: string | number } | undefined
+      if (init?.id && Number(init.object) === Number(formData.value.object) && Number(init.material) === Number(item.material)
+          && String(init.date || '') <= String(formData.value.date || '')) {
+        balance += parseDecimalInput(String(init.quantity ?? 0)) || 0
+      }
+    }
+    item.currentBalance = balance
     // available — ровно проверка сервера (минимум на эту и последующие даты); старый BE без поля → остаток на дату
     item.available = data.available !== undefined ? parseFloat(data.available) : item.currentBalance
   } catch (error) {
