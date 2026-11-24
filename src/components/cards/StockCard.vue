@@ -51,7 +51,7 @@
         
         <div v-if="stock.source_description">
           <span class="text-muted">Описание источника:</span>
-          <span class="font-medium ml-2">{{ truncateText(stock.source_description, 50) }}</span>
+          <span class="font-medium ml-2"><StockSourceLink :item="stock" /></span>
         </div>
         
         <div v-if="stock.comment">
@@ -87,6 +87,7 @@ import { stageLabel } from '@/constants/stages'
 import { StockSnapshot } from '@/api/types/stocks'
 import MobileCard from '@/components/MobileCard.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
+import StockSourceLink from '@/components/StockSourceLink.vue'
 import { useMobileCardHelpers } from '@/composables/useResponsiveTable'
 import { formatDate, formatNumberClean } from '@/utils/formatters'
 

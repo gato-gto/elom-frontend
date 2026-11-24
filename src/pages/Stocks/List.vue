@@ -51,9 +51,7 @@
 
       <!-- Custom column for source -->
       <template #column-source="{ item }">
-        <span class="text-xs text-muted">
-          {{ item.source_description || `${getSourceTypeDisplayName(item.source_type)} #${item.source_id}` }}
-        </span>
+        <span class="text-xs text-muted"><StockSourceLink :item="item" /></span>
       </template>
 
       <!-- Custom column for responsible -->
@@ -76,6 +74,7 @@ import { useObjectsStore } from '@/stores/objects'
 import { useMaterialsStore } from '@/stores/materials'
 import { useEmployeesStore } from '@/stores/employees'
 import { usePermissions } from '@/composables/usePermissions'
+import StockSourceLink from '@/components/StockSourceLink.vue'
 import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import StockCard from '@/components/cards/StockCard.vue'
@@ -144,14 +143,6 @@ function responsibleName(id: number | null | undefined) {
 
 function getStageDisplayName(stage: string) {
   return stageLabel(stage)  // F-1033: единый источник (был рукописный словарь)
-}
-
-function getSourceTypeDisplayName(sourceType: string) {
-  const sourceTypeNames: Record<string, string> = {
-    'purchase_item': 'Закупка',
-    'writeoff': 'Списание'
-  }
-  return sourceTypeNames[sourceType] || sourceType
 }
 
 // GenericList configuration

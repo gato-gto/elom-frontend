@@ -8662,9 +8662,8 @@ components:
           maxLength: 128
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -8692,9 +8691,8 @@ components:
           maxLength: 128
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -9000,9 +8998,8 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
       required:
       - amount
       - contribution
@@ -10407,9 +10404,8 @@ components:
           maxLength: 128
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedEmployeeRequest:
@@ -10655,9 +10651,8 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -10823,9 +10818,8 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -10916,9 +10910,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedWorkItemRequest:
@@ -10942,9 +10935,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedWriteOffRequest:
@@ -11417,9 +11409,8 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11473,9 +11464,8 @@ components:
           maxLength: 64
         size_bytes:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11958,9 +11948,8 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -11982,6 +11971,10 @@ components:
         source_description:
           type: string
           readOnly: true
+        source_document_id:
+          type: integer
+          nullable: true
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -12001,6 +11994,7 @@ components:
       - responsible_name
       - smart_quantity
       - source_description
+      - source_document_id
       - stage
       - unit
       - unit_code
@@ -12050,9 +12044,8 @@ components:
             * `writeoff` - Write Off
         source_id:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           default: 0
           description: ID первоисточника (PurchaseItem.id или WriteOff.id)
         responsible:
@@ -12108,11 +12101,11 @@ components:
     TokenRefresh:
       type: object
       properties:
+        refresh:
+          type: string
         access:
           type: string
           readOnly: true
-        refresh:
-          type: string
       required:
       - access
       - refresh
@@ -12354,9 +12347,11 @@ components:
         return_date:
           type: string
           format: date-time
+          readOnly: true
           nullable: true
           description: Дата возврата (пока пусто — инструмент выдан)
         return_condition:
+          readOnly: true
           nullable: true
           description: |-
             Состояние при возврате (обязательно при возврате)
@@ -12369,13 +12364,13 @@ components:
             * `lost` - Утерян
           oneOf:
           - $ref: '#/components/schemas/ToolConditionEnum'
-          - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         return_condition_display:
           type: string
           readOnly: true
         return_comment:
           type: string
+          readOnly: true
           description: Комментарий при возврате
         is_returned:
           type: boolean
@@ -12408,7 +12403,10 @@ components:
       - issued_to
       - issued_to_name
       - object_name
+      - return_comment
+      - return_condition
       - return_condition_display
+      - return_date
       - tool
       - tool_brand
       - tool_category
@@ -12444,29 +12442,6 @@ components:
         issue_comment:
           type: string
           description: Комментарий при выдаче
-        return_date:
-          type: string
-          format: date-time
-          nullable: true
-          description: Дата возврата (пока пусто — инструмент выдан)
-        return_condition:
-          nullable: true
-          description: |-
-            Состояние при возврате (обязательно при возврате)
-
-            * `new` - Новый
-            * `good` - Хорошее
-            * `after_repair` - После ремонта
-            * `needs_repair` - Требует ремонта
-            * `broken` - Сломан
-            * `lost` - Утерян
-          oneOf:
-          - $ref: '#/components/schemas/ToolConditionEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        return_comment:
-          type: string
-          description: Комментарий при возврате
       required:
       - issue_condition
       - issued_to
@@ -12677,9 +12652,8 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         children_count:
@@ -12706,9 +12680,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -12745,9 +12718,8 @@ components:
           readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -12823,9 +12795,8 @@ components:
           nullable: true
         order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:

@@ -21,6 +21,8 @@ export interface StockSnapshot {
   is_archived: boolean;
   smart_quantity: SmartQuantity;
   source_description: string;
+  // F-827: id документа-источника (закупки/списания); у прихода source_id — id позиции закупки
+  source_document_id?: number | null;
   created_at: string;
   updated_at: string;
 }
