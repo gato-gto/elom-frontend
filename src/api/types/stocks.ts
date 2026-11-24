@@ -44,6 +44,7 @@ export interface WriteOff {
   is_archived: boolean;
   current_balance: string; // decimal as string
   smart_quantity: SmartQuantity;
+  created_by?: number | null; // F-1093: автор — бригадир удаляет только свои списания
   created_at: string;
   updated_at: string;
 }

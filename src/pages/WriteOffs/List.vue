@@ -99,9 +99,18 @@ import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import WriteOffCard from '@/components/cards/WriteOffCard.vue'
 import { usePermissions } from '@/composables/usePermissions'
+import { useAuthStore } from '@/stores/auth'
+import { useNotifications } from '@/composables/useNotifications'
+import { canDeleteWriteOff, writeOffDeleteQuestion } from '@/utils/deleteRules'
 
 // ✅ RBAC: проверка через permissions
-const { can, canExportReports } = usePermissions()
+const { can, canExportReports, hasPermission } = usePermissions()
+const authStore = useAuthStore()
+const { showSuccess } = useNotifications()
+// F-1093 (T3; ответы владельца 1 и 2): «Удалить» — по тому же правилу, что на сервере
+const deletePerms = computed(() => ({
+  isSuperuser: !!authStore.me?.is_superuser, has: hasPermission, meId: authStore.me?.id,
+}))
 const canCreate = computed(() => can('writeoffs', 'create'))
 
 const route = useRoute()
@@ -113,7 +122,7 @@ const materialsStore = useMaterialsStore()
 const employeesStore = useEmployeesStore()
 
 // Error handling
-const { handleLoadingError } = useErrorHandler()
+const { handleLoadingError, handleDeleteError } = useErrorHandler()
 
 // Modal state
 const modalOpen = ref(false)
@@ -233,6 +242,14 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
       label: 'Редактировать',
       class: 'btn-outline',
       permission: 'writeoffs.edit' // F-863 (perm-audit): было БЕЗ гейта (нет resource) → fail-open для роли view-only; _own учитывается filterActionsByPermissions
+    },
+    {
+      key: 'delete',
+      label: 'Удалить',
+      class: 'btn-error',
+      permission: 'writeoffs.delete',
+      // F-1093: admin/manager — любое; бригадир — своё; архив — никто (как на сервере)
+      visible: (item: WriteOff) => canDeleteWriteOff(item, deletePerms.value)
     }
   ],
   mobileCardComponent: WriteOffCard,
@@ -269,6 +286,20 @@ async function handleAction(action: string, item: WriteOff) {
     case 'edit':
       openEdit(item)
       break
+    case 'delete':
+      await handleDelete(item)
+      break
+  }
+}
+
+// F-1093: удаление списания возвращает материал на остаток — вопрос говорит, сколько
+async function handleDelete(writeOff: WriteOff) {
+  if (!confirm(writeOffDeleteQuestion(writeOff))) {return}
+  try {
+    await writeOffsStore.remove(writeOff.id)
+    showSuccess('Списание удалено')
+  } catch (error) {
+    await handleDeleteError(error, 'writeoff', writeOff.id)
   }
 }
 

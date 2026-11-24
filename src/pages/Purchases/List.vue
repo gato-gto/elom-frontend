@@ -134,6 +134,7 @@ import { useEmployeesStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
 import { usePermissions } from '@/composables/usePermissions'
+import { canDeletePurchase, purchaseDeleteQuestion } from '@/utils/deleteRules'
 
 // Stores
 const purchasesStore = usePurchasesStore()
@@ -143,7 +144,11 @@ const authStore = useAuthStore()
 const { showSuccess, showError } = useNotifications()
 
 // ✅ RBAC: проверяем разрешения вместо ролей
-const { canCreateRequests, canApprovePurchases, canExportReports } = usePermissions()
+const { canCreateRequests, canApprovePurchases, canExportReports, hasPermission } = usePermissions()
+// F-1093 (T3; ответы владельца 1 и 2): «Удалить» — по тому же правилу, что на сервере
+const deletePerms = computed(() => ({
+  isSuperuser: !!authStore.me?.is_superuser, has: hasPermission, meId: authStore.me?.id,
+}))
 
 // isRequester = может создавать заявки, но не одобрять
 const isRequester = computed(() => canCreateRequests.value)
@@ -349,7 +354,15 @@ const listConfig = computed(() => ({
         disabled: (item: Purchase) => item.is_archived === true,
         disabledTooltip: 'Закупка в закрытом периоде (архив) — отклонить нельзя'
       }
-    ] : [])
+    ] : []),
+    {
+      key: 'delete',
+      label: 'Удалить',
+      class: 'btn-error btn-sm',
+      permission: 'purchases.delete',
+      // F-1093: admin/manager — любую; бригадир — свой черновик; архив — никто (как на сервере)
+      visible: (item: Purchase) => canDeletePurchase(item, deletePerms.value)
+    }
   ],
   mobileCardComponent: PurchaseCard,
   mobileCardProp: 'purchase',
@@ -486,10 +499,12 @@ async function handleReject(purchase: Purchase) {
 }
 
 async function handleDelete(purchase: Purchase) {
-  if (!confirm(`Удалить закупку "${purchase.purchase_no || '#' + purchase.id}"?`)) {return}
-  
+  // F-1093: вопрос говорит, что станет с остатком; отказ сервера («сначала удалите списания») — в уведомлении
+  if (!confirm(purchaseDeleteQuestion(purchase))) {return}
+
   try {
     await purchasesStore.remove(purchase.id)
+    showSuccess('Закупка удалена')
   } catch (error) {
     await handleDeleteError(error, 'purchase', purchase.id)
   }
