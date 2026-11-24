@@ -584,6 +584,12 @@ const canAddItems = computed(() =>
   !(isEdit.value && props.initial?.status === 'completed' && (formData.value as any).status === 'completed')
 )
 
+// F-1085 (ответ владельца 5): дату ПРОВЕДЁННОЙ закупки не меняем — сервер отвечает 400; исправление — отмена и
+// новая закупка. Снятие проведения (статус → «Новая») снова открывает дату, как и на сервере.
+const dateLocked = computed(() =>
+  isEdit.value && props.initial?.status === 'completed' && formData.value.status === 'completed'
+)
+
 // Function to get item field error
 // getItemFieldError теперь из useItemsForm composable
 
@@ -829,7 +835,11 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       label: 'Дата',
       required: true,
       order: 1,
-      width: 'half'
+      width: 'half',
+      disabled: dateLocked.value,
+      help: dateLocked.value
+        ? 'Дату проведённой закупки не меняют: отмените закупку и создайте новую с нужной датой'
+        : undefined
     },
     {
       key: 'object',

@@ -426,6 +426,41 @@ describe('PurchaseForm', () => {
     })
   })
 
+  describe('F-1085: дата проведённой закупки не меняется (ответ владельца 5)', () => {
+    const stubs = { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true }
+    type DateField = { key: string; disabled?: boolean; help?: string }
+    type FormVm = { formConfig: { fields: DateField[] }; formData: { status: string } }
+    const vmOf = (w: { vm: unknown }) => w.vm as FormVm
+    const dateField = (w: { vm: unknown }) => vmOf(w).formConfig.fields.find(f => f.key === 'date')
+    const HINT = 'Дату проведённой закупки не меняют: отмените закупку и создайте новую с нужной датой'
+    const mountWith = (id: number, status: string) => mount(PurchaseForm, {
+      props: { initial: { id, status, date: '2026-03-01', items: [], photos: [] } as unknown as never },
+      global: { stubs }
+    })
+
+    it('правка выполненной закупки → поле даты закрыто, подсказка как исправить', async () => {
+      const wrapper = mountWith(17, 'completed')
+      await flushPromises()
+      expect(dateField(wrapper)?.disabled).toBe(true)
+      expect(dateField(wrapper)?.help).toBe(HINT)
+    })
+
+    it('черновик → дату менять можно, подсказки нет', async () => {
+      const wrapper = mountWith(18, 'new')
+      await flushPromises()
+      expect(dateField(wrapper)?.disabled).toBe(false)
+      expect(dateField(wrapper)?.help).toBeUndefined()
+    })
+
+    it('снятие проведения (статус → «Новая») снова открывает дату — как на сервере', async () => {
+      const wrapper = mountWith(19, 'completed')
+      await flushPromises()
+      vmOf(wrapper).formData.status = 'new'
+      await wrapper.vm.$nextTick()
+      expect(dateField(wrapper)?.disabled).toBe(false)
+    })
+  })
+
   describe('Amount Calculation', () => {
     it('calculates item amount correctly', () => {
       const item = {
