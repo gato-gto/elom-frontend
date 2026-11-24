@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import PurchaseForm from '../PurchaseForm.vue'
 import { useMaterialsStore } from '@/stores/materials'
+import { usePermissionsStore } from '@/stores/permissions'
 
 // Mock router
 vi.mock('vue-router', () => ({
@@ -458,6 +459,65 @@ describe('PurchaseForm', () => {
       vmOf(wrapper).formData.status = 'new'
       await wrapper.vm.$nextTick()
       expect(dateField(wrapper)?.disabled).toBe(false)
+    })
+  })
+
+  describe('F-1087: ответственный при правке (ответ владельца 25)', () => {
+    const stubs = { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true }
+    type Field = { key: string; condition?: () => boolean }
+    type Vm = {
+      formConfig: { fields: Field[] }
+      preparePurchaseData: (d: Record<string, unknown>) => Record<string, unknown>
+    }
+    const MANAGER = ['purchases.view_all', 'purchases.edit_all', 'purchases.assign_responsible']
+    const ADMIN = [...MANAGER, 'purchases.change_responsible']
+    const seed = (perms: string[]) => {
+      usePermissionsStore().permissions = perms.map((codename) => ({ codename })) as never
+    }
+    const respShown = (w: { vm: unknown }) => {
+      const f = (w.vm as Vm).formConfig.fields.find(x => x.key === 'responsible')
+      return !!f && (!f.condition || f.condition())
+    }
+    const payload = (w: { vm: unknown }) => (w.vm as Vm).preparePurchaseData({
+      date: '2026-03-01', object: 1, supplier: 1, status: 'new', comment: '', responsible: 42, items: []
+    })
+    const editInitial = { id: 31, status: 'new', date: '2026-03-01', responsible: 42, items: [], photos: [] }
+
+    it('manager на правке: поля «Ответственный» нет, в запрос не уходит', async () => {
+      const w = mount(PurchaseForm, { props: { initial: editInitial as unknown as never }, global: { stubs } })
+      await flushPromises()
+      seed(MANAGER)  // после загрузки: форма при монтировании сама перечитывает права (мок API → пусто)
+      expect(respShown(w)).toBe(false)
+      expect('responsible' in payload(w)).toBe(false)
+    })
+
+    it('admin на правке: поле есть и уходит в запрос', async () => {
+      const w = mount(PurchaseForm, { props: { initial: editInitial as unknown as never }, global: { stubs } })
+      await flushPromises()
+      seed(ADMIN)
+      expect(respShown(w)).toBe(true)
+      expect(payload(w).responsible).toBe(42)
+    })
+
+    it('смена объекта на правке не подставляет ответственного объекта; при создании — подставляет', async () => {
+      type FieldVm = { genericFormRef: unknown; onFieldChange: (k: string, v: unknown) => void }
+      for (const [initial, expected] of [[editInitial, 0], [undefined, 1]] as const) {
+        const w = mount(PurchaseForm, { props: initial ? { initial: initial as unknown as never } : {}, global: { stubs } })
+        await flushPromises()
+        seed(MANAGER)
+        const setFieldValue = vi.fn()
+        const vm = w.vm as unknown as FieldVm
+        vm.genericFormRef = { setFieldValue }
+        vm.onFieldChange('object', 2)
+        expect(setFieldValue.mock.calls.filter(c => c[0] === 'responsible').length).toBe(expected)
+      }
+    })
+
+    it('manager при создании: поле есть (назначение при создании осталось)', async () => {
+      const w = mount(PurchaseForm, { global: { stubs } })
+      await flushPromises()
+      seed(MANAGER)
+      expect(respShown(w)).toBe(true)
     })
   })
 

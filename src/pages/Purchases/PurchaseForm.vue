@@ -775,6 +775,10 @@ const isRequester = computed(() => canCreateRequests.value)
 // ответственного ЗАКУПКИ — ЛЮБОГО активного сотрудника (не только бригадира; объект — отдельно, brigadier-only).
 // Пусто → BE берёт ответственного объекта; не-руководство → BE форсит self. Значение = user id (Purchase.responsible = FK User).
 const canAssignResponsible = computed(() => can('purchases', 'assign_responsible'))
+// F-1087 (ответ владельца 25): у существующей закупки ответственного меняет только admin
+// (purchases.change_responsible); остальным поле на правке не показываем и не шлём — сервер его не меняет.
+const canChangeResponsible = computed(() => can('purchases', 'change_responsible'))
+const showResponsibleField = computed(() => (isEdit.value ? canChangeResponsible.value : canAssignResponsible.value))
 const responsibleOptions = computed(() =>
   employeesStore.items
     .filter((e: any) => e.is_active)
@@ -861,7 +865,7 @@ const formConfig = computed<GenericFormConfig<PurchaseRequest>>(() => ({
       options: responsibleOptions.value,
       order: 2.5,
       width: 'half',
-      condition: () => canAssignResponsible.value
+      condition: () => showResponsibleField.value
     },
     {
       key: 'supplier',
@@ -1060,7 +1064,7 @@ function preparePurchaseData(data: PurchaseRequest): PurchaseRequest {
     comment: data.comment,
     // Фича «Ответственный»: шлём responsible (user id) ТОЛЬКО если руководство выбрало его в поле; иначе не
     // шлём → BE форсит self (не-руководство) или берёт ответственного объекта (руководство без выбора).
-    ...(canAssignResponsible.value && (data as any).responsible ? { responsible: (data as any).responsible } : {}),
+    ...(showResponsibleField.value && (data as any).responsible ? { responsible: (data as any).responsible } : {}),
     // FE-1: отправляем только заполненные позиции — без пустого хвостового плейсхолдера.
     items: items.value.filter((item) => !isEmptyPurchaseItem(item)).map((item) => {
       const itemData: any = {
@@ -1470,7 +1474,8 @@ function onFieldChange(key: string, value: any) {
   // form GenericForm через exposed setFieldValue (F-982/983: запись в PurchaseForm.formData поле не меняла —
   // это разные состояния). object.responsible — profile_id (EmployeeProfile); Purchase.responsible — user id
   // → маппим через employeesStore. Пустой объект/нет ответственного → сбрасываем в '' (BE-дефолт сработает).
-  if (key === 'object' && canAssignResponsible.value) {
+  // F-1087: только при СОЗДАНИИ — правка ответственного не меняет (ответ владельца 25)
+  if (key === 'object' && canAssignResponsible.value && !isEdit.value) {
     const obj = objectsStore.items.find((o: any) => String(o.id) === String(value))
     const profId = obj?.responsible ?? null
     const emp = profId != null ? employeesStore.items.find((e: any) => String(e.profile_id) === String(profId)) : null
