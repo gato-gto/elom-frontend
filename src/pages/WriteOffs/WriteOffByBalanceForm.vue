@@ -1,5 +1,5 @@
 <template>
-  <Modal :size="'6xl'" :model-value="isOpen" title="Внести остатки (инвентаризация)" @close="$emit('close')">
+  <Modal :size="'6xl'" :model-value="isOpen" title="Внести остатки (инвентаризация)" guard-unsaved @close="$emit('close')">
     <div class="space-y-6">
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <p class="text-sm text-muted">

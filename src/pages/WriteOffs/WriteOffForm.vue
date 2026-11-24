@@ -3,6 +3,7 @@
     :size="'6xl'"
     :model-value="isOpen"
     :title="props.initial ? 'Редактирование списания' : 'Новое списание'"
+    guard-unsaved
     @close="closeModal"
   >
     <div class="space-y-6">

@@ -8,6 +8,8 @@
       aria-modal="true"
       :aria-label="title || undefined"
       tabindex="-1"
+      @input="markDirty"
+      @change="markDirty"
     >
       <div v-if="title || $slots.header" class="modal-header flex items-center justify-between mb-4 no-print">
         <h3 v-if="title" class="font-bold text-lg modal-title">{{ title }}</h3>
@@ -18,7 +20,7 @@
           type="button"
           aria-label="Закрыть"
           title="Закрыть"
-          @click="handleClose"
+          @click="requestClose"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
@@ -42,6 +44,8 @@
 <script setup lang="ts">
 import { computed, watch, ref, nextTick, onBeforeUnmount } from 'vue'
 import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
+import { pushModal, removeModal, isTopModal } from '@/utils/modalStack'
+import { confirmDiscard, useUnsavedGuard } from '@/composables/useUnsavedGuard'
 
 interface Props {
   modelValue: boolean
@@ -49,6 +53,10 @@ interface Props {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl'
   closable?: boolean
   backdrop?: boolean
+  // B21: форма с большим вводом (закупка, списание, инвентаризация). Если в окне что-то вводили,
+  // крестик/Escape/уход со страницы/перезагрузка сначала спрашивают подтверждение. Кнопка формы
+  // «Отмена» — осознанный отказ и закрывает без вопроса (её обрабатывает сама форма).
+  guardUnsaved?: boolean
 }
 
 interface Emits {
@@ -59,7 +67,8 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   closable: true,
-  backdrop: true
+  backdrop: true,
+  guardUnsaved: false
 })
 
 const emit = defineEmits<Emits>()
@@ -85,6 +94,23 @@ const handleClose = () => {
   emit('update:modelValue', false)
 }
 
+// B21: «что-то вводили» = в окне было событие input/change (поля, селекты, DecimalInput, поиск
+// материала). Сбрасывается при каждом открытии. Ввод и откат обратно всё равно считается вводом —
+// лишний вопрос дешевле потерянной закупки.
+const dirty = ref(false)
+function markDirty() {
+  if (props.guardUnsaved) { dirty.value = true }
+}
+const hasUnsaved = () => props.guardUnsaved && props.modelValue && dirty.value
+useUnsavedGuard(hasUnsaved)
+
+function requestClose() {
+  if (hasUnsaved() && !confirmDiscard()) { return }
+  handleClose()
+}
+
+const modalId = Symbol('modal')
+
 // F-300 + F-508: закрытие крестиком И по Escape. Клик по фону (бэкдроп) НЕ закрывает.
 // Почему так: случайный клик мимо формы — самая частая причина потери введённых данных,
 // поэтому бэкдроп остаётся выключенным (F-300). Escape же — осознанное намеренное действие
@@ -102,12 +128,14 @@ function focusables(): HTMLElement[] {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  // B21: при вложенных окнах клавиатура — только у верхнего (иначе Escape закрывал и форму под ним).
+  if (!isTopModal(modalId)) { return }
   // F-508: Escape закрывает форму (как крестик). Уважает prop `closable`: если закрытие
   // запрещено (напр. незавершённая операция), Escape тоже не закрывает.
   if (e.key === 'Escape') {
     if (props.closable) {
       e.preventDefault()
-      handleClose()
+      requestClose()
     }
     return
   }
@@ -141,6 +169,8 @@ watch(
   () => props.modelValue,
   async (isOpen, wasOpen) => {
     if (isOpen) {
+      dirty.value = false
+      pushModal(modalId)
       lastActive = document.activeElement as HTMLElement | null
       document.addEventListener('keydown', onKeydown)
       // A-02 (F-519): блокируем прокрутку фона — иначе на iOS он ползёт под модалкой.
@@ -150,6 +180,8 @@ watch(
       const items = focusables()
       ;(items[0] || modalBox.value)?.focus()
     } else if (wasOpen !== undefined) {
+      removeModal(modalId)
+      dirty.value = false
       document.removeEventListener('keydown', onKeydown)
       if (scrollLocked) { unlockBodyScroll(); scrollLocked = false }
       lastActive?.focus?.()
@@ -160,6 +192,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  removeModal(modalId)
   document.removeEventListener('keydown', onKeydown)
   // страховка: если модалку размонтировали открытой — снять блокировку.
   if (scrollLocked) { unlockBodyScroll(); scrollLocked = false }

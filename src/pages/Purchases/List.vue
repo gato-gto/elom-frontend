@@ -42,7 +42,7 @@
     </GenericList>
 
     <!-- Modal for creating/editing purchase -->
-    <Modal v-model="modalOpen" :title="modalTitle" size="6xl" :closable="true">
+    <Modal v-model="modalOpen" :title="modalTitle" size="6xl" :closable="true" guard-unsaved>
       <PurchaseForm 
         :initial="editingPurchase" 
         @saved="onPurchaseSaved" 

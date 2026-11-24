@@ -194,6 +194,7 @@ import { useUiStore } from '@/stores/ui'
 import { useWorkCategoriesStore } from '@/stores/workCategories'
 import { useCoefficientPresetsStore } from '@/stores/coefficientPresets'
 import { usePermissions } from '@/composables/usePermissions'
+import { useUnsavedGuard } from '@/composables/useUnsavedGuard'
 import WorkItemSearchSelect from '@/components/WorkItemSearchSelect.vue'
 import QuickAddWorkItem from '@/components/QuickAddWorkItem.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -260,6 +261,13 @@ const submitting = ref(false)
 const formError = ref('')
 const fieldErrors = reactive<Record<string, string>>({})
 const lineErrors = ref<Record<number, Record<string, string>>>({})
+
+// B21: несохранённая смета не теряется молча (перезагрузка, «назад», переход по меню). «Изменено» =
+// состояние формы отличается от снимка после загрузки/сохранения — так считается и удаление строки.
+const snapshotState = () => JSON.stringify({ form, lines: lines.value })
+let savedSnapshot: string | null = null
+const markSaved = () => { savedSnapshot = snapshotState() }
+useUnsavedGuard(() => savedSnapshot !== null && snapshotState() !== savedSnapshot)
 
 const objectName = computed(() => objectsStore.items.find(o => o.id === form.object)?.name || '')
 
@@ -613,6 +621,7 @@ async function handleSubmit() {
       ? await estimatesStore.update(editId.value!, payload)
       : await estimatesStore.create(payload)
     ui.toast({ type: 'success', text: isEdit.value ? 'Смета обновлена' : 'Смета создана' })
+    markSaved()
     router.push(`/estimates/${saved.id}`)
   } catch (error: any) {
     applyServerErrors(error)
@@ -671,5 +680,8 @@ async function loadForEdit(id: number) {
 onMounted(async () => {
   if (objectsStore.items.length === 0) { objectsStore.fetchList({ page_size: 1000 }).catch(() => {}) }
   if (isEdit.value) { await loadForEdit(editId.value!) }
+  // снимок — после того как наблюдатель зон (N3) дочистил загруженные строки: это не правка пользователя
+  await nextTick()
+  markSaved()
 })
 </script>

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 // #65: форма-документ с авто-группировкой. Строка несёт снапшот пути (section/subcategory) из выбранной
@@ -28,6 +28,9 @@ vi.mock('@/components/WorkItemSearchSelect.vue', () => ({ default: { name: 'Work
 vi.mock('@/components/ListHeader.vue', () => ({ default: { name: 'ListHeader', template: '<div />' } }))
 
 import EstimateForm from '@/pages/Estimates/EstimateForm.vue'
+
+// B21: форма вешает beforeunload — без размонтирования слушатели прошлых тестов текли в следующие.
+enableAutoUnmount(afterEach)
 
 interface Lite { id: number; name: string; kind: string; kind_display: string; unit: string; default_price: string | null; category: number; section_name: string; subcategory_name: string; is_draft?: boolean }
 function mountForm() {
@@ -473,5 +476,78 @@ describe('EstimateForm — #65 авто-группировка + контрак�
     anyVm.removeLine(anyVm.lines.findIndex(l => l.work_item === 91))   // удалили Р1 (цель)
     await nextTick(); await nextTick()
     expect(coeff.coeff_targets).toEqual([uid2])   // uid удалённой работы вычищен, вторая цель жива
+  })
+})
+
+// B21 (аудит 23.11): несохранённая смета не теряется молча при перезагрузке/уходе со страницы.
+describe('EstimateForm — защита несохранённого (B21)', () => {
+  const unloadPrevented = () => {
+    const e = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(e)
+    return e.defaultPrevented
+  }
+  beforeEach(() => {
+    create.mockClear(); update.mockClear(); push.mockClear(); fetchOne.mockReset()
+    for (const k of Object.keys(routeParams)) { delete routeParams[k] }
+  })
+
+  it('test_new_estimate_untouched_does_not_block_unload', async () => {
+    const w = mount(EstimateForm); await flushPromises(); await nextTick()
+    expect(unloadPrevented()).toBe(false)
+    w.unmount()
+  })
+
+  it('test_new_estimate_with_line_blocks_unload', async () => {
+    const w = mount(EstimateForm); await flushPromises(); await nextTick()
+    const vm = w.vm as unknown as { onSearchPicked: (i: Record<string, unknown>) => void }
+    vm.onSearchPicked({ id: 1, name: 'X', kind: 'work', kind_display: 'Работа', unit: 'шт.', default_price: '1000', category: 2, section_name: 'S', subcategory_name: 'Sub' })
+    await nextTick()
+    expect(unloadPrevented()).toBe(true)
+    w.unmount()
+    expect(unloadPrevented(), 'после ухода со страницы слушатель снят').toBe(false)
+  })
+
+  it('test_edit_loaded_untouched_does_not_block_but_removed_line_does', async () => {
+    routeParams.id = '8'
+    fetchOne.mockResolvedValueOnce({
+      id: 8, object: 347, title: 'Смета', date: '', note: '', lines: [
+        { work_item: 55, name: 'Кабель', kind: 'work', unit: 'п.м.', quantity: '2', unit_price: '6000',
+          position_no: '', section_name: 'Монтаж', subcategory_name: 'Прокладка', coeff_scope: '',
+          coeff_scope_name: '', coeff_scope_section: '', uid: 'w8', coeff_targets: [], is_draft: false },
+        { work_item: null, name: 'Коэфф', kind: 'coefficient', unit: 'коэф.', quantity: '1', unit_price: '1.5',
+          position_no: '', section_name: '', subcategory_name: '', coeff_scope: 'selection',
+          coeff_scope_name: '', coeff_scope_section: '', uid: 'c8', coeff_targets: ['w8', 'gone'], is_draft: false },
+      ],
+    })
+    const w = mount(EstimateForm); await flushPromises(); await nextTick(); await nextTick()
+    // загрузка (и автоочистка ссылки 'gone' наблюдателем) — не правка пользователя
+    expect(unloadPrevented()).toBe(false)
+    const vm = w.vm as unknown as { removeLine: (i: number) => void }
+    vm.removeLine(0)
+    await nextTick()
+    expect(unloadPrevented()).toBe(true)
+    w.unmount()
+  })
+
+  it('test_edit_still_loading_does_not_block_unload', async () => {
+    routeParams.id = '9'
+    fetchOne.mockReturnValueOnce(new Promise(() => {}))   // ответ ещё не пришёл
+    const w = mount(EstimateForm); await flushPromises(); await nextTick()
+    expect(unloadPrevented()).toBe(false)
+    w.unmount()
+  })
+
+  it('test_saved_estimate_does_not_block_navigation', async () => {
+    const w = mount(EstimateForm); await flushPromises(); await nextTick()
+    const vm = w.vm as unknown as { lines: Array<Record<string, unknown>>; form: { title: string }; handleSubmit: () => Promise<void> }
+    vm.lines.push(line({ name: 'Свободная', quantity: '1', unit_price: '100' }))
+    vm.form.title = 'Новая'
+    await nextTick()
+    expect(unloadPrevented()).toBe(true)
+    await vm.handleSubmit()
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(push).toHaveBeenCalledWith('/estimates/7')
+    expect(unloadPrevented()).toBe(false)
+    w.unmount()
   })
 })
