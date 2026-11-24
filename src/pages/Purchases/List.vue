@@ -134,7 +134,7 @@ import { useEmployeesStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
 import { usePermissions } from '@/composables/usePermissions'
-import { canDeletePurchase, purchaseDeleteQuestion } from '@/utils/deleteRules'
+import { canDeletePurchase, purchaseDeleteQuestion, ownObjectIdsOf } from '@/utils/deleteRules'
 
 // Stores
 const purchasesStore = usePurchasesStore()
@@ -148,6 +148,7 @@ const { canCreateRequests, canApprovePurchases, canExportReports, hasPermission 
 // F-1093 (T3; ответы владельца 1 и 2): «Удалить» — по тому же правилу, что на сервере
 const deletePerms = computed(() => ({
   isSuperuser: !!authStore.me?.is_superuser, has: hasPermission, meId: authStore.me?.id,
+  ownObjectIds: ownObjectIdsOf(authStore.me, objectsStore.items),  // F-1096: «свой объект», как на сервере
 }))
 
 // isRequester = может создавать заявки, но не одобрять

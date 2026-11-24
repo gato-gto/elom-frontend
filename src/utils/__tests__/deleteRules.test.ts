@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  canDeletePurchase, canDeleteWriteOff, purchaseDeleteQuestion, writeOffDeleteQuestion, type DeletePerms,
+  canDeletePurchase, canDeleteWriteOff, purchaseDeleteQuestion, writeOffDeleteQuestion, ownObjectIdsOf, type DeletePerms,
 } from '../deleteRules'
 
 // F-1093 (T3; ответы владельца 1 и 2): то же правило, что на сервере (purchases/tests_f1084_delete_policy.py).
@@ -60,5 +60,26 @@ describe('вопросы перед удалением', () => {
       .toBe('Удалить списание? Остаток объекта «Гостиница» увеличится на 5 м «Кабель».')
     expect(writeOffDeleteQuestion({ quantity: '1500.5', unit_code: 'м', material_name: 'Кабель', object_name: 'Г' }))
       .toBe('Удалить списание? Остаток объекта «Г» увеличится на 1\u00a0500,5 м «Кабель».')
+  })
+})
+
+describe('F-1096 (ревью): бригадир — только на своём объекте, как сервер', () => {
+  const brigOn = (ids: number[]): DeletePerms => ({ ...BRIG, ownObjectIds: new Set(ids) })
+  it('свой черновик на чужом теперь объекте — кнопки нет', () => {
+    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7, object: 5 }, brigOn([6]))).toBe(false)
+    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7, object: 6 }, brigOn([6]))).toBe(true)
+  })
+  it('своё списание на чужом объекте — кнопки нет', () => {
+    expect(canDeleteWriteOff({ created_by: 7, object: 5 }, brigOn([6]))).toBe(false)
+    expect(canDeleteWriteOff({ created_by: 7, object: 6 }, brigOn([6]))).toBe(true)
+  })
+  it('руководству объект не важен', () => {
+    expect(canDeletePurchase({ id: 1, status: 'completed', created_by: 99, object: 5 }, { ...MANAGER, ownObjectIds: new Set() })).toBe(true)
+  })
+  it('свои объекты = назначенные + где ответственный (по profile_id)', () => {
+    const ids = ownObjectIdsOf({ assigned_object_ids: [3], profile_id: 70 },
+      [{ id: 4, responsible: 70 }, { id: 5, responsible: 71 }, { id: 3, responsible: 71 }])
+    expect([...ids].sort()).toEqual([3, 4])
+    expect([...ownObjectIdsOf(null, [{ id: 4, responsible: 70 }])]).toEqual([])
   })
 })

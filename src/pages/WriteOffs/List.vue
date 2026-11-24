@@ -101,7 +101,7 @@ import WriteOffCard from '@/components/cards/WriteOffCard.vue'
 import { usePermissions } from '@/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
-import { canDeleteWriteOff, writeOffDeleteQuestion } from '@/utils/deleteRules'
+import { canDeleteWriteOff, writeOffDeleteQuestion, ownObjectIdsOf } from '@/utils/deleteRules'
 
 // ✅ RBAC: проверка через permissions
 const { can, canExportReports, hasPermission } = usePermissions()
@@ -110,6 +110,7 @@ const { showSuccess } = useNotifications()
 // F-1093 (T3; ответы владельца 1 и 2): «Удалить» — по тому же правилу, что на сервере
 const deletePerms = computed(() => ({
   isSuperuser: !!authStore.me?.is_superuser, has: hasPermission, meId: authStore.me?.id,
+  ownObjectIds: ownObjectIdsOf(authStore.me, objectsStore.items),  // F-1096: «свой объект», как на сервере
 }))
 const canCreate = computed(() => can('writeoffs', 'create'))
 
@@ -298,6 +299,8 @@ async function handleDelete(writeOff: WriteOff) {
   try {
     await writeOffsStore.remove(writeOff.id)
     showSuccess('Списание удалено')
+    // F-1096 (ревью): «Остаток» в соседних строках считается ПОСЛЕ каждого списания — перечитываем список
+    await writeOffsStore.fetchList()
   } catch (error) {
     await handleDeleteError(error, 'writeoff', writeOff.id)
   }

@@ -9,9 +9,24 @@ export interface DeletePerms {
   isSuperuser: boolean
   has: (codename: string) => boolean
   meId: number | null | undefined
+  /** F-1096 (ревью): объекты пользователя (назначен или ответственный) — сервер требует «свой объект» */
+  ownObjectIds?: Set<number> | null
+}
+
+/** Свои объекты: назначенные + те, где пользователь ответственный (Object.responsible — profile id). */
+export function ownObjectIdsOf(
+  me: { assigned_object_ids?: number[] | null; profile_id?: number | null } | null | undefined,
+  objects: Array<{ id: number; responsible?: number | null }>,
+): Set<number> {
+  const ids = new Set<number>(me?.assigned_object_ids || [])
+  if (me?.profile_id != null) {
+    for (const o of objects) { if (o.responsible === me.profile_id) { ids.add(o.id) } }
+  }
+  return ids
 }
 
 interface PurchaseLike {
+  object?: number | null
   status?: string
   created_by?: number | null
   is_archived?: boolean
@@ -21,6 +36,7 @@ interface PurchaseLike {
 }
 
 interface WriteOffLike {
+  object?: number | null
   created_by?: number | null
   is_archived?: boolean
   quantity?: string | number | null
@@ -33,12 +49,18 @@ export function canDeletePurchase(p: PurchaseLike, a: DeletePerms): boolean {
   if (p.is_archived) { return false }
   if (a.isSuperuser || a.has('purchases.delete_all')) { return true }
   return a.has('purchases.delete_own') && p.status === 'new' && a.meId != null && p.created_by === a.meId
+    && isOwnObject(p.object, a)
+}
+
+function isOwnObject(objectId: number | null | undefined, a: DeletePerms): boolean {
+  if (!a.ownObjectIds) { return true }  // список объектов не передан — решает сервер
+  return objectId != null && a.ownObjectIds.has(objectId)
 }
 
 export function canDeleteWriteOff(w: WriteOffLike, a: DeletePerms): boolean {
   if (w.is_archived) { return false }
   if (a.isSuperuser || a.has('writeoffs.delete_all')) { return true }
-  return a.has('writeoffs.delete_own') && a.meId != null && w.created_by === a.meId
+  return a.has('writeoffs.delete_own') && a.meId != null && w.created_by === a.meId && isOwnObject(w.object, a)
 }
 
 /** Вопрос перед удалением закупки: что произойдёт с остатком. */

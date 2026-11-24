@@ -8,7 +8,8 @@ import { defineComponent, h } from 'vue'
 const { remove, perms, me } = vi.hoisted(() => ({
   remove: vi.fn().mockResolvedValue(undefined),
   perms: { list: [] as string[] },
-  me: { value: { id: 7, is_superuser: false } as { id: number; is_superuser: boolean } },
+  me: { value: { id: 7, is_superuser: false, profile_id: 70, assigned_object_ids: [] as number[] } as
+    { id: number; is_superuser: boolean; profile_id: number; assigned_object_ids: number[] } },
 }))
 
 vi.mock('vue-router', () => ({ useRoute: () => ({ query: {}, params: {} }), useRouter: () => ({ push: vi.fn() }) }))
@@ -16,7 +17,7 @@ vi.mock('@/stores/purchases', () => ({
   usePurchasesStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined), remove }),
   approvePurchaseWithReport: vi.fn(), rejectPurchase: vi.fn(),
 }))
-vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [], selectOptions: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
+vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [{ id: 3, responsible: 70 }], selectOptions: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/employees', () => ({ useEmployeesStore: () => ({ items: [], selectOptions: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ get me() { return me.value } }) }))
 vi.mock('@/composables/useNotifications', () => ({ useNotifications: () => ({ showSuccess: vi.fn(), showError: vi.fn() }) }))
@@ -54,7 +55,7 @@ const del = () => {
   if (!a?.visible) { throw new Error('нет действия «Удалить» с visible') }
   return a as Action & { visible: (i: unknown) => boolean }
 }
-const P = { id: 21552, purchase_no: 'P0005', status: 'completed', object_name: 'Медцентр 01', created_by: 99, is_archived: false }
+const P = { id: 21552, object: 3, purchase_no: 'P0005', status: 'completed', object_name: 'Медцентр 01', created_by: 99, is_archived: false }
 
 describe('Список закупок: «Удалить» (F-1093)', () => {
   beforeEach(() => { remove.mockClear() })
