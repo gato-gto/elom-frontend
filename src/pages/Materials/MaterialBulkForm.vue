@@ -2,6 +2,7 @@
   <Modal
     :size="'6xl'"
     :model-value="isOpen"
+    guard-unsaved
     title="Массовое добавление материалов"
     @close="closeModal"
   >

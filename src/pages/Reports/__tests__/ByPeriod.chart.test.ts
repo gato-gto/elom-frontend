@@ -87,7 +87,7 @@ describe('ByPeriod — месяц', () => {
     vi.clearAllMocks()
     vi.mocked(api.get).mockResolvedValue({
       data: { results: [
-        { period: '2026-08-01', total_amount: 100, purchases: 1, unique_objects: 1, unique_materials: 1, unique_responsibles: 1, avg_amount: 100 },
+        { period: '2026-08', total_amount: 100, purchases: 1, unique_objects: 1, unique_materials: 1, unique_responsibles: 1, avg_amount: 100 },
       ], count: 1, total: null },
     })
   })

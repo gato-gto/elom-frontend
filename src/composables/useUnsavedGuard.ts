@@ -15,7 +15,30 @@ export function confirmDiscard(): boolean {
   return window.confirm(DISCARD_MESSAGE)
 }
 
+// Ревью B21 (R2): реестр смонтированных форм — для явных действий ухода (выход из системы), которые сначала
+// меняют состояние (стирают токены), а потом переходят. Спрашивать нужно ДО действия и один раз.
+const activeChecks = new Set<() => boolean>()
+let discardConfirmed = false
+const routersWithReset = new WeakSet<object>()
+
+export function hasUnsavedChanges(): boolean {
+  for (const check of activeChecks) { if (check()) { return true } }
+  return false
+}
+
+/** Перед явным уходом (выход): нет несохранённого → true; иначе спросить. OK → следующий переход не
+ *  спрашивает повторно (разово, сбрасывается после любой навигации). */
+export function confirmLeaveIfUnsaved(): boolean {
+  if (!hasUnsavedChanges()) { return true }
+  if (!confirmDiscard()) { return false }
+  discardConfirmed = true
+  return true
+}
+
 export function useUnsavedGuard(isActive: () => boolean): void {
+  activeChecks.add(isActive)
+  onBeforeUnmount(() => { activeChecks.delete(isActive) })
+
   // Event, а не BeforeUnloadEvent: eslint-конфиг (no-undef) не знает DOM-типов (их проверяет TS).
   const onBeforeUnload = (e: Event) => {
     if (!isActive()) { return }
@@ -31,9 +54,15 @@ export function useUnsavedGuard(isActive: () => boolean): void {
   // с компонентом. Смена только query (фильтры списка) — не уход со страницы, не спрашиваем.
   const router = getCurrentInstance()?.appContext.config.globalProperties.$router as Router | undefined
   if (router && typeof router.beforeEach === 'function') {
-    const removeGuard = router.beforeEach((to, from) => (
-      to.path !== from.path && isActive() ? confirmDiscard() : true
-    ))
+    const removeGuard = router.beforeEach((to, from) => {
+      if (to.path === from.path || !isActive()) { return true }
+      return discardConfirmed ? true : confirmDiscard()
+    })
     onBeforeUnmount(removeGuard)
+    // разовый обход после confirmLeaveIfUnsaved гасим после любой навигации (один хук на роутер)
+    if (!routersWithReset.has(router) && typeof router.afterEach === 'function') {
+      routersWithReset.add(router)
+      router.afterEach(() => { discardConfirmed = false })
+    }
   }
 }

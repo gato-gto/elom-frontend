@@ -15,7 +15,8 @@ export function todayLocal(): string {
 /**
  * Нормализует входную дату
  */
-const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/
+// 'YYYY-MM-DD' и 'YYYY-MM' (месяц отчёта по периодам, BE strftime %Y-%m — ревью F-1080)
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/
 
 function toValidDate(value: string | Date | number | null | undefined): Date | null {
   if (!value) { return null }
@@ -24,7 +25,7 @@ function toValidDate(value: string | Date | number | null | undefined): Date | n
   if (typeof value === 'string') {
     const m = DATE_ONLY_RE.exec(value)
     if (m) {
-      const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+      const [y, mo, d] = [Number(m[1]), Number(m[2]), m[3] === undefined ? 1 : Number(m[3])]
       const local = new Date(y, mo - 1, d)
       // 2026-13-45 не «перекатываем» в другую дату
       const same = local.getFullYear() === y && local.getMonth() === mo - 1 && local.getDate() === d

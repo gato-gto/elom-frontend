@@ -300,6 +300,7 @@
   import { useUiStore } from '@/stores/ui'
   import { getIconPath } from '@/assets/icons'
   import type { NavigationItem } from '@/types/router'
+  import { confirmLeaveIfUnsaved } from '@/composables/useUnsavedGuard'
   
   const route = useRoute()
   const router = useRouter()
@@ -566,6 +567,8 @@
   const handleChangePassword = () => { closeFullMenu(); emit('change-password') }
 
   const handleLogout = async () => {
+    // ревью B21 (R2): спросить про несохранённое ДО выхода (см. AppLayout.logout)
+    if (!confirmLeaveIfUnsaved()) { return }
     try {
       closeFullMenu()
       auth.logout()

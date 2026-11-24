@@ -138,6 +138,7 @@ import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
 import AutoNavigation from '@/components/AutoNavigation.vue'
 import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
+import { confirmLeaveIfUnsaved } from '@/composables/useUnsavedGuard'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -190,6 +191,9 @@ const pwModalOpen = ref(false)
 const mustChangePassword = computed(() => !!auth.me?.must_change_password)
 
 const logout = async () => {
+  // ревью B21 (R2): спросить про несохранённое ДО выхода — после auth.logout() «Отмена» оставляла
+  // человека на форме уже без токенов (сохранить нельзя)
+  if (!confirmLeaveIfUnsaved()) { return }
   try {
     auth.logout()
     ui.toast({ type: 'success', text: 'Вы вышли из системы' })

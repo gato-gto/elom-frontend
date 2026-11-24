@@ -70,7 +70,7 @@
     </Modal>
 
     <!-- Modal for bulk add -->
-    <Modal v-model="bulkAddModalOpen" title="Массовое добавление инструментов" size="6xl" :closable="true">
+    <Modal v-model="bulkAddModalOpen" title="Массовое добавление инструментов" size="6xl" :closable="true" guard-unsaved>
       <ToolBulkAddForm @saved="onBulkAddSaved" @cancel="bulkAddModalOpen = false" />
     </Modal>
 

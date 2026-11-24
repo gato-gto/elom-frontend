@@ -261,8 +261,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import { lockBodyScroll, unlockBodyScroll } from '@/utils/scrollLock'
+import { pushModal, removeModal, isTopModal } from '@/utils/modalStack'
 import { useRouter, useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import type { Purchase, PurchasePhoto, Employee } from '@/api/types'
@@ -400,7 +401,11 @@ function openPhotoModal(photo: PurchasePhoto, index: number = 0) {
 // лайтбоксом, Escape/стрелки не работали. Добавляем scroll-lock + клавиатуру (Escape закрывает,
 // ←/→ листают). Полный focus-trap для лайтбокса избыточен (мало контролов), но базовая операбельность
 // с клавиатуры и блокировка фона — обязательны.
+// Ревью B21 (R5): лайтбокс — в общем стеке модалок: Escape закрывает только фото, а не окно просмотра
+// закупки под ним (оба слушали document).
+const photoModalId = Symbol('photo-lightbox')
 function onPhotoKeydown(e: KeyboardEvent) {
+  if (!isTopModal(photoModalId)) { return }
   if (e.key === 'Escape') { e.preventDefault(); photoModalOpen.value = false }
   else if (e.key === 'ArrowRight') { nextPhoto() }
   else if (e.key === 'ArrowLeft') { previousPhoto() }
@@ -408,15 +413,18 @@ function onPhotoKeydown(e: KeyboardEvent) {
 
 watch(photoModalOpen, (isOpen, wasOpen) => {
   if (isOpen) {
+    pushModal(photoModalId)
     document.addEventListener('keydown', onPhotoKeydown)
     lockBodyScroll()
   } else if (wasOpen !== undefined) {
+    removeModal(photoModalId)
     document.removeEventListener('keydown', onPhotoKeydown)
     unlockBodyScroll()
   }
 })
 
 onUnmounted(() => {
+  removeModal(photoModalId)
   document.removeEventListener('keydown', onPhotoKeydown)
   if (photoModalOpen.value) { unlockBodyScroll() }
 })
@@ -461,33 +469,8 @@ function handlePrint() {
   router.push({ name: 'PurchasePrint', params: { id: props.purchase.id } })
 }
 
-// Клавиатурная навигация
-function handleKeydown(event: KeyboardEvent) {
-  if (!photoModalOpen.value) {return}
-  
-  switch (event.key) {
-    case 'ArrowLeft':
-      event.preventDefault()
-      previousPhoto()
-      break
-    case 'ArrowRight':
-      event.preventDefault()
-      nextPhoto()
-      break
-    case 'Escape':
-      event.preventDefault()
-      photoModalOpen.value = false
-      break
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+// Ревью B21: второй обработчик клавиш (handleKeydown) дублировал onPhotoKeydown — стрелка листала на
+// два фото. Клавиатуру лайтбокса ведёт только onPhotoKeydown (выше).
 </script>
 
 <style scoped>
