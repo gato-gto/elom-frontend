@@ -38,7 +38,11 @@ const objectsStore = useObjectsStore()
 const employeesStore = useEmployeesStore()
 const auth = useAuthStore()
 const { handleFormError } = useErrorHandler()
-const { canCreateRequests } = usePermissions()
+const { canCreateRequests, hasPermission } = usePermissions()
+// F-1094 (ревью; ответ владельца 11): архив объекта (активность) — решение руководства, у кого есть право удалять
+// объекты; сервер остальным отвечает 403. Бригадир флажок не видит.
+const canArchiveObject = computed(() =>
+  !!auth.me?.is_superuser || hasPermission('objects.delete') || hasPermission('objects.delete_all'))
 
 // Проверка: ограниченный доступ (как requester - может только себе назначать)
 const isLimitedAccess = computed(() => canCreateRequests.value)
@@ -159,7 +163,8 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       type: 'checkbox',
       label: 'Активный объект',
       order: 10,
-      width: 'full'
+      width: 'full',
+      condition: () => canArchiveObject.value
     }
   ],
   submitText: props.initial ? 'Обновить' : 'Создать',

@@ -10,6 +10,12 @@ const EMPLOYEES = [
   { id: 2, profile_id: 102, username: 'resp', first_name: 'Иван', last_name: 'Ответственный', assigned_object_ids: [] },
   { id: 3, profile_id: 103, username: 'stranger', first_name: 'Чужой', last_name: 'Бригадир', assigned_object_ids: [8] },
   { id: 4, profile_id: 104, username: 'mgr', first_name: 'Менеджер', last_name: '', assigned_object_ids: [] },
+  // F-1094 (ревью): назначены на объект 7, но списание на них не уменьшит остаток — не предлагаем
+  { id: 5, profile_id: 105, username: 'gone', first_name: 'Ушедший', last_name: '', assigned_object_ids: [7], is_active: false },
+  { id: 6, profile_id: 106, username: 'mgr7', first_name: 'Менеджер7', last_name: '', assigned_object_ids: [7],
+    roles: [{ name: 'manager' }] },
+  { id: 9, profile_id: 109, username: 'mixed', first_name: 'Смешанный', last_name: '', assigned_object_ids: [7],
+    roles: [{ name: 'manager' }, { name: 'brigadier' }] },
 ]
 
 vi.mock('@/stores/writeOffs', () => ({
@@ -61,9 +67,9 @@ async function optionsFor(objectId: number, initial?: Record<string, unknown>) {
 }
 
 describe('WriteOffForm: ответственный — только люди объекта (F-1089)', () => {
-  it('объект 7: ответственный объекта и назначенный; чужих и менеджера нет', async () => {
+  it('объект 7: ответственный объекта и назначенные с учётом; чужих, отключённых и «без учёта» нет', async () => {
     const vm = await optionsFor(7)
-    expect(vm.responsibleOptions.map(o => o.value)).toEqual([0, 2, 1])
+    expect(vm.responsibleOptions.map(o => o.value)).toEqual([0, 2, 1, 9])
     expect(vm.responsibleOptions[1].label).toBe('Иван Ответственный (ответственный за объект)')
   })
 
@@ -79,8 +85,8 @@ describe('WriteOffForm: ответственный — только люди о�
 
   it('правка строки до правила: текущий (чужой) ответственный остаётся выбираемым на том же объекте', async () => {
     const vm = await optionsFor(7, { id: 50, object: 7, responsible: 3, date: '2026-03-05' })
-    expect(vm.responsibleOptions.map(o => o.value)).toEqual([0, 2, 1, 3])
-    expect(vm.responsibleOptions[3].label).toBe('Чужой Бригадир (текущий ответственный)')
+    expect(vm.responsibleOptions.map(o => o.value)).toEqual([0, 2, 1, 9, 3])
+    expect(vm.responsibleOptions[4].label).toBe('Чужой Бригадир (текущий ответственный)')
   })
 
   it('та же строка при смене объекта — прежний ответственный не предлагается', async () => {

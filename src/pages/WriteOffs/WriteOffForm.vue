@@ -717,12 +717,21 @@ const loadEmployeesByObject = async (objectId: number) => {
       : undefined
     const objectResponsibleUserId = objectResponsibleEmp?.id ?? null
 
+    // F-1094 (ревью): только активные и «с учётом остатков» (D-026: учёт у всех, кроме тех, у кого лишь
+    // manager/warehouse) — иначе списание тихо не уменьшит остаток; сервер проверяет то же.
+    const canTakeWriteOff = (emp: { is_active?: boolean; roles?: Array<{ name: string }> } | undefined): boolean => {
+      if (emp?.is_active === false) { return false }
+      const roles = emp?.roles || []
+      return !(roles.length > 0 && roles.every(r => r.name === 'manager' || r.name === 'warehouse'))
+    }
     const people: Array<{ value: number; label: string }> = []
-    if (objectResponsibleEmp) {
+    if (objectResponsibleEmp && canTakeWriteOff(objectResponsibleEmp)) {
       people.push({ value: objectResponsibleEmp.id, label: `${empLabel(objectResponsibleEmp)} (ответственный за объект)` })
     }
     for (const emp of getByObject(objectId)) {
-      if (!people.some(p => p.value === emp.id)) { people.push({ value: emp.id, label: empLabel(emp) }) }
+      if (canTakeWriteOff(emp) && !people.some(p => p.value === emp.id)) {
+        people.push({ value: emp.id, label: empLabel(emp) })
+      }
     }
     // Правка строки, внесённой до правила: текущий ответственный остаётся выбираемым, пока объект тот же
     // (сервер такую правку пропускает, если ответственного и объект не меняют).
@@ -736,7 +745,8 @@ const loadEmployeesByObject = async (objectId: number) => {
 
     // Автозаполнение, если пользователь не выбирал сам: ответственный объекта, иначе первый из людей объекта.
     if (!userModifiedFields.value.responsible) {
-      const fallback = objectResponsibleUserId ?? people[0]?.value
+      const respOffered = people.some(p => p.value === objectResponsibleUserId)
+      const fallback = (respOffered ? objectResponsibleUserId : null) ?? people[0]?.value
       if (fallback) { formData.value.responsible = fallback }
     }
   } catch (error) {

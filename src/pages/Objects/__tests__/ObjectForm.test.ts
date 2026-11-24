@@ -67,3 +67,32 @@ describe('ObjectForm · этап работ (F-1034)', () => {
     )
   })
 })
+
+describe('ObjectForm · флажок «Активный объект» только у руководства (F-1094)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+  type Field = { key: string; condition?: () => boolean }
+  const shown = (w: ReturnType<typeof mountForm>) => {
+    const cfg = w.findComponent(GenericForm).props('config') as { fields: Field[] }
+    const f = cfg.fields.find(x => x.key === 'is_active')
+    return !!f && (!f.condition || f.condition())
+  }
+  const seed = async (perms: string[]) => {
+    const { usePermissionsStore } = await import('@/stores/permissions')
+    usePermissionsStore().permissions = perms.map(codename => ({ codename })) as never
+  }
+
+  it('бригадир (без objects.delete) — флажка нет', async () => {
+    const w = mountForm(existing)
+    await seed(['objects.view', 'objects.edit'])
+    expect(shown(w)).toBe(false)
+  })
+
+  it('руководство (objects.delete_all) — флажок есть', async () => {
+    const w = mountForm(existing)
+    await seed(['objects.view', 'objects.edit', 'objects.delete', 'objects.delete_all'])
+    expect(shown(w)).toBe(true)
+  })
+})

@@ -453,6 +453,19 @@ describe('PurchaseForm', () => {
       expect(dateField(wrapper)?.help).toBeUndefined()
     })
 
+    it('вернули статус «Выполнено» — дата возвращается к исходной (F-1094)', async () => {
+      const wrapper = mountWith(20, 'completed')
+      await flushPromises()
+      type FieldVm = { genericFormRef: unknown; onFieldChange: (k: string, v: unknown) => void }
+      const vm = wrapper.vm as unknown as FieldVm
+      const setFieldValue = vi.fn()
+      vm.genericFormRef = { setFieldValue }
+      vm.onFieldChange('status', 'new')
+      vm.onFieldChange('date', '2026-03-09')
+      vm.onFieldChange('status', 'completed')
+      expect(setFieldValue).toHaveBeenCalledWith('date', '2026-03-01')
+    })
+
     it('снятие проведения (статус → «Новая») снова открывает дату — как на сервере', async () => {
       const wrapper = mountWith(19, 'completed')
       await flushPromises()

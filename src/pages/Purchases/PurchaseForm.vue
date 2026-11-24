@@ -1465,6 +1465,12 @@ function onStatusChange(newStatus: string) {
 function onFieldChange(key: string, value: any) {
   if (key === 'status') {
     onStatusChange(value)
+    // F-1094 (ревью): вернули проведённой закупке статус «Выполнено» — дата снова закрыта, поэтому
+    // возвращаем исходную (иначе изменённая дата «застревала» в закрытом поле и сохранение давало 400).
+    if (isEdit.value && props.initial?.status === 'completed' && value === 'completed' && props.initial.date) {
+      genericFormRef.value?.setFieldValue('date', props.initial.date)
+      Object.assign(formData.value, { date: props.initial.date })
+    }
   }
   // F-643 (#28): зеркалим object/date в formData → live-предупреждение о закрытом периоде.
   if (key === 'object' || key === 'date') {
