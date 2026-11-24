@@ -10,7 +10,7 @@
       <template #column-tool_inventory_number="{ item, value }">
         <div class="flex flex-col gap-1">
           <div class="flex items-center gap-2">
-            <span class="font-mono font-bold text-primary break-words">{{ value }}</span>
+            <span class="font-code font-bold text-primary break-words">{{ value }}</span>
           </div>
           <span class="font-medium break-words">
             {{ [

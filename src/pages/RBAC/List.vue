@@ -31,6 +31,7 @@
     <FilterPanel
       :columns="2"
       :loading="rbacStore.loading"
+      :active="filtersActive"
       @reset="handleResetFilters"
     >
       <FilterField
@@ -352,6 +353,9 @@ async function handleRefresh() {
 function handleFilterChange() {
   // Фильтры применяются автоматически через computed
 }
+
+// «Сбросить фильтры» — только при заданном фильтре
+const filtersActive = computed(() => !!filters.value.search || !!filters.value.is_system)
 
 function handleResetFilters() {
   filters.value = {

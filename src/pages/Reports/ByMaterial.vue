@@ -23,6 +23,7 @@
     <FilterPanel
       :columns="3"
       :loading="loading"
+      :active="filtersActive"
       @reset="resetFilters"
     >
       <FilterField
@@ -306,6 +307,9 @@ const objectOptions = computed(() => [
   { value: '', label: 'Все объекты' },
   ...objects.value.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
 ])
+
+// «Сбросить фильтры» — только при заданном фильтре
+const filtersActive = computed(() => !!dateFrom.value || !!dateTo.value || !!objectId.value)
 
 function resetFilters() {
   dateFrom.value = undefined

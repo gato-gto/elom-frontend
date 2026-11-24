@@ -210,7 +210,9 @@ const listConfig = computed<GenericListConfig<ObjectBalance>>(() => ({
     {
       key: 'date',
       type: 'date',
-      label: 'Дата'
+      label: 'Дата',
+      // дата по умолчанию = сегодня (F-855) — сама по себе не повод показывать «Сбросить фильтры»
+      defaultValue: todayLocal()
     }
   ],
   mobileCardComponent: BalanceCard,

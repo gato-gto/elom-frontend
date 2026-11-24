@@ -23,6 +23,7 @@
     <FilterPanel
       :columns="3"
       :loading="loading"
+      :active="filtersActive"
       @reset="resetFilters"
     >
       <FilterField
@@ -295,6 +296,9 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 }
 
 // Export functions removed - using centralized useExport composable
+
+// «Сбросить фильтры» — только при заданном фильтре (период «месяц» — значение по умолчанию)
+const filtersActive = computed(() => !!dateFrom.value || !!dateTo.value || period.value !== 'month')
 
 function resetFilters() {
   dateFrom.value = undefined

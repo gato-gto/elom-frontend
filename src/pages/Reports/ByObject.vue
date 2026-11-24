@@ -23,6 +23,7 @@
     <FilterPanel
       :columns="4"
       :loading="loading"
+      :active="filtersActive"
       @reset="resetFilters"
     >
       <FilterField
@@ -294,6 +295,9 @@ async function handleExport(format: 'csv' | 'excel' | 'pdf') {
 }
 
 // Export functions removed - using centralized useExport composable
+
+// «Сбросить фильтры» — только при заданном фильтре
+const filtersActive = computed(() => Object.values(filters.value).some(v => v !== undefined && v !== null && v !== ''))
 
 function resetFilters() {
   filters.value = { date_from: undefined, date_to: undefined, object: undefined, responsible: undefined }

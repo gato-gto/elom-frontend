@@ -26,6 +26,9 @@ export interface FilterConfig {
   min?: number
   max?: number
   step?: number
+  // Значение, которое список ставит сам (дата остатков = сегодня). Равное ему — не «заданный фильтр»:
+  // кнопка «Сбросить фильтры» не показывается.
+  defaultValue?: string
 }
 
 export interface ActionConfig<T = any> {
