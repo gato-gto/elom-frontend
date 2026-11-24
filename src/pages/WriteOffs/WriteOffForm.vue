@@ -398,7 +398,7 @@ import { createBulk } from '@/stores/writeOffs'
 import { useObjectsStore } from '@/stores/objects'
 import { useArchivePeriodsStore } from '@/stores/archivePeriods'
 import { useMaterialsStore, getMaterialsByObject } from '@/stores/materials'
-import { useEmployeesStore, getByObject, getResponsibleEmployees, canBeResponsible } from '@/stores/employees'
+import { useEmployeesStore, getByObject } from '@/stores/employees'
 import { useUnitsStore } from '@/stores/units'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
@@ -701,25 +701,15 @@ const loadEmployeesByObject = async (objectId: number) => {
       return
     }
     
-    // Для других ролей: стандартная логика (используем централизованную функцию)
-    const responsibleList = [
-      { value: 0, label: '— выберите ответственного —' },
-      ...getResponsibleEmployees()
-        .map((emp: any) => ({ value: emp.id, label: empLabel(emp) }))
-    ]
-
+    // F-1089 (ответ владельца 11): ответственный списания — только люди объекта: его ответственный и
+    // назначенные на объект сотрудники; сервер проверяет то же (400). Без объекта выбирать не из кого.
     if (!objectId) {
-      responsibleOptions.value = responsibleList
+      responsibleOptions.value = [{ value: 0, label: '— сначала выберите объект —' }]
       return
     }
 
-    // Получаем объект для поиска его ответственного.
-    // ROOT-CAUSE бага «ответственный не подгружается по объекту»: Object.responsible — это
-    // EmployeeProfile.id (profile_id), а WriteOff.responsible и опции формы работают в
-    // пространстве User.id (emp.id). Мостом служит emp.profile_id — сравнивать/присваивать
-    // profile_id напрямую в User-поле нельзя, иначе value не совпадёт ни с одной опцией и
-    // select покажет плейсхолдер (ровно этот баг). В PurchaseForm ответственного вычисляет
-    // бэкенд из объекта, поэтому там этой ловушки нет; здесь выбор ручной — маппим сами.
+    // Object.responsible — EmployeeProfile.id (profile_id), а WriteOff.responsible и опции формы — User.id
+    // (emp.id). Мост — emp.profile_id; присваивать profile_id в User-поле нельзя (select покажет плейсхолдер).
     const selectedObject = objectsStore.items.find((obj: any) => obj.id === objectId)
     const objectResponsibleProfileId = selectedObject?.responsible
     const objectResponsibleEmp = objectResponsibleProfileId
@@ -727,42 +717,27 @@ const loadEmployeesByObject = async (objectId: number) => {
       : undefined
     const objectResponsibleUserId = objectResponsibleEmp?.id ?? null
 
-    // Если у объекта есть ответственный и его нет в списке — добавляем (в пространстве User.id)
-    if (objectResponsibleEmp && objectResponsibleUserId) {
-      const alreadyInList = responsibleList.some(item => item.value === objectResponsibleUserId)
-      if (!alreadyInList) {
-        responsibleList.push({
-          value: objectResponsibleUserId,
-          label: `${empLabel(objectResponsibleEmp)} (ответственный за объект)`
-        })
-      }
+    const people: Array<{ value: number; label: string }> = []
+    if (objectResponsibleEmp) {
+      people.push({ value: objectResponsibleEmp.id, label: `${empLabel(objectResponsibleEmp)} (ответственный за объект)` })
     }
-    
-    // При редактировании добавляем текущего ответственного, если его нет в списке
-    if (props.initial && props.initial.responsible) {
-      const currentResponsible = employeesStore.items.find((emp: any) => emp.id === props.initial!.responsible)
-      if (currentResponsible && !responsibleList.some(item => item.value === props.initial!.responsible)) {
-        responsibleList.push({ 
-          value: currentResponsible.id, 
-          label: `${empLabel(currentResponsible)} (текущий ответственный)` 
-        })
-      }
+    for (const emp of getByObject(objectId)) {
+      if (!people.some(p => p.value === emp.id)) { people.push({ value: emp.id, label: empLabel(emp) }) }
     }
-    
-    responsibleOptions.value = responsibleList
-    
-    // Получаем всех сотрудников объекта, которые могут быть ответственными
-    const objectEmployees = getByObject(objectId)
-    const brigadiers = objectEmployees.filter((emp: any) => canBeResponsible(emp))
+    // Правка строки, внесённой до правила: текущий ответственный остаётся выбираемым, пока объект тот же
+    // (сервер такую правку пропускает, если ответственного и объект не меняют).
+    if (props.initial?.responsible && props.initial.object === objectId
+        && !people.some(p => p.value === props.initial!.responsible)) {
+      const current = employeesStore.items.find((emp: any) => emp.id === props.initial!.responsible)
+      if (current) { people.push({ value: current.id, label: `${empLabel(current)} (текущий ответственный)` }) }
+    }
 
-    // Автозаполнение ответственного, если не изменён пользователем.
-    // objectResponsibleUserId уже в пространстве User.id — совпадёт с value опции.
+    responsibleOptions.value = [{ value: 0, label: '— выберите ответственного —' }, ...people]
+
+    // Автозаполнение, если пользователь не выбирал сам: ответственный объекта, иначе первый из людей объекта.
     if (!userModifiedFields.value.responsible) {
-      if (objectResponsibleUserId) {
-        formData.value.responsible = objectResponsibleUserId
-      } else if (brigadiers.length > 0) {
-        formData.value.responsible = brigadiers[0].id
-      }
+      const fallback = objectResponsibleUserId ?? people[0]?.value
+      if (fallback) { formData.value.responsible = fallback }
     }
   } catch (error) {
     console.error('Error loading employees by object:', error)
