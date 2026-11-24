@@ -119,7 +119,6 @@ const formConfig = computed(() => ({
       required: true,
       order: 2,
       width: 'half' as const,
-      help: 'Название роли, которое будет отображаться пользователям',
       validation: {
         maxLength: 100  // F-258: зеркалим Role.display_name max_length=100
       }
@@ -133,7 +132,6 @@ const formConfig = computed(() => ({
       order: 3,
       width: 'full' as const,
       rows: 3,
-      help: 'Подробное описание роли и её назначения в системе'
     },
     {
       key: 'permissions',

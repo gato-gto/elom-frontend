@@ -128,7 +128,6 @@ const formConfig = computed<GenericFormConfig<ToolIssueCreateRequest>>(() => ({
       options: objectOptions.value,
       order: 2,
       width: 'full',
-      help: 'Необязательно'
     },
     {
       key: 'issue_condition',

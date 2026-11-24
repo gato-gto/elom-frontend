@@ -66,7 +66,6 @@ const formConfig = computed<GenericFormConfig>(() => ({
         ),
       ],
       order: 2,
-      help: 'Выберите родительскую категорию для создания иерархии',
     },
   ],
   submitText: isEdit.value ? 'Сохранить изменения' : 'Создать категорию',

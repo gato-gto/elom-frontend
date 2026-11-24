@@ -126,7 +126,6 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
         minLength: 1,
         maxLength: 500
       },
-      help: 'Контактная информация ключевого лица'
     },
     {
       key: 'location_url',

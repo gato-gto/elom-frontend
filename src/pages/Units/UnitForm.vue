@@ -85,7 +85,6 @@ const formConfig = computed<GenericFormConfig<UnitRequest>>(() => ({
       required: true,
       order: 2,
       width: 'full',
-      help: getCodeHelpText(),
       validation: {
         minLength: 1,
         maxLength: 10,
@@ -156,19 +155,6 @@ function isUsedInSmartConversion(unitCode: string): boolean {
   ]
   
   return smartConversionUnits.includes(unitCode)
-}
-
-function getCodeHelpText(): string {
-  if (!currentCode.value) {
-    return 'Короткий код для использования в системе (например: кг, м, шт)'
-  }
-  
-  const isSmart = isUsedInSmartConversion(currentCode.value)
-  if (isSmart) {
-    return 'Этот код поддерживает умную конвертацию'
-  }
-  
-  return 'Код будет использоваться как есть, без автоматической конвертации'
 }
 
 function getSmartConversionAlertClass(): string {

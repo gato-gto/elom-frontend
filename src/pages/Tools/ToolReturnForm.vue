@@ -96,7 +96,6 @@ const formConfig = computed<GenericFormConfig<ToolIssueReturnRequest>>(() => ({
       required: true,
       order: 1,
       width: 'full',
-      help: 'Обязательно выберите актуальное состояние инструмента'
     }
   ],
   submitText: 'Оформить возврат',
