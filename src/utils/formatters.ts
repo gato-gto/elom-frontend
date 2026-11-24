@@ -15,8 +15,22 @@ export function todayLocal(): string {
 /**
  * Нормализует входную дату
  */
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/
+
 function toValidDate(value: string | Date | number | null | undefined): Date | null {
   if (!value) { return null }
+  // Аудит F-20: календарная дата 'YYYY-MM-DD' (дата закупки/списания, месяц отчёта) — без пояса.
+  // new Date('2026-08-01') = полночь UTC → западнее UTC показывалось «31.07» / «июль».
+  if (typeof value === 'string') {
+    const m = DATE_ONLY_RE.exec(value)
+    if (m) {
+      const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+      const local = new Date(y, mo - 1, d)
+      // 2026-13-45 не «перекатываем» в другую дату
+      const same = local.getFullYear() === y && local.getMonth() === mo - 1 && local.getDate() === d
+      return same ? local : null
+    }
+  }
   const date = value instanceof Date ? value : new Date(value)
   return isNaN(date.getTime()) ? null : date
 }
@@ -43,6 +57,18 @@ export function formatDate(dateString: string | Date | number | null | undefined
     month: '2-digit',
     day: '2-digit'
   })
+}
+
+const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+
+/**
+ * Месяц словом: '2026-08-01' → «Август 2026» (отчёт по месяцам; аудит F-20 — раньше «01.08.2026»).
+ */
+export function formatMonthYear(value: string | Date | null | undefined): string {
+  const date = toValidDate(value)
+  if (!date) { return '—' }
+  return `${RU_MONTHS[date.getMonth()]} ${date.getFullYear()}`
 }
 
 /**
@@ -134,38 +160,23 @@ export function formatAmountWithCurrency(
  * - 0.5 -> "0.5"
  * - 0 -> "0"
  */
+const RU_CLEAN_NUMBER = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 10 })
+
 export function formatNumberClean(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === '') { return '—' }
   
   const num0 = typeof value === 'string' ? parseFloat(value) : value
   if (isNaN(num0)) { return '—' }
 
-  // F-921: срезаем float-артефакты представления у ВЫЧИСЛЕННЫХ значений. `str.replace(/\.?0+$/)`
-  // ниже убирает только хвостовые НУЛИ, но 0.1+0.2 === 0.30000000000000004 → строка кончается на
-  // «…004», не на нулях → в UI попадал сырой 17-значный артефакт. Округляем до 10 знаков (артефакты
+  // F-921: срезаем float-артефакты представления у ВЫЧИСЛЕННЫХ значений: 0.1+0.2 === 0.30000000000000004 →
+  // в UI попадал сырой 17-значный артефакт. Округляем до 10 знаков (артефакты
   // живут на 15–17-й значащей цифре; реальные значения BE ≤6 знаков, F-876) — легитимные малые числа
   // (1e-6, 1e-7) и целые не затрагиваются.
   const num = parseFloat(num0.toFixed(10))
 
-  // Если число целое, возвращаем как целое
-  if (Number.isInteger(num)) {
-    return num.toString()
-  }
-  
-  // Для дробных чисел убираем лишние нули в конце
-  // Используем toFixed с достаточным количеством знаков, затем убираем нули
-  const str = num.toString()
-  
-  // Если число в научной нотации, конвертируем в обычный формат
-  if (str.includes('e') || str.includes('E')) {
-    // Используем toFixed для больших чисел
-    const fixed = num.toFixed(10)
-    return fixed.replace(/\.?0+$/, '')
-  }
-  
-  // Убираем завершающие нули после точки
-  // Сначала убираем завершающие нули, затем убираем точку если она осталась одна
-  return str.replace(/\.?0+$/, '')
+  // Аудит F-15: на экранах одно написание чисел — по-русски, как у остатков («1 000», «0,4», «-2,5»);
+  // раньше здесь было «1000» и «0.4». Хвостовые нули Intl не печатает; знаков — до 10 (BE ≤6, F-876).
+  return RU_CLEAN_NUMBER.format(num === 0 ? 0 : num)
 }
 
 /**

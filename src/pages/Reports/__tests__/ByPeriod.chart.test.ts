@@ -78,3 +78,37 @@ describe('ByPeriod chart single-render (F-570)', () => {
     expect(createChartSpy).toHaveBeenCalledTimes(2)
   })
 })
+
+// Аудит F-20 ①②: месяц в таблице выводился датой «01.08.2026»; подписи графика строились из
+// new Date('2026-08-01') (полночь UTC) → западнее UTC месяц съезжал на предыдущий.
+describe('ByPeriod — месяц', () => {
+  const ORIGINAL_TZ = process.env.TZ
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(api.get).mockResolvedValue({
+      data: { results: [
+        { period: '2026-08-01', total_amount: 100, purchases: 1, unique_objects: 1, unique_materials: 1, unique_responsibles: 1, avg_amount: 100 },
+      ], count: 1, total: null },
+    })
+  })
+
+  it('test_month_row_shows_month_name_not_first_day_date', async () => {
+    const w = mountPage()
+    await flushPromises()
+    const cell = w.find('tbody tr td')
+    expect(cell.text()).toBe('Август 2026')
+  })
+
+  it('test_chart_month_label_west_of_utc_is_same_month', async () => {
+    process.env.TZ = 'America/New_York'
+    try {
+      mountPage()
+      await flushPromises()
+      await new Promise(r => setTimeout(r, 0))
+      const cfg = createChartSpy.mock.calls.at(-1)?.[0] as { data: { labels: string[] } }
+      expect(cfg.data.labels[0]).toMatch(/^авг/)
+    } finally {
+      process.env.TZ = ORIGINAL_TZ
+    }
+  })
+})

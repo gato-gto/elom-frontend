@@ -60,8 +60,8 @@ describe('EstimateForm — пресеты коэффициентов (F-1036)', 
     expect(vm.lines).toHaveLength(0)                          // строка ещё не добавлена
     const t = w.text()
     expect(t).toContain('Ночные работы после 20:00')
-    expect(t).toContain('×1.3')
-    expect(t).toContain('×1.5')
+    expect(t).toContain('×1,3')  // F-15: русская запятая
+    expect(t).toContain('×1,5')
     expect(t).toContain(`зона: ${TV}`)
     expect(t).not.toContain('Выключенный пресет')
     expect(t).toContain('Свой коэффициент')

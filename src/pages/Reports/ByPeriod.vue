@@ -131,7 +131,7 @@
         <!-- Actual Data -->
         <tbody v-else>
           <tr v-for="r in rows" :key="r.period" >
-            <td>{{ formatDateFn(r.period) }}</td>
+            <td>{{ period === 'month' ? formatMonthYear(r.period) : formatDateFn(r.period) }}</td>
             <td class="text-right">{{ formatCurrency(r.total_amount) }}</td>
             <td class="text-right">{{ r.purchases ?? '—' }}</td>
             <td class="text-right">{{ r.avg_amount ? formatCurrency(r.avg_amount) : '—' }}</td>
@@ -177,7 +177,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import api from '@/api/client'
 import endpoints, { buildQuery } from '@/api/endpoints'
-import { formatCurrency, formatDate, formatDateWithOptions, formatNumberWithOptions } from '@/utils/formatters'
+import { formatCurrency, formatDate, formatDateWithOptions, formatMonthYear, formatNumberWithOptions } from '@/utils/formatters'
 
 // Expose formatDate to template
 const formatDateFn = formatDate
@@ -374,10 +374,10 @@ function updateChart() {
   }
 
   const labels = rows.value.map(row => {
-    const date = new Date(row.period)
-    return period.value === 'month' 
-      ? formatDateWithOptions(date, { month: 'short', year: 'numeric' })
-      : formatDateWithOptions(date, { day: 'numeric', month: 'short' })
+    // строка 'YYYY-MM-DD' — календарная дата без пояса (аудит F-20); new Date() сдвигал месяц западнее UTC
+    return period.value === 'month'
+      ? formatDateWithOptions(row.period, { month: 'short', year: 'numeric' })
+      : formatDateWithOptions(row.period, { day: 'numeric', month: 'short' })
   })
 
   const amounts = rows.value.map(row => Number(row.total_amount) || 0)

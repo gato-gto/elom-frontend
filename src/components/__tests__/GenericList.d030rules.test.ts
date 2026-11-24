@@ -81,3 +81,32 @@ describe('GenericList: «Сбросить фильтры» и значение �
     expect(cell.classes()).toContain('font-code')
   })
 })
+
+// Аудит F-20 ③: пока список грузится, на телефоне под спиннером висело «Нет списаний / Создайте первое
+// списание» (мобильный пустой блок был v-else без проверки загрузки; в таблице проверка была).
+describe('GenericList: пустое состояние не показывается во время загрузки', () => {
+  const cfg = { title: 'Списания', emptyTitle: 'Нет списаний', emptySubtitle: 'Создайте первое списание',
+    columns: [{ key: 'name', label: 'Название' }], mobileCardComponent: { template: '<div />' } }
+  const mountWith = (loading: boolean) => {
+    // мобильная раскладка (карточки) включается при ширине < 768
+    const prev = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 375 })
+    try {
+      return mount(GenericList, {
+        props: { config: cfg as never, store: { ...baseStore({}), items: [], loading } as never },
+      })
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: prev })
+    }
+  }
+
+  it('test_loading_empty_list_hides_empty_state', () => {
+    const t = mountWith(true).text()
+    expect(t).not.toContain('Нет списаний')
+    expect(t).not.toContain('Создайте первое списание')
+  })
+
+  it('test_loaded_empty_list_shows_empty_state', () => {
+    expect(mountWith(false).text()).toContain('Создайте первое списание')
+  })
+})

@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { formatNumberClean, formatQuantity, formatDate, formatDateTime, formatNumber, formatCurrency, pluralizeRu } from '../formatters'
 
+// Аудит F-15 (24.11): числа на экранах — по-русски («14,5», «1 000»), как у остатков; ожидания с точкой
+// («14.5») были зафиксированы до этого правила.
 describe('formatNumberClean', () => {
   it('removes trailing zeros from decimal numbers', () => {
     expect(formatNumberClean(14.000000)).toBe('14')
     expect(formatNumberClean('14.000000')).toBe('14')
-    expect(formatNumberClean(14.5)).toBe('14.5')
-    expect(formatNumberClean('14.50')).toBe('14.5')
-    expect(formatNumberClean(14.500000)).toBe('14.5')
+    expect(formatNumberClean(14.5)).toBe('14,5')
+    expect(formatNumberClean('14.50')).toBe('14,5')
+    expect(formatNumberClean(14.500000)).toBe('14,5')
   })
 
   it('shows integers as integers', () => {
@@ -18,9 +20,9 @@ describe('formatNumberClean', () => {
 
   it('shows fractional part only when it exists', () => {
     expect(formatNumberClean(14.0)).toBe('14')
-    expect(formatNumberClean(14.5)).toBe('14.5')
-    expect(formatNumberClean(0.5)).toBe('0.5')
-    expect(formatNumberClean(0.000001)).toBe('0.000001')
+    expect(formatNumberClean(14.5)).toBe('14,5')
+    expect(formatNumberClean(0.5)).toBe('0,5')
+    expect(formatNumberClean(0.000001)).toBe('0,000001')
   })
 
   it('handles null and undefined', () => {
@@ -36,28 +38,34 @@ describe('formatNumberClean', () => {
 
   it('handles negative numbers', () => {
     expect(formatNumberClean(-14.000000)).toBe('-14')
-    expect(formatNumberClean(-14.5)).toBe('-14.5')
-    expect(formatNumberClean(-14.50)).toBe('-14.5')
+    expect(formatNumberClean(-14.5)).toBe('-14,5')
+    expect(formatNumberClean(-14.50)).toBe('-14,5')
+  })
+
+  it('test_thousands_are_grouped_like_balances_screen', () => {
+    // аудит F-15: в форме списания было «1000» и «0.4», на «Остатках» — «1 000 м», «0,4 м»
+    expect(formatNumberClean(1000)).toBe('1\u00a0000')
+    expect(formatNumberClean('1234567.25')).toBe('1\u00a0234\u00a0567,25')
+    expect(formatNumberClean(-0)).toBe('0')
   })
 
   it('handles very small numbers', () => {
-    expect(formatNumberClean(0.000001)).toBe('0.000001')
-    // Very small numbers may be formatted differently depending on JavaScript engine
-    const result = formatNumberClean(0.0000001)
-    expect(result === '1e-7' || result === '0.0000001' || result === '1e-7').toBe(true)
+    expect(formatNumberClean(0.000001)).toBe('0,000001')
+    // раньше допускалась научная запись «1e-7»; Intl печатает обычной десятичной записью
+    expect(formatNumberClean(0.0000001)).toBe('0,0000001')
   })
 })
 
 describe('formatQuantity', () => {
   it('formats quantity with unit', () => {
     expect(formatQuantity(14.000000, 'м')).toBe('14 м')
-    expect(formatQuantity(14.5, 'кг')).toBe('14.5 кг')
-    expect(formatQuantity('14.50', 'шт')).toBe('14.5 шт')
+    expect(formatQuantity(14.5, 'кг')).toBe('14,5 кг')
+    expect(formatQuantity('14.50', 'шт')).toBe('14,5 шт')
   })
 
   it('formats quantity without unit', () => {
     expect(formatQuantity(14.000000)).toBe('14')
-    expect(formatQuantity(14.5)).toBe('14.5')
+    expect(formatQuantity(14.5)).toBe('14,5')
   })
 
   it('handles null and undefined', () => {
@@ -186,14 +194,14 @@ describe('pluralizeRu (F-920)', () => {
 
 describe('formatNumberClean float-артефакты (F-921)', () => {
   it('срезает артефакт представления вычисленных float', () => {
-    expect(formatNumberClean(0.1 + 0.2)).toBe('0.3')          // 0.30000000000000004
-    expect(formatNumberClean(1.005 * 3)).toBe('3.015')        // 3.0149999999999997
-    expect(formatNumberClean(0.3)).toBe('0.3')
+    expect(formatNumberClean(0.1 + 0.2)).toBe('0,3')          // 0.30000000000000004
+    expect(formatNumberClean(1.005 * 3)).toBe('3,015')        // 3.0149999999999997
+    expect(formatNumberClean(0.3)).toBe('0,3')
   })
   it('не ломает легитимные малые и целые числа', () => {
-    expect(formatNumberClean(0.000001)).toBe('0.000001')
+    expect(formatNumberClean(0.000001)).toBe('0,000001')
     expect(formatNumberClean(14.000000)).toBe('14')
-    expect(formatNumberClean(-14.5)).toBe('-14.5')
+    expect(formatNumberClean(-14.5)).toBe('-14,5')
     expect(formatNumberClean(0)).toBe('0')
   })
 })

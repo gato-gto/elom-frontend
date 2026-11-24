@@ -51,7 +51,7 @@ describe('Catalog — пресеты коэффициентов (F-1036)', () =>
     expect(presetFetch).toHaveBeenCalledWith({ page_size: 100 })
     const t = w.text()
     expect(t).toContain('Пресеты коэффициентов')
-    expect(t).toContain('×1.3')
+    expect(t).toContain('×1,3')  // F-15: русская запятая
     expect(t).toContain('зона: Монтаж ТВ кронштейнов')
     expect(t).toContain('выкл')
     const names = w.findAll('[data-testid="preset-row"]').map(r => r.text())
