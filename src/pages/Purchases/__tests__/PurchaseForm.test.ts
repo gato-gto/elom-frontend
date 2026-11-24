@@ -534,6 +534,27 @@ describe('PurchaseForm', () => {
     })
   })
 
+  describe('F-1095: версия записи при правке (ответ владельца 16)', () => {
+    const stubs = { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true }
+    type Vm = { preparePurchaseData: (d: Record<string, unknown>) => Record<string, unknown> }
+    const data = { date: '2026-03-01', object: 1, supplier: 1, status: 'new', comment: '', items: [] }
+
+    it('правка — в запросе версия, которую открыли', async () => {
+      const w = mount(PurchaseForm, {
+        props: { initial: { id: 41, status: 'new', updated_at: '2026-11-24T18:00:00.123456+05:00', items: [], photos: [] } as unknown as never },
+        global: { stubs },
+      })
+      await flushPromises()
+      expect((w.vm as unknown as Vm).preparePurchaseData(data).expected_updated_at).toBe('2026-11-24T18:00:00.123456+05:00')
+    })
+
+    it('создание — без версии', async () => {
+      const w = mount(PurchaseForm, { global: { stubs } })
+      await flushPromises()
+      expect('expected_updated_at' in (w.vm as unknown as Vm).preparePurchaseData(data)).toBe(false)
+    })
+  })
+
   describe('Amount Calculation', () => {
     it('calculates item amount correctly', () => {
       const item = {

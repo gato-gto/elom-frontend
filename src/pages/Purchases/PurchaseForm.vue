@@ -1065,6 +1065,9 @@ function preparePurchaseData(data: PurchaseRequest): PurchaseRequest {
     // Фича «Ответственный»: шлём responsible (user id) ТОЛЬКО если руководство выбрало его в поле; иначе не
     // шлём → BE форсит self (не-руководство) или берёт ответственного объекта (руководство без выбора).
     ...(showResponsibleField.value && (data as any).responsible ? { responsible: (data as any).responsible } : {}),
+    // F-1095 (ответ владельца 16): версия, которую открыли, — если запись успели изменить, сервер ответит 409
+    // «изменил другой пользователь, обновите», а не перезапишет чужую правку.
+    ...(isEdit.value && props.initial?.updated_at ? { expected_updated_at: props.initial.updated_at } : {}),
     // FE-1: отправляем только заполненные позиции — без пустого хвостового плейсхолдера.
     items: items.value.filter((item) => !isEmptyPurchaseItem(item)).map((item) => {
       const itemData: any = {
