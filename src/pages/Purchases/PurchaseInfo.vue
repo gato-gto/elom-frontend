@@ -179,7 +179,7 @@
     <!-- Photo Modal -->
     <div v-if="photoModalOpen" class="modal modal-open no-print">
       <!-- F-1004: max-h-screen(=100vh) + dvh-пара — iOS-ландшафт/тулбар (sibling базового .modal-box) -->
-      <div class="modal-box max-w-6xl w-full h-full max-h-screen max-h-[100dvh]">
+      <div ref="photoBox" class="modal-box photo-lightbox-box max-w-6xl w-full h-full max-h-screen max-h-[100dvh]">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold">
             {{ getPhotoTypeLabel(selectedPhoto?.type) }} - {{ currentPhotoIndex + 1 }} из {{ currentPhotoList.length }}
@@ -404,8 +404,24 @@ function openPhotoModal(photo: PurchasePhoto, index: number = 0) {
 // Ревью B21 (R5): лайтбокс — в общем стеке модалок: Escape закрывает только фото, а не окно просмотра
 // закупки под ним (оба слушали document).
 const photoModalId = Symbol('photo-lightbox')
+const photoBox = ref<HTMLElement | null>(null)
+// Ревью N1: лайтбокс верхний в стеке → Tab ловит он сам (как Modal), иначе фокус уходил под оверлеи
+function trapPhotoTab(e: KeyboardEvent) {
+  const box = photoBox.value
+  if (!box) { return }
+  const items = Array.from(box.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'))
+    .filter((el) => el.offsetParent !== null)
+  if (items.length === 0) { e.preventDefault(); return }
+  const first = items[0]
+  const last = items[items.length - 1]
+  const active = document.activeElement as HTMLElement | null
+  const inside = !!active && box.contains(active)
+  if (e.shiftKey && (active === first || !inside)) { e.preventDefault(); last.focus() }
+  else if (!e.shiftKey && (active === last || !inside)) { e.preventDefault(); first.focus() }
+}
 function onPhotoKeydown(e: KeyboardEvent) {
   if (!isTopModal(photoModalId)) { return }
+  if (e.key === 'Tab') { trapPhotoTab(e); return }
   if (e.key === 'Escape') { e.preventDefault(); photoModalOpen.value = false }
   else if (e.key === 'ArrowRight') { nextPhoto() }
   else if (e.key === 'ArrowLeft') { previousPhoto() }

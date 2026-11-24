@@ -263,7 +263,8 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     // ревью B21 (R3): открытый список закрывается сам — Escape не доходит до модалки формы на document,
     // иначе «Закрыть без сохранения?» для всей формы. Закрытый список — Escape работает как обычно.
-    if (showDropdown.value) { event.stopPropagation() }
+    // ревью N3: то же условие видимости, что у списка в шаблоне (флаг может быть true при скрытом списке)
+    if (showDropdown.value && (searchResults.value.length > 0 || searchQuery.value.length >= 2)) { event.stopPropagation() }
     showDropdown.value = false
     isUserTyping.value = false
     searchInput.value?.blur()

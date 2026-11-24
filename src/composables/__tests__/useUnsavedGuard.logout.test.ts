@@ -4,7 +4,7 @@ import { resolve } from 'path'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { createRouter, createMemoryHistory, RouterView } from 'vue-router'
-import { useUnsavedGuard, hasUnsavedChanges, confirmLeaveIfUnsaved, DISCARD_MESSAGE } from '../useUnsavedGuard'
+import { useUnsavedGuard, hasUnsavedChanges, confirmLeaveIfUnsaved, resetLeaveBypass, DISCARD_MESSAGE } from '../useUnsavedGuard'
 
 // Ревью B21 (R2): «Выйти» со страницы с несохранённой сметой — сначала auth.logout() (токены стёрты), потом
 // router.push('/login') → «Закрыть без сохранения?» → «Отмена» оставляла человека на форме уже
@@ -77,6 +77,18 @@ describe('useUnsavedGuard — явный уход (выход из систем�
   })
 })
 
+describe('useUnsavedGuard — обход не «зависает» (ревью N2)', () => {
+  it('test_reset_leave_bypass_after_failed_logout_next_leave_asks', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { w, router } = await setup({ v: true })
+    expect(confirmLeaveIfUnsaved()).toBe(true)
+    resetLeaveBypass()                 // выход упал до перехода (catch в logout)
+    await router.push('/other')
+    expect(confirm).toHaveBeenCalledTimes(2)
+    w.unmount()
+  })
+})
+
 describe('«Выйти» спрашивает про несохранённое ДО auth.logout()', () => {
   // монтировать весь лейаут ради одного порядка вызовов избыточно — проверяем тело обработчиков
   const root = resolve(__dirname, '../../..')
@@ -89,6 +101,7 @@ describe('«Выйти» спрашивает про несохранённое 
       const out = body.search(/^\s+auth\.logout\(\)\s*$/m)   // сам вызов, не упоминание в комментарии
       expect(guard, 'нет проверки несохранённого').toBeGreaterThan(-1)
       expect(out).toBeGreaterThan(guard)
+      expect(body.slice(body.indexOf('catch'), body.indexOf('catch') + 120), 'сбой выхода гасит обход').toContain('resetLeaveBypass()')
     })
   }
 })

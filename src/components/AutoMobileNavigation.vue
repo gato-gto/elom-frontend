@@ -300,7 +300,7 @@
   import { useUiStore } from '@/stores/ui'
   import { getIconPath } from '@/assets/icons'
   import type { NavigationItem } from '@/types/router'
-  import { confirmLeaveIfUnsaved } from '@/composables/useUnsavedGuard'
+  import { confirmLeaveIfUnsaved, resetLeaveBypass } from '@/composables/useUnsavedGuard'
   
   const route = useRoute()
   const router = useRouter()
@@ -575,6 +575,7 @@
       ui.toast({ type: 'success', text: 'Вы вышли из системы' })
       await router.push('/login')
     } catch (error) {
+      resetLeaveBypass()
       // eslint-disable-next-line no-console
       if (typeof console !== 'undefined' && console.error) { console.error('Logout error:', error) }
       ui.toast({ type: 'error', text: 'Ошибка при выходе' })

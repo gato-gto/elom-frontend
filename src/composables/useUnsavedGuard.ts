@@ -28,6 +28,12 @@ export function hasUnsavedChanges(): boolean {
 
 /** Перед явным уходом (выход): нет несохранённого → true; иначе спросить. OK → следующий переход не
  *  спрашивает повторно (разово, сбрасывается после любой навигации). */
+/** Ревью N2: явный уход не состоялся (выход упал до перехода) — снять разовый обход, иначе следующий
+ *  уход с несохранённой формой прошёл бы без вопроса. */
+export function resetLeaveBypass(): void {
+  discardConfirmed = false
+}
+
 export function confirmLeaveIfUnsaved(): boolean {
   if (!hasUnsavedChanges()) { return true }
   if (!confirmDiscard()) { return false }

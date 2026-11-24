@@ -55,4 +55,24 @@ describe('PurchaseInfo — лайтбокс фото', () => {
     expect(info.currentPhotoIndex).toBe(1)
     w.unmount()
   })
+
+  it('test_tab_in_lightbox_keeps_focus_inside_photo', async () => {
+    // ревью N1: лайтбокс стал верхним в стеке → ловушка Tab окна просмотра выключилась, а у лайтбокса своей нет
+    const { w } = mountView()
+    await tick()
+    await w.findAll('.photo-item')[0].trigger('click')
+    await nextTick()
+    vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body)
+    const box = document.querySelector('.photo-lightbox-box') as HTMLElement
+    expect(box, 'контейнер лайтбокса').not.toBeNull()
+    const btns = Array.from(box.querySelectorAll('button:not([disabled])')) as HTMLElement[]
+    btns[btns.length - 1].focus()
+    const ev = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+    document.dispatchEvent(ev)
+    await tick()
+    expect(ev.defaultPrevented).toBe(true)
+    expect(box.contains(document.activeElement)).toBe(true)
+    vi.restoreAllMocks()
+    w.unmount()
+  })
 })

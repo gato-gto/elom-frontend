@@ -23,13 +23,28 @@ for (const [name, Comp] of [['MaterialSearchSelect', MaterialSearchSelect], ['Wo
   describe(name, () => {
     it('test_escape_with_open_suggestions_closes_them_and_does_not_reach_modal', async () => {
       const w = mount(Comp as never, { props: { modelValue: null }, attachTo: document.body })
-      const vm = w.vm as unknown as { showDropdown: boolean }
+      const vm = w.vm as unknown as { showDropdown: boolean; searchQuery: string }
+      vm.searchQuery = 'Кабель'          // список виден: флаг + запрос ≥2 символов (как v-if в шаблоне)
       vm.showDropdown = true
       await nextTick()
       w.find('input').element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
       await nextTick()
       expect(vm.showDropdown).toBe(false)
       expect(reached, 'Escape не должен дойти до модалки').toBe(0)
+      w.unmount()
+    })
+
+    it('test_escape_when_flag_open_but_list_hidden_reaches_modal', async () => {
+      // ревью N3: набрали ≥2 символов, стёрли до одного — список скрыт (v-if по запросу), флаг ещё true
+      const w = mount(Comp as never, { props: { modelValue: null }, attachTo: document.body })
+      const vm = w.vm as unknown as { showDropdown: boolean; searchQuery: string; searchResults: unknown[] }
+      vm.searchQuery = 'к'
+      vm.searchResults = []
+      vm.showDropdown = true
+      await nextTick()
+      w.find('input').element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      await nextTick()
+      expect(reached, 'список не виден — Escape принадлежит окну').toBe(1)
       w.unmount()
     })
 

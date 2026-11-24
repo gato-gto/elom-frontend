@@ -138,7 +138,7 @@ import { useUiStore } from '@/stores/ui'
 import { useThemeStore } from '@/stores/theme'
 import AutoNavigation from '@/components/AutoNavigation.vue'
 import AutoMobileNavigation from '@/components/AutoMobileNavigation.vue'
-import { confirmLeaveIfUnsaved } from '@/composables/useUnsavedGuard'
+import { confirmLeaveIfUnsaved, resetLeaveBypass } from '@/composables/useUnsavedGuard'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -199,6 +199,7 @@ const logout = async () => {
     ui.toast({ type: 'success', text: 'Вы вышли из системы' })
     await router.push('/login')
   } catch (error) {
+    resetLeaveBypass()
     // eslint-disable-next-line no-console
     if (typeof console !== 'undefined' && console.error) { console.error('Logout error:', error) }
     ui.toast({ type: 'error', text: 'Ошибка при выходе' })
