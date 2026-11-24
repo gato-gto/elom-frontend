@@ -28,6 +28,10 @@
         </div>
       </template>
 
+      <template #column-status="{ item }">
+        <span class="badge badge-sm" :class="getStatusBadgeClass(item.status)">{{ getStatusLabel(item.status) }}</span>
+      </template>
+
       <!-- Custom column for responsible with name lookup -->
       <template #column-responsible="{ item }">
         <span>{{ item.responsible_name || responsibleName(item.responsible) || '—' }}</span>
@@ -115,6 +119,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useEditQuery } from '@/composables/useEditQuery'
+import { getStatusBadgeClass, getStatusLabel } from '@/utils/statusHelpers'
 import type { Purchase, Employee } from '@/api/types'
 import { formatDate } from '@/utils/formatters'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -224,6 +229,8 @@ const listConfig = computed(() => ({
   columns: [
     { key: 'date', label: 'Дата', sortable: true, formatter: (value: any) => formatDate(value) },
     { key: 'purchase_no', label: '№ закупки', sortable: true },
+    // аудит B20: без статуса отменённая закупка выглядела выполненной (на телефоне он был в карточке)
+    { key: 'status', label: 'Статус', sortable: false },
     { key: 'object__name', label: 'Объект', sortable: true, displayKey: 'object_name' }, // Используем object__name для сортировки, но отображаем object_name
     { key: 'supplier__name', label: 'Поставщик', sortable: true, displayKey: 'supplier_name' }, // Используем supplier__name для сортировки, но отображаем supplier_name
     { key: 'responsible__username', label: 'Ответственный', sortable: true, displayKey: 'responsible_name' }, // F-858: сортируем по username (уже в ordering_fields), а не по скрытому User.id (порядок регистрации)

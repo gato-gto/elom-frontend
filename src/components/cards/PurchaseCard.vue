@@ -115,6 +115,6 @@ defineEmits<Emits>()
 
 const { truncateText } = useMobileCardHelpers()
 
-const statusLabel = (status: string) =>
-  getStatusLabel(status, { completed: 'Завершена' })
+// B20: та же подпись, что в списке, фильтре и форме («Выполнено»; было «Завершена»)
+const statusLabel = (status: string) => getStatusLabel(status)
 </script>

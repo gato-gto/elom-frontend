@@ -806,7 +806,7 @@ const supplierOptions = computed(() =>
 const statusOptions = [
   { value: 'new', label: 'Новая' },
   { value: 'completed', label: 'Выполнено' },
-  { value: 'cancelled', label: 'Отмена' }
+  { value: 'cancelled', label: 'Отменена' }  // B20: как в фильтре и списке (было «Отмена»)
 ]
 
 // GenericForm configuration
