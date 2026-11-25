@@ -211,3 +211,34 @@ export interface ReportByResponsibleQuery {
   [key: string]: string | number | boolean | (string | number)[] | null | undefined;
 }
 
+// F-1104 (ответ владельца 13): оборотная ведомость и отчёт по списаниям (по объекту × материалу)
+export interface StockReportRowBase {
+  object_id: number;
+  object_name: string;
+  object_is_active: boolean;
+  material_id: number;
+  material_name: string;
+  unit: string;
+}
+
+export interface TurnoverRow extends StockReportRowBase {
+  opening: number;
+  income: number;
+  expense: number;
+  closing: number;
+}
+
+export interface WriteOffReportRow extends StockReportRowBase {
+  qty_total: number;
+  writeoffs: number;
+  first_date: string;
+  last_date: string;
+}
+
+export interface StockReportResponse<Row> {
+  count: number;
+  results: Row[];
+  period: { date_from: string; date_to: string };
+  grand_total: { rows_count: number; writeoffs?: number };
+}
+

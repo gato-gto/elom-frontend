@@ -5,7 +5,8 @@ import { formatCurrency } from '@/utils/formatters'
 
 // F-721: покрываем ВТОРОЙ паттерн ключей grand_total — total_amount/purchases (by-object/period/
 // responsible), в дополнение к by-material (amount_total/rows). chartStats обязан брать сводку из BE
-// grand_total, а не reduce'ом по странице; avg = total_amount / rows_count (на строку отчёта).
+// grand_total, а не reduce'ом по странице. Средняя: было total_amount / rows_count (на строку отчёта); по
+// ответу владельца 13 (24.11, F-1104) — на ЗАКУПКУ: total_amount / purchases.
 
 const reportResponse = {
   count: 40,
@@ -52,6 +53,6 @@ describe('F-721: ByPeriod сводка из grand_total (паттерн total_am
 
     expect(cs.totalAmount.value).toBe(formatCurrency(77777))          // из grand_total, не 10
     expect(cs.totalPurchases.value).toBe('55')                        // из grand_total, не 1
-    expect(cs.avgAmount.value).toBe(formatCurrency(77777 / 40))       // total_amount / rows_count
+    expect(cs.avgAmount.value).toBe(formatCurrency(77777 / 55))       // total_amount / purchases (F-1104)
   })
 })

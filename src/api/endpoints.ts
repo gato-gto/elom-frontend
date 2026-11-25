@@ -138,6 +138,9 @@ export const endpoints = {
         byObject: join('/reports/purchases/by-object/'),
         byResponsible: join('/reports/purchases/by-responsible/'),
         byMaterial: join('/reports/purchases/by-material/'),
+        // F-1104 (ответ владельца 13): оборотная ведомость и отчёт по списаниям
+        turnover: join('/reports/stock/turnover/'),
+        writeoffs: join('/reports/stock/writeoffs/'),
     },
 
     // Estimates (смета по объекту / отчёт цен) — этап 1

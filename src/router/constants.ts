@@ -52,6 +52,8 @@ export const ROUTE_NAMES = {
   REPORT_BY_OBJECT: 'ReportByObject',
   REPORT_BY_MATERIAL: 'ReportByMaterial',
   REPORT_BY_RESPONSIBLE: 'ReportByResponsible',
+  REPORT_TURNOVER: 'ReportTurnover',
+  REPORT_WRITEOFFS: 'ReportWriteOffs',
   
   // Import
   IMPORT_PURCHASES: 'ImportPurchases',
@@ -117,6 +119,8 @@ export const ROUTE_PATHS = {
   REPORT_BY_OBJECT: '/reports/by-object',
   REPORT_BY_MATERIAL: '/reports/by-material',
   REPORT_BY_RESPONSIBLE: '/reports/by-responsible',
+  REPORT_TURNOVER: '/reports/turnover',
+  REPORT_WRITEOFFS: '/reports/writeoffs',
   
   // Import
   IMPORT_PURCHASES: '/import'

@@ -5495,6 +5495,109 @@ paths:
           description: ''
         '501':
           description: PDF export is not enabled in MVP
+  /api/v1/reports/stock/turnover/:
+    get:
+      operationId: reports_stock_turnover_retrieve
+      description: 'Оборотная ведомость: начало, приход, расход, конец по объекту
+        × материалу за период.'
+      summary: Оборотная ведомость (остаток на начало, приход, расход, конец)
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: С даты YYYY-MM-DD (по умолчанию — 1-е число текущего месяца)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: По дату YYYY-MM-DD (по умолчанию — сегодня)
+      - in: query
+        name: export
+        schema:
+          type: string
+        description: xlsx | csv
+      - in: query
+        name: material
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Материал(ы)
+      - in: query
+        name: object
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Объект(ы)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Сортировка по колонке, '-' — по убыванию
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/reports/stock/writeoffs/:
+    get:
+      operationId: reports_stock_writeoffs_retrieve
+      description: 'Отчёт по списаниям: количество и число списаний за период по объекту
+        × материалу.'
+      summary: Отчёт по списаниям
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: С даты YYYY-MM-DD (по умолчанию — 1-е число текущего месяца)
+      - in: query
+        name: date_to
+        schema:
+          type: string
+        description: По дату YYYY-MM-DD (по умолчанию — сегодня)
+      - in: query
+        name: export
+        schema:
+          type: string
+        description: xlsx | csv
+      - in: query
+        name: material
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Материал(ы)
+      - in: query
+        name: object
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Объект(ы)
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Сортировка по колонке, '-' — по убыванию
+      - in: query
+        name: responsible
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Ответственный
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/v1/stock/snapshots/:
     get:
       operationId: stock_snapshots_list

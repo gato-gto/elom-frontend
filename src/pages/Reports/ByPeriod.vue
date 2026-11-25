@@ -107,7 +107,7 @@
               </span>
             </th>
             <th @click="handleSort('avg_amount')" class="cursor-pointer hover:bg-base-200 text-right">
-              Средняя сумма
+              Средняя на закупку
               <span v-if="sortBy === 'avg_amount'" class="ml-1">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </span>
@@ -436,8 +436,8 @@ const chartStats = computed(() => {
   const gt = grandTotal.value
   const totalAmount = gt ? gt.total_amount : rows.value.reduce((sum, row) => sum + row.total_amount, 0)
   const totalPurchases = gt ? gt.purchases : rows.value.reduce((sum, row) => sum + (row.purchases || 0), 0)
-  const uniqueCount = gt ? gt.rows_count : rows.value.length
-  const avgAmount = uniqueCount ? totalAmount / uniqueCount : 0
+  // F-1104 (ответ владельца 13, B20): средняя — на ЗАКУПКУ (Σ суммы / Σ закупок), а не на строку отчёта
+  const avgAmount = totalPurchases ? totalAmount / totalPurchases : 0
   
   return {
     totalAmount: {
@@ -449,7 +449,7 @@ const chartStats = computed(() => {
       value: totalPurchases.toString()
     },
     avgAmount: {
-      label: 'Средняя сумма',
+      label: 'Средняя на закупку',
       value: formatCurrency(avgAmount)
     }
   }

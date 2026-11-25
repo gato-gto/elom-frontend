@@ -54,6 +54,7 @@ const ReportByPeriod = () => import(/* webpackChunkName: "reports" */ '@/pages/R
 const ReportByObject = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByObject.vue')
 const ReportByMaterial = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByMaterial.vue')
 const ReportByResponsible = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/ByResponsible.vue')
+const ReportStock = () => import(/* webpackChunkName: "reports" */ '@/pages/Reports/StockReport.vue')  // F-1104
 
 
 // Suppliers
@@ -626,6 +627,37 @@ const routes = [
       icon: 'people',      // F-1032
       category: 'reports',
       order: 14,
+      permissions: ['reports.view']
+    }
+  },
+  // F-1104 (ответ владельца 13): оборотная ведомость и отчёт по списаниям — одна страница, два вида
+  {
+    path: '/reports/turnover',
+    name: 'ReportTurnover',
+    component: ReportStock,
+    props: { kind: 'turnover' },
+    meta: {
+      title: 'Оборотная ведомость',
+      breadcrumb: 'Отчеты / Оборотная ведомость',
+      description: 'Остаток на начало, приход, расход и остаток на конец по объектам и материалам',
+      icon: 'table-cells',
+      category: 'reports',
+      order: 15,
+      permissions: ['reports.view']
+    }
+  },
+  {
+    path: '/reports/writeoffs',
+    name: 'ReportWriteOffs',
+    component: ReportStock,
+    props: { kind: 'writeoffs' },
+    meta: {
+      title: 'Отчёт по списаниям',
+      breadcrumb: 'Отчеты / По списаниям',
+      description: 'Списания за период по объектам и материалам',
+      icon: 'document-minus',
+      category: 'reports',
+      order: 16,
       permissions: ['reports.view']
     }
   },
