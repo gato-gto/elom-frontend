@@ -77,7 +77,9 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       order: 2,
       width: 'half',
       // Аудит A1 / инвариант: у объекта ОБЯЗАН быть ответственный (нельзя сохранить без него).
-      required: true,
+      // F-1119 (ревью-14): у бригадира при правке поле заблокировано и не отправляется (сервер его не меняет) —
+      // обязательность там не проверяем, иначе объект без ответственного было не сохранить вовсе.
+      required: !(isLimitedAccess.value && props.initial),
       // Для бригадиров поле заблокировано - они всегда ответственные за свои объекты
       disabled: isLimitedAccess.value,
       // F-1118 (ревью-13): подсказка — только при создании; при правке сервер ответственного не меняет (F-1113)
@@ -289,6 +291,9 @@ async function handleSubmit(formData: ObjectRequest) {
     }
 
     if (props.initial) {
+      // F-1119 (ревью-14, MED): бригадир ответственного не меняет (F-1113) — не шлём поле вовсе: присланный
+      // настоящий ответственный, у которого сняли роль «Бригадир», давал 400 на любую правку объекта
+      if (isLimitedAccess.value) { delete submitData.responsible }
       await objectsStore.update(props.initial.id, submitData)
     } else {
       await objectsStore.create(submitData)

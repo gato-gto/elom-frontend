@@ -72,20 +72,33 @@ const LINK_REFRESH_MS = 45 * 60 * 1000
 let loadedAt = 0
 let timer: ReturnType<typeof setInterval> | undefined
 
+// F-1119 (ревью-14): фоновое обновление — тихое (без «Загрузка…» и тоста; при сбое — следующая попытка через
+// RETRY_MS, а не каждую минуту); поздний ответ прежнего запроса (фонового, по прежнему объекту) не затирает
+// более свежий список (напр. после загрузки файла).
+const RETRY_MS = 5 * 60 * 1000
+let requestSeq = 0
+
 function refreshIfStale() {
-  if (document.visibilityState !== 'hidden' && Date.now() - loadedAt >= LINK_REFRESH_MS) { load() }
+  if (document.visibilityState !== 'hidden' && Date.now() - loadedAt >= LINK_REFRESH_MS) { load(true) }
 }
 
-async function load() {
-  loading.value = true
+async function load(background = false) {
+  const seq = ++requestSeq
+  if (!background) { loading.value = true }
   try {
     const { data } = await api.get<ObjectFileRow[]>(endpoints.objects.files(props.objectId))
+    if (seq !== requestSeq) { return }
     files.value = Array.isArray(data) ? data : []
     loadedAt = Date.now()
   } catch (e) {
-    ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось загрузить список файлов' })
+    if (seq !== requestSeq) { return }
+    if (background) {
+      loadedAt = Date.now() - LINK_REFRESH_MS + RETRY_MS   // тихо; повторим через RETRY_MS
+    } else {
+      ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось загрузить список файлов' })
+    }
   } finally {
-    loading.value = false
+    if (seq === requestSeq) { loading.value = false }
   }
 }
 
@@ -126,7 +139,7 @@ async function remove(f: ObjectFileRow) {
   }
 }
 
-watch(() => props.objectId, load)
+watch(() => props.objectId, () => load())
 onMounted(() => {
   load()
   timer = setInterval(refreshIfStale, 60 * 1000)

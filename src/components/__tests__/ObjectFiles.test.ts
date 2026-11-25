@@ -108,4 +108,43 @@ describe('ObjectFiles (F-1110)', () => {
       vi.useRealTimers()
     }
   })
+
+  // F-1119 (ревью-14): фоновое обновление — тихое и не затирает свежий список
+  describe('фоновое обновление (F-1119)', () => {
+    const F = (id: number, name: string) => ({ ...FILES[0], id, name, url: `https://api.elom.uz/protected-media/${id}?token=t` })
+    beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] }) })
+    afterEach(() => { vi.useRealTimers() })
+
+    it('офлайн: без тостов ошибки, повтор через 5 минут, а не каждую минуту', async () => {
+      const w = await mountIt(false)
+      get.mockReset().mockRejectedValue(new Error('Network Error'))
+      toast.mockClear()
+      vi.advanceTimersByTime(45 * 60 * 1000)
+      await flushPromises()
+      expect(get).toHaveBeenCalledTimes(1)
+      for (let i = 0; i < 4; i++) { vi.advanceTimersByTime(60 * 1000); await flushPromises() }
+      expect(get).toHaveBeenCalledTimes(1)                     // через 4 минуты — ещё не повторяли
+      vi.advanceTimersByTime(60 * 1000)
+      await flushPromises()
+      expect(get).toHaveBeenCalledTimes(2)                     // 5 минут — повтор
+      expect(toast).not.toHaveBeenCalled()
+      expect(w.findAll('[data-test="file-row"]').length).toBe(2)   // прежний список на месте
+    })
+
+    it('поздний фоновый ответ не затирает список после загрузки; «Загрузка…» не показывается', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      const w = mount(ObjectFiles, { props: { objectId: 7, canManage: true } })
+      await flushPromises()
+      let release: (v: unknown) => void = () => {}
+      get.mockReturnValueOnce(new Promise(r => { release = r }))
+      vi.advanceTimersByTime(45 * 60 * 1000)
+      await flushPromises()
+      expect(w.text()).not.toContain('Загрузка')
+      get.mockResolvedValueOnce({ data: [F(3, 'new.pdf'), F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      await pick(w as never, new File(['%PDF-1'], 'new.pdf', { type: 'application/pdf' }))
+      release({ data: [F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      await flushPromises()
+      expect(w.findAll('[data-test="file-row"]').map(r => r.find('a').text())).toEqual(['new.pdf', 'a.pdf', 'b.pdf'])
+    })
+  })
 })
