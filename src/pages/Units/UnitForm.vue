@@ -91,7 +91,9 @@ const formConfig = computed<GenericFormConfig<UnitRequest>>(() => ({
       // F-1099 (ответ владельца 8): код используемой единицы печатается в документах — менять нельзя
       disabled: codeLocked.value,
       help: codeLocked.value ? 'Единица уже есть в материалах или документах — код менять нельзя, название можно' : undefined,
-      validation: {
+      // F-1105 (ревью): у закрытого поля правила не проверяем — иначе используемая единица со «старым»
+      // кодом (п.м., длиннее 10) не давала сохранить даже название: поле нельзя ни поправить, ни пройти
+      validation: codeLocked.value ? undefined : {
         minLength: 1,
         maxLength: 10,
         pattern: /^[а-яёА-ЯЁa-zA-Z0-9²³]+$/

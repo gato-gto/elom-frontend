@@ -33,6 +33,15 @@ describe('UnitForm · замок кода используемой единиц�
     expect(f.help).toBe(HINT)
   })
 
+  it('используемая единица со «старым» кодом: у закрытого поля нет проверок формата (иначе не сохранить имя)', () => {
+    const f = codeField({ ...unit(true), code: 'п.м.' })
+    expect(f.validation).toBeUndefined()
+  })
+
+  it('неиспользуемая единица: код проверяется по формату', () => {
+    expect(codeField(unit(false)).validation?.pattern).toBeInstanceOf(RegExp)
+  })
+
   it('неиспользуемая единица: код можно менять, подсказки нет', () => {
     const f = codeField(unit(false))
     expect(f.disabled).toBe(false)

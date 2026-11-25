@@ -132,7 +132,12 @@ function shouldConvert(originalValue: number, convertedValue: number, rule: Unit
   // 1000,000001 м не должно стать «1 км».
   const micro = Math.round(originalValue * 1e6)
   const factorMicro = Math.round(rule.factor * 1e6)
-  return Number.isSafeInteger(micro) && micro % factorMicro === 0
+  if (!Number.isSafeInteger(micro)) {
+    // F-1105 (ревью): ≥ ~9·10⁹ миллионные не помещаются в точное целое; дробной части у таких значений нет —
+    // делимость проверяем самим делением (иначе фронт не укрупнял, а сервер укрупнял)
+    return Number.isInteger(originalValue / rule.factor)
+  }
+  return micro % factorMicro === 0
 }
 
 /**

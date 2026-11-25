@@ -18,7 +18,9 @@
             {{ tool.condition_display || getConditionDisplayName(tool.condition) }}
           </div>
           <div>
-            <span v-if="tool.current_holder_name" class="text-sm">
+            <!-- F-1105 (ревью F-1101): списанный — не «на складе» (как в списке и карточке) -->
+            <span v-if="tool.is_written_off" class="badge badge-neutral badge-sm">Списан</span>
+            <span v-else-if="tool.current_holder_name" class="text-sm">
               У: <strong>{{ tool.current_holder_name }}</strong>
             </span>
             <span v-else class="badge badge-success badge-sm">На складе</span>
