@@ -51,6 +51,9 @@ const { handleFormError } = useErrorHandler()
 // Track current code for smart conversion display
 const currentCode = ref('')
 
+// F-1099: сервер помечает единицу, на которую уже ссылаются материалы или документы
+const codeLocked = computed(() => props.initial?.in_use === true)
+
 // Form configuration
 const formConfig = computed<GenericFormConfig<UnitRequest>>(() => ({
   title: props.initial ? 'Редактировать единицу' : 'Новая единица',
@@ -85,6 +88,9 @@ const formConfig = computed<GenericFormConfig<UnitRequest>>(() => ({
       required: true,
       order: 2,
       width: 'full',
+      // F-1099 (ответ владельца 8): код используемой единицы печатается в документах — менять нельзя
+      disabled: codeLocked.value,
+      help: codeLocked.value ? 'Единица уже есть в материалах или документах — код менять нельзя, название можно' : undefined,
       validation: {
         minLength: 1,
         maxLength: 10,

@@ -36,6 +36,8 @@ export interface Unit {
   id: number;
   code: string;
   name: string;
+  /** F-1099: на единицу ссылаются материалы или документы — код менять нельзя (только чтение). */
+  in_use?: boolean;
   created_at?: string;
   updated_at?: string;
 }

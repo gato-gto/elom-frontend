@@ -12525,9 +12525,13 @@ components:
         name:
           type: string
           maxLength: 64
+        in_use:
+          type: boolean
+          readOnly: true
       required:
       - code
       - id
+      - in_use
       - name
     UnitRequest:
       type: object
