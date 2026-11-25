@@ -80,7 +80,8 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
       required: true,
       // Для бригадиров поле заблокировано - они всегда ответственные за свои объекты
       disabled: isLimitedAccess.value,
-      help: isLimitedAccess.value ? 'Вы автоматически назначены ответственным за этот объект' : undefined
+      // F-1118 (ревью-13): подсказка — только при создании; при правке сервер ответственного не меняет (F-1113)
+      help: isLimitedAccess.value && !props.initial ? 'Вы автоматически назначены ответственным за этот объект' : undefined
     },
     {
       key: 'address',
@@ -185,8 +186,8 @@ const initialFormData = computed<ObjectRequest>(() => {
       address: props.initial.address || '',
       is_active: props.initial.is_active,
       location_url: props.initial.location_url,
-      // Для бригадиров ответственный всегда они сами
-      responsible: isLimitedAccess.value ? currentUserProfileId : props.initial.responsible,
+      // F-1118 (ревью-13): при правке — настоящий ответственный объекта (сервер его бригадиру не меняет, F-1113)
+      responsible: props.initial.responsible,
       current_stage: props.initial.current_stage || undefined,
       key_person_name: props.initial.key_person_name || '',
       key_person_contacts: props.initial.key_person_contacts || '',
@@ -212,7 +213,16 @@ const initialFormData = computed<ObjectRequest>(() => {
 
 // Computed options
 const employeeOptions = computed(() => {
-  // Для бригадиров показываем только их самих
+  // F-1118 (ревью-13): правка объекта бригадиром — в (заблокированном) поле настоящий ответственный
+  if (isLimitedAccess.value && props.initial) {
+    const id = Number(props.initial.responsible)
+    const me = auth.me
+    const label = me && Number(me.profile_id) === id
+      ? (`${me.first_name || ''} ${me.last_name || ''}`.trim() || me.username)
+      : (props.initial.responsible_name || 'текущий ответственный')
+    return id ? [{ value: id, label }] : []
+  }
+  // Для бригадиров (создание) показываем только их самих
   if (isLimitedAccess.value && auth.me) {
     const currentUserName =
       `${auth.me.first_name || ''} ${auth.me.last_name || ''}`.trim() || auth.me.username
