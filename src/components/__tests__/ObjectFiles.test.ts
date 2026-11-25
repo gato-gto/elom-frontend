@@ -190,4 +190,29 @@ describe('ObjectFiles (F-1110)', () => {
       expect(names(w)).toEqual(['new.pdf', 'a.pdf'])
     })
   })
+
+  // F-1123 (ревью-16): удалённый файл не возвращается поздним фоновым ответом, снятым до удаления
+  describe('удаление во время фонового обновления (F-1123)', () => {
+    const F = (id: number, name: string) => ({ ...FILES[0], id, name, url: `https://x/${id}?token=t` })
+    beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] }) })
+    afterEach(() => { vi.useRealTimers() })
+
+    it('поздний фоновый ответ не возвращает удалённый файл', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      const w = mount(ObjectFiles, { props: { objectId: 7, canManage: true } })
+      await flushPromises()
+      let release: (v: unknown) => void = () => {}
+      get.mockReturnValueOnce(new Promise(r => { release = r }))
+      vi.advanceTimersByTime(45 * 60 * 1000)
+      await flushPromises()
+      get.mockResolvedValueOnce({ data: [F(2, 'b.pdf')] })
+      vi.spyOn(window, 'confirm').mockReturnValue(true)
+      await w.findAll('[data-test="file-delete"]')[0].trigger('click')
+      await flushPromises()
+      release({ data: [F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      await flushPromises()
+      expect(w.findAll('[data-test="file-row"]').map(r => r.find('a').text())).toEqual(['b.pdf'])
+      expect(w.text()).not.toContain('Загрузка')
+    })
+  })
 })

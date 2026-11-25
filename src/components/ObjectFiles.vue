@@ -133,6 +133,9 @@ async function remove(f: ObjectFileRow) {
   try {
     await api.delete(endpoints.objects.file(props.objectId, f.id))
     files.value = files.value.filter(x => x.id !== f.id)
+    // F-1123 (ревью-16): тихо перечитываем — новый номер запроса отбрасывает поздний фоновый ответ, снятый ДО удаления
+    // (иначе удалённый файл возвращался в список)
+    load(true)
     ui.toast({ type: 'success', text: 'Файл удалён' })
   } catch (e) {
     ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось удалить файл' })
