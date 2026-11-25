@@ -16,6 +16,27 @@
       <div v-if="store.error" class="px-4 py-3 text-sm text-error border-b border-base-300">{{ store.error }}</div>
       <div v-if="store.loading && store.lockDates.length === 0" class="p-6 text-center text-sm text-subtle">Загрузка…</div>
       <div v-else-if="store.lockDates.length === 0" class="p-8 text-center text-sm text-subtle">Нет объектов</div>
+      <!-- F-1120 (live 25.11): на телефоне — карточки (MOBILE_UI_SPEC п.6): таблица шире экрана прятала дату и кнопку -->
+      <ul v-else-if="isMobile" class="divide-y divide-base-300" data-test="lock-cards">
+        <li v-for="r in store.lockDates" :key="r.object" class="px-4 py-3 space-y-1">
+          <div class="flex items-start justify-between gap-2">
+            <span class="font-medium break-words min-w-0">{{ r.object_name }}</span>
+            <span v-if="!r.object_is_active" class="badge badge-ghost badge-sm shrink-0">неактивен</span>
+          </div>
+          <div class="text-sm">
+            Дата запрета:
+            <span v-if="r.closed_until" class="font-medium">{{ formatDate(r.closed_until) }}</span>
+            <span v-else class="text-muted">не задана</span>
+          </div>
+          <div v-if="r.closed_until_at" class="text-xs text-muted break-words">
+            {{ r.closed_until_by_name || '—' }}, {{ formatDateTime(r.closed_until_at) }}
+          </div>
+          <button v-if="canEdit" data-test="edit-lock-card" class="btn btn-sm btn-outline w-full mt-1" :disabled="busy"
+                  @click="openEdit(r)">
+            {{ r.closed_until ? 'Изменить' : 'Поставить' }}
+          </button>
+        </li>
+      </ul>
       <div v-else class="table-container">
         <table class="modern-table">
           <thead>
@@ -116,8 +137,10 @@ import { parseApiError } from '@/utils/errorHandler'
 import { formatDate, formatDateTime, formatMonthYear, todayLocal } from '@/utils/formatters'
 import Modal from '@/components/Modal.vue'
 import ListHeader from '@/components/ListHeader.vue'
+import { useResponsiveTable } from '@/composables/useResponsiveTable'
 
 const store = useArchivePeriodsStore()
+const { isMobile } = useResponsiveTable()   // F-1120: тот же порог, что у остальных списков
 const ui = useUiStore()
 const { can } = usePermissions()
 // как у сервера (SetLockDateView, close/reopen): stock.edit_all
