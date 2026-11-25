@@ -22,7 +22,8 @@ const TURNOVER = {
 const WRITEOFFS = {
   count: 1, period: { date_from: '2026-03-01', date_to: '2026-03-31' }, grand_total: { writeoffs: 3, rows_count: 1 },
   results: [{ object_id: 1, object_name: 'Гостиница', object_is_active: true, material_id: 2,
-    material_name: 'Кабель', unit: 'м', qty_total: 25, writeoffs: 3, first_date: '2026-03-10', last_date: '2026-03-25' }],
+    material_name: 'Кабель', unit: 'м', qty_total: 25, qty_unaccounted: 4, writeoffs: 3, first_date: '2026-03-10',
+    last_date: '2026-03-25' }],
 }
 
 function routeGet(report: unknown) {
@@ -68,7 +69,7 @@ describe('Отчёты по складу (F-1104)', () => {
     const w = await mountReport('writeoffs')
     expect(w.text()).toContain('Отчёт по списаниям')
     const head = w.findAll('thead th').map(th => th.text().replace(/[↑↓]/g, '').trim())
-    expect(head).toEqual(['Объект', 'Материал', 'Ед.', 'Количество', 'Списаний', 'Первое', 'Последнее'])
+    expect(head).toEqual(['Объект', 'Материал', 'Ед.', 'Количество', 'в т.ч. без учёта', 'Списаний', 'Первое', 'Последнее'])
     expect(w.text()).toContain('Списаний за период: 3')
     expect(reportCalls()[0]).toContain('/reports/stock/writeoffs/')
   })
@@ -82,6 +83,38 @@ describe('Отчёты по складу (F-1104)', () => {
     await w.findAll('thead th')[6].trigger('click')
     await flushPromises()
     expect(reportCalls().at(-1)).toContain('ordering=-closing')
+  })
+
+  // F-1108 (ревью): «Все объекты» после выбора объекта отдаёт undefined — раньше уходило object=NaN → 400
+  it('сброс фильтров на «Все» (FilterField отдаёт undefined) не шлёт NaN', async () => {
+    routeGet(TURNOVER)
+    const w = await mountReport('turnover')
+    const vm = w.vm as unknown as { filters: Record<string, unknown>; handleExport: (f: 'csv' | 'excel') => Promise<void> }
+    vm.filters.object = undefined
+    vm.filters.material = undefined
+    await vm.handleExport('csv')
+    expect(exportFromBackend.mock.calls.at(-1)?.[3]).toEqual({ date_from: '2026-03-01', date_to: '2026-03-31' })
+  })
+
+  // F-1108 (ревью): один компонент на два маршрута — смена вида обязана перезапросить отчёт
+  it('переход оборотка → списания перезапрашивает данные', async () => {
+    routeGet(TURNOVER)
+    const w = await mountReport('turnover')
+    routeGet(WRITEOFFS)
+    await w.setProps({ kind: 'writeoffs' })
+    await flushPromises()
+    expect(reportCalls().at(-1)).toContain('/reports/stock/writeoffs/')
+    expect(w.text()).toContain('Списаний за период: 3')
+  })
+
+  it('выгрузка повторяет сортировку экрана', async () => {
+    routeGet(TURNOVER)
+    const w = await mountReport('turnover')
+    await w.findAll('thead th')[6].trigger('click')
+    await flushPromises()
+    ;(w.vm as unknown as { handleExport: (f: 'csv' | 'excel') => Promise<void> }).handleExport('csv')
+    await flushPromises()
+    expect(exportFromBackend.mock.calls.at(-1)?.[3]).toMatchObject({ ordering: 'closing' })
   })
 
   it('выгрузка — с сервера с теми же фильтрами', async () => {

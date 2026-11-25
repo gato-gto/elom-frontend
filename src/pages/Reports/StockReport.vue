@@ -112,7 +112,10 @@ const SPECS: Record<Kind, { title: string; icon: string; file: string; url: stri
     empty: 'Нет списаний за период',
     columns: [
       { key: 'object_name', label: 'Объект' }, { key: 'material_name', label: 'Материал' }, { key: 'unit', label: 'Ед.' },
-      { key: 'qty_total', label: 'Количество', num: true }, { key: 'writeoffs', label: 'Списаний', num: true },
+      { key: 'qty_total', label: 'Количество', num: true },
+      // F-1108 (ревью): «без учёта» (руководство, D-026) не уменьшают остаток — их нет в «Расходе» оборотки
+      { key: 'qty_unaccounted', label: 'в т.ч. без учёта', num: true },
+      { key: 'writeoffs', label: 'Списаний', num: true },
       { key: 'first_date', label: 'Первое', date: true }, { key: 'last_date', label: 'Последнее', date: true },
     ],
   },
@@ -120,7 +123,9 @@ const SPECS: Record<Kind, { title: string; icon: string; file: string; url: stri
 const spec = computed(() => SPECS[props.kind])
 
 const monthStart = () => `${todayLocal().slice(0, 8)}01`
-const emptyFilters = () => ({ date_from: monthStart(), date_to: todayLocal(), object: '', material: '', responsible: '' })
+type FilterId = string | number | null | undefined
+const emptyFilters = () => ({ date_from: monthStart(), date_to: todayLocal(), object: '' as FilterId,
+  material: '' as FilterId, responsible: '' as FilterId })
 const filters = ref(emptyFilters())
 const rows = ref<Row[]>([])
 const period = ref<{ date_from: string; date_to: string } | null>(null)
@@ -149,9 +154,12 @@ function query(): Record<string, string | number> {
   const f = filters.value
   if (f.date_from) { q.date_from = f.date_from }
   if (f.date_to) { q.date_to = f.date_to }
-  if (f.object !== '') { q.object = Number(f.object) }
-  if (f.material !== '') { q.material = Number(f.material) }
-  if (props.kind === 'writeoffs' && f.responsible !== '') { q.responsible = Number(f.responsible) }
+  // F-1108 (ревью): FilterField на «Все …» отдаёт undefined/null — раньше Number(undefined) = NaN → 400
+  const id = (v: FilterId) => (v === '' || v === null || v === undefined ? null : Number(v))
+  const obj = id(f.object), mat = id(f.material), resp = id(f.responsible)
+  if (obj !== null && Number.isFinite(obj)) { q.object = obj }
+  if (mat !== null && Number.isFinite(mat)) { q.material = mat }
+  if (props.kind === 'writeoffs' && resp !== null && Number.isFinite(resp)) { q.responsible = resp }
   return q
 }
 
@@ -165,8 +173,8 @@ function cell(r: Row, c: Column): string {
 async function fetchReport() {
   loading.value = true
   try {
-    const params: Record<string, string | number> = { ...query(), page: currentPage.value, page_size: pageSize.value }
-    if (sortKey.value) { params.ordering = `${sortDesc.value ? '-' : ''}${sortKey.value}` }
+    const params: Record<string, string | number> = { ...query(), ...ordering(), page: currentPage.value,
+      page_size: pageSize.value }
     const { data } = await api.get<StockReportResponse<Row>>(spec.value.url + buildQuery(params))
     rows.value = data.results || []
     totalItems.value = data.count || 0
@@ -185,9 +193,15 @@ function handleSort(key: string) {
   fetchReport()
 }
 
+function ordering(): Record<string, string> {
+  return sortKey.value ? { ordering: `${sortDesc.value ? '-' : ''}${sortKey.value}` } : {}
+}
+
 async function handleExport(format: 'csv' | 'excel') {
   try {
-    await exportFromBackend(spec.value.url, format === 'excel' ? 'xlsx' : 'csv', `${spec.value.file}_${todayLocal()}`, query())
+    // F-1108 (ревью): выгрузка — с теми же фильтрами и в том же порядке, что на экране
+    await exportFromBackend(spec.value.url, format === 'excel' ? 'xlsx' : 'csv', `${spec.value.file}_${todayLocal()}`,
+      { ...query(), ...ordering() })
   } catch (error) {
     ErrorHandlers.dataLoading(error)
   }
@@ -217,6 +231,17 @@ async function loadRefs() {
 
 const refetch = debounce(() => { currentPage.value = 1; fetchReport() }, 300)
 watch(filters, refetch, { deep: true })
+// F-1108 (ревью): оба маршрута — один компонент; Vue переиспользует его при переходе между отчётами →
+// без этого новый вид показывал строки прежнего (и без справочника ответственных)
+watch(() => props.kind, async () => {
+  rows.value = []
+  period.value = null
+  grandTotal.value = null
+  sortKey.value = ''
+  sortDesc.value = false
+  currentPage.value = 1
+  await Promise.all([loadRefs(), fetchReport()])
+})
 
 defineExpose({ handleExport })
 

@@ -230,6 +230,8 @@ export interface TurnoverRow extends StockReportRowBase {
 
 export interface WriteOffReportRow extends StockReportRowBase {
   qty_total: number;
+  /** F-1108: из них «без учёта» (D-026) — в журнале их нет */
+  qty_unaccounted: number;
   writeoffs: number;
   first_date: string;
   last_date: string;
