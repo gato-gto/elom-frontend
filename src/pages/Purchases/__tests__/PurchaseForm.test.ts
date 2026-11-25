@@ -4,6 +4,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import PurchaseForm from '../PurchaseForm.vue'
 import { useMaterialsStore } from '@/stores/materials'
 import { usePermissionsStore } from '@/stores/permissions'
+import { useObjectsStore } from '@/stores/objects'
+import { useAuthStore } from '@/stores/auth'
 
 // Mock router
 vi.mock('vue-router', () => ({
@@ -592,9 +594,23 @@ describe('PurchaseForm: закупка архивного объекта (F-1109
     expect((w.vm as unknown as Vm).objectOptions).toContainEqual({ value: 483, label: 'Гостиница Гранд Капитал (в архиве)' })
   })
 
-  it('новая закупка — архивных объектов в списке нет', async () => {
+  // F-1115 (ревью): прежний тест шёл на пустом сторе и не мог упасть — теперь в сторе есть архивный объект
+  it('новая закупка — архивного объекта в списке нет, активный есть', async () => {
     const w = mount(PurchaseForm, { global: { stubs } })
     await flushPromises()
-    expect((w.vm as unknown as Vm).objectOptions.some(o => o.label.endsWith('(в архиве)'))).toBe(false)
+    useObjectsStore().items = [{ id: 1, name: 'Гостиница', is_active: true }, { id: 2, name: 'Офис', is_active: false }] as never
+    await flushPromises()
+    expect((w.vm as unknown as Vm).objectOptions).toEqual([{ value: 1, label: 'Гостиница' }])
+  })
+
+  it('активный объект закупки вне назначений — в списке без пометки «(в архиве)»', async () => {
+    const initial = { id: 32, status: 'new', date: '2026-10-23', object: 5, object_name: 'Медцентр', responsible: 42,
+      items: [], photos: [] }
+    const w = mount(PurchaseForm, { props: { initial: initial as unknown as never }, global: { stubs } })
+    await flushPromises()
+    useAuthStore().me = { id: 42, username: 'm', assigned_object_ids: [1] } as never
+    useObjectsStore().items = [{ id: 1, name: 'Гостиница', is_active: true }, { id: 5, name: 'Медцентр', is_active: true }] as never
+    await flushPromises()
+    expect((w.vm as unknown as Vm).objectOptions).toContainEqual({ value: 5, label: 'Медцентр' })
   })
 })

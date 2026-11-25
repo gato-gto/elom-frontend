@@ -52,4 +52,26 @@ describe('WriteOffForm: списание архивного объекта (F-11
     expect(objectSelect.findAll('option').filter(o => o.text() === '— выберите объект —').length).toBe(1)
     expect(respSelect.findAll('option').filter(o => o.text().startsWith('— ')).length).toBe(1)
   })
+
+  // F-1115 (ревью F-1109): карточка архивного объекта пришла ПОСЛЕ смены объекта — список людей и ответственный
+  // остаются от нового объекта (иначе сервер отвечал 400: ответственный не из людей объекта)
+  it('поздняя карточка прежнего объекта не перезаписывает ответственного нового', async () => {
+    let releaseCard: (v: unknown) => void = () => {}
+    get.mockImplementation((url: string) => (String(url).includes('/objects/484/')
+      ? new Promise(r => { releaseCard = r })
+      : Promise.resolve({ data: { results: [], count: 0 } })))
+    const w = mount(WriteOffForm, { props: { initial: INITIAL, isOpen: true }, global: { stubs: { PermissionButton: true, MaterialSearchSelect: true } } })
+    await flushPromises()
+    const vm = w.vm as unknown as { loadEmployeesByObject: (id: number) => Promise<void>; formData: { object: number; responsible: number | null };
+      responsibleOptions: Array<{ value: number; label: string }> }
+    const stale = vm.loadEmployeesByObject(484)       // ждёт карточку архивного объекта
+    vm.formData.object = 7
+    await vm.loadEmployeesByObject(7)                 // у O-7 людей нет — только заглушка
+    const afterNew = vm.responsibleOptions.map(o => o.label)
+    releaseCard({ data: { id: 484, name: 'Офис Медцентр', responsible: 102, is_active: false } })
+    await stale
+    await flushPromises()
+    expect(vm.responsibleOptions.map(o => o.label)).toEqual(afterNew)
+    expect(afterNew).toEqual(['— выберите ответственного —'])
+  })
 })

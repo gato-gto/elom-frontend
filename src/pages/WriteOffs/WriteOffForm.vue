@@ -404,7 +404,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useUiStore } from '@/stores/ui'
 import { formatNumberClean, todayLocal } from '@/utils/formatters'
 import api from '@/api/client'
-import { withCurrentObject } from '@/utils/currentObjectOption'
+import { isArchivedObject, withCurrentObject } from '@/utils/currentObjectOption'
 import { endpoints } from '@/api/endpoints'
 import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
 import type { 
@@ -484,7 +484,7 @@ const objectOptions = computed(() => {
   // F-1109: у правки списания архивного объекта его объект остаётся в списке («(в архиве)»)
   const current = props.initial ? { id: props.initial.object, name: (props.initial as { object_name?: string }).object_name } : null
   const opts = withCurrentObject(objects.map((obj: SiteObject) => ({ value: obj.id, label: obj.name })),
-    current?.id, current?.name)
+    current?.id, current?.name, isArchivedObject(objectsStore.items as SiteObject[], current?.id))
 
   // Если только один объект - не показываем placeholder
   if (opts.length === 1) {
@@ -682,7 +682,12 @@ const loadMaterialsByObject = async (objectId: number) => {
 // F-596: подпись сотрудника — «Имя Фамилия», fallback username (как везде, [[elom-ui-copy-conventions]]).
 const empLabel = (e: any): string => (e ? `${e.first_name || ''} ${e.last_name || ''}`.trim() || e.username : '')
 
+// F-1115 (ревью F-1109): загрузка людей объекта ждёт карточку архивного объекта — ответ по прежнему объекту
+// (пользователь успел сменить объект) не должен перезаписать список и ответственного
+let employeesSeq = 0
+
 const loadEmployeesByObject = async (objectId: number) => {
+  const seq = ++employeesSeq
   employeesLoading.value = true
   try {
     // Для бригадира: он автоматически становится ответственным
@@ -718,6 +723,7 @@ const loadEmployeesByObject = async (objectId: number) => {
         const { data } = await api.get(endpoints.objects.one(objectId))
         selectedObject = data
       } catch { /* нет доступа — останется «текущий ответственный» */ }
+      if (seq !== employeesSeq) { return }
     }
     const objectResponsibleProfileId = selectedObject?.responsible
     const objectResponsibleEmp = objectResponsibleProfileId
@@ -760,7 +766,7 @@ const loadEmployeesByObject = async (objectId: number) => {
   } catch (error) {
     console.error('Error loading employees by object:', error)
   } finally {
-    employeesLoading.value = false
+    if (seq === employeesSeq) { employeesLoading.value = false }
   }
 }
 

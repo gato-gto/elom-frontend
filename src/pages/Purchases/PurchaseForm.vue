@@ -500,7 +500,7 @@
 </template>
 
 <script setup lang="ts">
-import { withCurrentObject } from '@/utils/currentObjectOption'  // F-1109
+import { isArchivedObject, withCurrentObject } from '@/utils/currentObjectOption'  // F-1109, F-1115
 import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { normalizeDecimalInput, parseDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
@@ -789,7 +789,8 @@ const objectOptions = computed(() => {
   // Для requester показываем только назначенные объекты
   // F-1109: закупка архивного объекта при правке — её объект остаётся в списке («(в архиве)»), иначе поле пустое
   const keepCurrent = (opts: Array<{ value: number; label: string }>) =>
-    withCurrentObject(opts, props.initial?.object, props.initial?.object_name)
+    withCurrentObject(opts, props.initial?.object, props.initial?.object_name,
+      isArchivedObject(objects.value as Array<{ id: number; is_active?: boolean }>, props.initial?.object))
   if (isRequester.value) {
     const assignedIds = auth.me?.assigned_object_ids || []
     const list = objects.value.filter((obj: any) => assignedIds.includes(obj.id) && obj.is_active)
