@@ -94,6 +94,9 @@
             </li>
           </ul>
         </section>
+
+        <!-- F-1110 (ответ владельца 17): файлы проекта -->
+        <ObjectFiles v-if="object" :object-id="object.id" :can-manage="canManageFiles" />
       </div>
 
     <!-- Modal for editing -->
@@ -119,6 +122,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Modal from '@/components/Modal.vue'
 import ObjectForm from './ObjectForm.vue'
+import ObjectFiles from '@/components/ObjectFiles.vue'
 import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
@@ -140,6 +144,13 @@ const stageDictionary: Record<string, { label: string; description: string }> = 
 
 // ✅ RBAC: проверка через permissions вместо хардкода ролей
 const canEdit = computed(() => can('objects', 'edit'))
+// F-1110: файлы проекта загружают/удаляют руководство (objects.delete — как «В архив») и ответственный объекта
+// (Object.responsible — EmployeeProfile.id, сравниваем с profile_id пользователя). Сервер проверяет то же.
+const canManageFiles = computed(() => {
+  const me = _authStore.me as { is_superuser?: boolean; profile_id?: number } | null
+  return !!me?.is_superuser || can('objects', 'delete')
+    || (!!object.value?.responsible && object.value.responsible === me?.profile_id)
+})
 
 const statusLabel = computed(() => (object.value?.is_active ? 'Активный' : 'Неактивный'))
 const statusBadgeClass = computed(() => (object.value?.is_active ? 'badge-success' : 'badge-error'))

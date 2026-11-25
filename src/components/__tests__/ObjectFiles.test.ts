@@ -1,0 +1,85 @@
+// F-1110 (ответ владельца 17): файлы проекта в карточке объекта — PDF и изображения до 50 МБ; загружают и удаляют
+// руководство и ответственный, видят участники объекта.
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+
+const { get, post, del, toast } = vi.hoisted(() => ({
+  get: vi.fn(), post: vi.fn().mockResolvedValue({ data: {} }), del: vi.fn().mockResolvedValue({}), toast: vi.fn(),
+}))
+vi.mock('@/api/client', () => ({ default: { get, post, delete: del } }))
+vi.mock('@/stores/ui', () => ({ useUiStore: () => ({ toast }) }))
+
+import ObjectFiles from '@/components/ObjectFiles.vue'
+import { endpoints } from '@/api/endpoints'
+
+const FILES = [
+  { id: 1, name: 'План этажа.pdf', size: 1258291, content_type: 'application/pdf', uploaded_by_name: 'Анна',
+    created_at: '2026-11-20T10:00:00+05:00', url: 'https://api.elom.uz/protected-media/objects/plan.pdf?token=t' },
+  { id: 2, name: 'фото.png', size: 2048, content_type: 'image/png', uploaded_by_name: null,
+    created_at: '2026-11-21T10:00:00+05:00', url: 'https://api.elom.uz/protected-media/objects/p.png?token=t' },
+]
+const mountIt = async (canManage: boolean) => {
+  const w = mount(ObjectFiles, { props: { objectId: 7, canManage } })
+  await flushPromises()
+  return w
+}
+const pick = async (w: Awaited<ReturnType<typeof mountIt>>, file: File) => {
+  const input = w.find('input[type="file"]')
+  Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+  await input.trigger('change')
+  await flushPromises()
+}
+
+describe('ObjectFiles (F-1110)', () => {
+  beforeEach(() => {
+    get.mockReset(); post.mockClear(); del.mockClear(); toast.mockClear()
+    get.mockResolvedValue({ data: FILES })
+    vi.restoreAllMocks()
+  })
+
+  it('список: имя ссылкой на файл, размер и кто загрузил', async () => {
+    const w = await mountIt(false)
+    expect(get).toHaveBeenCalledWith(endpoints.objects.files(7))
+    const rows = w.findAll('[data-test="file-row"]')
+    expect(rows.length).toBe(2)
+    expect(rows[0].find('a').attributes('href')).toBe(FILES[0].url)
+    expect(rows[0].text()).toContain('1,2 МБ')
+    expect(rows[0].text()).toContain('Анна')
+    expect(rows[1].text()).toContain('2 КБ')
+  })
+
+  it('без права — ни загрузки, ни удаления', async () => {
+    const w = await mountIt(false)
+    expect(w.find('input[type="file"]').exists()).toBe(false)
+    expect(w.findAll('[data-test="file-delete"]').length).toBe(0)
+  })
+
+  it('больше 50 МБ — не отправляем, говорим почему', async () => {
+    const w = await mountIt(true)
+    const big = new File(['x'], 'big.pdf', { type: 'application/pdf' })
+    Object.defineProperty(big, 'size', { value: 50 * 1024 * 1024 + 1 })
+    await pick(w, big)
+    expect(post).not.toHaveBeenCalled()
+    expect(toast).toHaveBeenCalledWith({ type: 'error', text: 'Файл больше 50 МБ.' })
+  })
+
+  it('загрузка — multipart на адрес объекта, затем список перечитывается', async () => {
+    const w = await mountIt(true)
+    await pick(w, new File(['%PDF-1'], 'смета.pdf', { type: 'application/pdf' }))
+    expect(post.mock.calls[0][0]).toBe(endpoints.objects.files(7))
+    const fd = post.mock.calls[0][1] as FormData
+    expect((fd.get('file') as File).name).toBe('смета.pdf')
+    expect(get).toHaveBeenCalledTimes(2)
+  })
+
+  it('удаление — с вопросом; отказ — ничего', async () => {
+    const w = await mountIt(true)
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+    await w.findAll('[data-test="file-delete"]')[0].trigger('click')
+    await flushPromises()
+    expect(del).not.toHaveBeenCalled()
+    await w.findAll('[data-test="file-delete"]')[0].trigger('click')
+    await flushPromises()
+    expect(del).toHaveBeenCalledWith(endpoints.objects.file(7, 1))
+  })
+})

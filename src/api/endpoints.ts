@@ -73,6 +73,9 @@ export const endpoints = {
         responsibles: join('/objects/responsibles/'),
         // F-1107 (ответ владельца 3): удалить тестовый объект со всеми документами (только администратор)
         purge: (id: number) => join(`/objects/${id}/purge/`),
+        // F-1110 (ответ владельца 17): файлы проекта объекта
+        files: (id: number) => join(`/objects/${id}/files/`),
+        file: (id: number, fileId: number) => join(`/objects/${id}/files/${fileId}/`),
     },
 
     // Purchases endpoints

@@ -2859,6 +2859,193 @@ paths:
           description: Нет прав доступа
         '404':
           description: Объект не найден
+  /api/v1/objects/{id}/files/:
+    get:
+      operationId: objects_files_list
+      description: 'F-1110 (ответ владельца 17): PDF или изображение (JPEG/PNG/WebP)
+        до 50 МБ; ссылка — подписанная.'
+      summary: 'Файлы проекта объекта: список (участники объекта) и загрузка (руководство,
+        ответственный)'
+      parameters:
+      - in: query
+        name: address
+        schema:
+          type: string
+      - in: query
+        name: created_by
+        schema:
+          type: number
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Objects
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedObjectFileRowList'
+          description: ''
+    post:
+      operationId: objects_files_create
+      description: 'F-1110 (ответ владельца 17): PDF или изображение (JPEG/PNG/WebP)
+        до 50 МБ; ссылка — подписанная.'
+      summary: 'Файлы проекта объекта: список (участники объекта) и загрузка (руководство,
+        ответственный)'
+      parameters:
+      - in: query
+        name: address
+        schema:
+          type: string
+      - in: query
+        name: created_by
+        schema:
+          type: number
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: responsible
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Objects
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObjectFileUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedObjectFileRowList'
+          description: ''
+  /api/v1/objects/{id}/files/{file_id}/:
+    delete:
+      operationId: objects_files_destroy
+      description: |-
+        ViewSet для управления строительными объектами.
+
+        Объект — площадка строительства или ремонта.
+        Все закупки, списания и остатки привязаны к объекту.
+
+        **Основные поля:**
+        - name, address — идентификация объекта
+        - responsible — ответственный сотрудник (бригадир)
+        - current_stage — этап работ на самом объекте (состояние стройки, она идёт независимо от подрядчика;
+          обязателен при создании, предзаполнения нет — F-792)
+        - key_person_name, key_person_contacts — контактное лицо
+        - date_start, date_end — сроки проекта
+
+        **Права доступа:**
+        - Директор/Админ/Координатор — видят все объекты
+        - Бригадир — видит только свои объекты (где он ответственный или назначен)
+
+        **Дополнительные действия:**
+        - `responsibles` — список ответственных за объекты
+      summary: Удалить файл проекта (руководство, ответственный объекта)
+      parameters:
+      - in: path
+        name: file_id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      tags:
+      - Objects
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/objects/{id}/purge/:
     post:
       operationId: objects_purge_create
@@ -10030,6 +10217,41 @@ components:
       - updated_at
       - updated_by
       - updated_by_name
+    ObjectFileRow:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        size:
+          type: integer
+        content_type:
+          type: string
+        uploaded_by_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        url:
+          type: string
+      required:
+      - content_type
+      - created_at
+      - id
+      - name
+      - size
+      - uploaded_by_name
+      - url
+    ObjectFileUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     ObjectPurgeRequestRequest:
       type: object
       properties:
@@ -10299,6 +10521,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MaterialRequestRecord'
+    PaginatedObjectFileRowList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectFileRow'
     PaginatedObjectList:
       type: object
       required:
