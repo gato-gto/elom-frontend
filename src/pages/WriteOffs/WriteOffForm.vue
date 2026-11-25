@@ -41,7 +41,6 @@
             class="select select-bordered w-full"
             :class="{ 'select-error': errors.object }"
           >
-            <option v-if="!hasSingleObject" value="" disabled>— выберите объект —</option>
             <option
               v-for="object in objectOptions"
               :key="object.value"
@@ -70,7 +69,6 @@
             :class="{ 'select-error': errors.responsible }"
             :disabled="isLimitedAccess"
           >
-            <option value="" disabled>— выберите ответственного —</option>
             <option
               v-for="responsible in responsibleOptions"
               :key="responsible.value"
@@ -406,6 +404,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useUiStore } from '@/stores/ui'
 import { formatNumberClean, todayLocal } from '@/utils/formatters'
 import api from '@/api/client'
+import { withCurrentObject } from '@/utils/currentObjectOption'
 import { endpoints } from '@/api/endpoints'
 import { DUPLICATE_MATERIAL_MESSAGE } from '@/constants/validation'
 import type { 
@@ -482,16 +481,17 @@ const loadedMaterialsByObject = ref<Material[]>([])
 // Дополнительно фильтруем только активные объекты
 const objectOptions = computed(() => {
   const objects = (objectsStore.items as SiteObject[]).filter((obj: SiteObject) => obj.is_active)
-  
+  // F-1109: у правки списания архивного объекта его объект остаётся в списке («(в архиве)»)
+  const current = props.initial ? { id: props.initial.object, name: (props.initial as { object_name?: string }).object_name } : null
+  const opts = withCurrentObject(objects.map((obj: SiteObject) => ({ value: obj.id, label: obj.name })),
+    current?.id, current?.name)
+
   // Если только один объект - не показываем placeholder
-  if (objects.length === 1) {
-    return objects.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
+  if (opts.length === 1) {
+    return opts
   }
-  
-  return [
-    { value: 0, label: '— выберите объект —' },
-    ...objects.map((obj: SiteObject) => ({ value: obj.id, label: obj.name }))
-  ]
+
+  return [{ value: 0, label: '— выберите объект —' }, ...opts]
 })
 
 // Проверка, есть ли только один объект
@@ -710,7 +710,15 @@ const loadEmployeesByObject = async (objectId: number) => {
 
     // Object.responsible — EmployeeProfile.id (profile_id), а WriteOff.responsible и опции формы — User.id
     // (emp.id). Мост — emp.profile_id; присваивать profile_id в User-поле нельзя (select покажет плейсхолдер).
-    const selectedObject = objectsStore.items.find((obj: any) => obj.id === objectId)
+    let selectedObject: { responsible?: number | null } | undefined =
+      (objectsStore.items as SiteObject[]).find((obj: SiteObject) => obj.id === objectId)
+    if (!selectedObject) {
+      // F-1109: архивного объекта нет в списке активных — берём его карточку, чтобы найти ответственного
+      try {
+        const { data } = await api.get(endpoints.objects.one(objectId))
+        selectedObject = data
+      } catch { /* нет доступа — останется «текущий ответственный» */ }
+    }
     const objectResponsibleProfileId = selectedObject?.responsible
     const objectResponsibleEmp = objectResponsibleProfileId
       ? employeesStore.items.find((emp: any) => emp.profile_id === objectResponsibleProfileId)

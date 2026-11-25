@@ -577,3 +577,24 @@ describe('PurchaseForm', () => {
     })
   })
 })
+
+// F-1109 (live 25.11): правка закупки архивного объекта — поле «Объект» было пустым (в списке только активные)
+describe('PurchaseForm: закупка архивного объекта (F-1109)', () => {
+  beforeEach(() => { setActivePinia(createPinia()); vi.clearAllMocks() })
+  const stubs = { MaterialSearchSelect: true, SupplierSearchSelect: true, GenericForm: true }
+  type Vm = { objectOptions: Array<{ value: number; label: string }> }
+
+  it('объект закупки показан с пометкой «(в архиве)»', async () => {
+    const initial = { id: 31, status: 'cancelled', date: '2026-10-23', object: 483, object_name: 'Гостиница Гранд Капитал',
+      responsible: 42, items: [], photos: [] }
+    const w = mount(PurchaseForm, { props: { initial: initial as unknown as never }, global: { stubs } })
+    await flushPromises()
+    expect((w.vm as unknown as Vm).objectOptions).toContainEqual({ value: 483, label: 'Гостиница Гранд Капитал (в архиве)' })
+  })
+
+  it('новая закупка — архивных объектов в списке нет', async () => {
+    const w = mount(PurchaseForm, { global: { stubs } })
+    await flushPromises()
+    expect((w.vm as unknown as Vm).objectOptions.some(o => o.label.endsWith('(в архиве)'))).toBe(false)
+  })
+})

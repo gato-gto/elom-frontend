@@ -500,6 +500,7 @@
 </template>
 
 <script setup lang="ts">
+import { withCurrentObject } from '@/utils/currentObjectOption'  // F-1109
 import DecimalInput from '@/components/DecimalInput.vue'  // F-1046 (B6): запятая-дробь при любом языке браузера
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { normalizeDecimalInput, parseDecimalInput } from '@/utils/numberInput'  // F-1015: запятая=дробь, пробелы=разряды (зеркало BE F-768)
@@ -786,25 +787,28 @@ const responsibleOptions = computed(() =>
 
 const objectOptions = computed(() => {
   // Для requester показываем только назначенные объекты
+  // F-1109: закупка архивного объекта при правке — её объект остаётся в списке («(в архиве)»), иначе поле пустое
+  const keepCurrent = (opts: Array<{ value: number; label: string }>) =>
+    withCurrentObject(opts, props.initial?.object, props.initial?.object_name)
   if (isRequester.value) {
     const assignedIds = auth.me?.assigned_object_ids || []
     const list = objects.value.filter((obj: any) => assignedIds.includes(obj.id) && obj.is_active)
-    return list.map((obj: any) => ({
+    return keepCurrent(list.map((obj: any) => ({
       value: obj.id,
       label: obj.name
-    }))
+    })))
   }
-  
+
   // Для остальных ролей: если у пользователя есть список назначенных объектов, показываем только их
   const assignedIds = auth.me?.assigned_object_ids || []
   const list = assignedIds.length > 0
     ? objects.value.filter((obj: any) => assignedIds.includes(obj.id) && obj.is_active)
     : objects.value.filter((obj: any) => obj.is_active)
 
-  return list.map((obj: any) => ({
+  return keepCurrent(list.map((obj: any) => ({
     value: obj.id,
     label: obj.name
-  }))
+  })))
 })
 
 const supplierOptions = computed(() => 
