@@ -6,24 +6,28 @@ import { describe, it, expect } from 'vitest'
 import { smartConvert, formatSmartQuantity } from '@/utils/unitRounding'
 import { formatNumber } from '@/utils/formatters'
 
-describe('F-717/F-868 умное сокращение количеств/остатков', () => {
+describe('F-717/F-1100 умное сокращение количеств/остатков', () => {
   it('smartConvert укрупняет целые кратные', () => {
     expect(smartConvert(9750000, 'м')).toMatchObject({ value: 9750, unit: 'км', converted: true })
     expect(smartConvert(250000, 'м')).toMatchObject({ value: 250, unit: 'км', converted: true })
     expect(smartConvert(2000, 'г')).toMatchObject({ value: 2, unit: 'кг', converted: true })
   })
 
-  it('F-868 (решение владельца): укрупняет и «красивые» дроби — 1500 м → 1,5 км', () => {
-    expect(smartConvert(1500, 'г')).toMatchObject({ value: 1.5, unit: 'кг', converted: true })
-    expect(smartConvert(1500, 'м')).toMatchObject({ value: 1.5, unit: 'км', converted: true })
-    expect(smartConvert(1250, 'г')).toMatchObject({ value: 1.25, unit: 'кг', converted: true })
-    expect(smartConvert(1750, 'г')).toMatchObject({ value: 1.75, unit: 'кг', converted: true })
+  // Было (F-868, решение владельца 08.2026): «красивые» дроби укрупнялись — 1500 м → 1,5 км. Владелец
+  // пересмотрел (ответ 10, 24.11): на экранах одно правило с сервером — «только точные значения», потому что
+  // сервер (get_best_unit) дробей не давал и в одной строке стояли «1,5 км» и «1 500 м» (B19). Ожидание
+  // поменялось по решению, а не под код; полная таблица — unitDisplayParity.test.ts.
+  it('F-1100 (ответ 10): «красивые» дроби НЕ укрупняются — 1500 м остаётся 1 500 м', () => {
+    expect(smartConvert(1500, 'г')).toMatchObject({ value: 1500, unit: 'г', converted: false })
+    expect(smartConvert(1500, 'м')).toMatchObject({ value: 1500, unit: 'м', converted: false })
+    expect(smartConvert(1250, 'г')).toMatchObject({ value: 1250, unit: 'г', converted: false })
+    expect(smartConvert(1750, 'г')).toMatchObject({ value: 1750, unit: 'г', converted: false })
   })
 
   it('F-868: НЕ укрупняет, если значение неточное (точность важнее — «видно реально»)', () => {
     // 1499,9 м → 1,4999 км: округлилось бы до «1,5 км» и исказило реальное число → оставляем
     expect(smartConvert(1499.9, 'м').converted).toBe(false)
-    // 1,05 кг — кратно 0,05, но «некрасивая» дробь → оставляем 1050 г
+    // 1,05 кг — дробь → оставляем 1050 г
     expect(smartConvert(1050, 'г').converted).toBe(false)
     // 0,25 кг < 1 → короче как «250 г»
     expect(smartConvert(250, 'г').converted).toBe(false)

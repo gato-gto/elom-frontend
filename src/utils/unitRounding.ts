@@ -118,55 +118,21 @@ export function smartConvert(
 }
 
 /**
- * Определяет, стоит ли конвертировать значение
- * Основано на логике из бэкенда
+ * Определяет, стоит ли конвертировать значение.
+ * F-1100 (ответ владельца 10, 24.11): на экранах одно правило с сервером (common/smart_conversion.py,
+ * get_best_unit, F-635) — «только точные значения»: укрупняем, только если значение делится на коэффициент
+ * НАЦЕЛО и в крупной единице ≥ 1. «Красивые дроби» F-868 (1500 м → 1,5 км) отменены: в одной строке стояли
+ * «1,5 км» (фронт) и «1 500 м» (сервер). Общая таблица примеров — __tests__/unit_display_cases.json.
  */
 function shouldConvert(originalValue: number, convertedValue: number, rule: UnitRoundingRule): boolean {
-  // 1. Проверяем, что значение >= 1 в целевой единице (0,25 кг оставляем как 250 г — короче/понятнее)
-  if (convertedValue < 1) {
+  if (!Number.isFinite(originalValue) || convertedValue < 1) {
     return false
   }
-
-  // 2. Проверяем, что не создаём слишком большие числа
-  if (convertedValue > 1000000) {
-    return false
-  }
-
-  // 3. F-868 (решение владельца — «разрешить красивые дроби»): раньше здесь стояло integer-only
-  //    условие `originalValue % factor !== 0`, из-за которого 1500 м показывалось «1 500 м», а не
-  //    «1,5 км» (и это противоречило и превью, которое видел владелец, и док-контракту внизу файла).
-  //    Теперь укрупняем и дробные, НО только когда значение в целевой единице ТОЧНОЕ — кратно 0,05
-  //    (шаг «красивых» дробей). Иначе округление (formatNumber → 2 знака) исказило бы реальное число
-  //    (1499,9 м не должно превращаться в «1,5 км»), а владелец требует «видно реально».
-  const steps = (originalValue / rule.factor) * 20 // 20 = 1/0,05
-  if (!Number.isFinite(steps) || Math.abs(steps - Math.round(steps)) > 1e-9) {
-    return false
-  }
-
-  // 4. Итог — «красивое» число (целое / 0.5 / 0.25 / 0.75 / 0.1-сетка). Сетка 0,05 из (3) шире,
-  //    поэтому «некрасивые» шаги (1,05 · 1,15 · 1,35 …) отсекаем — оставляем в исходной единице.
-  if (!isBeautifulNumber(convertedValue)) {
-    return false
-  }
-
-  return true
-}
-
-/**
- * Проверяет, является ли число "красивым"
- * Красивые числа: целые, 0.5, 0.25, 0.75, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9
- */
-function isBeautifulNumber(value: number): boolean {
-  // Целое число
-  if (Number.isInteger(value)) {
-    return true
-  }
-  
-  // Проверяем простые дроби
-  const fractionalPart = value - Math.floor(value)
-  const beautifulFractions = [0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9]
-  
-  return beautifulFractions.some(frac => Math.abs(fractionalPart - frac) < 0.001)
+  // Делимость считаем в целых миллионных (в базе 6 знаков после запятой), а не делением float:
+  // 1000,000001 м не должно стать «1 км».
+  const micro = Math.round(originalValue * 1e6)
+  const factorMicro = Math.round(rule.factor * 1e6)
+  return Number.isSafeInteger(micro) && micro % factorMicro === 0
 }
 
 /**
@@ -269,11 +235,11 @@ export function getBestUnitRepresentation(
  * smartConvert(1123, 'г') // { value: 1123, unit: 'г', converted: false, reason: 'Значение не подходит для конвертации' }
  * smartConvert(100, 'мм') // { value: 10, unit: 'см', converted: true, reason: '10 мм = 1 см' }
  * smartConvert(213, 'мм') // { value: 213, unit: 'мм', converted: false, reason: 'Значение не подходит для конвертации' }
- * smartConvert(1500, 'г') // { value: 1.5, unit: 'кг', converted: true, reason: '1000 г = 1 кг' }
+ * smartConvert(1500, 'г') // { value: 1500, unit: 'г', converted: false } — F-1100: дробь не показываем
  * 
  * autoSmartConvertAndFormat(1000, 'г') // "1 кг"
  * autoSmartConvertAndFormat(1123, 'г') // "1123 г"
  * autoSmartConvertAndFormat(100, 'мм') // "10 см"
  * autoSmartConvertAndFormat(213, 'мм') // "213 мм"
- * autoSmartConvertAndFormat(1500, 'г') // "1.5 кг"
+ * autoSmartConvertAndFormat(1500, 'г') // "1 500 г"
  */
