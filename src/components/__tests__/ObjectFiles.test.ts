@@ -147,4 +147,47 @@ describe('ObjectFiles (F-1110)', () => {
       expect(w.findAll('[data-test="file-row"]').map(r => r.find('a').text())).toEqual(['new.pdf', 'a.pdf', 'b.pdf'])
     })
   })
+
+  // F-1122 (ревью-15): фоновый запрос не стартует во время основной загрузки — иначе при своём сбое он отбрасывал
+  // успешный ответ основного (номер очереди)
+  describe('фон не перебивает основную загрузку (F-1122)', () => {
+    const F = (id: number, name: string) => ({ ...FILES[0], id, name, url: `https://x/${id}?token=t` })
+    const names = (w: ReturnType<typeof mount>) => w.findAll('[data-test="file-row"]').map(r => r.find('a').text())
+    beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] }) })
+    afterEach(() => { vi.useRealTimers() })
+
+    it('смена объекта во время фонового сбоя — показан список нового объекта', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'obj7-a.pdf'), F(2, 'obj7-b.pdf')] })
+      const w = mount(ObjectFiles, { props: { objectId: 7, canManage: false } })
+      await flushPromises()
+      vi.advanceTimersByTime(44 * 60 * 1000 + 30 * 1000)
+      await flushPromises()
+      let fg: (v: unknown) => void = () => {}
+      get.mockReturnValueOnce(new Promise(r => { fg = r }))
+      await w.setProps({ objectId: 8 })
+      get.mockRejectedValueOnce(new Error('Network Error'))
+      vi.advanceTimersByTime(60 * 1000)
+      await flushPromises()
+      fg({ data: [F(9, 'obj8-z.pdf')] })
+      await flushPromises()
+      expect(names(w)).toEqual(['obj8-z.pdf'])
+    })
+
+    it('загрузка файла во время фонового сбоя — новый файл в списке', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'a.pdf')] })
+      const w = mount(ObjectFiles, { props: { objectId: 7, canManage: true } })
+      await flushPromises()
+      vi.advanceTimersByTime(44 * 60 * 1000 + 30 * 1000)
+      await flushPromises()
+      let fg: (v: unknown) => void = () => {}
+      get.mockReturnValueOnce(new Promise(r => { fg = r }))
+      await pick(w as never, new File(['%PDF'], 'new.pdf', { type: 'application/pdf' }))
+      get.mockRejectedValueOnce(new Error('Network Error'))
+      vi.advanceTimersByTime(60 * 1000)
+      await flushPromises()
+      fg({ data: [F(3, 'new.pdf'), F(1, 'a.pdf')] })
+      await flushPromises()
+      expect(names(w)).toEqual(['new.pdf', 'a.pdf'])
+    })
+  })
 })

@@ -79,7 +79,9 @@ const RETRY_MS = 5 * 60 * 1000
 let requestSeq = 0
 
 function refreshIfStale() {
-  if (document.visibilityState !== 'hidden' && Date.now() - loadedAt >= LINK_REFRESH_MS) { load(true) }
+  // F-1122 (ревью-15): не во время основной загрузки — иначе фоновый запрос забирал номер очереди и при своём сбое
+  // отбрасывал успешный ответ основного (после смены объекта показывались файлы прежнего)
+  if (!loading.value && document.visibilityState !== 'hidden' && Date.now() - loadedAt >= LINK_REFRESH_MS) { load(true) }
 }
 
 async function load(background = false) {
