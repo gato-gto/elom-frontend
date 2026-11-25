@@ -4,6 +4,50 @@ info:
   version: 1.0.0
   description: Energy Life — учёт закупок, остатки, архив, отчёты (v1)
 paths:
+  /api/v1/archive/lock-date/:
+    post:
+      operationId: archive_lock_date_create
+      description: Поставить, перенести или снять (date=null) дату запрета объекта.
+        Право stock.edit_all.
+      summary: Дата запрета объекта
+      tags:
+      - Archive
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_SetInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/_SetInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/_SetInputRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/archive/lock-dates/:
+    get:
+      operationId: archive_lock_dates_list
+      description: 'Даты запрета объектов (видимых пользователю): для страницы «Дата
+        запрета» и пред-проверки форм.'
+      summary: Даты запрета по объектам
+      tags:
+      - Archive
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LockDateRowList'
+          description: ''
   /api/v1/archive/periods/:
     get:
       operationId: archive_periods_list
@@ -9316,6 +9360,33 @@ components:
         * `material` - Материал
         * `equipment` - Оборудование
         * `coefficient` - Коэффициент
+    LockDateRowList:
+      type: object
+      properties:
+        object:
+          type: integer
+        object_name:
+          type: string
+        object_is_active:
+          type: boolean
+        closed_until:
+          type: string
+          format: date
+          nullable: true
+        closed_until_by_name:
+          type: string
+          nullable: true
+        closed_until_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - closed_until
+      - closed_until_at
+      - closed_until_by_name
+      - object
+      - object_is_active
+      - object_name
     Material:
       type: object
       description: |-
@@ -13266,6 +13337,18 @@ components:
           minLength: 1
       required:
       - month
+      - object
+    _SetInputRequest:
+      type: object
+      properties:
+        object:
+          type: integer
+        date:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - date
       - object
     _WriteOffBulkInputRequest:
       type: object

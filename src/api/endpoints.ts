@@ -109,6 +109,9 @@ export const endpoints = {
         list: join('/archive/periods/'),
         close: join('/archive/periods/close/'),
         reopen: join('/archive/periods/reopen/'),
+        // F-1106 (ответ владельца 7): «дата запрета» на объект
+        lockDates: join('/archive/lock-dates/'),
+        setLockDate: join('/archive/lock-date/'),
     },
 
     // Tools endpoints

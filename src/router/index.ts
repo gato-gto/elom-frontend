@@ -449,10 +449,10 @@ const routes = [
     name: 'ArchivePeriods',
     component: ArchivePeriods,
     meta: {
-      title: 'Архив',
+      title: 'Дата запрета',  // F-1106 (ответ владельца 7): было «Архив» (помесячное закрытие)
       icon: 'archive',
-      breadcrumb: 'Архивные периоды',
-      description: 'Закрытие и открытие месяцев по объектам',
+      breadcrumb: 'Дата запрета',
+      description: 'Дата, по которую документы объекта только для чтения',
       category: 'inventory',
       order: 8,
       permissions: ['stock.view']

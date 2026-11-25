@@ -1,72 +1,49 @@
 <template>
   <div class="list-container space-y-6">
-    <!-- F-526: единый заголовок как на остальных страницах (ListHeader), вместо кастомного <h1>. -->
+    <!-- F-1106 (ответ владельца 7): одна «дата запрета» на объект вместо помесячного закрытия -->
     <ListHeader
-      title="Архивные периоды"
-      subtitle="Закрытие месяца по объекту делает данные периода (закупки, движения, списания) архивными — только для чтения. Балансы сохраняются."
+      title="Дата запрета"
+      subtitle="Всё по дату запрета включительно — закупки, движения, списания — только для чтения. Остатки и отчёты их учитывают. Дату переносит и снимает руководство."
       icon="inventory_2"
       :show-create="false"
     />
 
-    <!-- Закрыть период — только для держателей stock.edit (иначе контрол скрыт, не «обманка») -->
-    <section v-if="canEdit" class="rounded-lg border border-base-300 p-4">
-      <h2 class="text-sm font-medium mb-3">Закрыть период</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-end">
-        <label class="block">
-          <span class="block text-xs mb-1 text-muted">Объект</span>
-          <select v-model="form.object" class="select select-bordered w-full">
-            <option :value="0" disabled>— выберите объект —</option>
-            <option v-for="o in objectOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-        </label>
-        <label class="block">
-          <span class="block text-xs mb-1 text-muted">Месяц</span>
-          <input v-model="form.month" type="month" :max="currentMonth()" class="input input-bordered w-full" />
-          <span v-if="monthIsFuture" class="block text-xs mt-1 text-error">Будущий месяц закрыть нельзя</span>
-        </label>
-        <button
-          class="btn btn-primary"
-          :disabled="!form.object || !form.month || monthIsFuture || busy"
-          @click="askClose"
-        >
-          Закрыть период
-        </button>
-      </div>
-    </section>
-
-    <!-- Список закрытых периодов -->
     <section class="rounded-lg border border-base-300 overflow-hidden">
       <div class="px-4 py-3 border-b border-base-300 flex items-center justify-between">
-        <h2 class="text-sm font-medium">Закрытые периоды</h2>
+        <h2 class="text-sm font-medium">Объекты</h2>
         <button class="btn btn-ghost btn-sm" :disabled="store.loading" @click="refresh">Обновить</button>
       </div>
-
       <div v-if="store.error" class="px-4 py-3 text-sm text-error border-b border-base-300">{{ store.error }}</div>
-
-      <div v-if="store.loading" class="p-6 text-center text-sm text-subtle">Загрузка…</div>
-      <div v-else-if="store.items.length === 0" class="p-8 text-center text-sm text-subtle">
-        Пока нет закрытых периодов
-      </div>
-      <!-- F-526: стандартная таблица .modern-table как на остальных экранах (вместо кастомной). -->
+      <div v-if="store.loading && store.lockDates.length === 0" class="p-6 text-center text-sm text-subtle">Загрузка…</div>
+      <div v-else-if="store.lockDates.length === 0" class="p-8 text-center text-sm text-subtle">Нет объектов</div>
       <div v-else class="table-container">
         <table class="modern-table">
           <thead>
             <tr>
-              <th>Месяц</th>
               <th>Объект</th>
-              <th>Закрыт</th>
-              <th>Кем</th>
+              <th>Дата запрета</th>
+              <th>Кто и когда менял</th>
               <th v-if="canEdit" class="text-right">Действия</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in store.items" :key="p.id">
-              <td class="whitespace-nowrap font-mono">{{ formatMonth(p.month) }}</td>
-              <td>{{ p.object_name }}</td>
-              <td class="text-muted whitespace-nowrap font-mono">{{ formatDateTime(p.closed_at) }}</td>
-              <td class="text-muted">{{ p.closed_by_name || '—' }}</td>
+            <tr v-for="r in store.lockDates" :key="r.object">
+              <td>
+                <span class="break-words">{{ r.object_name }}</span>
+                <span v-if="!r.object_is_active" class="badge badge-ghost badge-sm ml-1">неактивен</span>
+              </td>
+              <td class="whitespace-nowrap">
+                <span v-if="r.closed_until" class="font-medium">{{ formatDate(r.closed_until) }}</span>
+                <span v-else class="text-muted">не задана</span>
+              </td>
+              <td class="text-muted">
+                <template v-if="r.closed_until_at">{{ r.closed_until_by_name || '—' }}, {{ formatDateTime(r.closed_until_at) }}</template>
+                <template v-else>—</template>
+              </td>
               <td v-if="canEdit" class="text-right">
-                <button class="btn btn-sm btn-outline" :disabled="busy" @click="askReopen(p)">Открыть</button>
+                <button data-test="edit-lock" class="btn btn-sm btn-outline" :disabled="busy" @click="openEdit(r)">
+                  {{ r.closed_until ? 'Изменить' : 'Поставить' }}
+                </button>
               </td>
             </tr>
           </tbody>
@@ -74,141 +51,111 @@
       </div>
     </section>
 
-    <!-- Подтверждение действия -->
-    <Modal v-model="confirm.open" :title="confirm.title" size="lg" :closable="!busy">
-      <p class="text-sm">{{ confirm.message }}</p>
-      <div v-if="confirm.error" class="mt-3 alert alert-error text-sm py-2">{{ confirm.error }}</div>
-      <div class="flex justify-end gap-2 mt-5">
-        <button class="btn btn-ghost btn-sm" :disabled="busy" @click="confirm.open = false">Отмена</button>
-        <button
-          class="btn btn-sm"
-          :class="confirm.danger ? 'btn-warning' : 'btn-primary'"
-          :disabled="busy"
-          @click="runConfirm"
-        >
-          <span v-if="busy" class="loading loading-spinner loading-xs"></span>
-          {{ confirm.confirmText }}
+    <!-- Помесячные закрытия по старому правилу (на проде их нет) — только снять -->
+    <section v-if="store.items.length > 0" class="rounded-lg border border-base-300 overflow-hidden">
+      <div class="px-4 py-3 border-b border-base-300">
+        <h2 class="text-sm font-medium">Закрытые месяцы (старое правило)</h2>
+      </div>
+      <div class="table-container">
+        <table class="modern-table">
+          <tbody>
+            <tr v-for="p in store.items" :key="p.id">
+              <td class="whitespace-nowrap">{{ formatMonthYear(p.month) }}</td>
+              <td>{{ p.object_name }}</td>
+              <td v-if="canEdit" class="text-right">
+                <button class="btn btn-sm btn-ghost" :disabled="busy" @click="reopenLegacy(p)">Открыть</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <Modal v-model="edit.open" :title="`Дата запрета: ${edit.name}`" size="lg" :closable="!busy">
+      <label class="block">
+        <span class="block text-xs mb-1 text-muted">Дата запрета (включительно)</span>
+        <input v-model="edit.date" type="date" :max="today()" class="input input-bordered w-full sm:w-60" />
+      </label>
+      <p v-if="dateIsFuture" class="text-sm text-error mt-2">Дату запрета в будущем ставить нельзя</p>
+      <p v-else-if="edit.date" class="text-sm mt-3">
+        Закупки, движения и списания объекта по {{ formatDate(edit.date) }} включительно станут только для чтения.
+        <template v-if="edit.current && edit.date < edit.current">
+          Документы с {{ formatDate(nextDay(edit.date)) }} по {{ formatDate(edit.current) }} снова можно будет менять.
+        </template>
+      </p>
+      <div v-if="edit.error" class="mt-3 alert alert-error text-sm py-2">{{ edit.error }}</div>
+      <div class="flex flex-wrap justify-between gap-2 mt-5">
+        <button v-if="edit.current" data-test="clear-lock" class="btn btn-sm btn-ghost text-warning" :disabled="busy"
+                @click="save(null)">
+          Снять дату запрета
         </button>
+        <span v-else />
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" :disabled="busy" @click="edit.open = false">Отмена</button>
+          <button data-test="save-lock" class="btn btn-primary btn-sm" :disabled="busy || !edit.date || dateIsFuture"
+                  @click="save(edit.date)">
+            <span v-if="busy" class="loading loading-spinner loading-xs"></span>
+            Сохранить
+          </button>
+        </div>
       </div>
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useArchivePeriodsStore, type ArchivePeriod } from '@/stores/archivePeriods'
-import { useObjectsStore } from '@/stores/objects'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useArchivePeriodsStore, type ArchivePeriod, type LockDateRow } from '@/stores/archivePeriods'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore } from '@/stores/ui'
 import { parseApiError } from '@/utils/errorHandler'
-import { formatDateTime, todayLocal } from '@/utils/formatters'
-import type { SiteObject } from '@/api/types'
+import { formatDate, formatDateTime, formatMonthYear, todayLocal } from '@/utils/formatters'
 import Modal from '@/components/Modal.vue'
 import ListHeader from '@/components/ListHeader.vue'
 
 const store = useArchivePeriodsStore()
-const objectsStore = useObjectsStore()
 const ui = useUiStore()
 const { can } = usePermissions()
-
-// F-912 (permission-string contract): BE close_period/reopen_period требуют stock.EDIT_ALL
-// (stock/views.py:814,882), а НЕ stock.edit. Гейтили по 'edit' → держатель голого stock.edit
-// (бригадир) видел контролы закрытия/открытия, но BE отвечал 403 — та самая «кнопка-обманка»,
-// которую комментарий обещал избежать. Синхронизируем с BE: edit_all.
+// как у сервера (SetLockDateView, close/reopen): stock.edit_all
 const canEdit = computed(() => can('stock', 'edit_all'))
 
 const busy = ref(false)
-// F-1047 (B14): будущий месяц закрыть нельзя (BE F-814) — ограничиваем выбор; месяц по местному
-// времени (toISOString давал UTC: 1-го числа с 00:00 до 05:00 по Ташкенту — прошлый месяц, F-884).
-// F-1069: текущий месяц считается при каждом обращении (PWA может быть открыт через смену месяца);
-// max у <input type=month> не везде соблюдается (ввод с клавиатуры, Safari/Firefox, iOS) — запрет в логике.
-const currentMonth = (): string => todayLocal().slice(0, 7)
-const form = reactive({ object: 0, month: currentMonth() })
-// F-1075 (ревью): месяц разбираем как числа — в текстовом поле (Safari/Firefox) «2026-9» и «2026-11 »
-// строковое сравнение считало будущими, а « 2026-12» — нет.
-function monthIndex(v: string): number | null {
-  const m = /^\s*(\d{4})-(\d{1,2})\s*$/.exec(v || '')
-  if (!m) { return null }
-  const mm = Number(m[2])
-  return mm >= 1 && mm <= 12 ? Number(m[1]) * 12 + mm : null
-}
-const isFutureMonth = (v: string): boolean => {
-  const i = monthIndex(v)
-  const cur = monthIndex(currentMonth())
-  return i === null || cur === null ? false : i > cur
-}
-const monthIsFuture = computed(() => !!form.month && isFutureMonth(form.month))
+const today = (): string => todayLocal()
+const edit = reactive({ open: false, object: 0, name: '', current: null as string | null, date: '', error: null as string | null })
+// строки 'YYYY-MM-DD' сравниваются как даты; сервер проверяет то же (400)
+const dateIsFuture = computed(() => !!edit.date && edit.date > today())
 
-const objectOptions = computed(() =>
-  objectsStore.items.map((o: SiteObject) => ({ value: o.id, label: o.name }))
-)
-
-interface ConfirmState {
-  open: boolean
-  title: string
-  message: string
-  confirmText: string
-  danger: boolean
-  error: string | null
-  run: (() => Promise<void>) | null
-}
-const confirm = reactive<ConfirmState>({
-  open: false, title: '', message: '', confirmText: '', danger: false, error: null, run: null,
-})
-
-const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
-function formatMonth(m: string): string {
-  const d = new Date(m)
-  if (isNaN(d.getTime())) {return m}
-  return `${RU_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+function nextDay(d: string): string {
+  const [y, m, dd] = d.split('-').map(Number)
+  const n = new Date(Date.UTC(y, m - 1, dd + 1))
+  return n.toISOString().slice(0, 10)
 }
 
-function objectName(id: number): string {
-  return objectsStore.items.find((o: SiteObject) => o.id === id)?.name ?? `объект #${id}`
+function openEdit(r: LockDateRow) {
+  Object.assign(edit, { open: true, object: r.object, name: r.object_name, current: r.closed_until,
+    date: r.closed_until || today(), error: null })
 }
 
-function askClose() {
-  if (!form.object || !form.month || isFutureMonth(form.month)) {return}
-  confirm.title = 'Закрыть период'
-  confirm.message = `Закрыть ${formatMonth(form.month + '-01')} по объекту «${objectName(form.object)}»? `
-    + 'Закупки, движения и списания этого периода станут архивными (только для чтения).'
-  confirm.confirmText = 'Закрыть период'
-  confirm.danger = false
-  confirm.error = null
-  confirm.run = async () => {
-    await store.close(form.object, form.month)
-    ui.toast({ type: 'success', text: 'Период закрыт' })
-  }
-  confirm.open = true
-}
-
-function askReopen(p: ArchivePeriod) {
-  const month = String(p.month).slice(0, 7)
-  confirm.title = 'Открыть период'
-  confirm.message = `Открыть ${formatMonth(p.month)} по объекту «${p.object_name}»? `
-    + 'С данных периода будет снят архив — они снова станут редактируемыми.'
-  confirm.confirmText = 'Открыть период'
-  confirm.danger = true
-  confirm.error = null
-  confirm.run = async () => {
-    await store.reopen(p.object, month)
-    ui.toast({ type: 'success', text: 'Период открыт' })
-  }
-  confirm.open = true
-}
-
-async function runConfirm() {
-  if (!confirm.run) {return}
+async function save(date: string | null) {
   busy.value = true
-  confirm.error = null
+  edit.error = null
   try {
-    await confirm.run()
-    confirm.open = false
-  } catch (e: any) {
-    confirm.error = parseApiError(e).detail || 'Не удалось выполнить действие'
+    await store.setLockDate(edit.object, date)
+    edit.open = false
+    ui.toast({ type: 'success', text: date ? `Дата запрета — ${formatDate(date)}` : 'Дата запрета снята' })
+  } catch (e) {
+    edit.error = parseApiError(e).detail || 'Не удалось сохранить'
   } finally {
     busy.value = false
+  }
+}
+
+async function reopenLegacy(p: ArchivePeriod) {
+  if (!confirm(`Открыть ${formatMonthYear(p.month)} по объекту «${p.object_name}»?`)) { return }
+  try {
+    await store.reopen(p.object, String(p.month).slice(0, 7))
+  } catch (e) {
+    ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось открыть месяц' })
   }
 }
 
@@ -220,13 +167,5 @@ async function refresh() {
   }
 }
 
-onMounted(async () => {
-  // F-718: objects=35 > 20 — грузим полный список БЕЗУСЛОВНО. Guard !items.length оставлял усечённый
-  // (20) стор с Objects/List → объекты #21..35 печатались как «объект #id» вместо имени.
-  const loads: Promise<unknown>[] = [
-    store.fetchList().catch(() => {}),
-    objectsStore.fetchList({ page_size: 1000, ordering: 'name' } as any),
-  ]
-  await Promise.all(loads)
-})
+onMounted(() => { store.fetchList().catch(() => {}) })
 </script>
