@@ -134,8 +134,9 @@ async function remove(f: ObjectFileRow) {
     await api.delete(endpoints.objects.file(props.objectId, f.id))
     files.value = files.value.filter(x => x.id !== f.id)
     // F-1123 (ревью-16): тихо перечитываем — новый номер запроса отбрасывает поздний фоновый ответ, снятый ДО удаления
-    // (иначе удалённый файл возвращался в список)
-    load(true)
+    // (иначе удалённый файл возвращался в список). F-1124 (ревью-17): не во время основной загрузки (как фон, F-1122) —
+    // иначе его сбой отбрасывал успешный ответ основной (напр. смена объекта, пока шло удаление).
+    if (!loading.value) { load(true) }
     ui.toast({ type: 'success', text: 'Файл удалён' })
   } catch (e) {
     ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось удалить файл' })

@@ -215,4 +215,25 @@ describe('ObjectFiles (F-1110)', () => {
       expect(w.text()).not.toContain('Загрузка')
     })
   })
+
+  // F-1124 (ревью-17): удаление «в полёте», а карточка уже показывает другой объект — список нового объекта не трогаем
+  it('удаление завершилось после смены объекта — показан список нового объекта (F-1124)', async () => {
+    const F = (id: number, name: string) => ({ ...FILES[0], id, name, url: `https://x/${id}?token=t` })
+    get.mockReset().mockResolvedValueOnce({ data: [F(1, 'obj7-a.pdf'), F(2, 'obj7-b.pdf')] })
+    const w = mount(ObjectFiles, { props: { objectId: 7, canManage: true } })
+    await flushPromises()
+    let releaseDel: (v: unknown) => void = () => {}
+    del.mockReset().mockReturnValueOnce(new Promise(r => { releaseDel = r }))
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await w.findAll('[data-test="file-delete"]')[0].trigger('click')
+    let release8: (v: unknown) => void = () => {}
+    get.mockReturnValueOnce(new Promise(r => { release8 = r }))
+    await w.setProps({ objectId: 8 })
+    get.mockRejectedValueOnce(new Error('network'))
+    releaseDel({})
+    await flushPromises()
+    release8({ data: [F(3, 'obj8-c.pdf')] })
+    await flushPromises()
+    expect(w.findAll('[data-test="file-row"]').map(r => r.find('a').text())).toEqual(['obj8-c.pdf'])
+  })
 })
