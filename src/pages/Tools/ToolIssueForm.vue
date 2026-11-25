@@ -1,5 +1,9 @@
 <template>
   <div class="tool-issue-form">
+    <!-- F-1101 (ответ 12): списанный/утерянный не выдаём; сломанный — выдаём с предупреждением -->
+    <div v-if="issueBlock" class="alert alert-error mb-4" role="alert">{{ issueBlock }}</div>
+    <div v-else-if="issueWarning" class="alert alert-warning mb-4" role="alert">{{ issueWarning }}</div>
+
     <!-- Tool info -->
     <div v-if="tool" class="alert alert-info mb-4">
       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -32,6 +36,7 @@ import type { Tool, ToolIssueCreateRequest, ToolCondition } from '@/api/types/to
 import type { GenericFormConfig } from '@/types/generic'
 import GenericForm from '@/components/GenericForm.vue'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { toolIssueBlock, toolIssueWarning } from '@/utils/toolRules'
 
 const props = defineProps<{
   tool: Tool | null
@@ -41,6 +46,10 @@ const emit = defineEmits<{
   saved: []
   cancel: []
 }>()
+
+// F-1101: «уже выдан» форма не проверяет — для этого есть сервер и закрытая кнопка «Выдать» в списке
+const issueBlock = computed(() => (props.tool ? toolIssueBlock({ ...props.tool, current_holder: null }) : null))
+const issueWarning = computed(() => (props.tool ? toolIssueWarning(props.tool) : null))
 
 const toolIssuesStore = useToolIssuesStore()
 const employeesStore = useEmployeesStore()
@@ -162,6 +171,8 @@ async function handleSubmit(formData: ToolIssueCreateRequest) {
     if (!formData.tool || formData.tool <= 0) {
       throw new Error('Инструмент не выбран — выдача невозможна')
     }
+    if (issueBlock.value) { throw new Error(issueBlock.value) }
+    if (issueWarning.value && !confirm(`${issueWarning.value} Выдать?`)) { return }
 
     // Convert empty object to undefined
     if (!formData.object) {

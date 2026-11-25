@@ -54,7 +54,14 @@
 
       <!-- Custom column for current_holder -->
       <template #column-current_holder="{ item }">
-        <div v-if="item.current_holder_name" class="flex flex-col gap-1">
+        <!-- F-1101 (ответ 12): списанный — не «на складе» -->
+        <div v-if="item.is_written_off" class="flex flex-col gap-1">
+          <span class="badge badge-neutral badge-sm">Списан</span>
+          <span class="text-xs text-muted break-words">
+            {{ formatDate(item.written_off_at) }}<template v-if="item.written_off_reason"> · {{ item.written_off_reason }}</template>
+          </span>
+        </div>
+        <div v-else-if="item.current_holder_name" class="flex flex-col gap-1">
           <span class="font-medium break-words">{{ item.current_holder_name }}</span>
           <span v-if="item.current_object_name" class="text-xs text-muted break-words">
             {{ item.current_object_name }}
@@ -77,6 +84,11 @@
     <!-- Modal for issuing tool -->
     <Modal v-model="issueModalOpen" title="Выдать инструмент" size="lg" :closable="true">
       <ToolIssueForm :tool="issuingTool" @saved="onIssueSaved" @cancel="issueModalOpen = false" />
+    </Modal>
+
+    <!-- F-1101: списание инструмента -->
+    <Modal v-model="writeOffModalOpen" title="Списать инструмент" size="lg" :closable="true">
+      <ToolWriteOffForm :tool="writeOffTool" @saved="onWriteOffSaved" @cancel="writeOffModalOpen = false" />
     </Modal>
 
     <!-- Modal for returning tool -->
@@ -107,6 +119,10 @@ import ToolBulkAddForm from './ToolBulkAddForm.vue'
 import ToolIssueForm from './ToolIssueForm.vue'
 import ToolReturnForm from './ToolReturnForm.vue'
 import ToolHistory from './ToolHistory.vue'
+import ToolWriteOffForm from './ToolWriteOffForm.vue'
+import { toolIssueBlock, toolWriteOffBlock } from '@/utils/toolRules'
+import { formatDate } from '@/utils/formatters'
+import { parseApiError } from '@/utils/errorHandler'
 import GenericList from '@/components/GenericList.vue'
 import ToolCard from '@/components/cards/ToolCard.vue'
 import api from '@/api/client'
@@ -141,6 +157,8 @@ const returnModalOpen = ref(false)
 const returningIssue = ref<ToolIssue | null>(null)
 const historyModalOpen = ref(false)
 const historyTool = ref<Tool | null>(null)
+const writeOffModalOpen = ref(false)
+const writeOffTool = ref<Tool | null>(null)
 
 // Categories for filter
 const categories = ref<string[]>([])
@@ -164,6 +182,13 @@ const stockFilterOptions = computed(() => [
   { value: '', label: 'Все' },
   { value: 'true', label: 'На складе' },
   { value: 'false', label: 'Выдано' }
+])
+
+// F-1101 (ответ 12): учёт — в работе / списанные
+const writtenOffFilterOptions = computed(() => [
+  { value: '', label: 'Все' },
+  { value: 'false', label: 'В работе' },
+  { value: 'true', label: 'Списанные' }
 ])
 
 const objectOptions = computed(() => [
@@ -226,6 +251,12 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
       options: stockFilterOptions.value
     },
     {
+      key: 'written_off',
+      type: 'select',
+      label: 'Учёт',
+      options: writtenOffFilterOptions.value
+    },
+    {
       key: 'current_object',
       type: 'select',
       label: 'Объект',
@@ -249,8 +280,10 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
       key: 'issue',
       label: 'Выдать',
       class: 'btn-success btn-sm',
-      // F-850 (RBAC fail-open): BE issue требует tools.create; гейтим и состоянием, и правом
-      disabled: (item: Tool) => !!item.current_holder || !can('tools', 'create')
+      // F-850 (RBAC fail-open): BE issue требует tools.create; гейтим и состоянием, и правом.
+      // F-1101 (ответ 12): списанный и утерянный не выдаются — причина в подсказке.
+      disabled: (item: Tool) => !!toolIssueBlock(item) || !can('tools', 'create'),
+      disabledTooltip: (item: Tool) => toolIssueBlock(item) || 'Нет права выдавать инструмент'
     },
     {
       key: 'return',
@@ -269,6 +302,21 @@ const listConfig = computed<GenericListConfig<Tool>>(() => ({
       label: 'Редактировать',
       class: 'btn-outline btn-sm',
       disabled: () => !canEdit.value  // F-850 (RBAC fail-open): было активно у view-only заявителя
+    },
+    {
+      // F-1101 (ответ 12): «Списать» — руководство и склад (tools.delete), только инструмент на складе
+      key: 'write_off',
+      label: 'Списать',
+      permission: 'tools.delete',
+      visible: (item: Tool) => !item.is_written_off,
+      disabled: (item: Tool) => !!toolWriteOffBlock(item),
+      disabledTooltip: (item: Tool) => toolWriteOffBlock(item) || ''
+    },
+    {
+      key: 'restore',
+      label: 'Вернуть в работу',
+      permission: 'tools.delete',
+      visible: (item: Tool) => !!item.is_written_off
     },
     {
       key: 'delete',
@@ -392,6 +440,31 @@ async function handleAction(action: string, item: Tool) {
     case 'delete':
       await handleDelete(item)
       break
+    case 'write_off':
+      writeOffTool.value = item
+      writeOffModalOpen.value = true
+      break
+    case 'restore':
+      await handleRestore(item)
+      break
+  }
+}
+
+async function onWriteOffSaved() {
+  writeOffModalOpen.value = false
+  ui.toast({ type: 'success', text: 'Инструмент списан' })
+  await toolsStore.fetchList()
+}
+
+// F-1101: отмена ошибочного списания
+async function handleRestore(tool: Tool) {
+  if (!confirm(`Вернуть инструмент «${tool.name}» в работу? Списание будет отменено.`)) { return }
+  try {
+    await toolsStore.restore(tool.id)
+    ui.toast({ type: 'success', text: 'Инструмент возвращён в работу' })
+    await toolsStore.fetchList()
+  } catch (error) {
+    ui.toast({ type: 'error', text: parseApiError(error).detail })
   }
 }
 

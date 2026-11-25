@@ -23,6 +23,11 @@ export interface Tool {
   // Вычисляемые поля на frontend
   is_in_stock?: boolean;
   status_display?: string;
+  /** F-1101 (ответ 12): учётный статус «Списан» — ставят/снимают действия write-off/restore. */
+  is_written_off?: boolean;
+  written_off_at?: string | null;
+  written_off_reason?: string;
+  written_off_by_name?: string | null;
   created_at: string;
   updated_at: string;
 }

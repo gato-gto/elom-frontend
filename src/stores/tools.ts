@@ -179,6 +179,44 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
+  // F-1101 (ответ владельца 12): «Списать» / «Вернуть в работу». Сервер отдаёт обновлённый инструмент —
+  // кладём его в список на место прежнего. Тост — у компонента (как update/remove, F-557).
+  const replaceItem = (data: Tool) => {
+    const index = items.value.findIndex(item => item.id === data.id)
+    if (index !== -1) { items.value[index] = data }
+    if (current.value?.id === data.id) { current.value = data }
+  }
+
+  const writeOff = async (id: number, payload: { reason: string; date?: string }): Promise<Tool> => {
+    loading.value = true
+    error.value = null
+    try {
+      const { data } = await api.post<Tool>(endpoints.tools.writeOff(id), payload)
+      replaceItem(data)
+      return data
+    } catch (err) {
+      error.value = parseApiError(err).detail
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const restore = async (id: number): Promise<Tool> => {
+    loading.value = true
+    error.value = null
+    try {
+      const { data } = await api.post<Tool>(endpoints.tools.restore(id), {})
+      replaceItem(data)
+      return data
+    } catch (err) {
+      error.value = parseApiError(err).detail
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const remove = async (id: number): Promise<void> => {
     loading.value = true
     error.value = null
@@ -311,6 +349,8 @@ export const useToolsStore = defineStore('tools', () => {
     fetchOne,
     create,
     update,
+    writeOff,
+    restore,
     remove,
     fetchCategories,
     bulkCreate,

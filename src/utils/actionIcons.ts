@@ -22,6 +22,9 @@ export const ACTION_ICONS: Record<string, string> = {
   reject: 'M6 18L18 6M6 6l12 12',
   issue: 'M13 7l5 5m0 0l-5 5m5-5H6',
   return: 'M11 17l-5-5m0 0l5-5m-5 5h12',
+  // F-1101: инструмент — «Списать» (коробка-архив с минусом) и «Вернуть в работу» (стрелка-разворот)
+  write_off: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
+  restore: 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6',
 }
 
 // btn-soft (DaisyUI v5): мягкий семантический фон + насыщенная иконка того же тона (без обводки,
@@ -34,6 +37,8 @@ export const ACTION_BTN: Record<string, string> = {
   issue: 'btn-soft btn-warning',
   return: 'btn-soft btn-info',
   edit: 'btn-soft btn-info',
+  write_off: 'btn-soft btn-error',
+  restore: 'btn-soft btn-success',
   view: 'btn-soft',
   open: 'btn-soft',
 }

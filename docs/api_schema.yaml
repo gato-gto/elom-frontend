@@ -6849,6 +6849,11 @@ paths:
         schema:
           type: string
         description: Поиск по инвентарному номеру, названию, категории, марке
+      - in: query
+        name: written_off
+        schema:
+          type: boolean
+        description: Списан
       tags:
       - Tools
       security:
@@ -7075,6 +7080,70 @@ paths:
           description: Нельзя удалить инструмент с историей выдач
         '404':
           description: Инструмент не найден
+  /api/v1/tools/{id}/restore/:
+    post:
+      operationId: tools_restore_create
+      description: 'F-1101: отмена ошибочного списания. Право tools.delete.'
+      summary: Вернуть списанный инструмент в работу
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Инструмент.
+        required: true
+      tags:
+      - Tools
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+          description: ''
+        '400':
+          description: Инструмент не списан
+  /api/v1/tools/{id}/write-off/:
+    post:
+      operationId: tools_write_off_create
+      description: 'F-1101 (ответ владельца 12): статус «Списан». Только инструмент
+        на складе; причина обязательна, дата — не в будущем (по умолчанию сегодня).
+        Право tools.delete.'
+      summary: Списать инструмент
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Инструмент.
+        required: true
+      tags:
+      - Tools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolWriteOffRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ToolWriteOffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ToolWriteOffRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+          description: ''
+        '400':
+          description: Выдан / уже списан / нет причины
   /api/v1/tools/bulk-create/:
     post:
       operationId: tools_bulk_create_create
@@ -12187,6 +12256,23 @@ components:
         status_display:
           type: string
           readOnly: true
+        is_written_off:
+          type: boolean
+          readOnly: true
+        written_off_at:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+          description: Дата списания (пусто — в работе)
+        written_off_reason:
+          type: string
+          readOnly: true
+          description: Причина списания
+        written_off_by_name:
+          type: string
+          nullable: true
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -12205,9 +12291,13 @@ components:
       - id
       - inventory_number
       - is_in_stock
+      - is_written_off
       - name
       - status_display
       - updated_at
+      - written_off_at
+      - written_off_by_name
+      - written_off_reason
     ToolBulkCreateRequest:
       type: object
       description: |-
@@ -12505,6 +12595,20 @@ components:
           description: Комментарий при возврате
       required:
       - return_condition
+    ToolWriteOffRequest:
+      type: object
+      description: 'F-1101 (ответ владельца 12): списание инструмента — причина обязательна,
+        дата не в будущем.'
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 256
+        date:
+          type: string
+          format: date
+      required:
+      - reason
     TypeEnum:
       enum:
       - instructions

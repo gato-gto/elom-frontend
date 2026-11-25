@@ -117,6 +117,9 @@ export const endpoints = {
         one: (id: number) => join(`/tools/${id}/`),
         categories: join('/tools/categories/'),
         bulkCreate: join('/tools/bulk-create/'),
+        // F-1101 (ответ владельца 12): статус «Списан»
+        writeOff: (id: number) => join(`/tools/${id}/write-off/`),
+        restore: (id: number) => join(`/tools/${id}/restore/`),
     },
 
     // Tool Issues endpoints

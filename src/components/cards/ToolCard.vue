@@ -33,7 +33,12 @@
         <div class="flex items-start gap-2">
           <span class="font-medium text-muted flex-shrink-0">Местоположение:</span>
           <div class="flex-1 min-w-0">
-            <span v-if="tool.current_holder_name" class="break-words">
+            <!-- F-1101 (ответ 12): списанный — не «на складе» -->
+            <span v-if="tool.is_written_off" class="break-words">
+              <span class="badge badge-neutral badge-xs">Списан</span>
+              <span v-if="tool.written_off_reason" class="text-xs text-muted block mt-1">{{ tool.written_off_reason }}</span>
+            </span>
+            <span v-else-if="tool.current_holder_name" class="break-words">
               {{ tool.current_holder_name }}
               <span v-if="tool.current_object_name" class="text-xs text-muted block mt-1">
                 ({{ tool.current_object_name }})
