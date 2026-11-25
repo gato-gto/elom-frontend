@@ -236,4 +236,42 @@ describe('ObjectFiles (F-1110)', () => {
     await flushPromises()
     expect(w.findAll('[data-test="file-row"]').map(r => r.find('a').text())).toEqual(['obj8-c.pdf'])
   })
+
+  // F-1125 (ревью-18): удалённый файл не возвращается никаким ответом, снятым до фиксации удаления (7 → 8 → 7, пока
+  // шло удаление); при смене объекта и сбое загрузки нового — файлов прежнего нет
+  describe('после удаления и смены объекта (F-1125)', () => {
+    const F = (id: number, name: string) => ({ ...FILES[0], id, name, url: `https://x/${id}?token=t` })
+    const names = (w: ReturnType<typeof mount>) => w.findAll('[data-test="file-row"]').map(r => r.find('a').text())
+    const deferred = () => { let release: (v: unknown) => void = () => {}; const p = new Promise(r => { release = r }); return { p, release } }
+
+    it('7 → 8 → 7 во время удаления: поздний снимок не возвращает удалённый файл', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      const w = mount(ObjectFiles, { props: { objectId: 7, canManage: true } })
+      await flushPromises()
+      const d = deferred(); del.mockReset().mockReturnValueOnce(d.p)
+      vi.spyOn(window, 'confirm').mockReturnValue(true)
+      await w.findAll('[data-test="file-delete"]')[0].trigger('click')
+      const g8 = deferred(); get.mockReturnValueOnce(g8.p)
+      await w.setProps({ objectId: 8 })
+      const g7 = deferred(); get.mockReturnValueOnce(g7.p)
+      await w.setProps({ objectId: 7 })
+      get.mockResolvedValue({ data: [F(2, 'b.pdf')] })
+      d.release({})
+      await flushPromises()
+      g8.release({ data: [F(3, 'c.pdf')] })
+      g7.release({ data: [F(1, 'a.pdf'), F(2, 'b.pdf')] })
+      await flushPromises()
+      expect(names(w)).toEqual(['b.pdf'])
+    })
+
+    it('сбой загрузки нового объекта — файлы прежнего не показываются', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'obj7.pdf')] })
+      const w = mount(ObjectFiles, { props: { objectId: 7, canManage: true } })
+      await flushPromises()
+      get.mockRejectedValueOnce(new Error('network'))
+      await w.setProps({ objectId: 8 })
+      await flushPromises()
+      expect(names(w)).toEqual([])
+    })
+  })
 })

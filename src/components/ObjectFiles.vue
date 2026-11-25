@@ -55,6 +55,9 @@ const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp'
 const MAX_SIZE = 50 * 1024 * 1024
 
 const files = ref<ObjectFileRow[]>([])
+// F-1125 (ревью-18): удалённые в этой карточке id — ни один ответ, снятый до фиксации удаления, их не вернёт (id —
+// первичный ключ, законно вернуться не может)
+const deletedIds = new Set<number>()
 const loading = ref(false)
 const busy = ref(false)
 
@@ -90,7 +93,7 @@ async function load(background = false) {
   try {
     const { data } = await api.get<ObjectFileRow[]>(endpoints.objects.files(props.objectId))
     if (seq !== requestSeq) { return }
-    files.value = Array.isArray(data) ? data : []
+    files.value = (Array.isArray(data) ? data : []).filter(x => !deletedIds.has(x.id))
     loadedAt = Date.now()
   } catch (e) {
     if (seq !== requestSeq) { return }
@@ -132,6 +135,7 @@ async function remove(f: ObjectFileRow) {
   busy.value = true
   try {
     await api.delete(endpoints.objects.file(props.objectId, f.id))
+    deletedIds.add(f.id)
     files.value = files.value.filter(x => x.id !== f.id)
     // F-1123 (ревью-16): тихо перечитываем — новый номер запроса отбрасывает поздний фоновый ответ, снятый ДО удаления
     // (иначе удалённый файл возвращался в список). F-1124 (ревью-17): не во время основной загрузки (как фон, F-1122) —
@@ -145,7 +149,9 @@ async function remove(f: ObjectFileRow) {
   }
 }
 
-watch(() => props.objectId, () => load())
+// F-1125 (ревью-18, давнее): при смене объекта прежний список сразу убираем — иначе при сбое загрузки нового объекта
+// в его карточке оставались файлы прежнего (с кнопкой «Удалить»)
+watch(() => props.objectId, () => { files.value = []; load() })
 onMounted(() => {
   load()
   timer = setInterval(refreshIfStale, 60 * 1000)
