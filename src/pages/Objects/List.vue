@@ -62,10 +62,15 @@ import Modal from '@/components/Modal.vue'
 import ObjectForm from './ObjectForm.vue'
 import GenericList from '@/components/GenericList.vue'
 import ObjectCard from '@/components/cards/ObjectCard.vue'
+import { useAuthStore } from '@/stores/auth'
+import { parseApiError } from '@/utils/errorHandler'
+import api from '@/api/client'
+import { endpoints } from '@/api/endpoints'
 
 // Stores
 const router = useRouter()
 const objectsStore = useObjectsStore()
+const authStore = useAuthStore()
 const ui = useUiStore()
 // F-592: ?edit=<id> открывает форму редактирования (как на Purchases/Materials/… — паритет диплинков).
 useEditQuery(objectsStore, openEdit)
@@ -163,13 +168,32 @@ const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
       disabled: () => !canEdit.value
     },
     {
+      // F-1107 (ответ владельца 3): архив — явным действием (раньше «Удалить» архивировал молча, B13)
+      key: 'archive',
+      label: 'В архив',
+      permission: 'objects.delete',
+      visible: (item: SiteObject) => item.is_active
+    },
+    {
+      key: 'unarchive',
+      label: 'Вернуть из архива',
+      permission: 'objects.delete',
+      visible: (item: SiteObject) => !item.is_active
+    },
+    {
       key: 'delete',
       label: 'Удалить',
       class: 'btn-error',
       permission: 'objects.delete', // F-863 (perm-audit): гейт по DELETE-праву (было !canEdit = EDIT → fail-open)
       disabled: (item: SiteObject) => !item.is_active,
-      confirm: (item: SiteObject) =>
-        `Удалить объект "${item.name}"? Если у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
+      confirm: (item: SiteObject) => deleteQuestion(item)
+    },
+    {
+      // F-1107: тестовый объект со всеми документами — только администратор и только из архива
+      key: 'purge',
+      label: 'Удалить с документами',
+      class: 'btn-error btn-outline',
+      visible: (item: SiteObject) => !item.is_active && authStore.me?.is_superuser === true
     }
   ],
   mobileCardComponent: ObjectCard,
@@ -205,29 +229,63 @@ async function handleAction(action: string, item: SiteObject) {
     case 'delete':
       await handleDelete(item)
       break
+    case 'archive':
+      await setActive(item, false)
+      break
+    case 'unarchive':
+      await setActive(item, true)
+      break
+    case 'purge':
+      await handlePurge(item)
+      break
   }
 }
 
+// F-1107 (ответ владельца 3): «Удалить» — только для объекта без документов; с документами сервер отвечает
+// «отправьте в архив» (400, текст показывает handleDeleteError)
+function deleteQuestion(item: SiteObject): string {
+  return `Удалить объект «${item.name}»? Объект с документами удалить нельзя — его отправляют в архив.`
+}
+
 async function handleDelete(object: SiteObject) {
-  const confirmMessage =
-    `Удалить объект "${object.name}"?\n\nЕсли у объекта есть связанные записи (закупки, списания), он будет деактивирован.`
-  if (!confirm(confirmMessage)) {return}
-
+  if (!confirm(deleteQuestion(object))) {return}
   try {
-    const response = await objectsStore.remove(object.id)
-
-    if (response && (response as any).action === 'deactivated') {
-      ui.toast({
-        type: 'info',
-        text: `Объект "${object.name}" деактивирован (имеет связанные записи)`
-      })
-    } else {
-      ui.toast({ type: 'success', text: `Объект "${object.name}" удален` })
-    }
-
+    await objectsStore.remove(object.id)
+    ui.toast({ type: 'success', text: `Объект «${object.name}» удалён` })
     await objectsStore.fetchList()
   } catch (error) {
     await handleDeleteError(error, 'object', object.id)
+  }
+}
+
+async function setActive(object: SiteObject, active: boolean) {
+  const question = active
+    ? `Вернуть объект «${object.name}» из архива?`
+    : `Отправить объект «${object.name}» в архив? Его документы сохранятся, новые операции по нему вносить не будут.`
+  if (!confirm(question)) {return}
+  try {
+    await objectsStore.update(object.id, { is_active: active })
+    ui.toast({ type: 'success', text: active ? 'Объект возвращён из архива' : 'Объект в архиве' })
+    await objectsStore.fetchList()
+  } catch (error) {
+    ui.toast({ type: 'error', text: parseApiError(error).detail })
+  }
+}
+
+async function handlePurge(object: SiteObject) {
+  const typed = prompt(`Удалить «${object.name}» со всеми закупками, списаниями и движениями? Это нельзя отменить. `
+    + 'Для подтверждения введите название объекта точно:')
+  if (typed === null) {return}
+  if (typed !== object.name) {
+    ui.toast({ type: 'error', text: 'Название введено неточно — ничего не удалено' })
+    return
+  }
+  try {
+    await api.post(endpoints.objects.purge(object.id), { confirm_name: typed })
+    ui.toast({ type: 'success', text: `Объект «${object.name}» удалён со всеми документами` })
+    await objectsStore.fetchList()
+  } catch (error) {
+    ui.toast({ type: 'error', text: parseApiError(error).detail })
   }
 }
 

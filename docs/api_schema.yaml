@@ -2859,6 +2859,42 @@ paths:
           description: Нет прав доступа
         '404':
           description: Объект не найден
+  /api/v1/objects/{id}/purge/:
+    post:
+      operationId: objects_purge_create
+      description: 'F-1107 (ответ владельца 3): объект должен быть в архиве и без
+        инструментов; confirm_name — точное название объекта.'
+      summary: Удалить тестовый объект со всеми документами (только суперпользователь)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this object.
+        required: true
+      tags:
+      - Objects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectPurgeRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObjectPurgeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObjectPurgeRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectPurgeResult'
+          description: ''
   /api/v1/objects/responsibles/:
     get:
       operationId: objects_responsibles
@@ -9994,6 +10030,22 @@ components:
       - updated_at
       - updated_by
       - updated_by_name
+    ObjectPurgeRequestRequest:
+      type: object
+      properties:
+        confirm_name:
+          type: string
+          minLength: 1
+      required:
+      - confirm_name
+    ObjectPurgeResult:
+      type: object
+      properties:
+        deleted:
+          type: object
+          additionalProperties: {}
+      required:
+      - deleted
     ObjectRequest:
       type: object
       description: |-
