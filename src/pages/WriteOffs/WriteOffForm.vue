@@ -1192,9 +1192,9 @@ onMounted(async () => {
   if (unitsStore.items.length === 0) {
     promises.push(unitsStore.fetchList({ page_size: 1000, ordering: 'name' } as any))
   }
-  if (archivePeriodsStore.items.length === 0) {
-    promises.push(archivePeriodsStore.fetchList())  // F-640 (#28): для пред-проверки закрытого периода
-  }
+  // F-640 (#28): пред-проверка закрытого периода. F-1111 (ревью): даты запрета меняются — перечитываем при каждом
+  // открытии формы (раньше — только при пустом сторе); сбой ловит try/catch ниже.
+  promises.push(archivePeriodsStore.fetchList())
   
   if (promises.length > 0) {
     try {

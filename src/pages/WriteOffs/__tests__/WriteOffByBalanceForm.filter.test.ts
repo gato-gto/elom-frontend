@@ -16,11 +16,13 @@ vi.mock('@/stores/ui', () => ({ useUiStore: () => ({ toast: vi.fn() }) }))
 // F-642 (#28): форма зовёт archivePeriodsStore.fetchList() в onMounted для пред-гейта закрытого
 // периода. Без мока реальный стор дёргает api.get (здесь замокан только post) → unhandled rejection.
 // Период открыт → пред-гейт не мешает существующим кейсам.
+const { archiveFetch } = vi.hoisted(() => ({ archiveFetch: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@/stores/archivePeriods', () => ({
   useArchivePeriodsStore: () => ({
-    items: [],
+    // F-1111: стор уже не пустой (открывали другую форму) — даты запрета всё равно перечитываются
+    items: [{ id: 1, object: 99, month: '2020-01-01' }],
     isPeriodClosed: () => false,
-    fetchList: vi.fn().mockResolvedValue(undefined)
+    fetchList: archiveFetch
   })
 }))
 vi.mock('@/api/client', () => ({ default: { post } }))
@@ -227,5 +229,14 @@ describe('WriteOffByBalanceForm — только материалы в нали�
     expect(vm.rows.length).toBe(1)
     expect(vm.rows[0].material).toBe(null)
     expect(vm.rows[0].actual_balance).toBe('')
+  })
+  // F-1111 (ревью F-1106): дата запрета меняется — форма перечитывает её при каждом открытии, даже если стор
+  // уже заполнен.
+  it('перечитывает даты запрета при открытии, даже если стор не пуст', async () => {
+    archiveFetch.mockClear()
+    const wrapper = mount(WriteOffByBalanceForm, { props: { isOpen: true }, ...stub })
+    await flushPromises()
+    expect(archiveFetch).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 })

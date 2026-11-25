@@ -107,6 +107,30 @@ describe('Отчёты по складу (F-1104)', () => {
     expect(w.text()).toContain('Списаний за период: 3')
   })
 
+  // F-1111 (ревью): поздний ответ прежнего вида не затирает новый (оборотка медленная → уже открыты списания)
+  it('поздний ответ оборотки после перехода на списания игнорируется, загрузка не гаснет раньше времени', async () => {
+    const release: Record<string, (v: unknown) => void> = {}
+    get.mockImplementation((url: string) => {
+      const u = String(url)
+      const kind = u.includes('/reports/stock/turnover/') ? 'turnover' : u.includes('/reports/stock/writeoffs/') ? 'writeoffs' : ''
+      if (kind) {return new Promise(r => { release[kind] = r })}
+      return Promise.resolve({ data: { results: [], count: 0 } })
+    })
+    const w = mount(StockReport, { props: { kind: 'turnover' }, global: { stubs: { ModernPagination: true } } })
+    await flushPromises()
+    await w.setProps({ kind: 'writeoffs' })
+    await flushPromises()
+    release.turnover({ data: TURNOVER })          // старый ответ пришёл, новый ещё в пути
+    await flushPromises()
+    expect(w.find('.list-content').classes()).toContain('relative')   // загрузка ещё идёт
+    expect(w.text()).not.toContain('Кабель')                           // строк оборотки нет (идёт заглушка загрузки)
+    release.writeoffs({ data: WRITEOFFS })
+    await flushPromises()
+    expect(w.find('.list-content').classes()).not.toContain('relative')
+    expect(w.findAll('tbody tr')[0].findAll('td').map(td => td.text().replace(/\s/g, ' ')).slice(3, 6))
+      .toEqual(['25', '4', '3'])
+  })
+
   it('выгрузка повторяет сортировку экрана', async () => {
     routeGet(TURNOVER)
     const w = await mountReport('turnover')

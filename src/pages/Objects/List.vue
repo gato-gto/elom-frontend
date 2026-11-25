@@ -276,7 +276,9 @@ async function handlePurge(object: SiteObject) {
   const typed = prompt(`Удалить «${object.name}» со всеми закупками, списаниями и движениями? Это нельзя отменить. `
     + 'Для подтверждения введите название объекта точно:')
   if (typed === null) {return}
-  if (typed !== object.name) {
+  // F-1111 (ревью): как на сервере — без ловушек клавиатуры iOS (заглавная буква, «умные» кавычки, пробел в конце)
+  const norm = (t: string) => t.normalize('NFKC').replace(/[«»“”„‟"']/g, '"').replace(/\s+/g, ' ').trim().toLowerCase()
+  if (norm(typed) !== norm(object.name)) {
     ui.toast({ type: 'error', text: 'Название введено неточно — ничего не удалено' })
     return
   }

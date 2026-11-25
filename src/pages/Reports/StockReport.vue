@@ -170,12 +170,16 @@ function cell(r: Row, c: Column): string {
   return v === null || v === undefined || v === '' ? '—' : String(v)
 }
 
+let requestSeq = 0   // F-1111 (ревью): поздний ответ прежнего запроса (другой вид/фильтр) не затирает новый
+
 async function fetchReport() {
+  const seq = ++requestSeq
   loading.value = true
   try {
     const params: Record<string, string | number> = { ...query(), ...ordering(), page: currentPage.value,
       page_size: pageSize.value }
     const { data } = await api.get<StockReportResponse<Row>>(spec.value.url + buildQuery(params))
+    if (seq !== requestSeq) { return }
     rows.value = data.results || []
     totalItems.value = data.count || 0
     period.value = data.period || null
@@ -183,7 +187,7 @@ async function fetchReport() {
   } catch (error) {
     ErrorHandlers.dataLoading(error)
   } finally {
-    loading.value = false
+    if (seq === requestSeq) { loading.value = false }
   }
 }
 

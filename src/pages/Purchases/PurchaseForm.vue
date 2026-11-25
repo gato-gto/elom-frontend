@@ -1510,7 +1510,8 @@ async function loadData() {
     objectsStore.fetchList({ page_size: 1000 }),
     employeesStore.fetchList({ page_size: 1000 }),
     suppliersStore.fetchList({ page_size: 1000 }),
-    archivePeriodsStore.fetchList(),  // F-643 (#28): для пред-предупреждения о закрытом периоде (свой стор, без page_size)
+    // F-643 (#28): пред-предупреждение о закрытом периоде; F-1111: сбой не мешает загрузить закупку
+    archivePeriodsStore.fetchList().catch(() => undefined),
   ])
   
   // Load purchase data if editing

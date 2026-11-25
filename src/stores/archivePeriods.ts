@@ -45,11 +45,14 @@ export const useArchivePeriodsStore = defineStore('archivePeriods', () => {
       // пропускало периоды за пределами первой страницы (A F-718 этот стор оставил без page_size).
       // F-1028 (S): page_size через params + F-510-алярм усечения (хардкод-строка обходила warnIfNearPageSize).
       const PAGE = 1000
-      // F-1106: даты запрета объектов — рядом с помесячными периодами (наследие), обе для пред-проверки форм
+      // F-1106: даты запрета объектов — рядом с помесячными периодами (наследие), обе для пред-проверки форм.
+      // F-1111 (ревью): сбой дат запрета не роняет загрузку формы — пред-проверка просто без них (сервер всё равно
+      // проверит), список месяцев грузится как раньше.
       const lockReq = api.get(endpoints.archivePeriods.lockDates)
+        .then(r => (Array.isArray(r.data) ? r.data : []))
+        .catch(() => lockDates.value)
       const { data } = await api.get(endpoints.archivePeriods.list, { params: { page_size: PAGE } })
-      const { data: locks } = await lockReq
-      lockDates.value = Array.isArray(locks) ? locks : []
+      lockDates.value = await lockReq
       items.value = Array.isArray(data) ? data : (data?.results ?? [])
       if (!Array.isArray(data)) { warnIfNearPageSize(endpoints.archivePeriods.list, Number(data?.count ?? items.value.length), PAGE, Boolean(data?.next)) }
     } catch (e: any) {

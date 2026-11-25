@@ -88,12 +88,13 @@ describe('Объекты: архив и удаление тестовых (F-110
 
   it('удалить тестовый: нужно ввести точное название; отмена или неверное — ничего', async () => {
     await mountList()
-    const ask = vi.spyOn(window, 'prompt').mockReturnValueOnce(null).mockReturnValueOnce('тест-объект').mockReturnValueOnce('Тест-объект')
+    // F-1111: регистр, «умные» кавычки и пробел в конце (клавиатура iOS) не важны — неверно только другое название
+    const ask = vi.spyOn(window, 'prompt').mockReturnValueOnce(null).mockReturnValueOnce('Тест-объект-2').mockReturnValueOnce('тест-объект ')
     fire('purge', ARCHIVED); await flushPromises()
     fire('purge', ARCHIVED); await flushPromises()
     expect(post).not.toHaveBeenCalled()
     fire('purge', ARCHIVED); await flushPromises()
-    expect(post).toHaveBeenCalledWith(endpoints.objects.purge(6), { confirm_name: 'Тест-объект' })
+    expect(post).toHaveBeenCalledWith(endpoints.objects.purge(6), { confirm_name: 'тест-объект ' })
     expect(ask.mock.calls[0][0]).toContain('Удалить «Тест-объект» со всеми закупками, списаниями и движениями')
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 
 // Stores are consumed as `useXStore()` — every mock export MUST be a function.
 // createBulk (F-270): именованный экспорт, мокаем как vi.fn() — форма зовёт его на CREATE.
@@ -37,11 +37,13 @@ vi.mock('@/stores/units', () => ({
 // F-640 (#28, Агент B): форма зовёт archivePeriodsStore.fetchList() в Promise.all загрузки для
 // пред-гейта закрытого периода. Без мока реальный стор дёргает замоканный api.get, цепочка
 // Promise.all рвётся и баланс не рендерится → тест «shows future balance» падал. Период открыт.
+const { archiveFetch } = vi.hoisted(() => ({ archiveFetch: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@/stores/archivePeriods', () => ({
   useArchivePeriodsStore: () => ({
-    items: [],
+    // F-1111: стор уже не пустой (открывали другую форму) — даты запрета всё равно перечитываются
+    items: [{ id: 1, object: 99, month: '2020-01-01' }],
     isPeriodClosed: () => false,
-    fetchList: vi.fn().mockResolvedValue(undefined)
+    fetchList: archiveFetch
   })
 }))
 
@@ -308,6 +310,16 @@ describe('WriteOffForm.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(vm.errors.responsible?.[0]).toContain('Недопустимый ответственный')
+  })
+  // F-1111 (ревью F-1106): дата запрета меняется — форма перечитывает её при каждом открытии, даже если стор
+  // уже заполнен.
+  it('перечитывает даты запрета при открытии, даже если стор не пуст', async () => {
+    archiveFetch.mockClear()
+    const wrapper = mount(WriteOffForm, { props: { isOpen: true, initial: null },
+      global: { stubs: { Modal: ModalStub, MaterialSearchSelect: MaterialSearchSelectStub } } })
+    await flushPromises()
+    expect(archiveFetch).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 })
 

@@ -46,3 +46,17 @@ describe('archivePeriods · дата запрета (F-1106)', () => {
     expect(get.mock.calls.filter(c => c[0] === endpoints.archivePeriods.lockDates).length).toBe(2)
   })
 })
+
+describe('archivePeriods · сбой дат запрета не ломает загрузку (F-1111)', () => {
+  beforeEach(() => { setActivePinia(createPinia()); get.mockReset() })
+
+  it('lock-dates отвечает ошибкой — месяцы загружены, ошибки нет', async () => {
+    get.mockImplementation((url: string) => (url === endpoints.archivePeriods.lockDates
+      ? Promise.reject(new Error('404'))
+      : Promise.resolve({ data: { results: [{ id: 1, month: '2026-01-01', object: 8, object_name: 'B', closed_at: '',
+          closed_by: null, closed_by_name: null, is_closed: true }], count: 1 } })))
+    const s = useArchivePeriodsStore()
+    await expect(s.fetchList()).resolves.toBeUndefined()
+    expect(s.isPeriodClosed(8, '2026-01-20')).toBe(true)
+  })
+})

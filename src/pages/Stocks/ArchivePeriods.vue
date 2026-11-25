@@ -63,7 +63,10 @@
               <td class="whitespace-nowrap">{{ formatMonthYear(p.month) }}</td>
               <td>{{ p.object_name }}</td>
               <td v-if="canEdit" class="text-right">
-                <button class="btn btn-sm btn-ghost" :disabled="busy" @click="reopenLegacy(p)">Открыть</button>
+                <!-- F-1111 (ревью): месяц внутри даты запрета объекта открыть нельзя (сервер — 400) -->
+                <button v-if="!insideLockDate(p)" data-test="reopen-legacy" class="btn btn-sm btn-ghost" :disabled="busy"
+                        @click="reopenLegacy(p)">Открыть</button>
+                <span v-else class="text-xs text-muted">внутри даты запрета</span>
               </td>
             </tr>
           </tbody>
@@ -74,9 +77,10 @@
     <Modal v-model="edit.open" :title="`Дата запрета: ${edit.name}`" size="lg" :closable="!busy">
       <label class="block">
         <span class="block text-xs mb-1 text-muted">Дата запрета (включительно)</span>
-        <input v-model="edit.date" type="date" :max="today()" class="input input-bordered w-full sm:w-60" />
+        <input v-model="edit.date" type="date" :min="MIN_DATE" :max="today()" class="input input-bordered w-full sm:w-60" />
       </label>
       <p v-if="dateIsFuture" class="text-sm text-error mt-2">Дату запрета в будущем ставить нельзя</p>
+      <p v-else-if="dateTooEarly" class="text-sm text-error mt-2">Слишком ранняя дата запрета — проверьте год</p>
       <p v-else-if="edit.date" class="text-sm mt-3">
         Закупки, движения и списания объекта по {{ formatDate(edit.date) }} включительно станут только для чтения.
         <template v-if="edit.current && edit.date < edit.current">
@@ -92,7 +96,7 @@
         <span v-else />
         <div class="flex gap-2">
           <button class="btn btn-ghost btn-sm" :disabled="busy" @click="edit.open = false">Отмена</button>
-          <button data-test="save-lock" class="btn btn-primary btn-sm" :disabled="busy || !edit.date || dateIsFuture"
+          <button data-test="save-lock" class="btn btn-primary btn-sm" :disabled="busy || !edit.date || dateIsFuture || dateTooEarly"
                   @click="save(edit.date)">
             <span v-if="busy" class="loading loading-spinner loading-xs"></span>
             Сохранить
@@ -124,6 +128,14 @@ const today = (): string => todayLocal()
 const edit = reactive({ open: false, object: 0, name: '', current: null as string | null, date: '', error: null as string | null })
 // строки 'YYYY-MM-DD' сравниваются как даты; сервер проверяет то же (400)
 const dateIsFuture = computed(() => !!edit.date && edit.date > today())
+// F-1111 (ревью): опечатка в годе («0026») — сервер отвечает 400; не даём отправить
+const MIN_DATE = '2020-01-01'
+const dateTooEarly = computed(() => !!edit.date && edit.date < MIN_DATE)
+
+function insideLockDate(p: ArchivePeriod): boolean {
+  const lock = store.lockDates.find(r => r.object === p.object)?.closed_until
+  return !!lock && String(p.month).slice(0, 10) <= lock
+}
 
 function nextDay(d: string): string {
   const [y, m, dd] = d.split('-').map(Number)
