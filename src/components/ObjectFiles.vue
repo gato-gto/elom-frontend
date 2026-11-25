@@ -32,7 +32,7 @@
 <script setup lang="ts">
 // F-1110 (ответ владельца 17): файлы проекта в карточке объекта. Ссылки — подписанные и временные (сервер, F-029);
 // загружают и удаляют руководство и ответственный объекта (canManage), видят участники объекта (сервер — 404 чужим).
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '@/api/client'
 import { endpoints } from '@/api/endpoints'
 import { useUiStore } from '@/stores/ui'
@@ -65,11 +65,23 @@ function formatSize(bytes: number): string {
   return `${fmt(bytes / (1024 * 1024))} МБ`
 }
 
+// F-1116 (ревью F-1110, LOW): ссылки на файлы подписаны на 1 час — карточка, открытая дольше, давала по клику
+// «Срок действия ссылки истёк». Список (а с ним ссылки) обновляется, если он старше LINK_REFRESH_MS: по таймеру и
+// при возвращении на вкладку (на iOS таймеры фоновой вкладки спят).
+const LINK_REFRESH_MS = 45 * 60 * 1000
+let loadedAt = 0
+let timer: ReturnType<typeof setInterval> | undefined
+
+function refreshIfStale() {
+  if (document.visibilityState !== 'hidden' && Date.now() - loadedAt >= LINK_REFRESH_MS) { load() }
+}
+
 async function load() {
   loading.value = true
   try {
     const { data } = await api.get<ObjectFileRow[]>(endpoints.objects.files(props.objectId))
     files.value = Array.isArray(data) ? data : []
+    loadedAt = Date.now()
   } catch (e) {
     ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось загрузить список файлов' })
   } finally {
@@ -115,5 +127,13 @@ async function remove(f: ObjectFileRow) {
 }
 
 watch(() => props.objectId, load)
-onMounted(load)
+onMounted(() => {
+  load()
+  timer = setInterval(refreshIfStale, 60 * 1000)
+  document.addEventListener('visibilitychange', refreshIfStale)
+})
+onUnmounted(() => {
+  if (timer) { clearInterval(timer) }
+  document.removeEventListener('visibilitychange', refreshIfStale)
+})
 </script>

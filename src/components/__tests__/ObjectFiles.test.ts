@@ -1,7 +1,7 @@
 // F-1110 (ответ владельца 17): файлы проекта в карточке объекта — PDF и изображения до 50 МБ; загружают и удаляют
 // руководство и ответственный, видят участники объекта.
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils'
 
 const { get, post, del, toast } = vi.hoisted(() => ({
   get: vi.fn(), post: vi.fn().mockResolvedValue({ data: {} }), del: vi.fn().mockResolvedValue({}), toast: vi.fn(),
@@ -29,6 +29,9 @@ const pick = async (w: Awaited<ReturnType<typeof mountIt>>, file: File) => {
   await input.trigger('change')
   await flushPromises()
 }
+
+// F-1116: компонент держит таймер и слушатель видимости — каждый тест размонтирует свой экземпляр
+enableAutoUnmount(afterEach)
 
 describe('ObjectFiles (F-1110)', () => {
   beforeEach(() => {
@@ -81,5 +84,28 @@ describe('ObjectFiles (F-1110)', () => {
     await w.findAll('[data-test="file-delete"]')[0].trigger('click')
     await flushPromises()
     expect(del).toHaveBeenCalledWith(endpoints.objects.file(7, 1))
+  })
+
+  // F-1116 (ревью F-1110): ссылки подписаны на час — список обновляется, пока карточка открыта
+  it('список перечитывается через 45 минут и при возвращении на вкладку после долгого перерыва', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    try {
+      const w = await mountIt(false)
+      expect(get).toHaveBeenCalledTimes(1)
+      vi.advanceTimersByTime(44 * 60 * 1000)
+      expect(get).toHaveBeenCalledTimes(1)                      // ещё свежо
+      vi.advanceTimersByTime(60 * 1000)
+      await flushPromises()
+      expect(get).toHaveBeenCalledTimes(2)                      // 45 минут — обновили
+      vi.setSystemTime(Date.now() + 50 * 60 * 1000)              // вкладка «спала», таймер не шёл
+      document.dispatchEvent(new Event('visibilitychange'))
+      await flushPromises()
+      expect(get).toHaveBeenCalledTimes(3)
+      w.unmount()
+      vi.advanceTimersByTime(120 * 60 * 1000)
+      expect(get).toHaveBeenCalledTimes(3)                      // после закрытия карточки — тишина
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
