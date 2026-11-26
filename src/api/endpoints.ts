@@ -119,6 +119,13 @@ export const endpoints = {
         setLockDate: join('/archive/lock-date/'),
     },
 
+    // D-2: корзина — закупки и списания, отправленные в корзину (руководство; окончательно — мастер-аккаунт)
+    trash: {
+        list: join('/trash/'),
+        restore: (kind: 'purchases' | 'writeoffs', id: number) => join(`/trash/${kind}/${id}/restore/`),
+        purge: (kind: 'purchases' | 'writeoffs', id: number) => join(`/trash/${kind}/${id}/`),
+    },
+
     // Tools endpoints
     tools: {
         list: join('/tools/'),

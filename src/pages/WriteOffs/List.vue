@@ -99,19 +99,12 @@ import GenericList from '@/components/GenericList.vue'
 import SmartUnitValue from '@/components/SmartUnitValue.vue'
 import WriteOffCard from '@/components/cards/WriteOffCard.vue'
 import { usePermissions } from '@/composables/usePermissions'
-import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
-import { canDeleteWriteOff, writeOffDeleteQuestion, ownObjectIdsOf } from '@/utils/deleteRules'
+import { canTrash, writeOffTrashQuestion } from '@/utils/deleteRules'
 
 // ✅ RBAC: проверка через permissions
-const { can, canExportReports, hasPermission } = usePermissions()
-const authStore = useAuthStore()
+const { can, canExportReports } = usePermissions()
 const { showSuccess } = useNotifications()
-// F-1093 (T3; ответы владельца 1 и 2): «Удалить» — по тому же правилу, что на сервере
-const deletePerms = computed(() => ({
-  isSuperuser: !!authStore.me?.is_superuser, has: hasPermission, meId: authStore.me?.id,
-  ownObjectIds: ownObjectIdsOf(authStore.me, objectsStore.items),  // F-1096: «свой объект», как на сервере
-}))
 const canCreate = computed(() => can('writeoffs', 'create'))
 
 const route = useRoute()
@@ -246,11 +239,11 @@ const listConfig = computed<GenericListConfig<WriteOff>>(() => ({
     },
     {
       key: 'delete',
-      label: 'Удалить',
+      label: 'В корзину',
       class: 'btn-error',
       permission: 'writeoffs.delete',
-      // F-1093: admin/manager — любое; бригадир — своё; архив — никто (как на сервере)
-      visible: (item: WriteOff) => canDeleteWriteOff(item, deletePerms.value)
+      // D-2: решает сервер (can_trash): руководство — любое; ответственный и склад — своё в течение 3 ч
+      visible: (item: WriteOff) => canTrash(item)
     }
   ],
   mobileCardComponent: WriteOffCard,
@@ -295,10 +288,10 @@ async function handleAction(action: string, item: WriteOff) {
 
 // F-1093: удаление списания возвращает материал на остаток — вопрос говорит, сколько
 async function handleDelete(writeOff: WriteOff) {
-  if (!confirm(writeOffDeleteQuestion(writeOff))) {return}
+  if (!confirm(writeOffTrashQuestion(writeOff))) {return}
   try {
     await writeOffsStore.remove(writeOff.id)
-    showSuccess('Списание удалено')
+    showSuccess('Списание в корзине')
     // F-1096 (ревью): «Остаток» в соседних строках считается ПОСЛЕ каждого списания — перечитываем список
     await writeOffsStore.fetchList()
   } catch (error) {

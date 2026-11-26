@@ -3,10 +3,11 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
 // F-1093 (T3; ответы владельца 1 и 2): в списке списаний появилась кнопка «Удалить».
-// Видна по тому же правилу, что на сервере; перед удалением — вопрос с последствиями для остатка.
+// D-2 (26.11): «Удалить» → «В корзину»; видимость — по полю сервера can_trash; вопрос — с последствиями для остатка.
 
-const { remove, fetchList, perms, me } = vi.hoisted(() => ({
+const { remove, fetchList, perms, me, showSuccess } = vi.hoisted(() => ({
   remove: vi.fn().mockResolvedValue(undefined),
+  showSuccess: vi.fn(),
   fetchList: vi.fn().mockResolvedValue(undefined),
   perms: { list: [] as string[] },
   me: { value: { id: 7, is_superuser: false, profile_id: 70, assigned_object_ids: [] as number[] } as
@@ -22,7 +23,7 @@ vi.mock('@/stores/objects', () => ({ useObjectsStore: () => ({ items: [{ id: 3, 
 vi.mock('@/stores/materials', () => ({ useMaterialsStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/employees', () => ({ useEmployeesStore: () => ({ items: [], fetchList: vi.fn().mockResolvedValue(undefined) }) }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ get me() { return me.value } }) }))
-vi.mock('@/composables/useNotifications', () => ({ useNotifications: () => ({ showSuccess: vi.fn(), showError: vi.fn() }) }))
+vi.mock('@/composables/useNotifications', () => ({ useNotifications: () => ({ showSuccess, showError: vi.fn() }) }))
 vi.mock('@/composables/usePermissions', () => ({
   usePermissions: () => ({
     can: () => true,
@@ -41,7 +42,7 @@ vi.mock('@/api/client', () => ({
 
 import WriteOffsList from '@/pages/WriteOffs/List.vue'
 
-type Action = { key: string; permission?: string; visible?: (i: unknown) => boolean }
+type Action = { key: string; label?: string; permission?: string; visible?: (i: unknown) => boolean }
 type Cfg = { actions: Action[] }
 let captured: Cfg | null = null
 const GenericListStub = defineComponent({
@@ -64,32 +65,27 @@ const del = () => {
 }
 const WO = { id: 5, object: 3, quantity: '5.000000', unit_code: 'м', material_name: 'Кабель', object_name: 'Гостиница', is_archived: false }
 
-describe('Список списаний: «Удалить» (F-1093)', () => {
+describe('Список списаний: «В корзину» (F-1093, D-2)', () => {
   beforeEach(() => {
-    remove.mockClear(); fetchList.mockClear()
+    remove.mockClear(); fetchList.mockClear(); showSuccess.mockClear()
     me.value = { id: 7, is_superuser: false, profile_id: 70, assigned_object_ids: [] }
   })
 
-  it('действие есть, гейт по writeoffs.delete', async () => {
+  it('действие «В корзину», гейт по writeoffs.delete', async () => {
     await mountList()
+    expect(findDel()?.label).toBe('В корзину')
     expect(findDel()?.permission).toBe('writeoffs.delete')
   })
 
-  it('бригадир видит у своего списания и не видит у чужого', async () => {
-    perms.list = ['writeoffs.delete', 'writeoffs.delete_own']
-    await mountList()
-    expect(del().visible({ ...WO, created_by: 7 })).toBe(true)
-    expect(del().visible({ ...WO, created_by: 99 })).toBe(false)
-  })
-
-  it('руководство видит у любого, кроме архивного', async () => {
+  it('видимость решает сервер (can_trash); архив — никогда', async () => {
     perms.list = ['writeoffs.delete', 'writeoffs.delete_all']
     await mountList()
-    expect(del().visible({ ...WO, created_by: 99 })).toBe(true)
-    expect(del().visible({ ...WO, created_by: 99, is_archived: true })).toBe(false)
+    expect(del().visible({ ...WO, can_trash: false })).toBe(false)
+    expect(del().visible({ ...WO, can_trash: true })).toBe(true)
+    expect(del().visible({ ...WO, can_trash: true, is_archived: true })).toBe(false)
   })
 
-  it('подтверждение с последствиями → удаляет; отказ → не удаляет', async () => {
+  it('подтверждение с последствиями → в корзину и пересчёт списка; отказ → ничего', async () => {
     const w = await mountList()
     const vm = w.vm as unknown as { handleAction: (a: string, i: unknown) => Promise<void> }
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
@@ -99,15 +95,9 @@ describe('Список списаний: «Удалить» (F-1093)', () => {
     await vm.handleAction('delete', WO)
     expect(remove).toHaveBeenCalledWith(5)
     expect(fetchList).toHaveBeenCalledTimes(1)   // F-1096: «Остаток» соседних строк пересчитан
-    expect(confirmSpy).toHaveBeenCalledWith('Удалить списание? Остаток объекта «Гостиница» увеличится на 5 м «Кабель».')
+    expect(confirmSpy).toHaveBeenCalledWith('Отправить списание в корзину? Остаток объекта «Гостиница» увеличится на 5 м '
+      + '«Кабель». Руководство сможет вернуть его в течение 7 дней.')
+    expect(showSuccess).toHaveBeenCalledWith('Списание в корзине')
     confirmSpy.mockRestore()
-  })
-})
-
-describe('F-1096: своё списание на чужом объекте — кнопки нет', () => {
-  it('объект 9 не свой', async () => {
-    perms.list = ['writeoffs.delete', 'writeoffs.delete_own']
-    await mountList()
-    expect(del().visible({ ...WO, object: 9, created_by: 7 })).toBe(false)
   })
 })

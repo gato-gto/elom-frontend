@@ -39,6 +39,7 @@ const RBACRoleForm = () => import(/* webpackChunkName: "rbac" */ '@/pages/RBAC/R
 const StocksList = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/List.vue')
 const StockBalances = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/Balances.vue')
 const ArchivePeriods = () => import(/* webpackChunkName: "stocks" */ '@/pages/Stocks/ArchivePeriods.vue')
+const TrashList = () => import(/* webpackChunkName: "trash" */ '@/pages/Trash/List.vue')   // D-2
 
 // WriteOffs
 const WriteOffsList = () => import(/* webpackChunkName: "writeoffs" */ '@/pages/WriteOffs/List.vue')
@@ -456,6 +457,21 @@ const routes = [
       category: 'inventory',
       order: 8,
       permissions: ['stock.view']
+    }
+  },
+  // D-2 (корзина): закупки и списания, отправленные в корзину — руководство (и мастер-аккаунт)
+  {
+    path: '/trash',
+    name: 'Trash',
+    component: TrashList,
+    meta: {
+      title: 'Корзина',
+      icon: 'trash',
+      breadcrumb: 'Корзина',
+      description: 'Закупки и списания в корзине: восстановить или удалить окончательно',
+      category: 'inventory',
+      order: 9,
+      permissions: ['purchases.delete_all', 'writeoffs.delete_all']
     }
   },
 

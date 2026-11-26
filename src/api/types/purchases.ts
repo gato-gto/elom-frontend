@@ -58,6 +58,8 @@ export interface Purchase {
   updated_by_name?: string | null;
   created_at: string;
   updated_at: string;
+  // D-2: может ли текущий пользователь отправить закупку в корзину (считает сервер, в т.ч. окно 3 ч)
+  can_trash?: boolean;
 }
 
 // Request types

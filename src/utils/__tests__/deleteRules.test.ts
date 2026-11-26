@@ -1,85 +1,46 @@
 import { describe, it, expect } from 'vitest'
-import {
-  canDeletePurchase, canDeleteWriteOff, purchaseDeleteQuestion, writeOffDeleteQuestion, ownObjectIdsOf, type DeletePerms,
-} from '../deleteRules'
+import { canTrash, purchaseTrashQuestion, writeOffTrashQuestion, TRASH_RETENTION_DAYS } from '../deleteRules'
 
-// F-1093 (T3; ответы владельца 1 и 2): то же правило, что на сервере (purchases/tests_f1084_delete_policy.py).
-const perms = (codes: string[], meId = 7, isSuperuser = false): DeletePerms =>
-  ({ isSuperuser, meId, has: (c: string) => codes.includes(c) })
-const MANAGER = perms(['purchases.delete', 'purchases.delete_all', 'writeoffs.delete', 'writeoffs.delete_all'])
-const BRIG = perms(['purchases.delete', 'purchases.delete_own', 'writeoffs.delete', 'writeoffs.delete_own'])
-const WAREHOUSE = perms([])
-
-describe('canDeletePurchase', () => {
-  it('manager — любую, в т.ч. проведённую чужую', () => {
-    expect(canDeletePurchase({ id: 1, status: 'completed', created_by: 99 }, MANAGER)).toBe(true)
+// D-2 (корзина, 26.11): кто может отправить в корзину, решает сервер (поле can_trash: руководство — всё; ответственный
+// и склад — своё в течение 3 ч; свой черновик — всегда). Окно в часах FE не считает — только показывает кнопку.
+describe('canTrash', () => {
+  it('кнопка есть, только если сервер разрешил', () => {
+    expect(canTrash({ can_trash: true })).toBe(true)
+    expect(canTrash({ can_trash: false })).toBe(false)
   })
-  it('суперпользователь — любую', () => {
-    expect(canDeletePurchase({ id: 1, status: 'completed', created_by: 99 }, perms([], 7, true))).toBe(true)
+  it('нет поля (старый ответ сервера) или null — кнопки нет', () => {
+    expect(canTrash({})).toBe(false)
+    expect(canTrash({ can_trash: null })).toBe(false)
   })
-  it('бригадир — свой черновик', () => {
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7 }, BRIG)).toBe(true)
-  })
-  it('бригадир — не свою проведённую, не чужой черновик, не свою проведённую', () => {
-    expect(canDeletePurchase({ id: 1, status: 'completed', created_by: 99 }, BRIG)).toBe(false)
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 99 }, BRIG)).toBe(false)
-    expect(canDeletePurchase({ id: 1, status: 'completed', created_by: 7 }, BRIG)).toBe(false)
-  })
-  it('склад — ничего', () => {
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7 }, WAREHOUSE)).toBe(false)
-  })
-  it('архив (закрытый период) — никто', () => {
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7, is_archived: true }, MANAGER)).toBe(false)
-  })
-  it('нет автора у закупки → бригадир не удаляет', () => {
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: null }, BRIG)).toBe(false)
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7 }, { ...BRIG, meId: null })).toBe(false)
+  it('архив (закрытый период) — кнопки нет, даже если поле пришло true', () => {
+    expect(canTrash({ can_trash: true, is_archived: true })).toBe(false)
   })
 })
 
-describe('canDeleteWriteOff', () => {
-  it('manager — любое; бригадир — своё; склад — ничего; архив — никто', () => {
-    expect(canDeleteWriteOff({ created_by: 99 }, MANAGER)).toBe(true)
-    expect(canDeleteWriteOff({ created_by: 7 }, BRIG)).toBe(true)
-    expect(canDeleteWriteOff({ created_by: 99 }, BRIG)).toBe(false)
-    expect(canDeleteWriteOff({ created_by: 7 }, WAREHOUSE)).toBe(false)
-    expect(canDeleteWriteOff({ created_by: 7, is_archived: true }, MANAGER)).toBe(false)
+describe('вопросы перед отправкой в корзину', () => {
+  it('срок возврата — 7 дней, как на сервере (TRASH_RETENTION_DAYS)', () => {
+    expect(TRASH_RETENTION_DAYS).toBe(7)
   })
-})
-
-describe('вопросы перед удалением', () => {
-  it('проведённая закупка — предупреждает про остаток объекта', () => {
-    expect(purchaseDeleteQuestion({ id: 5, purchase_no: 'P0005', status: 'completed', object_name: 'Медцентр 01' }))
-      .toBe('Удалить закупку P0005? Её приход уйдёт с остатка объекта «Медцентр 01».')
+  it('проведённая закупка — про остаток объекта и про возврат', () => {
+    expect(purchaseTrashQuestion({ id: 5, purchase_no: 'P0005', status: 'completed', object_name: 'Медцентр 01' }))
+      .toBe('Отправить закупку P0005 в корзину? Её приход уйдёт с остатка объекта «Медцентр 01». '
+        + 'Руководство сможет вернуть её в течение 7 дней.')
+  })
+  it('проведённая закупка без названия объекта', () => {
+    expect(purchaseTrashQuestion({ id: 5, purchase_no: 'P0005', status: 'completed' }))
+      .toBe('Отправить закупку P0005 в корзину? Её приход уйдёт с остатка объекта. '
+        + 'Руководство сможет вернуть её в течение 7 дней.')
   })
   it('черновик — без слов про остаток; без номера — по id', () => {
-    expect(purchaseDeleteQuestion({ id: 5, status: 'new' })).toBe('Удалить закупку № 5?')
+    expect(purchaseTrashQuestion({ id: 5, status: 'new' }))
+      .toBe('Отправить закупку № 5 в корзину? Руководство сможет вернуть её в течение 7 дней.')
   })
-  it('списание — сколько и чего вернётся на остаток', () => {
-    expect(writeOffDeleteQuestion({ quantity: '5.000000', unit_code: 'м', material_name: 'Кабель', object_name: 'Гостиница' }))
-      .toBe('Удалить списание? Остаток объекта «Гостиница» увеличится на 5 м «Кабель».')
-    expect(writeOffDeleteQuestion({ quantity: '1500.5', unit_code: 'м', material_name: 'Кабель', object_name: 'Г' }))
-      .toBe('Удалить списание? Остаток объекта «Г» увеличится на 1\u00a0500,5 м «Кабель».')
-  })
-})
-
-describe('F-1096 (ревью): бригадир — только на своём объекте, как сервер', () => {
-  const brigOn = (ids: number[]): DeletePerms => ({ ...BRIG, ownObjectIds: new Set(ids) })
-  it('свой черновик на чужом теперь объекте — кнопки нет', () => {
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7, object: 5 }, brigOn([6]))).toBe(false)
-    expect(canDeletePurchase({ id: 1, status: 'new', created_by: 7, object: 6 }, brigOn([6]))).toBe(true)
-  })
-  it('своё списание на чужом объекте — кнопки нет', () => {
-    expect(canDeleteWriteOff({ created_by: 7, object: 5 }, brigOn([6]))).toBe(false)
-    expect(canDeleteWriteOff({ created_by: 7, object: 6 }, brigOn([6]))).toBe(true)
-  })
-  it('руководству объект не важен', () => {
-    expect(canDeletePurchase({ id: 1, status: 'completed', created_by: 99, object: 5 }, { ...MANAGER, ownObjectIds: new Set() })).toBe(true)
-  })
-  it('свои объекты = назначенные + где ответственный (по profile_id)', () => {
-    const ids = ownObjectIdsOf({ assigned_object_ids: [3], profile_id: 70 },
-      [{ id: 4, responsible: 70 }, { id: 5, responsible: 71 }, { id: 3, responsible: 71 }])
-    expect([...ids].sort()).toEqual([3, 4])
-    expect([...ownObjectIdsOf(null, [{ id: 4, responsible: 70 }])]).toEqual([])
+  it('списание — сколько и чего вернётся на остаток, и про возврат', () => {
+    expect(writeOffTrashQuestion({ quantity: '5.000000', unit_code: 'м', material_name: 'Кабель', object_name: 'Гостиница' }))
+      .toBe('Отправить списание в корзину? Остаток объекта «Гостиница» увеличится на 5 м «Кабель». '
+        + 'Руководство сможет вернуть его в течение 7 дней.')
+    expect(writeOffTrashQuestion({ quantity: '1500.5', unit_code: 'м', material_name: 'Кабель', object_name: 'Г' }))
+      .toBe('Отправить списание в корзину? Остаток объекта «Г» увеличится на 1 500,5 м «Кабель». '
+        + 'Руководство сможет вернуть его в течение 7 дней.')
   })
 })

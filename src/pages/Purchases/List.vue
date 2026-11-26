@@ -134,7 +134,7 @@ import { useEmployeesStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { useNotifications } from '@/composables/useNotifications'
 import { usePermissions } from '@/composables/usePermissions'
-import { canDeletePurchase, purchaseDeleteQuestion, ownObjectIdsOf } from '@/utils/deleteRules'
+import { canTrash, purchaseTrashQuestion } from '@/utils/deleteRules'
 
 // Stores
 const purchasesStore = usePurchasesStore()
@@ -144,12 +144,7 @@ const authStore = useAuthStore()
 const { showSuccess, showError } = useNotifications()
 
 // ✅ RBAC: проверяем разрешения вместо ролей
-const { canCreateRequests, canApprovePurchases, canExportReports, hasPermission } = usePermissions()
-// F-1093 (T3; ответы владельца 1 и 2): «Удалить» — по тому же правилу, что на сервере
-const deletePerms = computed(() => ({
-  isSuperuser: !!authStore.me?.is_superuser, has: hasPermission, meId: authStore.me?.id,
-  ownObjectIds: ownObjectIdsOf(authStore.me, objectsStore.items),  // F-1096: «свой объект», как на сервере
-}))
+const { canCreateRequests, canApprovePurchases, canExportReports } = usePermissions()
 
 // isRequester = может создавать заявки, но не одобрять
 const isRequester = computed(() => canCreateRequests.value)
@@ -358,11 +353,11 @@ const listConfig = computed(() => ({
     ] : []),
     {
       key: 'delete',
-      label: 'Удалить',
+      label: 'В корзину',
       class: 'btn-error btn-sm',
       permission: 'purchases.delete',
-      // F-1093: admin/manager — любую; бригадир — свой черновик; архив — никто (как на сервере)
-      visible: (item: Purchase) => canDeletePurchase(item, deletePerms.value)
+      // D-2: решает сервер (can_trash): руководство — любую; ответственный и склад — свою в течение 3 ч, свой черновик
+      visible: (item: Purchase) => canTrash(item)
     }
   ],
   mobileCardComponent: PurchaseCard,
@@ -500,12 +495,13 @@ async function handleReject(purchase: Purchase) {
 }
 
 async function handleDelete(purchase: Purchase) {
-  // F-1093: вопрос говорит, что станет с остатком; отказ сервера («сначала удалите списания») — в уведомлении
-  if (!confirm(purchaseDeleteQuestion(purchase))) {return}
+  // F-1093/D-2: вопрос говорит, что станет с остатком и что её можно вернуть; отказ сервера («сначала удалите
+  // списания», «прошло 3 ч») — в уведомлении
+  if (!confirm(purchaseTrashQuestion(purchase))) {return}
 
   try {
     await purchasesStore.remove(purchase.id)
-    showSuccess('Закупка удалена')
+    showSuccess('Закупка в корзине')
   } catch (error) {
     await handleDeleteError(error, 'purchase', purchase.id)
   }

@@ -7543,6 +7543,69 @@ paths:
                     - Перфоратор SDS-Plus
                   summary: Пример ответа
           description: ''
+  /api/v1/trash/:
+    get:
+      operationId: trash_retrieve
+      summary: 'Корзина: закупки и списания (руководство)'
+      tags:
+      - Trash
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrashList'
+          description: ''
+  /api/v1/trash/{kind}/{id}/:
+    delete:
+      operationId: trash_destroy
+      summary: Удалить окончательно из корзины (только мастер-аккаунт)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: kind
+        schema:
+          type: string
+        required: true
+      tags:
+      - Trash
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/trash/{kind}/{id}/restore/:
+    post:
+      operationId: trash_restore_create
+      summary: Вернуть документ из корзины (руководство)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: kind
+        schema:
+          type: string
+        required: true
+      tags:
+      - Trash
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrashRestored'
+          description: ''
   /api/v1/units/:
     get:
       operationId: units_list
@@ -11487,6 +11550,9 @@ components:
       description: Проставляет created_by/updated_by из request.user. Подмешивать
         ПЕРВЫМ.
       properties:
+        can_trash:
+          type: boolean
+          readOnly: true
         id:
           type: integer
           readOnly: true
@@ -11584,6 +11650,7 @@ components:
           type: string
           readOnly: true
       required:
+      - can_trash
       - cover_photo_url
       - created_at
       - created_by
@@ -12960,6 +13027,70 @@ components:
           format: date
       required:
       - reason
+    TrashList:
+      type: object
+      properties:
+        retention_days:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrashRow'
+      required:
+      - items
+      - retention_days
+    TrashRestored:
+      type: object
+      properties:
+        detail:
+          type: string
+        id:
+          type: integer
+      required:
+      - detail
+      - id
+    TrashRow:
+      type: object
+      properties:
+        kind:
+          type: string
+        id:
+          type: integer
+        title:
+          type: string
+        object_name:
+          type: string
+        date:
+          type: string
+          format: date
+        amount:
+          type: string
+          nullable: true
+        deleted_at:
+          type: string
+          format: date-time
+        deleted_by_name:
+          type: string
+          nullable: true
+        purge_after:
+          type: string
+          format: date-time
+        can_restore:
+          type: boolean
+        can_purge:
+          type: boolean
+      required:
+      - amount
+      - can_purge
+      - can_restore
+      - date
+      - deleted_at
+      - deleted_by_name
+      - id
+      - kind
+      - object_name
+      - purge_after
+      - title
     TypeEnum:
       enum:
       - instructions
@@ -13339,6 +13470,9 @@ components:
           type: string
           format: date-time
           readOnly: true
+        can_trash:
+          type: boolean
+          readOnly: true
         created_by:
           type: integer
           readOnly: true
@@ -13356,6 +13490,7 @@ components:
           type: string
           readOnly: true
       required:
+      - can_trash
       - created_at
       - created_by
       - created_by_name
