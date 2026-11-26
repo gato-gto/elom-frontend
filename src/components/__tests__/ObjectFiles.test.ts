@@ -283,6 +283,7 @@ describe('ObjectFiles (F-1110)', () => {
       get.mockReset().mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce({ data: FILES })
       const w = await mountIt(false)
       expect(w.find('[data-test="files-error"]').text()).toContain('Не удалось загрузить список файлов.')
+      expect(w.find('[data-test="files-error"]').attributes('role')).toBe('alert')   // озвучивается сразу
       expect(w.text()).not.toContain('Файлов пока нет')
       expect(toast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
       await w.find('[data-test="files-retry"]').trigger('click')

@@ -11,7 +11,7 @@
     <p v-if="canManage" class="text-xs text-muted mb-3 no-print">PDF или изображение (JPEG, PNG, WebP), до 50 МБ.</p>
 
     <div v-if="loading" class="text-sm text-subtle py-4">Загрузка…</div>
-    <div v-else-if="loadFailed && files.length === 0" data-test="files-error"
+    <div v-else-if="loadFailed && files.length === 0" data-test="files-error" role="alert"
          class="text-sm py-4 flex flex-wrap items-center gap-2">
       <span class="text-error">Не удалось загрузить список файлов.</span>
       <button type="button" data-test="files-retry" class="btn btn-sm btn-outline" @click="load()">Повторить</button>
@@ -65,7 +65,8 @@ const files = ref<ObjectFileRow[]>([])
 const deletedIds = new Set<number>()
 const loading = ref(false)
 // F-1126 (давнее наблюдение): основная загрузка списка не удалась — показываем это и «Повторить», а не «Файлов пока
-// нет» (пустой список при сбое читался как «файлов нет»). Фоновое обновление флаг не трогает (тихое, F-1119).
+// нет» (пустой список при сбое читался как «файлов нет»). Сбой фонового обновления флаг не ставит (тихое, F-1119);
+// любой успешный ответ — и фоновый — снимает.
 const loadFailed = ref(false)
 const busy = ref(false)
 
