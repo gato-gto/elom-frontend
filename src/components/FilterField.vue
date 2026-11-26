@@ -1,9 +1,7 @@
 <template>
-  <div class="filter-field">
-    <label v-if="label" class="filter-label">
-      {{ label }}
-      <span v-if="required" class="required-mark">*</span>
-    </label>
+  <div class="filter-field" :data-empty="isEmpty ? '' : undefined">
+    <!-- F-1128 (ревью-21): data-empty — на бумаге печатаются только заданные фильтры (components.css, @media print) -->
+    <label v-if="label" class="filter-label">{{ label }}<span v-if="required" class="required-mark"> *</span></label>
     
     <!-- Text Input -->
     <input
@@ -116,6 +114,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { selectAllOnFocus, parseDecimalInput } from '@/utils/numberInput'  // F-1017: тап выделяет значение
 
 interface Option {
@@ -137,11 +136,17 @@ interface Props {
   rows?: number
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   required: false,
   disabled: false,
   rows: 3
+})
+
+// F-1128: фильтр не задан — пусто, null, false (флажок) или пустой список
+const isEmpty = computed(() => {
+  const v = props.modelValue
+  return v === undefined || v === null || v === '' || v === false || (Array.isArray(v) && v.length === 0)
 })
 
 const emit = defineEmits<{

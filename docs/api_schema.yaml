@@ -11079,13 +11079,6 @@ components:
       properties:
         is_cover:
           type: boolean
-        mime:
-          type: string
-          maxLength: 64
-        size_bytes:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11839,11 +11832,10 @@ components:
           type: boolean
         mime:
           type: string
-          maxLength: 64
+          readOnly: true
         size_bytes:
           type: integer
-          maximum: 2147483647
-          minimum: 0
+          readOnly: true
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'
@@ -11859,6 +11851,8 @@ components:
       required:
       - created_at
       - id
+      - mime
+      - size_bytes
       - url
     PurchasePhotoBulkUploadRequest:
       type: object
@@ -11892,13 +11886,6 @@ components:
       properties:
         is_cover:
           type: boolean
-        mime:
-          type: string
-          maxLength: 64
-        size_bytes:
-          type: integer
-          maximum: 2147483647
-          minimum: 0
         type:
           allOf:
           - $ref: '#/components/schemas/TypeEnum'

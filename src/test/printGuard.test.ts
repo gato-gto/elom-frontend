@@ -8,6 +8,8 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import postcss, { type AtRule, type Rule } from 'postcss'
+import { mount } from '@vue/test-utils'
+import FilterField from '@/components/FilterField.vue'
 
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8')
 const root = postcss.parse(read('src/styles/components.css'))
@@ -15,7 +17,7 @@ const root = postcss.parse(read('src/styles/components.css'))
 const printBlocks: AtRule[] = []
 root.walkAtRules('media', (at) => { if (at.params.trim() === 'print') { printBlocks.push(at) } })
 
-/** Объявления печатных правил, чей селектор содержит sel (в любом печатном блоке). */
+/** Объявления печатных правил с селектором sel (в любом печатном блоке; поздние перекрывают ранние). */
 function printDecls(sel: string): Record<string, string> {
   const out: Record<string, string> = {}
   for (const b of printBlocks) {
@@ -61,9 +63,36 @@ describe('печать (F-1121)', () => {
     expect(td['white-space']).toBe('normal !important')
   })
 
-  it.each(['.filter-panel', '.header-actions', '.modern-pagination-container', '.btn', '.row-action-btn',
-    '.drawer-side', '.toast'])('на бумаге нет %s', (sel) => {
+  it.each(['.header-actions', '.pagination-nav', '.mobile-sort', '.filter-actions', '.btn', '.row-action-btn',
+    '.drawer-side', '.toast', '.filter-field[data-empty]'])('на бумаге нет %s', (sel) => {
     expect(printDecls(sel).display).toBe('none !important')
+  })
+
+  // F-1128 (ревью-21, MED): параметры выборки на бумаге — заданные фильтры и «Показано N из M»
+  it.each(['.filter-panel', '.modern-pagination-container', '.pagination-info'])('на бумаге остаётся %s', (sel) => {
+    expect(printDecls(sel).display).toBeUndefined()
+  })
+
+  it('панель фильтров без заданных фильтров не печатается; свёрнутая на телефоне — печатается', () => {
+    expect(printDecls('.filter-panel:not(:has(.filter-field:not([data-empty])))').display).toBe('none !important')
+    expect(printDecls('.filter-content').display).toBe('block !important')
+  })
+
+  it.each([
+    ['', true], [null, true], [undefined, true], [false, true], [[], true],
+    ['2026-11-01', false], [0, false], [7, false], [true, false], [[3], false],
+  ])('FilterField: значение %j → пустой фильтр (не печатается): %s', (value, empty) => {
+    const w = mount(FilterField, { props: { modelValue: value as never, type: 'text', label: 'Объект' } })
+    expect(w.attributes('data-empty') !== undefined).toBe(empty)
+  })
+
+  it('печать с телефона — мобильные карточки видны и на ширине листа', () => {
+    expect(printDecls('.mobile-only').display).toBe('block !important')
+  })
+
+  // F-1128 (ревью-21, HIGH): с именованной страницей invoice tfoot как footer-group давал разрыв — ИТОГО на 2-м листе
+  it('итог накладной — обычной строкой таблицы, не повторяемым подвалом', () => {
+    expect(printDecls('.invoice-table tfoot').display).toBe('table-row-group !important')
   })
 
   it.each([':root[data-theme="dark"]', ':root.dark'])('тёмная тема (%s) печатается светлыми токенами', (sel) => {

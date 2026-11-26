@@ -842,7 +842,9 @@
 
   .invoice-table thead { display: table-header-group !important; }
   .invoice-table tbody { display: table-row-group !important; }
-  .invoice-table tfoot { display: table-footer-group !important; }
+  /* F-1128 (ревью-21, HIGH): table-row-group, не footer-group — с именованной страницей invoice Chromium ставил
+     разрыв перед <tfoot>: ИТОГО и подписи уходили на 2-й лист. Итог печатается один раз, в конце. */
+  .invoice-table tfoot { display: table-row-group !important; }
   .invoice-table tr { display: table-row !important; page-break-inside: avoid; }
   .invoice-table th,
   .invoice-table td {
@@ -1054,8 +1056,10 @@
   .drawer-side,
   .nav-toggle-btn,
   .header-actions,
-  .filter-panel,
-  .modern-pagination-container,
+  .pagination-nav,
+  .mobile-sort,
+  .filter-actions,
+  .filter-chevron,
   .chart-controls,
   .row-action-btn,
   .action-btn,
@@ -1066,6 +1070,79 @@
   }
   .app-main {
     padding: 0 !important;
+  }
+
+  /* F-1128 (ревью-21, MED): параметры выборки остаются на бумаге — заданные фильтры строкой «Метка: значение»
+     (пустые поля и панель без заданных фильтров не печатаются) и «Показано 41–60 из 157» у пагинации, иначе печать
+     3-й страницы или отчёта за период выглядела как полный список без периода */
+  .filter-panel {
+    border: none !important;
+    box-shadow: none !important;
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 0 0.4rem !important;
+  }
+  .filter-panel:not(:has(.filter-field:not([data-empty]))),
+  .filter-field[data-empty] {
+    display: none !important;
+  }
+  .filter-header {
+    padding: 0 !important;
+    border: none !important;
+  }
+  .filter-title {
+    font-size: 8.5pt !important;
+    margin: 0 !important;
+  }
+  .filter-content {
+    display: block !important;   /* на телефоне панель свёрнута (v-show) — на бумаге фильтры всё равно нужны */
+    padding: 0 !important;
+  }
+  .filter-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.1rem 1rem !important;
+  }
+  .filter-field {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 0.3rem !important;
+  }
+  .filter-label {
+    display: inline !important;   /* на экране flex с gap — двоеточие отъезжало от метки */
+    font-size: 8.5pt !important;
+    margin: 0 !important;
+  }
+  .filter-label::after {
+    content: ":";
+  }
+  .filter-input,
+  .filter-select,
+  .filter-textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    font-size: 8.5pt !important;
+  }
+  .pagination-info {
+    font-size: 8.5pt !important;
+  }
+  .filter-input::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+
+  /* F-1128 (ревью-21): печать с телефона — карточки (их рендерит только мобильная раскладка, на десктопе их нет в DOM),
+     на ширине листа ≥ 768 px правило .mobile-only их прятало: на бумаге оставался один заголовок */
+  .mobile-only {
+    display: block !important;
+    break-inside: avoid;
   }
 
   /* 1–2) таблицы — в ширину поля листа, без горизонтальной прокрутки и без переноса по буквам */
