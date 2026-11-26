@@ -11,6 +11,11 @@
     <p v-if="canManage" class="text-xs text-muted mb-3">PDF или изображение (JPEG, PNG, WebP), до 50 МБ.</p>
 
     <div v-if="loading" class="text-sm text-subtle py-4">Загрузка…</div>
+    <div v-else-if="loadFailed && files.length === 0" data-test="files-error"
+         class="text-sm py-4 flex flex-wrap items-center gap-2">
+      <span class="text-error">Не удалось загрузить список файлов.</span>
+      <button type="button" data-test="files-retry" class="btn btn-sm btn-outline" @click="load()">Повторить</button>
+    </div>
     <div v-else-if="files.length === 0" class="text-sm text-subtle py-4">Файлов пока нет</div>
     <ul v-else class="divide-y divide-base-300">
       <li v-for="f in files" :key="f.id" data-test="file-row" class="py-2 flex items-start gap-3">
@@ -59,6 +64,9 @@ const files = ref<ObjectFileRow[]>([])
 // первичный ключ, законно вернуться не может)
 const deletedIds = new Set<number>()
 const loading = ref(false)
+// F-1126 (давнее наблюдение): основная загрузка списка не удалась — показываем это и «Повторить», а не «Файлов пока
+// нет» (пустой список при сбое читался как «файлов нет»). Фоновое обновление флаг не трогает (тихое, F-1119).
+const loadFailed = ref(false)
 const busy = ref(false)
 
 function formatSize(bytes: number): string {
@@ -95,11 +103,13 @@ async function load(background = false) {
     if (seq !== requestSeq) { return }
     files.value = (Array.isArray(data) ? data : []).filter(x => !deletedIds.has(x.id))
     loadedAt = Date.now()
+    loadFailed.value = false
   } catch (e) {
     if (seq !== requestSeq) { return }
     if (background) {
       loadedAt = Date.now() - LINK_REFRESH_MS + RETRY_MS   // тихо; повторим через RETRY_MS
     } else {
+      loadFailed.value = true
       ui.toast({ type: 'error', text: parseApiError(e).detail || 'Не удалось загрузить список файлов' })
     }
   } finally {

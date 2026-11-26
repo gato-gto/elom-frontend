@@ -274,4 +274,75 @@ describe('ObjectFiles (F-1110)', () => {
       expect(names(w)).toEqual([])
     })
   })
+
+  // F-1126 (давнее наблюдение): при сбое основной загрузки карточка писала «Файлов пока нет» — как будто файлов нет
+  describe('сбой загрузки списка (F-1126)', () => {
+    const F = (id: number, name: string) => ({ ...FILES[0], id, name, url: `https://x/${id}?token=t` })
+
+    it('первая загрузка не удалась — «Не удалось загрузить» и «Повторить», не «Файлов пока нет»; повтор загружает', async () => {
+      get.mockReset().mockRejectedValueOnce(new Error('Network Error')).mockResolvedValueOnce({ data: FILES })
+      const w = await mountIt(false)
+      expect(w.find('[data-test="files-error"]').text()).toContain('Не удалось загрузить список файлов.')
+      expect(w.text()).not.toContain('Файлов пока нет')
+      expect(toast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
+      await w.find('[data-test="files-retry"]').trigger('click')
+      await flushPromises()
+      expect(get).toHaveBeenCalledTimes(2)
+      expect(w.find('[data-test="files-error"]').exists()).toBe(false)
+      expect(w.findAll('[data-test="file-row"]').length).toBe(2)
+    })
+
+    it('файл загружен, а перечитывание не удалось — прежний список остаётся (без блока ошибки)', async () => {
+      const w = await mountIt(true)
+      get.mockRejectedValueOnce(new Error('network'))
+      await pick(w, new File(['%PDF-1'], 'новый.pdf', { type: 'application/pdf' }))
+      expect(post).toHaveBeenCalledTimes(1)
+      expect(w.findAll('[data-test="file-row"]').length).toBe(2)
+      expect(w.find('[data-test="files-error"]').exists()).toBe(false)
+    })
+
+    it('успешно и пусто — «Файлов пока нет», без ошибки', async () => {
+      get.mockReset().mockResolvedValue({ data: [] })
+      const w = await mountIt(false)
+      expect(w.text()).toContain('Файлов пока нет')
+      expect(w.find('[data-test="files-error"]').exists()).toBe(false)
+    })
+
+    it('смена объекта и сбой загрузки нового — ошибка, файлов прежнего нет', async () => {
+      get.mockReset().mockResolvedValueOnce({ data: [F(1, 'obj7.pdf')] })
+      const w = await mountIt(true)
+      get.mockRejectedValueOnce(new Error('network'))
+      await w.setProps({ objectId: 8 })
+      await flushPromises()
+      expect(w.findAll('[data-test="file-row"]').length).toBe(0)
+      expect(w.find('[data-test="files-error"]').exists()).toBe(true)
+    })
+
+    it('ошибка уходит после удачной загрузки другого объекта', async () => {
+      get.mockReset().mockRejectedValueOnce(new Error('network'))
+      const w = await mountIt(false)
+      expect(w.find('[data-test="files-error"]').exists()).toBe(true)
+      get.mockResolvedValueOnce({ data: [] })
+      await w.setProps({ objectId: 8 })
+      await flushPromises()
+      expect(w.find('[data-test="files-error"]').exists()).toBe(false)
+      expect(w.text()).toContain('Файлов пока нет')
+    })
+
+    describe('фон', () => {
+      beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] }) })
+      afterEach(() => { vi.useRealTimers() })
+
+      it('сбой тихого фонового обновления пустого списка ошибку не показывает', async () => {
+        get.mockReset().mockResolvedValueOnce({ data: [] })
+        const w = await mountIt(false)
+        get.mockRejectedValue(new Error('Network Error'))
+        vi.advanceTimersByTime(45 * 60 * 1000)
+        await flushPromises()
+        expect(get).toHaveBeenCalledTimes(2)
+        expect(w.find('[data-test="files-error"]').exists()).toBe(false)
+        expect(w.text()).toContain('Файлов пока нет')
+      })
+    })
+  })
 })

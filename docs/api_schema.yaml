@@ -4510,6 +4510,8 @@ paths:
           description: Файл не предоставлен или ошибка импорта
         '401':
           description: Не авторизован
+        '409':
+          description: Идёт другой импорт закупок — повторить позже
   /api/v1/purchases/import/dry_run/:
     post:
       operationId: purchases_import_dry_run
