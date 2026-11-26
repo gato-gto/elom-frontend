@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 // F-1104 (ответ владельца 13): оборотная ведомость и отчёт по списаниям — одна страница, два вида.
 
@@ -36,6 +37,10 @@ const mountReport = async (kind: 'turnover' | 'writeoffs') => {
   await flushPromises()
   return w
 }
+
+// F-1129: каждый тест размонтирует свой отчёт — иначе отложенный перезапрос (смена фильтра) прежнего экземпляра
+// стрелял внутри следующего теста (нестабильный «переход оборотка → списания» под нагрузкой)
+enableAutoUnmount(afterEach)
 
 describe('Отчёты по складу (F-1104)', () => {
   beforeEach(() => {
@@ -148,5 +153,34 @@ describe('Отчёты по складу (F-1104)', () => {
     await flushPromises()
     expect(exportFromBackend).toHaveBeenCalledWith(endpoints.reports.turnover, 'xlsx', 'oborotnaya_vedomost_2026-03-31',
       { date_from: '2026-03-01', date_to: '2026-03-31' })
+  })
+
+  // F-1129: смена фильтра → перезапрос через 300 мс; ушли со страницы раньше — запроса нет
+  describe('отложенный перезапрос по фильтру (F-1129)', () => {
+    beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] }) })
+
+    it('страница открыта — через 300 мс один перезапрос с новым фильтром', async () => {
+      routeGet(TURNOVER)
+      const w = await mountReport('turnover')
+      const before = reportCalls().length
+      ;(w.vm as unknown as { filters: Record<string, unknown> }).filters.object = 5
+      await nextTick()
+      vi.advanceTimersByTime(300)
+      await flushPromises()
+      expect(reportCalls().length).toBe(before + 1)
+      expect(reportCalls().at(-1)).toContain('object=5')
+    })
+
+    it('ушли со страницы до перезапроса — запроса нет', async () => {
+      routeGet(TURNOVER)
+      const w = await mountReport('turnover')
+      const before = reportCalls().length
+      ;(w.vm as unknown as { filters: Record<string, unknown> }).filters.object = 5
+      await nextTick()
+      w.unmount()
+      vi.advanceTimersByTime(1000)
+      await flushPromises()
+      expect(reportCalls().length).toBe(before)
+    })
   })
 })

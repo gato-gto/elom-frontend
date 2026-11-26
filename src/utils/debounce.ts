@@ -1,11 +1,24 @@
 // Утилиты для debounce и throttle
-import { ref, watch } from 'vue'
+import { getCurrentScope, onScopeDispose, ref, watch } from 'vue'
+
+// F-1129: отложенный вызов не переживает своего владельца. Создан в области эффектов (setup компонента, composable,
+// setup-стор) — таймер снимается при её уничтожении: уход со страницы в течение задержки больше не шлёт запрос
+// «ничьего» списка/отчёта (и таймер прежнего экземпляра не стреляет в следующем тесте). Вне области — как раньше.
+function cancelOnScopeDispose(cancel: () => void) {
+  if (getCurrentScope()) { onScopeDispose(cancel) }
+}
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null
+  cancelOnScopeDispose(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
+  })
 
   return (...args: Parameters<T>) => {
     if (timeoutId) {
@@ -13,6 +26,7 @@ export function debounce<T extends (...args: any[]) => any>(
     }
     
     timeoutId = setTimeout(() => {
+      timeoutId = null
       func(...args)
     }, delay)
   }
@@ -56,6 +70,7 @@ export function cancellableDebounce<T extends (...args: any[]) => any>(
       timeoutId = null
     }
   }
+  cancelOnScopeDispose(cancel)
 
   return { debounced, cancel }
 }
