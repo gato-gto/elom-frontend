@@ -925,8 +925,18 @@ function handlePrint() {
     border-left-color: #000 !important;
   }
 
+  /* F-1121: линия подписи — нижняя граница поля высотой 32 px (components.css); заливка давала чёрный
+     прямоугольник при печати с фоном */
   .signature-line {
-    background-color: #000 !important;
+    background-color: transparent !important;
+    border-bottom: 1px solid #000 !important;
+  }
+
+  /* F-1121: двузначный номер строки не налезает на наименование */
+  .invoice-table .col-number {
+    width: 2.25rem !important;
+    padding-left: 0.2rem !important;
+    padding-right: 0.2rem !important;
   }
 
   /* Статусы в печати — без цветных заливок, только контур + чёрный текст */

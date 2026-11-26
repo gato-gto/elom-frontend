@@ -95,7 +95,7 @@
                   {{ sortOrder === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th v-if="visibleActions.length > 0" class="text-right">Действия</th>
+              <th v-if="visibleActions.length > 0" class="text-right no-print">Действия</th>
             </tr>
           </thead>
           
@@ -132,7 +132,7 @@
                         <span v-else>{{ formatColumnValue(getColumnValue(item, column), column, item) }}</span>
                   </slot>
                 </td>
-                <td v-if="visibleActions.length > 0" class="text-right">
+                <td v-if="visibleActions.length > 0" class="text-right no-print">
                   <div class="flex gap-1 justify-end">
                     <template 
                       v-for="action in visibleActions"

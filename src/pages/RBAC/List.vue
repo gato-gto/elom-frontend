@@ -75,7 +75,7 @@
             <th>Разрешения</th>
             <th>Тип</th>
             <th>Статус</th>
-            <th class="text-right">Действия</th>
+            <th class="text-right no-print">Действия</th>
           </tr>
         </thead>
         <tbody>
@@ -108,7 +108,7 @@
             <td>
               <span class="badge badge-success badge-sm">Активна</span>
             </td>
-            <td class="text-right">
+            <td class="text-right no-print">
               <div class="flex gap-1 justify-end">
                 <!-- Системную роль нельзя менять/удалять через API (права задаются init_rbac),
                      поэтому для неё показываем только «Просмотр» — без вводящих в заблуждение кнопок. -->

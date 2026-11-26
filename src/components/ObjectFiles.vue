@@ -8,7 +8,7 @@
         <input type="file" class="hidden" :accept="ACCEPT" :disabled="busy" @change="onPick" />
       </label>
     </div>
-    <p v-if="canManage" class="text-xs text-muted mb-3">PDF или изображение (JPEG, PNG, WebP), до 50 МБ.</p>
+    <p v-if="canManage" class="text-xs text-muted mb-3 no-print">PDF или изображение (JPEG, PNG, WebP), до 50 МБ.</p>
 
     <div v-if="loading" class="text-sm text-subtle py-4">Загрузка…</div>
     <div v-else-if="loadFailed && files.length === 0" data-test="files-error"

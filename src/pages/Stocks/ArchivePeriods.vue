@@ -44,7 +44,7 @@
               <th>Объект</th>
               <th>Дата запрета</th>
               <th>Кто и когда менял</th>
-              <th v-if="canEdit" class="text-right">Действия</th>
+              <th v-if="canEdit" class="text-right no-print">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -61,7 +61,7 @@
                 <template v-if="r.closed_until_at">{{ r.closed_until_by_name || '—' }}, {{ formatDateTime(r.closed_until_at) }}</template>
                 <template v-else>—</template>
               </td>
-              <td v-if="canEdit" class="text-right">
+              <td v-if="canEdit" class="text-right no-print">
                 <button data-test="edit-lock" class="btn btn-sm btn-outline" :disabled="busy" @click="openEdit(r)">
                   {{ r.closed_until ? 'Изменить' : 'Поставить' }}
                 </button>

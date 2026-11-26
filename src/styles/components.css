@@ -684,10 +684,19 @@
    ============================================ */
 
 @media print {
-  /* Настройки страницы */
+  /* Настройки страницы. F-1121: без size — ориентацию (книжная/альбомная) выбирает пользователь в диалоге
+     печати (заданный size её блокирует), широкие таблицы можно печатать альбомно. Накладная — всегда A4 книжная
+     (именованная страница invoice). */
   @page {
-    size: A4;
     margin: 0.8cm;
+  }
+  @page invoice {
+    size: A4 portrait;
+    margin: 0.8cm;
+  }
+  .print-page,
+  .invoice-paper {
+    page: invoice;
   }
 
   /* Предотвращаем пустые страницы */
@@ -994,3 +1003,101 @@
 /* F-1071 (D-030 правило 1): коды (SKU, инвентарный №) — системный моноширинный, без загрузки шрифта. */
 .font-code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-variant-numeric: normal; }
 .modern-table td.font-code { white-space: nowrap; }
+
+/* ══ F-1121 (задача владельца 25.11): печать любой страницы ══
+   Проверено аудитом печати (Chromium PDF + снимки на ширине листа, светлая и тёмная тема):
+   1) таблицы списков и отчётов шире поля листа (min-width 48rem = 768 px против ≈733 px у A4 с полями 0,8 см) —
+      правая колонка («Сумма», «Остаток на конец», «Статус») уходила за край бумаги;
+   2) overflow-wrap:anywhere в сжатой колонке ломал имена по буквам;
+   3) тёмная тема печаталась светлым текстом (фон браузер по умолчанию не печатает — на бумаге почти пусто);
+   4) на бумаге — фильтры, кнопки, пагинация, уведомления. */
+@media print {
+  /* 3) на бумаге — всегда светлые токены, какая бы тема ни была выбрана */
+  :root[data-theme="dark"],
+  :root.dark {
+    color-scheme: light;
+    --color-base-100: hsl(0 0% 100%) !important;
+    --color-base-200: hsl(0 0% 100%) !important;
+    --color-base-300: hsl(200 14% 80%) !important;
+    --color-base-content: hsl(200 20% 12%) !important;
+    --color-primary: hsl(24 84% 37%) !important;
+    --color-secondary: hsl(204 19% 27%) !important;
+    --color-accent: hsl(205 39% 40%) !important;
+    --color-neutral: hsl(204 19% 21%) !important;
+    --color-info: hsl(205 39% 40%) !important;
+    --color-success: hsl(155 60% 28%) !important;
+    --color-warning: hsl(36 90% 30%) !important;
+    --color-error: hsl(6 59% 44%) !important;
+    /* короткие токены кастомного CSS (tailwind.css :root / :root.dark) — светлые значения */
+    --bc: 200 20% 15% !important;
+    --b1: 0 0% 100% !important;
+    --b2: 0 0% 100% !important;
+    --b3: 200 14% 85% !important;
+    --p: 24 84% 37% !important;
+    --p-text: 24 84% 37% !important;
+    --er: 6 59% 44% !important;
+    --tx-2: 205 15% 32% !important;
+    --tx-3: 205 12% 40% !important;
+    --control-border: 205 12% 55% !important;
+    background: #fff !important;
+  }
+  :root.dark .list-content,
+  :root.dark .modern-table,
+  .app-main {
+    background: #fff !important;
+  }
+  .list-content {
+    box-shadow: none !important;
+  }
+
+  /* 4) управление на бумаге не нужно */
+  .drawer-side,
+  .nav-toggle-btn,
+  .header-actions,
+  .filter-panel,
+  .modern-pagination-container,
+  .chart-controls,
+  .row-action-btn,
+  .action-btn,
+  .btn,
+  .toast,
+  .topbar-progress {
+    display: none !important;
+  }
+  .app-main {
+    padding: 0 !important;
+  }
+
+  /* 1–2) таблицы — в ширину поля листа, без горизонтальной прокрутки и без переноса по буквам */
+  .list-content .table-container,
+  .table-container,
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+  .list-content .modern-table,
+  .modern-table,
+  .table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  .modern-table th,
+  .modern-table td,
+  .table th,
+  .table td {
+    font-size: 8.5pt !important;
+    padding: 0.2rem 0.3rem !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+  .modern-table thead th,
+  .table thead th {
+    position: static !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr {
+    break-inside: avoid;
+  }
+}
