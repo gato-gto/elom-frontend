@@ -1082,8 +1082,12 @@
     padding: 0 !important;
     margin: 0 0 0.4rem !important;
   }
-  .filter-panel:not(:has(.filter-field:not([data-empty]))),
+  /* F-1130 (ревью-22): два отдельных правила — браузер без :has() (Safari/iOS < 15.4, Chrome < 105) отбрасывает ВЕСЬ
+     список селекторов, и пустые поля печатались бы; без :has теряется только скрытие пустой панели */
   .filter-field[data-empty] {
+    display: none !important;
+  }
+  .filter-panel:not(:has(.filter-field:not([data-empty]))) {
     display: none !important;
   }
   .filter-header {
@@ -1117,25 +1121,24 @@
   .filter-label::after {
     content: ":";
   }
-  .filter-input,
-  .filter-select,
-  .filter-textarea {
-    -webkit-appearance: none;
-    appearance: none;
-    border: none !important;
-    background: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    font-size: 8.5pt !important;
+  /* F-1130 (ревью-22): вместо полей — текст значения (FilterField .filter-print-value): поле печаталось обрезанным по
+     своей ширине (длинный поиск, длинная опция за краем листа), дата — в локали браузера */
+  .filter-field .filter-input,
+  .filter-field .filter-select,
+  .filter-field .filter-textarea,
+  .filter-field .filter-checkbox,
+  .filter-field .filter-multiselect {
+    display: none !important;
   }
-  .pagination-info {
+  .filter-print-value {
+    display: inline !important;
     font-size: 8.5pt !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
   }
-  .filter-input::-webkit-calendar-picker-indicator {
-    display: none;
+  .pagination-info,
+  .pagination-stats {
+    font-size: 8.5pt !important;
   }
 
   /* F-1128 (ревью-21): печать с телефона — карточки (их рендерит только мобильная раскладка, на десктопе их нет в DOM),
@@ -1177,4 +1180,9 @@
   tr {
     break-inside: avoid;
   }
+}
+
+/* F-1130: текст значения фильтра — только для печати (на экране его заменяет само поле) */
+.filter-print-value {
+  display: none;
 }

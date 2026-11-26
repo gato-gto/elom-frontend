@@ -110,4 +110,41 @@ describe('печать (F-1121)', () => {
     expect(gl).toContain('<td v-if="visibleActions.length > 0" class="text-right no-print">')
     expect(printDecls('.no-print').display).toBe('none !important')
   })
+
+  // F-1130 (ревью-22): правило с :has() — отдельно (браузер без :has отбрасывает весь список селекторов)
+  it('ни одно печатное правило не смешивает :has() с другими селекторами', () => {
+    const mixed: string[] = []
+    for (const b of printBlocks) {
+      b.walkRules((r: Rule) => { if (r.selector.includes(':has(') && r.selectors.length > 1) { mixed.push(r.selector) } })
+    }
+    expect(mixed).toEqual([])
+  })
+
+  it('на бумаге вместо полей фильтра — текст значения; на экране текст скрыт', () => {
+    for (const sel of ['.filter-field .filter-input', '.filter-field .filter-select', '.filter-field .filter-textarea']) {
+      expect(printDecls(sel).display).toBe('none !important')
+    }
+    expect(printDecls('.filter-print-value').display).toBe('inline !important')
+    let screen: string | undefined
+    root.walkRules('.filter-print-value', (r: Rule) => {
+      if (r.parent?.type === 'root') { r.walkDecls('display', d => { screen = d.value }) }
+    })
+    expect(screen).toBe('none')
+  })
+
+  it.each([
+    ['select', 7, [{ value: undefined, label: 'Все объекты' }, { value: 7, label: 'Медцентр 01' }], 'Медцентр 01'],
+    ['date', '2026-11-01', undefined, '01.11.2026'],
+    ['month', '2026-03', undefined, '03.2026'],
+    ['text', 'ООО Строй-Снаб Плюс СФ-12345 доставка', undefined, 'ООО Строй-Снаб Плюс СФ-12345 доставка'],
+    ['multiselect', [1, 2], [{ value: 1, label: 'А' }, { value: 2, label: 'Б' }], 'А, Б'],
+  ])('FilterField %s %j → на бумаге «%s»', (type, value, options, text) => {
+    const w = mount(FilterField, { props: { modelValue: value as never, type: type as never, label: 'Поле', options } })
+    expect(w.find('.filter-print-value').text()).toBe(text)
+  })
+
+  it('FilterField: пустое значение — текста для печати нет', () => {
+    const w = mount(FilterField, { props: { modelValue: '', type: 'text', label: 'Поиск' } })
+    expect(w.find('.filter-print-value').exists()).toBe(false)
+  })
 })

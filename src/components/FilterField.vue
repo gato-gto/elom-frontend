@@ -2,6 +2,9 @@
   <div class="filter-field" :data-empty="isEmpty ? '' : undefined">
     <!-- F-1128 (ревью-21): data-empty — на бумаге печатаются только заданные фильтры (components.css, @media print) -->
     <label v-if="label" class="filter-label">{{ label }}<span v-if="required" class="required-mark"> *</span></label>
+    <!-- F-1130 (ревью-22): на бумаге — текст значения (подпись опции, дата дд.мм.гггг) с переносом вместо поля: поле
+         печаталось обрезанным по своей ширине (длинный поиск, длинный материал), дата — в локали браузера -->
+    <span v-if="!isEmpty" class="filter-print-value">{{ printValue }}</span>
     
     <!-- Text Input -->
     <input
@@ -116,6 +119,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { selectAllOnFocus, parseDecimalInput } from '@/utils/numberInput'  // F-1017: тап выделяет значение
+import { formatDate } from '@/utils/formatters'
 
 interface Option {
   value: string | number | boolean | undefined
@@ -147,6 +151,19 @@ const props = withDefaults(defineProps<Props>(), {
 const isEmpty = computed(() => {
   const v = props.modelValue
   return v === undefined || v === null || v === '' || v === false || (Array.isArray(v) && v.length === 0)
+})
+
+// F-1130: текст значения для печати
+const optionLabel = (v: unknown) => (props.options || []).find(o => String(o.value) === String(v))?.label ?? String(v)
+const printValue = computed(() => {
+  const v = props.modelValue
+  if (isEmpty.value) { return '' }
+  if (props.type === 'select') { return optionLabel(v) }
+  if (props.type === 'multiselect' && Array.isArray(v)) { return v.map(optionLabel).join(', ') }
+  if (props.type === 'date' && typeof v === 'string') { return formatDate(v) }
+  if (props.type === 'month' && typeof v === 'string' && /^\d{4}-\d{2}$/.test(v)) { return `${v.slice(5)}.${v.slice(0, 4)}` }
+  if (props.type === 'checkbox') { return 'да' }
+  return String(v)
 })
 
 const emit = defineEmits<{
