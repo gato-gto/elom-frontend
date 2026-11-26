@@ -25,7 +25,10 @@
             </svg>
           </button>
           <div class="flex flex-col">
-            <span class="font-medium text-base-content">{{ value }}</span>
+            <span class="font-medium text-base-content">
+              {{ value }}
+              <span v-if="item.object_is_active === false" data-test="inactive-badge" class="badge badge-ghost badge-sm ml-1">неактивен</span>
+            </span>
             <span class="text-sm text-muted">{{ item.object_address }}</span>
           </div>
         </div>

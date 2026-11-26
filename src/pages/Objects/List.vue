@@ -131,8 +131,8 @@ const listConfig = computed<GenericListConfig<SiteObject>>(() => ({
     { key: 'name', label: 'Название', sortable: true },
     { key: 'address', label: 'Адрес', sortable: true },
     { key: 'responsible', label: 'Ответственный', sortable: true },
-    { key: 'date_start', label: 'Дата начала', sortable: true },
-    { key: 'date_end', label: 'Дата окончания', sortable: true },
+    { key: 'date_start', label: 'Начало (застройщик)', sortable: true },
+    { key: 'date_end', label: 'Окончание (застройщик)', sortable: true },
     { key: 'is_active', label: 'Активность', sortable: true }
   ],
   filters: [

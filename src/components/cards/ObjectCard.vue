@@ -7,19 +7,10 @@
           <span class="font-medium ml-2">{{ object.address }}</span>
         </div>
         
-        <div v-if="object.date_start">
-          <span class="text-muted">Начало работ:</span>
-          <span class="font-medium ml-2 font-mono">{{ formatDate(object.date_start || null) }}</span>
-        </div>
-        
-        <div v-if="object.date_end">
-          <span class="text-muted">Окончание:</span>
-          <span class="font-medium ml-2 font-mono">{{ formatDate(object.date_end) }}</span>
-        </div>
-        
-        <div v-if="getProjectProgress() !== null">
-          <span class="text-muted">Прогресс:</span>
-          <span class="font-medium ml-2 font-mono">{{ getProjectProgress() }}%</span>
+        <!-- F-1134 (ответы 23 и 31): сроки — застройщика, процент «прогресса» убран -->
+        <div v-if="object.date_start || object.date_end" data-test="developer-term">
+          <span class="text-muted">Сроки застройщика:</span>
+          <span class="font-medium ml-2 font-mono">{{ formatDate(object.date_start || null) }} — {{ formatDate(object.date_end || null) }}</span>
         </div>
         
         <div v-if="object.responsible_name">
@@ -90,28 +81,9 @@ interface Emits {
   (e: 'action', action: string): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 defineEmits<Emits>()
 
 useMobileCardHelpers()
 
-const getProjectProgress = () => {
-  if (!props.object.date_start || !props.object.date_end) {return null}
-  
-  const start = new Date(props.object.date_start)
-  const end = new Date(props.object.date_end)
-  const now = new Date()
-  
-  if (now < start) {return 0}
-  if (now > end) {return 100}
-  
-  const total = end.getTime() - start.getTime()
-  // F-924 (защитный guard): при date_start === date_end (проект «на 1 день») total=0 → passed/0=Infinity
-  // → «Infinity%». А при инвертированных датах (end<start) total<0 давал бы бессмыслицу. Обе аномалии
-  // данных → прогресс не показываем.
-  if (total <= 0) { return null }
-  const passed = now.getTime() - start.getTime()
-
-  return Math.round((passed / total) * 100)
-}
 </script>

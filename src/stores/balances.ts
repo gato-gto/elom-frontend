@@ -74,6 +74,7 @@ export const fetchBalancesList = async (params?: {
           object_id: obj.object_id,
           object_name: obj.object_name,
           object_address: obj.object_address,
+          object_is_active: obj.object_is_active,   // F-1134: пометка «неактивен» у объекта в архиве
           materials: obj.materials.map((material: any) => ({
             material_id: material.material_id,
             material_name: material.material_name,

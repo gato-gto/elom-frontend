@@ -61,13 +61,10 @@
               </dd>
             </div>
             <div class="fact">
-              <dt>Сроки</dt>
+              <!-- F-1134 (ответы 23 и 31): сроки — застройщика, не наши; процент «прошло срока» и полоса убраны -->
+              <dt>Сроки застройщика</dt>
               <dd>
-                <span class="tabular-nums">{{ formatDate(object.date_start || null) }} — {{ formatDate(object.date_end || null) }}</span>
-                <template v-if="projectProgress !== null">
-                  <div class="term-bar" role="presentation"><div class="term-bar__value" :style="{ width: `${projectProgress}%` }" /></div>
-                  <span class="fact-note">Прошло {{ projectProgress }} % срока</span>
-                </template>
+                <span class="tabular-nums" data-test="developer-term">{{ formatDate(object.date_start || null) }} — {{ formatDate(object.date_end || null) }}</span>
               </dd>
             </div>
             <div class="fact">
@@ -158,20 +155,6 @@ const currentStageMeta = computed(() => (object.value?.current_stage ? stageDict
 
 const responsibleName = computed(() => object.value?.responsible_name || 'Не назначен')
 
-const projectProgress = computed(() => {
-  if (!object.value?.date_start || !object.value?.date_end) {
-    return null
-  }
-  const start = new Date(object.value.date_start)
-  const end = new Date(object.value.date_end)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
-    return null
-  }
-  const now = new Date()
-  if (now <= start) {return 0}
-  if (now >= end) {return 100}
-  return Math.min(100, Math.max(0, Math.round(((now.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * 100)))
-})
 
 // Статистика по объекту
 // F-1073 (ревью D-030): число у ссылки = число строк в списке, который она открывает. «Закупки» — все
@@ -302,8 +285,6 @@ onBeforeUnmount(() => {
   .fact { grid-template-columns: 1fr; gap: 0.125rem; }
 }
 
-.term-bar { margin-top: 0.375rem; height: 4px; max-width: 16rem; border-radius: 2px; background: hsl(var(--b3)); overflow: hidden; }
-.term-bar__value { height: 100%; background: hsl(var(--tx-2)); }
 
 .object-links { list-style: none; margin: 0; padding: 0; }
 .object-links li + li { border-top: 1px solid hsl(var(--b3)); }

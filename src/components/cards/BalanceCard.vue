@@ -6,6 +6,10 @@
   >
     <template #content>
       <div class="space-y-3 text-sm">
+        <!-- F-1134 (ответ владельца 4): объект в архиве, остаток показываем с пометкой -->
+        <div v-if="balance.object_is_active === false">
+          <span data-test="inactive-badge" class="badge badge-ghost badge-sm">неактивен</span>
+        </div>
         <div>
           <span class="text-muted">Адрес:</span>
           <span class="font-medium ml-2">{{ balance.object_address || '—' }}</span>

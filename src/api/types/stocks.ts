@@ -144,6 +144,8 @@ export interface ObjectBalance {
   object_id: number;
   object_name: string;
   object_address: string;
+  // F-1134 (ответ владельца 4): неактивные (в архиве) объекты с остатком тоже в сводке — с этим признаком
+  object_is_active?: boolean;
   materials: MaterialBalance[];
   total_materials: number;
 }

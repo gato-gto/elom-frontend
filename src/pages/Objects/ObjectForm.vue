@@ -150,14 +150,14 @@ const formConfig = computed<GenericFormConfig<ObjectRequest>>(() => ({
     {
       key: 'date_start',
       type: 'date',
-      label: 'Дата начала работ',
+      label: 'Начало работ (сроки застройщика)',
       order: 8,
       width: 'half'
     },
     {
       key: 'date_end',
       type: 'date',
-      label: 'Дата окончания работ',
+      label: 'Окончание работ (сроки застройщика)',
       order: 9,
       width: 'half'
     },
