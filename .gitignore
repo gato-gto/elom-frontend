@@ -383,3 +383,7 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 _live.mjs
+
+# Stryker (F-1137)
+.stryker-tmp/
+reports/mutation/

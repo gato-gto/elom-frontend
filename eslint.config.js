@@ -168,6 +168,8 @@ export default [
     ignores: [
       'dist/**',
       'node_modules/**',
+      '.stryker-tmp/**',
+      'reports/**',
       '*.config.js',
       '*.config.ts'
     ]
