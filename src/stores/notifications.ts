@@ -132,8 +132,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
   function notifyPurchaseEdit(purchaseId: ID, editor: string) {
     addNotification({
       type: 'warning',
-      title: 'Закупка изменена',
-      message: `Закупка #${purchaseId} была изменена пользователем ${editor}`,
+      // F-1140 (владелец 28.11): «изменена» читалось как «измена» — слово «редактирование»
+      title: 'Редактирование закупки',
+      message: `Закупку #${purchaseId} отредактировал пользователь ${editor}`,
       related_type: 'purchase',
       related_id: purchaseId,
       action_url: `/purchases/${purchaseId}`
