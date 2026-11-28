@@ -204,11 +204,12 @@
                   <th style="min-width: 120px">Ед.</th>
                   <th style="min-width: 120px">Количество</th>
                   <th v-if="netShown" style="min-width: 120px">Цена без НДС</th>
-                  <!-- ревью-32 р2: с галочкой колонка «Цена с НДС» — от 1280 px, уже — строка под ценой без НДС -->
-                  <th :class="{ 'hidden xl:table-cell': netShown }" style="min-width: 120px" data-testid="th-gross">{{ netShown ? 'Цена с НДС' : 'Цена' }}</th>
+                  <!-- ревью-32 р2: с галочкой колонка «Цена с НДС» — от 1536 px (2xl), уже — строка под ценой без НДС -->
+                  <th :class="{ 'hidden 2xl:table-cell': netShown }" style="min-width: 120px" data-testid="th-gross">{{ netShown ? 'Цена с НДС' : 'Цена' }}</th>
                   <th class="text-right" style="min-width: 120px">Сумма</th>
-                  <!-- ревью-32: отдельная колонка — от 1280 px; уже — НДС под суммой (иначе на 1024 px прокрутка) -->
-                  <th v-if="vatRate > 0" class="text-right hidden xl:table-cell" style="min-width: 110px">НДС {{ vatRate }} %</th>
+                  <!-- ревью-32: отдельная колонка — от 1536 px (2xl; живой замер 28.11 с боковым меню 256 px: на xl/1280 таблица
+                       прокручивалась и «удалить» уходило за край); уже — НДС строкой под суммой -->
+                  <th v-if="vatRate > 0" class="text-right hidden 2xl:table-cell" style="min-width: 110px">НДС {{ vatRate }} %</th>
                   <th class="text-right" style="min-width: 80px">Действия</th>
                 </tr>
                 </thead>
@@ -289,13 +290,13 @@
                         data-testid="price-net"
                         @input="onNetPriceInput(it)"
                       />
-                      <div class="xl:hidden text-xs text-muted mt-1" data-testid="price-gross-inline">С НДС: {{ it.price ? formatMoney(it.price) : '—' }}</div>
+                      <div class="2xl:hidden text-xs text-muted mt-1" data-testid="price-gross-inline">С НДС: {{ it.price ? formatMoney(it.price) : '—' }}</div>
                       <div v-if="getItemFieldError(idx, 'price')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'price') }}
                       </div>
                     </div>
                   </td>
-                  <td :class="{ 'hidden xl:table-cell': netShown }" data-testid="td-gross">
+                  <td :class="{ 'hidden 2xl:table-cell': netShown }" data-testid="td-gross">
                     <div v-if="netShown" class="text-sm font-mono p-2 bg-base-200 rounded border" data-testid="price-gross">
                       {{ it.price ? formatMoney(it.price) : '—' }}
                     </div>
@@ -316,9 +317,9 @@
                   </td>
                   <td class="text-right font-mono">
                     {{ formatMoney(it.total) }}
-                    <div v-if="vatRate > 0" class="xl:hidden text-xs text-muted" data-testid="line-vat-inline">НДС {{ formatMoney(lineVat(it)) }}</div>
+                    <div v-if="vatRate > 0" class="2xl:hidden text-xs text-muted" data-testid="line-vat-inline">НДС {{ formatMoney(lineVat(it)) }}</div>
                   </td>
-                  <td v-if="vatRate > 0" class="text-right font-mono text-muted hidden xl:table-cell" data-testid="line-vat">{{ formatMoney(lineVat(it)) }}</td>
+                  <td v-if="vatRate > 0" class="text-right font-mono text-muted hidden 2xl:table-cell" data-testid="line-vat">{{ formatMoney(lineVat(it)) }}</td>
                   <td class="text-right">
                     <button type="button" class="btn btn-error btn-xs touch-target" aria-label="Удалить позицию" title="Удалить" @click="removeItem(idx)">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,14 +331,14 @@
                 </tbody>
                 <tfoot>
                 <tr class="font-bold">
-                  <!-- colspan не меняется по ширине экрана: колонку «Цена с НДС» (с xl) закрывает своя пустая ячейка -->
-                  <td v-if="netShown" class="hidden xl:table-cell" data-testid="total-pad"></td>
+                  <!-- colspan не меняется по ширине экрана: колонку «Цена с НДС» (с 2xl) закрывает своя пустая ячейка -->
+                  <td v-if="netShown" class="hidden 2xl:table-cell" data-testid="total-pad"></td>
                   <td colspan="4" class="text-right" data-testid="total-label">Итого:</td>
                   <td class="text-right font-mono">
                     {{ formatMoney(total) }}
-                    <div v-if="vatRate > 0" class="xl:hidden text-xs font-normal text-muted">в т. ч. НДС {{ formatMoney(totalVat) }}</div>
+                    <div v-if="vatRate > 0" class="2xl:hidden text-xs font-normal text-muted" data-testid="total-vat-inline">НДС {{ formatMoney(totalVat) }}</div>
                   </td>
-                  <td v-if="vatRate > 0" class="text-right font-mono hidden xl:table-cell" data-testid="total-vat">{{ formatMoney(totalVat) }}</td>
+                  <td v-if="vatRate > 0" class="text-right font-mono hidden 2xl:table-cell" data-testid="total-vat">{{ formatMoney(totalVat) }}</td>
                   <td></td>
                 </tr>
                 </tfoot>

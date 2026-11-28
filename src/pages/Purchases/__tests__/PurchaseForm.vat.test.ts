@@ -66,6 +66,14 @@ describe('PurchaseForm · НДС (F-1142)', () => {
     expect(text(w, '[data-testid="line-vat"]')).toBe('1510714,29')        // 14 100 000 × 12/112
     expect(text(w, '[data-testid="line-vat-inline"]')).toBe('НДС1510714,29')
     expect(text(w, '[data-testid="total-vat"]')).toBe('1510714,29')
+    expect(text(w, '[data-testid="total-vat-inline"]')).toBe('НДС1510714,29')
+    // живой замер 28.11 (боковое меню 256 px): колонка НДС помещается только с 1536 px (2xl), уже — строкой под суммой
+    for (const id of ['line-vat', 'total-vat']) {
+      expect(w.find(`[data-testid="${id}"]`).classes()).toEqual(expect.arrayContaining(['hidden', '2xl:table-cell']))
+    }
+    for (const id of ['line-vat-inline', 'total-vat-inline']) {
+      expect(w.find(`[data-testid="${id}"]`).classes()).toContain('2xl:hidden')
+    }
   })
 
   it('галочка: цена без НДС подставлена из текущей, цена с НДС не меняется — даже 0,05 (→ 0,04 → 0,04)', async () => {
@@ -195,8 +203,8 @@ describe('PurchaseForm · НДС (F-1142)', () => {
     expect(w.find('[data-testid="price-net"]').exists()).toBe(false)
   })
 
-  it('подвал: «Итого» — 4 колонки; с галочкой «Цена с НДС» уходит в строку под ценой без НДС до 1280 px, а в '
-    + 'подвале её закрывает своя ячейка (тоже только с 1280 px)', async () => {
+  it('подвал: «Итого» — 4 колонки; с галочкой «Цена с НДС» уходит в строку под ценой без НДС до 1536 px, а в '
+    + 'подвале её закрывает своя ячейка (тоже только с 1536 px)', async () => {
     const w = mountForm()
     await withItems(w, [['1', '100']])
     expect(w.find('[data-testid="total-label"]').attributes('colspan')).toBe('4')
@@ -205,13 +213,13 @@ describe('PurchaseForm · НДС (F-1142)', () => {
     expect(w.find('[data-testid="td-gross"]').classes()).not.toContain('hidden')
     await netOn(w)
     expect(w.find('[data-testid="total-label"]').attributes('colspan')).toBe('4')
-    expect(w.find('[data-testid="total-pad"]').classes()).toEqual(['hidden', 'xl:table-cell'])
-    expect(w.find('[data-testid="th-gross"]').classes()).toEqual(['hidden', 'xl:table-cell'])
-    expect(w.find('[data-testid="td-gross"]').classes()).toEqual(['hidden', 'xl:table-cell'])
+    expect(w.find('[data-testid="total-pad"]').classes()).toEqual(['hidden', '2xl:table-cell'])
+    expect(w.find('[data-testid="th-gross"]').classes()).toEqual(['hidden', '2xl:table-cell'])
+    expect(w.find('[data-testid="td-gross"]').classes()).toEqual(['hidden', '2xl:table-cell'])
     const inline = w.find('[data-testid="price-gross-inline"]')
-    expect(inline.classes()).toContain('xl:hidden')
+    expect(inline.classes()).toContain('2xl:hidden')
     expect(inline.text().replace(/\s/g, '')).toBe('СНДС:100,00')
-    // колонок в подвале столько же, сколько в шапке (на xl: пустая + 4 + сумма + НДС + действия = 8)
+    // колонок в подвале столько же, сколько в шапке (на 2xl: пустая + 4 + сумма + НДС + действия = 8)
     const headCols = w.findAll('thead th').length
     const footCols = w.findAll('tfoot td').reduce((n, td) => n + Number(td.attributes('colspan') ?? 1), 0)
     expect(footCols).toBe(headCols)
