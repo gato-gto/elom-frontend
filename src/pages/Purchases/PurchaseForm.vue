@@ -178,6 +178,23 @@
               <h2 class="text-lg font-semibold">{{ field.label }}</h2>
             </div>
 
+            <!-- F-1142: НДС — помощник ввода (в БД хранится цена с НДС, ставка не хранится) -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3" data-testid="vat-controls">
+              <!-- ревью-32: select не внутри DaisyUI .label — иначе наследует цвет 60 % (контраст ниже AA) -->
+              <div class="flex items-center gap-2">
+                <label for="purchase-vat-rate" class="text-sm">НДС</label>
+                <select id="purchase-vat-rate" v-model.number="vatRate" class="select select-bordered select-sm"
+                        data-testid="vat-rate" @change="onVatRateChange">
+                  <option v-for="r in VAT_RATES" :key="r" :value="r">{{ r === 0 ? 'без НДС' : `${r} %` }}</option>
+                </select>
+              </div>
+              <label v-if="vatRate > 0" class="label cursor-pointer gap-2 p-0 touch-target">
+                <input v-model="vatNetMode" type="checkbox" class="checkbox checkbox-sm" data-testid="vat-net-mode"
+                       @change="onVatNetModeChange" />
+                <span class="label-text">Цены без НДС (НДС добавить)</span>
+              </label>
+            </div>
+
             <!-- Desktop table view -->
             <div class="hidden md:block overflow-auto">
               <table class="table w-full">
@@ -186,8 +203,12 @@
                   <th style="min-width: 240px">Материал</th>
                   <th style="min-width: 120px">Ед.</th>
                   <th style="min-width: 120px">Количество</th>
-                  <th style="min-width: 120px">Цена</th>
+                  <th v-if="netShown" style="min-width: 120px">Цена без НДС</th>
+                  <!-- ревью-32 р2: с галочкой колонка «Цена с НДС» — от 1280 px, уже — строка под ценой без НДС -->
+                  <th :class="{ 'hidden xl:table-cell': netShown }" style="min-width: 120px" data-testid="th-gross">{{ netShown ? 'Цена с НДС' : 'Цена' }}</th>
                   <th class="text-right" style="min-width: 120px">Сумма</th>
+                  <!-- ревью-32: отдельная колонка — от 1280 px; уже — НДС под суммой (иначе на 1024 px прокрутка) -->
+                  <th v-if="vatRate > 0" class="text-right hidden xl:table-cell" style="min-width: 110px">НДС {{ vatRate }} %</th>
                   <th class="text-right" style="min-width: 80px">Действия</th>
                 </tr>
                 </thead>
@@ -256,22 +277,48 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td v-if="netShown">
                     <div>
-                      <DecimalInput 
-                        v-model="it.price" 
-                        step="0.01" 
-                        min="0" 
+                      <DecimalInput
+                        v-model="it.price_net"
+                        step="0.01"
+                        min="0"
                         class="input input-bordered input-sm w-full"
                         :class="{ 'input-error': getItemFieldError(idx, 'price') }"
-                        @input="recalc(it)"
+                        aria-label="Цена без НДС"
+                        data-testid="price-net"
+                        @input="onNetPriceInput(it)"
+                      />
+                      <div class="xl:hidden text-xs text-muted mt-1" data-testid="price-gross-inline">С НДС: {{ it.price ? formatMoney(it.price) : '—' }}</div>
+                      <div v-if="getItemFieldError(idx, 'price')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'price') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td :class="{ 'hidden xl:table-cell': netShown }" data-testid="td-gross">
+                    <div v-if="netShown" class="text-sm font-mono p-2 bg-base-200 rounded border" data-testid="price-gross">
+                      {{ it.price ? formatMoney(it.price) : '—' }}
+                    </div>
+                    <div v-else>
+                      <DecimalInput
+                        v-model="it.price"
+                        step="0.01"
+                        min="0"
+                        class="input input-bordered input-sm w-full"
+                        :class="{ 'input-error': getItemFieldError(idx, 'price') }"
+                        data-testid="price-input"
+                        @input="onGrossPriceInput(it)"
                       />
                       <div v-if="getItemFieldError(idx, 'price')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'price') }}
                       </div>
                     </div>
                   </td>
-                  <td class="text-right font-mono">{{ formatMoney(it.total) }}</td>
+                  <td class="text-right font-mono">
+                    {{ formatMoney(it.total) }}
+                    <div v-if="vatRate > 0" class="xl:hidden text-xs text-muted" data-testid="line-vat-inline">НДС {{ formatMoney(lineVat(it)) }}</div>
+                  </td>
+                  <td v-if="vatRate > 0" class="text-right font-mono text-muted hidden xl:table-cell" data-testid="line-vat">{{ formatMoney(lineVat(it)) }}</td>
                   <td class="text-right">
                     <button type="button" class="btn btn-error btn-xs touch-target" aria-label="Удалить позицию" title="Удалить" @click="removeItem(idx)">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -283,8 +330,14 @@
                 </tbody>
                 <tfoot>
                 <tr class="font-bold">
-                  <td colspan="4" class="text-right">Итого:</td>
-                  <td class="text-right font-mono">{{ formatMoney(total) }}</td>
+                  <!-- colspan не меняется по ширине экрана: колонку «Цена с НДС» (с xl) закрывает своя пустая ячейка -->
+                  <td v-if="netShown" class="hidden xl:table-cell" data-testid="total-pad"></td>
+                  <td colspan="4" class="text-right" data-testid="total-label">Итого:</td>
+                  <td class="text-right font-mono">
+                    {{ formatMoney(total) }}
+                    <div v-if="vatRate > 0" class="xl:hidden text-xs font-normal text-muted">в т. ч. НДС {{ formatMoney(totalVat) }}</div>
+                  </td>
+                  <td v-if="vatRate > 0" class="text-right font-mono hidden xl:table-cell" data-testid="total-vat">{{ formatMoney(totalVat) }}</td>
                   <td></td>
                 </tr>
                 </tfoot>
@@ -379,24 +432,45 @@
                     </div>
                     
                     <!-- Цена -->
-                    <div>
+                    <div v-if="netShown">
                       <label class="label">
-                        <span class="label-text text-xs">Цена за единицу</span>
+                        <span class="label-text text-xs">Цена за единицу без НДС</span>
                       </label>
-                      <DecimalInput 
-                        v-model="it.price" 
-                        step="0.01" 
-                        min="0" 
+                      <DecimalInput
+                        v-model="it.price_net"
+                        step="0.01"
+                        min="0"
                         class="input input-bordered input-sm w-full"
                         :class="{ 'input-error': getItemFieldError(idx, 'price') }"
                         placeholder="0.00"
-                        @input="recalc(it)"
+                        aria-label="Цена за единицу без НДС"
+                        data-testid="price-net-mobile"
+                        @input="onNetPriceInput(it)"
+                      />
+                      <div class="text-xs text-muted mt-1">С НДС: {{ it.price ? formatMoney(it.price) : '—' }}</div>
+                      <div v-if="getItemFieldError(idx, 'price')" class="text-error text-xs mt-1">
+                        {{ getItemFieldError(idx, 'price') }}
+                      </div>
+                    </div>
+                    <div v-else>
+                      <label class="label">
+                        <span class="label-text text-xs">Цена за единицу</span>
+                      </label>
+                      <DecimalInput
+                        v-model="it.price"
+                        step="0.01"
+                        min="0"
+                        class="input input-bordered input-sm w-full"
+                        :class="{ 'input-error': getItemFieldError(idx, 'price') }"
+                        placeholder="0.00"
+                        data-testid="price-input-mobile"
+                        @input="onGrossPriceInput(it)"
                       />
                       <div v-if="getItemFieldError(idx, 'price')" class="text-error text-xs mt-1">
                         {{ getItemFieldError(idx, 'price') }}
                       </div>
                     </div>
-                    
+
                     <!-- Сумма -->
                     <div>
                       <label class="label">
@@ -405,9 +479,19 @@
                       <div class="text-lg font-mono text-primary p-2  rounded border">
                         {{ formatMoney(it.total) }}
                       </div>
+                      <div v-if="vatRate > 0" class="text-xs text-muted mt-1">в т. ч. НДС {{ vatRate }} %: {{ formatMoney(lineVat(it)) }}</div>
                     </div>
                   </div>
                 </div>
+              </div>
+              <!-- F-1142: итог на телефоне (в таблице он в подвале) -->
+              <div class="flex justify-between font-bold px-1" data-testid="mobile-total">
+                <span>Итого:</span>
+                <span class="font-mono">{{ formatMoney(total) }}</span>
+              </div>
+              <div v-if="vatRate > 0" class="flex justify-between text-sm text-muted px-1 -mt-3">
+                <span>в т. ч. НДС {{ vatRate }} %:</span>
+                <span class="font-mono">{{ formatMoney(totalVat) }}</span>
               </div>
             </div>
 
@@ -527,6 +611,7 @@ import { useItemsForm } from '@/composables/useItemsForm'
 import type { BaseItem } from '@/composables/useItemsForm'
 import api from '@/api/client'
 import { calculateItemAmount, calculatePurchaseTotal } from '@/utils/calculations'
+import { DEFAULT_VAT_RATE, VAT_RATES, grossToNetPrice, isInvalidDecimal, lineVatIncluded, netToGrossPrice, totalVatIncluded } from '@/utils/vat'  // F-1142
 import { shouldWarnCompletedWithoutReport } from './completionWarning'
 
 // Props
@@ -711,7 +796,62 @@ interface PurchaseItem extends BaseItem {
   amount: string
   total?: number
   isNewMaterial?: boolean
+  price_net?: string   // F-1142: цена без НДС — только помощник ввода (в БД уходит price = цена с НДС)
+  net_touched?: boolean   // F-1142: цену без НДС ввёл человек (а не подставили из цены с НДС)
 }
+
+// F-1142 · НДС (владелец 28.11): галочка «Цены без НДС» — вводим цену без НДС, цена с НДС считается; колонка «НДС»
+// показывает НДС строки. Ставка и галочка в БД не пишутся (по умолчанию цены — с НДС, как раньше).
+const vatNetMode = ref(false)
+const vatRate = ref<number>(DEFAULT_VAT_RATE)
+// Ревью-32 р2 MED-A: на «без НДС» режим не сбрасывается, а только прячется (цена одна — колонка «без НДС» не нужна).
+// Раньше сброс на 0 терял режим: 12 → 0 → 12 оставлял цену 100 (введённую без НДС) как цену С НДС — минус 10,7 %.
+const netShown = computed(() => vatNetMode.value && vatRate.value > 0)
+
+function onNetPriceInput(item: PurchaseItem) {
+  item.net_touched = true
+  item.price = netToGrossPrice(item.price_net, vatRate.value)   // мусор → '' (его ловит validatePurchaseItems)
+  recalc(item)
+}
+
+// Цену с НДС правят руками (галочка снята или «без НДС») — она главная: смена ставки её больше не пересчитывает.
+function onGrossPriceInput(item: PurchaseItem) {
+  item.net_touched = false
+  recalc(item)
+}
+
+function onVatNetModeChange() {
+  if (!vatNetMode.value) { return }   // выключили — цена с НДС остаётся как есть
+  // включили — показываем цену без НДС из текущей цены с НДС; саму цену с НДС не трогаем, пока не изменят ввод
+  for (const it of items.value) {
+    it.price_net = it.price ? grossToNetPrice(it.price, vatRate.value) : ''
+    it.net_touched = false
+  }
+}
+
+function onVatRateChange() {
+  if (vatNetMode.value) {
+    for (const it of items.value) {
+      if (it.net_touched && it.price_net) {
+        // цену без НДС ввёл человек — цена с НДС считается по новой ставке («без НДС»: цена = введённой)
+        it.price = netToGrossPrice(it.price_net, vatRate.value)
+        recalc(it)
+      } else {
+        // цена без НДС лишь подставлена — цену с НДС не трогаем (ревью-32: строки, которых не касались, не
+        // переписываются), показываем цену без НДС по новой ставке
+        it.price_net = it.price ? grossToNetPrice(it.price, vatRate.value) : ''
+      }
+    }
+  }
+  // «без НДС»: галочка и колонка «без НДС» спрятаны (netShown), но режим помнится — 0 → 12 снова даст цену × 1,12
+}
+
+function lineVat(item: PurchaseItem): number {
+  return lineVatIncluded(item.quantity, item.price || '0', vatRate.value)
+}
+
+const totalVat = computed(() => totalVatIncluded(
+  items.value.map((it) => ({ quantity: it.quantity, price: it.price || '0' })), vatRate.value))
 
 const {
   items,
@@ -1048,8 +1188,13 @@ function validatePurchaseItems(): Record<string, string> {
     if (!item.quantity || isNaN(qtyNum) || qtyNum <= 0) {
       validationErrors[`items[${idx}].quantity`] = 'Количество должно быть больше 0'
     }
+
+    // F-1142 (ревью-32 MED-1): «1,000,50»/«abc» в цене без НДС давали пустую цену → на сервер уходил 0
+    if (netShown.value && isInvalidDecimal(item.price_net)) {
+      validationErrors[`items[${idx}].price`] = 'Цена без НДС — не число (дробь — запятой, без разделителей тысяч)'
+    }
   })
-  
+
   return validationErrors
 }
 
@@ -1444,8 +1589,8 @@ function recalc(item: PurchaseItem) {
 
 // Format money for display
 function formatMoney(amount: number | string | undefined): string {
-  if (!amount) {return '0.00'}
-  const num = typeof amount === 'string' ? parseFloat(normalizeDecimalInput(amount)) : amount
+  // F-1142: ноль — в том же формате, что и остальные суммы («0,00», а не «0.00»)
+  const num = !amount ? 0 : typeof amount === 'string' ? parseFloat(normalizeDecimalInput(amount)) : amount
   return num.toLocaleString('ru-RU', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
