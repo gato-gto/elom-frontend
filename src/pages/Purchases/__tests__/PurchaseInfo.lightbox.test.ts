@@ -56,6 +56,28 @@ describe('PurchaseInfo — лайтбокс фото', () => {
     w.unmount()
   })
 
+  it('test_close_button_same_size_as_arrows_and_closes_only_photo', async () => {
+    // F-1144 (владелец 28.11, 1920×1080: «крестик маленький»): крестик — круглая кнопка размера стрелок (40 px),
+    // без btn-sm/btn-xs. Размер иконки (24×24 вместо 6×24) — CSS components.css, доказан замером WebKit.
+    const { w, open } = mountView()
+    await tick()
+    await w.findAll('.photo-item')[0].trigger('click')
+    await nextTick()
+    const close = w.find('[data-testid="lightbox-close"]')
+    const arrow = w.findAll('.photo-lightbox-box .btn-circle').filter((b) => b.attributes('data-testid') !== 'lightbox-close')[0]
+    expect(close.classes().filter((c) => c.startsWith('btn-')).sort()).toEqual(['btn-circle', 'btn-outline'])
+    expect(arrow.classes().filter((c) => c.startsWith('btn-')).sort()).toEqual(['btn-circle', 'btn-outline'])
+    expect(close.attributes('aria-label')).toBe('Закрыть')
+    // ревью-32 р4 (соседний класс): у стрелок тоже есть подпись для экранного диктора
+    expect(w.findAll('.photo-lightbox-box .btn-circle').map((b) => b.attributes('aria-label')))
+      .toEqual(['Закрыть', 'Предыдущее фото', 'Следующее фото'])
+    await close.trigger('click')
+    const info = w.findComponent(PurchaseInfo).vm as unknown as { photoModalOpen: boolean }
+    expect(info.photoModalOpen).toBe(false)
+    expect(open.value).toBe(true)
+    w.unmount()
+  })
+
   it('test_tab_in_lightbox_keeps_focus_inside_photo', async () => {
     // ревью N1: лайтбокс стал верхним в стеке → ловушка Tab окна просмотра выключилась, а у лайтбокса своей нет
     const { w } = mountView()

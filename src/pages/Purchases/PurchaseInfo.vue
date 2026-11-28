@@ -184,7 +184,8 @@
           <h3 class="text-lg font-bold">
             {{ getPhotoTypeLabel(selectedPhoto?.type) }} - {{ currentPhotoIndex + 1 }} из {{ currentPhotoList.length }}
           </h3>
-          <button class="btn btn-sm btn-circle btn-outline" aria-label="Закрыть" title="Закрыть" @click="photoModalOpen = false">
+          <!-- F-1144: как стрелки листания (40 px; было btn-sm 32 px с иконкой, сжатой до 6 px) -->
+          <button class="btn btn-circle btn-outline" aria-label="Закрыть" title="Закрыть" data-testid="lightbox-close" @click="photoModalOpen = false">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -193,8 +194,10 @@
 
         <div v-if="selectedPhoto" class="relative h-full">
           <div v-if="currentPhotoList.length > 1" class="flex justify-between items-center mb-4">
-            <button 
+            <button
               class="btn btn-circle btn-outline"
+              aria-label="Предыдущее фото"
+              title="Предыдущее фото"
               :disabled="currentPhotoIndex === 0"
               @click="previousPhoto"
             >
@@ -208,8 +211,10 @@
               <span class="text-sm text-muted">{{ currentPhotoIndex + 1 }} / {{ currentPhotoList.length }}</span>
             </div>
             
-            <button 
+            <button
               class="btn btn-circle btn-outline"
+              aria-label="Следующее фото"
+              title="Следующее фото"
               :disabled="currentPhotoIndex === currentPhotoList.length - 1"
               @click="nextPhoto"
             >

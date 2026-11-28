@@ -184,6 +184,16 @@
   font-size: 1.125rem;
 }
 
+/* F-1144 (владелец 28.11, скрин 1920×1080: «крестик маленький»): круглые/квадратные кнопки-иконки — без внутренних
+   отступов. Наши .btn-xs/.btn-sm (выше) и .btn на тач-экранах (navigation-styles.css) лежат вне @layer и перебивали
+   padding-inline: 0 из DaisyUI .btn-circle/.btn-square (в @layer): в круге 32 px иконке 24 px оставалось 8 px
+   (WebKit: 6×24), в кнопке 24 px иконке 16 px — 6×16, на iPhone стрелкам галереи — 10×24. Иконку центрирует flex
+   самой .btn. !important — правил с padding у .btn несколько (в т. ч. .modern-table .btn), порядок файлов разный. */
+.btn-circle,
+.btn-square {
+  padding: 0 !important;
+}
+
 /* Группы кнопок */
 .btn-group {
   display: flex;
